@@ -1,0 +1,19 @@
+# Automatic HTTPS for {$DOMAIN} (Let's Encrypt). Only the API and its docs reach the app;
+# everything else, including /actuator, gets 404 here.
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	@app path /api/* /swagger-ui.html /swagger-ui/* /v3/api-docs /v3/api-docs/*
+	handle @app {
+		reverse_proxy app:8080
+	}
+
+	handle {
+		respond 404
+	}
+}

@@ -28,6 +28,7 @@
 - Security: `FirebaseAuthenticationFilter` + `TokenVerifier` (wraps `verifyIdToken`), `EmailAllowlist` (case-insensitive), CORS for `/api/**` from `CORS_ALLOWED_ORIGINS`. `GET /api/health` and Swagger UI are public; everything else needs the `ALLOWED` authority.
 - Error handling: `GlobalExceptionHandler` + `JsonErrorController` (`/error`) + `ApiErrorWriter` (security chain) all produce `{ code, message }`, including firewall rejections.
 - `GET /api/health`, `GET /api/me`; Actuator exposes `health` only, behind auth. Swagger UI at `/swagger-ui.html` with a Firebase bearer "Authorize" button.
+- `backend/Dockerfile` + `.dockerignore`, `deploy/docker-compose.yml` (app + Caddy, key mounted as a compose secret at `/run/secrets/firebase-sa.json`) and `deploy/Caddyfile`. Compose validated with `docker compose config`; the healthcheck command was tested against the running app (exit 0 when up, 1 when down).
 - Tests (21, all green): security integration tests (401 missing/invalid token, 403 not allowlisted, 403 unverified, 200 `/api/me`, 404 format, CORS preflight allow/deny, public docs, protected actuator), allowlist, Firebase startup, `.env` parser.
 
 ## In progress
@@ -39,7 +40,8 @@ Phase 1 – Skeleton (done when `./mvnw verify` passes and `docker build` works)
 - [x] Security filter: `Authorization: Bearer <ID token>` → `verifyIdToken`. Missing or invalid token → 401 `UNAUTHENTICATED`. Email not in `ALLOWED_EMAILS`, or `email_verified != true` → 403 `NOT_ALLOWED`. CORS from `CORS_ALLOWED_ORIGINS`.
 - [x] Global exception handler producing `{ code, message }` (CONTRACT "Errors").
 - [x] `GET /api/health` (public, `{ status: "UP" }`), `GET /api/me`, Actuator health only.
-- [ ] `backend/Dockerfile` (multi-stage, runs on linux/arm64), `deploy/docker-compose.yml` + `deploy/Caddyfile`.
+- [x] `backend/Dockerfile` (multi-stage, runs on linux/arm64), `deploy/docker-compose.yml` + `deploy/Caddyfile`.
+- [ ] **Verify `docker build`** (native and `--platform linux/arm64`), `docker run` + `/api/health`, and `caddy validate` on the Caddyfile. Blocked: Docker Desktop's engine cannot start until WSL is installed (see Known issues).
 - [x] Security tests: missing token → 401; not allowlisted → 403; unverified email → 403.
 
 ## Next
@@ -48,6 +50,8 @@ Later: Phase 2 providers + probe → `docs/DATA-SOURCES.md`; Phase 3 calculators
 
 ## Known issues
 
+- **Docker engine unavailable on the dev machine:** WSL is not installed, so Docker Desktop's Linux engine does not start (CLI calls return HTTP 500). Needs an admin `wsl --install` and a reboot by the owner. Until then the Docker build is unverified.
+- **Tooling quirk (Windows):** `kill $!` from Git Bash may not stop a `java.exe` started in the background; stop it with PowerShell `Stop-Process -Id <pid>` (find it with `Get-NetTCPConnection -LocalPort 8080`).
 - **`backend/.env.example` has uncommitted local edits containing real API keys.** Never stage it (`git add` explicit paths only). The owner restores it with `git checkout -- backend/.env.example`; the keys are already in the gitignored `backend/.env`.
 - Malformed URLs rejected by Tomcat itself (an encoded slash `%2F`) get Tomcat's HTML 400 page instead of the JSON error body, because they never reach Spring. Valid symbols never contain these characters.
 
@@ -68,4 +72,7 @@ Later: Phase 2 providers + probe → `docs/DATA-SOURCES.md`; Phase 3 calculators
 - **2026-09-27 — CORS** applies to `/api/**` only: methods GET/POST, headers `Authorization` and `Content-Type`, no credentials (bearer tokens, no cookies), preflight cached for 1 h.
 - **2026-09-27 — Contract: added error codes `404 NOT_FOUND`, `405 METHOD_NOT_ALLOWED`, `500 INTERNAL_ERROR`** (see the changelog in `CONTRACT.md`), so every error response carries a documented code.
 - **2026-09-27 — `UserDetailsServiceAutoConfiguration` excluded.** There is no username/password login, and it would log a generated password at startup.
+- **2026-09-27 — Dockerfile: no emulation for arm64.** Build stages use `--platform=$BUILDPLATFORM` (the jar is platform-independent) and the final `eclipse-temurin:25-jre` stage has no `RUN` step, so `buildx --platform linux/arm64` on x86 needs no QEMU. `--build-arg JAR_SOURCE=prebuilt` makes CI reuse the jar that `./mvnw verify` already tested instead of compiling twice. Runs as uid 1000 (`ubuntu` in both the image and on the Oracle VM, so the `chmod 600` key stays readable). Spring Boot layered extraction for smaller updates.
+- **2026-09-27 — Compose:** image `${APP_IMAGE:-ghcr.io/iducanhle/earnings-tracker-backend:latest}`; the service-account key is a compose secret mounted at `/run/secrets/firebase-sa.json`, and compose pins `GOOGLE_APPLICATION_CREDENTIALS` to that path whatever `.env` says. The healthcheck uses bash `/dev/tcp`, because the JRE image has neither curl nor wget (checked in Adoptium's Dockerfile). A missing `DOMAIN` fails fast.
+- **2026-09-27 — Caddy proxies only `/api/*` and the Swagger/OpenAPI paths**; everything else (including `/actuator`) is 404 at the edge. HSTS on, `Server` header removed, TCP 80/443 only (no HTTP/3, so the Oracle security list needs no UDP rule).
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

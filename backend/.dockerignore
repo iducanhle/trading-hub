@@ -1,0 +1,7 @@
+# Allowlist: only what the Dockerfile needs. Keeps .env, keys and IDE files out of the build context.
+*
+!.mvn/
+!mvnw
+!pom.xml
+!src/
+!target/earnings-tracker.jar

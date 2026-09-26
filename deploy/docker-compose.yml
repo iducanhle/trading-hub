@@ -1,0 +1,49 @@
+# Earnings Tracker on the Oracle Cloud VM: the Spring Boot API behind Caddy (automatic HTTPS).
+# Lives in /opt/earnings-tracker next to .env, Caddyfile and firebase-sa.json (see docs/DEPLOYMENT-backend.md).
+#   docker compose pull && docker compose up -d
+name: earnings-tracker
+
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/iducanhle/earnings-tracker-backend:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Always the in-container path of the secret below, whatever .env says.
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-sa.json
+    secrets:
+      - source: firebase-sa
+        target: firebase-sa.json
+    expose:
+      - "8080"
+    healthcheck:
+      # The JRE image has no curl or wget, so bash's /dev/tcp sends the request.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+secrets:
+  firebase-sa:
+    file: ./firebase-sa.json
+
+volumes:
+  # Certificates live here; keep the volume so restarts do not re-request them from Let's Encrypt.
+  caddy_data:
+  caddy_config:
