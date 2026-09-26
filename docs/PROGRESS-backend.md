@@ -24,18 +24,23 @@
 **Phase 1 – Skeleton**
 - Scaffolded `backend/` (Spring Initializr): Spring Boot 4.1.1, Java 25, Maven wrapper 3.3.4 (Maven 3.9.16). `com.earningstracker`, jar `target/earnings-tracker.jar`.
 - `application.yml` + `local` (default) / `prod` profiles, typed `@ConfigurationProperties` records. The `local` profile imports `backend/.env` via `DotenvPropertySourceLoader` (unit-tested).
+- Firebase Admin SDK init (`FirebaseAppHolder`): optional locally (warns, auth disabled), required in `prod` (fails fast with an actionable message).
+- Security: `FirebaseAuthenticationFilter` + `TokenVerifier` (wraps `verifyIdToken`), `EmailAllowlist` (case-insensitive), CORS for `/api/**` from `CORS_ALLOWED_ORIGINS`. `GET /api/health` and Swagger UI are public; everything else needs the `ALLOWED` authority.
+- Error handling: `GlobalExceptionHandler` + `JsonErrorController` (`/error`) + `ApiErrorWriter` (security chain) all produce `{ code, message }`, including firewall rejections.
+- `GET /api/health`, `GET /api/me`; Actuator exposes `health` only, behind auth. Swagger UI at `/swagger-ui.html` with a Firebase bearer "Authorize" button.
+- Tests (21, all green): security integration tests (401 missing/invalid token, 403 not allowlisted, 403 unverified, 200 `/api/me`, 404 format, CORS preflight allow/deny, public docs, protected actuator), allowlist, Firebase startup, `.env` parser.
 
 ## In progress
 
 Phase 1 – Skeleton (done when `./mvnw verify` passes and `docker build` works):
 - [x] Scaffold `backend/`: Spring Boot 4.1.1, Java 25, Maven wrapper.
 - [x] `application.yml` with `local` and `prod` profiles, typed config properties, `.env` loading for local runs.
-- [ ] Firebase Admin SDK init (`FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`).
-- [ ] Security filter: `Authorization: Bearer <ID token>` → `verifyIdToken`. Missing or invalid token → 401 `UNAUTHENTICATED`. Email not in `ALLOWED_EMAILS`, or `email_verified != true` → 403 `NOT_ALLOWED`. CORS from `CORS_ALLOWED_ORIGINS`.
-- [ ] Global exception handler producing `{ code, message }` (CONTRACT "Errors").
-- [ ] `GET /api/health` (public, `{ status: "UP" }`), `GET /api/me`, Actuator health only.
+- [x] Firebase Admin SDK init (`FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`).
+- [x] Security filter: `Authorization: Bearer <ID token>` → `verifyIdToken`. Missing or invalid token → 401 `UNAUTHENTICATED`. Email not in `ALLOWED_EMAILS`, or `email_verified != true` → 403 `NOT_ALLOWED`. CORS from `CORS_ALLOWED_ORIGINS`.
+- [x] Global exception handler producing `{ code, message }` (CONTRACT "Errors").
+- [x] `GET /api/health` (public, `{ status: "UP" }`), `GET /api/me`, Actuator health only.
 - [ ] `backend/Dockerfile` (multi-stage, runs on linux/arm64), `deploy/docker-compose.yml` + `deploy/Caddyfile`.
-- [ ] Security tests: missing token → 401; not allowlisted → 403; unverified email → 403.
+- [x] Security tests: missing token → 401; not allowlisted → 403; unverified email → 403.
 
 ## Next
 
@@ -44,6 +49,7 @@ Later: Phase 2 providers + probe → `docs/DATA-SOURCES.md`; Phase 3 calculators
 ## Known issues
 
 - **`backend/.env.example` has uncommitted local edits containing real API keys.** Never stage it (`git add` explicit paths only). The owner restores it with `git checkout -- backend/.env.example`; the keys are already in the gitignored `backend/.env`.
+- Malformed URLs rejected by Tomcat itself (an encoded slash `%2F`) get Tomcat's HTML 400 page instead of the JSON error body, because they never reach Spring. Valid symbols never contain these characters.
 
 ## Decisions
 
@@ -56,4 +62,10 @@ Later: Phase 2 providers + probe → `docs/DATA-SOURCES.md`; Phase 3 calculators
 - **2026-09-27 — Default profile is `local`** so `./mvnw spring-boot:run` just works; the Docker image sets `SPRING_PROFILES_ACTIVE=prod`.
 - **2026-09-27 — Tests use JUnit Jupiter 6 (6.0.3, managed by Boot 4.1).** §3 says JUnit 5; Jupiter 6 is its successor with the same API. Mockito is loaded as a Surefire `-javaagent` because JDK 21+ warns about (and future JDKs block) self-attaching agents.
 - **2026-09-27 — Virtual threads enabled** (`spring.threads.virtual.enabled`): request handling is mostly blocking I/O to providers and Firestore.
+- **2026-09-27 — Firebase is optional in `local`, required in `prod`.** Locally the app starts without a key (warning; every protected call is 401) so it can run before Firebase exists. In prod a missing key fails startup: a crash with a clear log line is easier to diagnose than a healthy-looking app that rejects every login. Credentials come only from the configured file (no Application Default Credentials probing), so tests and local runs never pick up stray gcloud credentials.
+- **2026-09-27 — Auth semantics.** Tokens are verified with `verifyIdToken` without the revocation check (that would add a network call per request). Missing/invalid token → 401 via the entry point. A valid token whose email is not allowlisted, or not verified, is authenticated *without* the `ALLOWED` authority → 403 via the access-denied handler. The 403 message says which check failed ("not on the allowlist" / "not verified"). Denials are logged with uid and email; tokens are never logged.
+- **2026-09-27 — `/api/health` is a liveness check that always says `UP` while the app serves requests.** Actuator exposes only `health`, and it needs a token (§9: `/api/health` is the only public endpoint). Wiring `/api/health` to Actuator's aggregate would make it depend on indicators such as SMTP once mail is added.
+- **2026-09-27 — CORS** applies to `/api/**` only: methods GET/POST, headers `Authorization` and `Content-Type`, no credentials (bearer tokens, no cookies), preflight cached for 1 h.
+- **2026-09-27 — Contract: added error codes `404 NOT_FOUND`, `405 METHOD_NOT_ALLOWED`, `500 INTERNAL_ERROR`** (see the changelog in `CONTRACT.md`), so every error response carries a documented code.
+- **2026-09-27 — `UserDetailsServiceAutoConfiguration` excluded.** There is no username/password login, and it would log a generated password at startup.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

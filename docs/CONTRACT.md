@@ -30,7 +30,10 @@ The HTTP status plus the body `{ "code": string, "message": string }`.
 | 401 | `UNAUTHENTICATED` |
 | 403 | `NOT_ALLOWED` (email not on the allowlist or not verified) |
 | 404 | `SYMBOL_NOT_FOUND` |
+| 404 | `NOT_FOUND` (unknown endpoint) |
+| 405 | `METHOD_NOT_ALLOWED` |
 | 429 | `RATE_LIMITED` |
+| 500 | `INTERNAL_ERROR` (unexpected server error) |
 | 503 | `UPSTREAM_UNAVAILABLE` (no cached data available) |
 
 ### Types
@@ -148,3 +151,4 @@ Backend-only collections (all client access is denied by the rules): `symbols`, 
 | Date | Change |
 |---|---|
 | 2026-09-26 | v1: initial contract, verbatim from the prompt. |
+| 2026-09-27 | Errors: added `404 NOT_FOUND` (unknown endpoint), `405 METHOD_NOT_ALLOWED` and `500 INTERNAL_ERROR`, so every error response has a documented code. |
