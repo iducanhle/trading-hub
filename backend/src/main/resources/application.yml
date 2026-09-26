@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: earnings-tracker
+  profiles:
+    default: local
+  threads:
+    virtual:
+      enabled: true
+  autoconfigure:
+    # No username/password login: authentication is Firebase ID tokens only.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
+server:
+  port: 8080
+
+springdoc:
+  # Public on purpose (Swagger UI at /swagger-ui.html); every API call made from it still needs a token.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when-authorized
+
+app:
+  firebase:
+    project-id: ${FIREBASE_PROJECT_ID:}
+    credentials-file: ${GOOGLE_APPLICATION_CREDENTIALS:}
+    # When true, startup fails if the credentials file is missing (prod). When false, the app
+    # starts with authentication disabled, so every call except /api/health returns 401.
+    required: false
+  security:
+    allowed-emails: ${ALLOWED_EMAILS:}
+    cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}

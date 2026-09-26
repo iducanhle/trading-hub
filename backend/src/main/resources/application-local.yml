@@ -1,0 +1,8 @@
+spring:
+  config:
+    # backend/.env when started from backend/ (./mvnw spring-boot:run). Real environment variables win.
+    import: optional:file:.env[.env]
+
+logging:
+  level:
+    com.earningstracker: DEBUG

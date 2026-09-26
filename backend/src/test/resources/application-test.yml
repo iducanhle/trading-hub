@@ -1,0 +1,8 @@
+app:
+  firebase:
+    project-id: test-project
+    credentials-file: ""
+    required: false
+  security:
+    allowed-emails: me@example.com, Friend@Example.com
+    cors-allowed-origins: https://app.example.com,http://localhost:4200
