@@ -17,13 +17,14 @@
 
 - Saved the prompt verbatim to `docs/PROMPT-backend.md`.
 - Monorepo skeleton: `backend/`, `frontend/` (placeholder README), `docs/`, `deploy/`, `.github/workflows/`. Root `.gitignore` (secrets, Maven, Node/Angular, Firebase CLI, IDE), `.gitattributes` (LF), `backend/.env.example` (placeholders only).
+- `docs/CONTRACT.md`: §10 verbatim (checked with `diff`), plus a title, a note on where it came from, and a changelog table for future API changes.
 
 ## In progress
 
 Phase 0 – Setup:
 - [x] Save the prompt
 - [x] Monorepo skeleton, `.gitignore`, `.gitattributes`, `backend/.env.example`
-- [ ] `docs/CONTRACT.md`
+- [x] `docs/CONTRACT.md`
 - [ ] Root `README.md`
 
 ## Next
