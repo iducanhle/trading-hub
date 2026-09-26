@@ -39,6 +39,7 @@ class SecurityIntegrationTest {
         assertThat(mvc.get().uri("/api/health"))
                 .hasStatusOk()
                 .bodyJson().isLenientlyEqualTo("{\"status\":\"UP\"}");
+        assertThat(mvc.head().uri("/api/health")).hasStatusOk();
     }
 
     @Test

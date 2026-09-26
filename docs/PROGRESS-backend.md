@@ -7,8 +7,8 @@
 | Phase | Status |
 |---|---|
 | 0 – Setup | Done |
-| 1 – Skeleton | In progress |
-| 2 – Providers | Not started |
+| 1 – Skeleton | Done |
+| 2 – Providers | Next (waiting for "continue") |
 | 3 – Domain + REST | Not started |
 | 4 – Jobs + email | Not started |
 | 5 – Deployment | Not started |
@@ -28,12 +28,19 @@
 - Security: `FirebaseAuthenticationFilter` + `TokenVerifier` (wraps `verifyIdToken`), `EmailAllowlist` (case-insensitive), CORS for `/api/**` from `CORS_ALLOWED_ORIGINS`. `GET /api/health` and Swagger UI are public; everything else needs the `ALLOWED` authority.
 - Error handling: `GlobalExceptionHandler` + `JsonErrorController` (`/error`) + `ApiErrorWriter` (security chain) all produce `{ code, message }`, including firewall rejections.
 - `GET /api/health`, `GET /api/me`; Actuator exposes `health` only, behind auth. Swagger UI at `/swagger-ui.html` with a Firebase bearer "Authorize" button.
-- `backend/Dockerfile` + `.dockerignore`, `deploy/docker-compose.yml` (app + Caddy, key mounted as a compose secret at `/run/secrets/firebase-sa.json`) and `deploy/Caddyfile`. Compose validated with `docker compose config`; the healthcheck command was tested against the running app (exit 0 when up, 1 when down).
+- `backend/Dockerfile` + `.dockerignore`, `deploy/docker-compose.yml` (app + Caddy, key mounted as a compose secret at `/run/secrets/firebase-sa.json`) and `deploy/Caddyfile`. Verified on Docker 29.8 (2026-09-27):
+  - `docker build` from source (native amd64): OK, 131 s cold.
+  - `docker buildx build --platform linux/arm64 --build-arg JAR_SOURCE=prebuilt`: OK in 13 s. The Maven stage was skipped and the arm64 stage is only `COPY`, so no emulation. The image is `linux/arm64`, runs as uid 1000, pulls about 207 MB.
+  - The arm64 image starts under QEMU (`aarch64`, JDK 25.0.4.1, `/api/health` UP).
+  - Full stack via the real compose file (`DOMAIN=localhost`, throwaway service-account key): app healthy after 12 s, `prod` profile, Firebase initialized. Through Caddy TLS: `/api/health` 200, `/api/me` 401 JSON, a bad token returns 401 `INVALID_ID_TOKEN` from the real verifier, `/actuator/health` and `/` 404 at the edge, HTTP→HTTPS 308, HSTS set, `Server` header removed.
+  - `caddy validate` (Caddy 2.11.4): valid, already formatted.
 - Tests (21, all green): security integration tests (401 missing/invalid token, 403 not allowlisted, 403 unverified, 200 `/api/me`, 404 format, CORS preflight allow/deny, public docs, protected actuator), allowlist, Firebase startup, `.env` parser.
 
 ## In progress
 
-Phase 1 – Skeleton (done when `./mvnw verify` passes and `docker build` works):
+- Nothing. Waiting for "continue" to start Phase 2.
+
+Phase 1 checklist (complete):
 - [x] Scaffold `backend/`: Spring Boot 4.1.1, Java 25, Maven wrapper.
 - [x] `application.yml` with `local` and `prod` profiles, typed config properties, `.env` loading for local runs.
 - [x] Firebase Admin SDK init (`FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`).
@@ -41,18 +48,35 @@ Phase 1 – Skeleton (done when `./mvnw verify` passes and `docker build` works)
 - [x] Global exception handler producing `{ code, message }` (CONTRACT "Errors").
 - [x] `GET /api/health` (public, `{ status: "UP" }`), `GET /api/me`, Actuator health only.
 - [x] `backend/Dockerfile` (multi-stage, runs on linux/arm64), `deploy/docker-compose.yml` + `deploy/Caddyfile`.
-- [ ] **Verify `docker build`** (native and `--platform linux/arm64`), `docker run` + `/api/health`, and `caddy validate` on the Caddyfile. Blocked: Docker Desktop's engine cannot start until WSL is installed (see Known issues).
+- [x] Verify `docker build` (native and `--platform linux/arm64`), `docker run` + `/api/health`, and `caddy validate` on the Caddyfile.
 - [x] Security tests: missing token → 401; not allowlisted → 403; unverified email → 403.
 
 ## Next
 
-Later: Phase 2 providers + probe → `docs/DATA-SOURCES.md`; Phase 3 calculators + all endpoints; Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
+**Phase 2 – Providers** (done when adapter tests pass and probe results are documented):
+- [ ] Probe step first: live calls to Yahoo (no key) and to Finnhub, Twelve Data and FMP (keys are in `backend/.env`). Record fields, limits, gaps and history depth in `docs/DATA-SOURCES.md`; mark anything unverifiable as **UNVERIFIED**; adjust the fallback chains to match.
+- [ ] One interface per capability (`SymbolSearchProvider`, `QuoteProvider`, `ProfileProvider`, `PriceHistoryProvider`, `EarningsProvider`, `EarningsCalendarProvider`, `RecommendationProvider`, `NewsProvider`, `PeersProvider`), routed by region through ordered fallback chains configured in `application.yml`.
+- [ ] Adapters (`RestClient`):
+  - Finnhub (60/min).
+  - Twelve Data (8/min, 800/day, with a daily call counter).
+  - Yahoo (cookie + crumb, EU consent redirect, realistic User-Agent, ≤1 req/s, isolated in one adapter).
+  - FMP (only when `FMP_API_KEY` is set).
+- [ ] Symbol mapping canonical (Yahoo-style) ↔ provider formats (e.g. `BRK-B` ↔ `BRK.B`).
+- [ ] Per-provider rate limiter + retry with exponential backoff and jitter. Missing keys: warn and fall back to Yahoo.
+- [ ] Cache layer: L1 Caffeine + L2 Firestore (via `FirebaseAppHolder`; L1 only when Firebase is absent), serving stale data with `stale: true` when a provider fails.
+- [ ] FX to USD via Yahoo chart (`EURUSD=X`, …). Pence (GBp/GBX) → GBP.
+- [ ] `eu-universe.csv` (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX) validated at startup; list invalid symbols under Known issues.
+- [ ] Adapter tests with small recorded fixtures (MockWebServer or WireMock).
+
+Later: Phase 3 calculators + all endpoints; Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
+
+Notes for Phase 5:
+- GHCR is free only for **public** packages; private packages get 500 MB storage and 1 GB transfer per month on the free plan. The image contains no secrets, so the guide should make the package public, or the workflow should prune old versions.
+- Build with `--build-arg JAR_SOURCE=prebuilt` after `./mvnw verify` (verified above).
 
 ## Known issues
 
-- **Docker engine unavailable on the dev machine:** WSL is not installed, so Docker Desktop's Linux engine does not start (CLI calls return HTTP 500). Needs an admin `wsl --install` and a reboot by the owner. Until then the Docker build is unverified.
 - **Tooling quirk (Windows):** `kill $!` from Git Bash may not stop a `java.exe` started in the background; stop it with PowerShell `Stop-Process -Id <pid>` (find it with `Get-NetTCPConnection -LocalPort 8080`).
-- **`backend/.env.example` has uncommitted local edits containing real API keys.** Never stage it (`git add` explicit paths only). The owner restores it with `git checkout -- backend/.env.example`; the keys are already in the gitignored `backend/.env`.
 - Malformed URLs rejected by Tomcat itself (an encoded slash `%2F`) get Tomcat's HTML 400 page instead of the JSON error body, because they never reach Spring. Valid symbols never contain these characters.
 
 ## Decisions
@@ -68,7 +92,7 @@ Later: Phase 2 providers + probe → `docs/DATA-SOURCES.md`; Phase 3 calculators
 - **2026-09-27 — Virtual threads enabled** (`spring.threads.virtual.enabled`): request handling is mostly blocking I/O to providers and Firestore.
 - **2026-09-27 — Firebase is optional in `local`, required in `prod`.** Locally the app starts without a key (warning; every protected call is 401) so it can run before Firebase exists. In prod a missing key fails startup: a crash with a clear log line is easier to diagnose than a healthy-looking app that rejects every login. Credentials come only from the configured file (no Application Default Credentials probing), so tests and local runs never pick up stray gcloud credentials.
 - **2026-09-27 — Auth semantics.** Tokens are verified with `verifyIdToken` without the revocation check (that would add a network call per request). Missing/invalid token → 401 via the entry point. A valid token whose email is not allowlisted, or not verified, is authenticated *without* the `ALLOWED` authority → 403 via the access-denied handler. The 403 message says which check failed ("not on the allowlist" / "not verified"). Denials are logged with uid and email; tokens are never logged.
-- **2026-09-27 — `/api/health` is a liveness check that always says `UP` while the app serves requests.** Actuator exposes only `health`, and it needs a token (§9: `/api/health` is the only public endpoint). Wiring `/api/health` to Actuator's aggregate would make it depend on indicators such as SMTP once mail is added.
+- **2026-09-27 — `/api/health` is a liveness check that always says `UP` while the app serves requests.** `HEAD` is public too, because uptime monitors (e.g. UptimeRobot) probe with `HEAD` by default. Actuator exposes only `health`, and it needs a token (§9: `/api/health` is the only public endpoint). Wiring `/api/health` to Actuator's aggregate would make it depend on indicators such as SMTP once mail is added.
 - **2026-09-27 — CORS** applies to `/api/**` only: methods GET/POST, headers `Authorization` and `Content-Type`, no credentials (bearer tokens, no cookies), preflight cached for 1 h.
 - **2026-09-27 — Contract: added error codes `404 NOT_FOUND`, `405 METHOD_NOT_ALLOWED`, `500 INTERNAL_ERROR`** (see the changelog in `CONTRACT.md`), so every error response carries a documented code.
 - **2026-09-27 — `UserDetailsServiceAutoConfiguration` excluded.** There is no username/password login, and it would log a generated password at startup.
