@@ -1,0 +1,11 @@
+# LF everywhere (repo and working tree), so shell scripts and mvnw still run
+# inside Linux containers when they are built from a Windows checkout.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.jar binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
