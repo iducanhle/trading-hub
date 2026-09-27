@@ -8,8 +8,8 @@
 |---|---|
 | 0 – Setup | Done |
 | 1 – Skeleton | Done |
-| 2 – Providers | In progress |
-| 3 – Domain + REST | Not started |
+| 2 – Providers | Done |
+| 3 – Domain + REST | Next (waiting for "continue") |
 | 4 – Jobs + email | Not started |
 | 5 – Deployment | Not started |
 
@@ -36,7 +36,7 @@
   - `caddy validate` (Caddy 2.11.4): valid, already formatted.
 - Tests (21, all green): security integration tests (401 missing/invalid token, 403 not allowlisted, 403 unverified, 200 `/api/me`, 404 format, CORS preflight allow/deny, public docs, protected actuator), allowlist, Firebase startup, `.env` parser.
 
-**Phase 2 – Providers** (in progress)
+**Phase 2 – Providers**
 - Probe results in `docs/DATA-SOURCES.md`.
 - `market` package: `Exchange` registry (suffix, currency, timezone, session hours → BMO/DMH/AMC classification), `Symbols` (canonical validation, region, `BRK-B` ↔ `BRK.B`), `Money` (pence → GBP), `PriceBars` (drops the unfinished session), plain records shared by all providers.
 - `provider` package: 9 capability interfaces + `FxRateProvider`; `ProviderRouter` (per-region fallback chains from `app.providers.chains`, validated at startup; `first` and `all` modes); `ProviderHttp` (Resilience4j rate limiter + retry with exponential backoff and jitter, daily quotas, safe error mapping).
@@ -44,27 +44,25 @@
 - Cache: `DocumentStore` (Firestore via Admin SDK; no-op without Firebase; read/write counters) and `TieredCache` (Caffeine L1 + Firestore L2 `{data, updatedAt}`, stale fallback, store failures degrade to memory).
 - `FxService`: USD rates for EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK via Yahoo, cached 24 h in L1 and `fx/latest`.
 - `eu-universe.csv`: 333 symbols (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX), built from Wikipedia constituent tables, all validated on Yahoo on 2026-09-27; `EuUniverse` re-validates in the background at startup (~7 batch requests).
+- Live verification (2026-09-27): `LiveProvidersTest` (opt-in, `LIVE_PROVIDERS=true`) passed against the real Yahoo, Finnhub, Twelve Data and FMP APIs, and caught a null-handling bug the fixtures had missed (fixed). Running the app with the local `.env`: Yahoo session via the direct cookie + crumb, and "EU universe: all 333 symbols are known to Yahoo".
+- 89 tests (4 of them the opt-in live tests, skipped by default).
 
 ## In progress
 
-**Phase 2 – Providers** (done when adapter tests pass and probe results are documented):
-- [x] Probe step: live calls to Yahoo, Finnhub, Twelve Data and FMP; findings, gaps, UNVERIFIED items and the resulting fallback chains in [DATA-SOURCES.md](DATA-SOURCES.md).
-- [x] One interface per capability (`SymbolSearchProvider`, `QuoteProvider`, `ProfileProvider`, `PriceHistoryProvider`, `EarningsProvider`, `EarningsCalendarProvider`, `RecommendationProvider`, `NewsProvider`, `PeersProvider`), routed by region through ordered fallback chains configured in `application.yml`.
-- [x] Adapters (`RestClient`):
-  - Finnhub (60/min).
-  - Twelve Data (8/min, 800/day, with a daily call counter).
-  - Yahoo (cookie + crumb, EU consent redirect, realistic User-Agent, ≤1 req/s, isolated in one adapter).
-  - FMP (only when `FMP_API_KEY` is set).
-- [x] Symbol mapping canonical (Yahoo-style) ↔ provider formats (e.g. `BRK-B` ↔ `BRK.B`).
-- [x] Per-provider rate limiter + retry with exponential backoff and jitter. Missing keys: warn and fall back to Yahoo.
-- [x] Cache layer: L1 Caffeine + L2 Firestore (via `FirebaseAppHolder`; L1 only when Firebase is absent), serving stale data with `stale: true` when a provider fails.
-- [x] FX to USD via Yahoo chart (`EURUSD=X`, …). Pence (GBp/GBX) → GBP.
-- [x] `eu-universe.csv` (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX) validated at startup; list invalid symbols under Known issues.
-- [x] Adapter tests with small recorded fixtures (MockWebServer or WireMock).
+- Nothing. Waiting for "continue" to start Phase 3.
 
 ## Next
 
-Later: Phase 3 calculators + all endpoints; Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
+**Phase 3 – Domain + REST** (done when all tests pass and the smoke script works locally):
+- [ ] Pure, unit-tested calculators (§5): performance summary (w1/m1/ytd/y1, live quote when newer than the last bar); history aggregation DAILY/WEEKLY (ISO weeks)/MONTHLY with the unfinished period as `partial: true` and `before` cursor pagination; earnings result + surprise %; price reaction (BMO/DMH/AMC/UNKNOWN, `timeAssumed`, N = `app.earnings.window-days`); earnings stats (beat rate, streak, avg |reaction|).
+- [ ] Earnings merge across providers via `ProviderRouter.all` (Finnhub → FMP → Yahoo): dedupe by fiscal (year, quarter) or report date, attach dateless fiscal rows to the first report within 100 days after the period end, max 12 quarters, accumulate in `earnings/{symbol}`.
+- [ ] Price history service: `prices/{symbol}` (≤ 5 years, oldest first, compact `{d,o,h,l,c,v}`), incremental top-up, full refetch when overlapping bars disagree (split or correction), stale after 1 trading day.
+- [ ] Profile service: `symbols/{symbol}` (7 days), `marketCapUsd` via `FxService`, logo fallback `https://www.google.com/s2/favicons?domain={domain}&sz=128` else null; fill missing fields (e.g. sector) from the next provider in the chain.
+- [ ] Every endpoint in `docs/CONTRACT.md`: search, stock overview, prices (+ earnings markers), history, earnings, recommendations, news, peers, calendar (`earningsCalendar/{date}` docs, L1 10 min, ≤ 42 days, filters), followed earnings (`users/{uid}/follows`), `viewed/{symbol}` at most once per symbol per day.
+- [ ] Validation → 400 `BAD_REQUEST`; `ProviderException` → `SYMBOL_NOT_FOUND` / `RATE_LIMITED` / `UPSTREAM_UNAVAILABLE`; `stale: true` when served from cache after a provider failure.
+- [ ] `backend/scripts/smoke.sh`: `/api/health`, then the main endpoints for AAPL and SAP.DE given a token.
+
+Later: Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
 
 Notes for Phase 5:
 - GHCR is free only for **public** packages; private packages get 500 MB storage and 1 GB transfer per month on the free plan. The image contains no secrets, so the guide should make the package public, or the workflow should prune old versions.
@@ -72,6 +70,20 @@ Notes for Phase 5:
 
 ## Known issues
 
+Data gaps (details in `docs/DATA-SOURCES.md`); the API returns `null` for these, never an invented value:
+- **EU revenue estimates for past quarters:** no free source. Only the upcoming quarter has an estimate (Yahoo); the jobs persist it in `earnings/{symbol}`, so EU history gains revenue estimates only for quarters observed while upcoming.
+- **EU revenue actuals** exist only for the last 4 quarters (Yahoo `financialsChart`), and EU fiscal quarter/year only for events seen while upcoming.
+- **Report times are often unknown:** 70% of Finnhub calendar events have no hour and Yahoo often says "time not supplied", so reactions for those quarters use the `UNKNOWN` rule with `timeAssumed = true`.
+- **Small caps** (e.g. CEZ.PR) often lack analyst estimates; Yahoo reports missing revenue estimates as 0, which becomes `null`.
+- **FMP free tier covers only some US symbols** (AAPL yes; BRK-B, SNOW no); Finnhub + Yahoo still cover them.
+- **Peers:** Yahoo returns at most 5 (EU); **EU news** (Yahoo RSS) has no source name or image.
+- **Providers can disagree** on EPS actuals and upcoming dates; the merge order decides (Finnhub → FMP → Yahoo).
+- **`COLTCZ.PR`** is a valid Yahoo symbol with almost no data (no name or currency in quotes).
+- **EU universe:** all 333 symbols valid on Yahoo as of 2026-09-27 (none to list as invalid). Index membership changes quarterly; the CSV is refreshed manually.
+- **UNVERIFIED:** Yahoo behaviour from the Frankfurt datacenter IP (the consent fallback is implemented and tested), Yahoo's real rate threshold, `BMO` as a Yahoo time type, FMP/Twelve Data daily reset times.
+
+Engineering:
+- Daily provider quotas are in-memory counters; a restart resets them (a provider 429 then falls back to the next provider).
 - **Tooling quirk (Windows):** `kill $!` from Git Bash may not stop a `java.exe` started in the background; stop it with PowerShell `Stop-Process -Id <pid>` (find it with `Get-NetTCPConnection -LocalPort 8080`).
 - Malformed URLs rejected by Tomcat itself (an encoded slash `%2F`) get Tomcat's HTML 400 page instead of the JSON error body, because they never reach Spring. Valid symbols never contain these characters.
 
@@ -112,4 +124,5 @@ Notes for Phase 5:
 - **2026-09-27 — EU universe built from Wikipedia constituent tables** (queried through the MediaWiki API; PX from its component list as of August 2026, symbols found via Yahoo search or batch quote). Companies in two indices are listed once, under their primary market: `REN.AS`, `SHELL.AS`, `UNA.AS`, `IAG.MC`, `MTS.MC`, `STLAP.PA`, `STMMI.MI`, `ABB.ST` and `AZN.ST` are left out; users can still follow them. Membership is as of 2026-09-27; refreshing the CSV is a manual step (rerun the build).
 - **2026-09-27 — Startup validation uses Yahoo batch quotes** (50 symbols per request, ~7 requests) instead of one request per symbol; unknown symbols are logged and excluded from `validMembers()`. Disabled in tests (`app.universe.validate-on-startup=false`).
 - **2026-09-27 — L2 documents are `{data, updatedAt}`** (Jackson-converted maps; `updatedAt` a Firestore Timestamp), so any record type can be cached without Firestore mapping annotations. L1 keeps entries for max(1 day, 2× freshness), so a stale copy survives provider outages.
+- **2026-09-27 — Opt-in live provider test** (`LIVE_PROVIDERS=true ./mvnw test -Dtest=LiveProvidersTest`, ~25 real calls): Yahoo's endpoints are unofficial and can change, so there is a one-command check. It is skipped in normal builds and CI.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

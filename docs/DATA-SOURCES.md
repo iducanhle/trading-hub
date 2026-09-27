@@ -106,6 +106,16 @@ Configured in `application.yml` (`app.providers.chains`). Providers without a ke
 - **Peers:** Yahoo returns at most 5 (contract allows 8).
 - **Finnhub news, profiles and peers exist only for US symbols.** EU news comes from Yahoo RSS, which has no source name or image.
 
+## Re-checking the providers
+
+Yahoo's endpoints are unofficial. To check that every adapter still works against the real APIs (about 25 calls, keys from `backend/.env`):
+
+```bash
+LIVE_PROVIDERS=true ./mvnw test -Dtest=LiveProvidersTest
+```
+
+Last run: 2026-09-27, all providers passing.
+
 ## UNVERIFIED
 
 - Yahoo's behaviour from the Frankfurt datacenter IP (consent wall, stricter throttling). The adapter handles both the direct and the consent flow.
