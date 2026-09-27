@@ -49,6 +49,20 @@ public class InMemoryDocumentStore implements DocumentStore {
     }
 
     @Override
+    public Map<String, Map<String, Object>> list(String collectionPath) {
+        check();
+        String prefix = collectionPath + "/";
+        Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+        documents.forEach((key, doc) -> {
+            if (key.startsWith(prefix) && key.indexOf('/', prefix.length()) < 0) {
+                result.put(key.substring(prefix.length()), doc);
+            }
+        });
+        reads.addAndGet(Math.max(1, result.size()));
+        return result;
+    }
+
+    @Override
     public boolean isPersistent() {
         return true;
     }

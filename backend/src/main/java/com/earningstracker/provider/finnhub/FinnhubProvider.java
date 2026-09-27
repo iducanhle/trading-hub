@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -24,6 +25,7 @@ import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.market.Symbols;
 import com.earningstracker.provider.EarningsCalendarProvider;
 import com.earningstracker.provider.EarningsProvider;
+import com.earningstracker.provider.ListingProvider;
 import com.earningstracker.provider.NewsProvider;
 import com.earningstracker.provider.PeersProvider;
 import com.earningstracker.provider.ProfileProvider;
@@ -48,7 +50,7 @@ import tools.jackson.databind.node.MissingNode;
  */
 @Component
 public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, ProfileProvider, EarningsProvider,
-        EarningsCalendarProvider, RecommendationProvider, NewsProvider, PeersProvider {
+        EarningsCalendarProvider, RecommendationProvider, NewsProvider, PeersProvider, ListingProvider {
 
     public static final String ID = "finnhub";
     private static final Logger log = LoggerFactory.getLogger(FinnhubProvider.class);
@@ -253,6 +255,18 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
             }
         }
         return peers;
+    }
+
+    /** From the symbol directory (no request once loaded); names are upper case as Finnhub lists them. */
+    @Override
+    public List<SymbolMatch> listings(Collection<String> symbols) {
+        directory.requireLoaded();
+        List<SymbolMatch> matches = new ArrayList<>();
+        for (String symbol : symbols) {
+            directory.find(symbol).ifPresent(listing -> matches.add(new SymbolMatch(symbol,
+                    Objects.requireNonNullElse(listing.name(), symbol), listing.exchange(), "USD")));
+        }
+        return matches;
     }
 
     private EarningsReport calendarRow(String symbol, JsonNode row) {

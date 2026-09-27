@@ -146,9 +146,35 @@ Backend-only collections (all client access is denied by the rules): `symbols`, 
 
 ---
 
+## Implementation notes
+
+Behaviour the tables above leave open, as the backend implements it. No field names or types differ from v1.
+
+- **Symbols in paths** are case-insensitive (`sap.de` → `SAP.DE`). An unsupported format or exchange suffix returns 400.
+- **`GET /api/search`**: `q` is 1–64 characters after trimming. US and EU results are interleaved, with exact symbol matches first (`sap` → `SAP.DE`, `SAP`, …). `logoUrl` is filled only for stocks whose profile is already cached.
+- **`GET /api/stocks/{symbol}/prices`**:
+  - `range` defaults to `1Y`, counted back from the latest bar. Only completed sessions are returned.
+  - `earningsMarkers` holds the reported quarters whose reaction day falls within the range, plus the next upcoming report. That marker has `result: "UPCOMING"` and a `date` equal to its expected reaction day under the timing rule, with weekends skipped.
+- **`GET /api/stocks/{symbol}/history`**:
+  - `period` defaults to `DAILY` and `limit` to 30 (1–100).
+  - `before` is exclusive: only rows whose `periodStart` is earlier. `nextBefore` is the last row's `periodStart` when more rows exist.
+  - `periodStart` and `periodEnd` are the first and last trading days of the period.
+  - Weekly and monthly `volume` is the sum of daily volumes. A partial day uses the live quote's volume when the source has one, otherwise 0.
+- **`GET /api/stocks/{symbol}/earnings`**:
+  - `quarters` holds reported quarters only. A report counts as reported after its date, or on its date once the actual is known.
+  - `upcoming` is the next unreported report.
+  - `time` is what the source reported (`UNKNOWN` when not known). `timeAssumed: true` means the reaction was computed with the UNKNOWN rule.
+- **`GET /api/stocks/{symbol}/news`**: `limit` is 1–50, default 10.
+- **`GET /api/calendar`**: `from` and `to` are required and inclusive, at most 42 days (`to − from + 1 ≤ 42`). Events come from the daily calendar job, so a date it has not covered yet is empty.
+- **`GET /api/followed/earnings`** uses stored data only. A followed stock whose earnings have never been loaded is listed in `noUpcomingDate` and loaded in the background, so it normally appears on the next request.
+- **`asOf` / `stale` on combined responses** (overview, prices, earnings): `asOf` is the oldest fetch time among the data used. `stale` is true if any of it was served from cache after a provider failure.
+
+---
+
 ## Changelog
 
 | Date | Change |
 |---|---|
 | 2026-09-26 | v1: initial contract, verbatim from the prompt. |
 | 2026-09-27 | Errors: added `404 NOT_FOUND` (unknown endpoint), `405 METHOD_NOT_ALLOWED` and `500 INTERNAL_ERROR`, so every error response has a documented code. |
+| 2026-09-27 | Added "Implementation notes": defaults, limits, cursor paging, marker and quarter semantics, the inclusive 42-day calendar span. No field changes. |

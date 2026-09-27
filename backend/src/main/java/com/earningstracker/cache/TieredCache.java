@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -27,13 +28,18 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 public class TieredCache {
 
+    /** Decides whether a cached value can be served without reloading. */
+    @FunctionalInterface
+    public interface Freshness<T> {
+        boolean isFresh(T value, Instant fetchedAt, Instant now);
+    }
+
     /**
      * @param name       L1 namespace and L2 collection
-     * @param freshFor   age after which a value is reloaded
      * @param persistent also stored in L2; L1-only data (quotes, news) never touches Firestore
      * @param retainFor  how long L1 keeps a value, so a stale copy can still be served when providers fail
      */
-    public record Policy<T>(String name, JavaType type, Duration freshFor, boolean persistent, Duration retainFor,
+    public record Policy<T>(String name, JavaType type, Freshness<T> freshness, boolean persistent, Duration retainFor,
             long maxEntries) {
     }
 
@@ -63,26 +69,32 @@ public class TieredCache {
 
     public <T> Policy<T> policy(String name, JavaType type, Duration freshFor, boolean persistent) {
         Duration retainFor = freshFor.compareTo(MIN_RETENTION) > 0 ? freshFor.multipliedBy(2) : MIN_RETENTION;
-        return new Policy<>(name, type, freshFor, persistent, retainFor, 10_000);
+        return policy(name, type, (value, fetchedAt, now) -> fetchedAt.plus(freshFor).isAfter(now), retainFor,
+                persistent);
+    }
+
+    public <T> Policy<T> policy(String name, JavaType type, Freshness<T> freshness, Duration retainFor,
+            boolean persistent) {
+        return new Policy<>(name, type, freshness, persistent, retainFor, 10_000);
     }
 
     public <T> Cached<T> get(Policy<T> policy, String id, Supplier<T> loader) {
-        Cache<String, Entry> l1 = l1(policy);
-        Instant now = clock.instant();
-        Entry candidate = l1.getIfPresent(id);
-        if (candidate == null && policy.persistent()) {
-            candidate = readL2(policy, id).orElse(null);
-            if (candidate != null) {
-                l1.put(id, candidate);
-            }
-        }
-        if (candidate != null && isFresh(candidate, policy, now)) {
+        return refresh(policy, id, previous -> loader.get());
+    }
+
+    /**
+     * Like {@link #get}, but the loader receives the cached value (possibly stale) or null, so it can update
+     * incrementally (e.g. append new daily bars).
+     */
+    public <T> Cached<T> refresh(Policy<T> policy, String id, Function<T, T> loader) {
+        Entry candidate = cachedEntry(policy, id);
+        if (candidate != null && isFresh(policy, candidate)) {
             return cached(candidate, false);
         }
         try {
-            T value = loader.get();
+            T value = loader.apply(candidate == null ? null : this.<T>value(candidate));
             put(policy, id, value);
-            return new Cached<>(value, now, false);
+            return new Cached<>(value, clock.instant(), false);
         } catch (RuntimeException e) {
             if (candidate == null) {
                 throw e;
@@ -92,23 +104,59 @@ public class TieredCache {
         }
     }
 
+    /** The cached value from L1 or L2, fresh or not, without calling any provider. */
+    public <T> Optional<Cached<T>> stored(Policy<T> policy, String id) {
+        Entry entry = cachedEntry(policy, id);
+        return entry == null ? Optional.empty() : Optional.of(cached(entry, !isFresh(policy, entry)));
+    }
+
+    /** The value in L1 only; never touches the store (cheap enough for every search result). */
+    public <T> Optional<T> peek(Policy<T> policy, String id) {
+        Entry entry = l1(policy).getIfPresent(id);
+        return entry == null ? Optional.empty() : Optional.of(value(entry));
+    }
+
     /** Stores a freshly fetched value in both levels (jobs use this to refresh proactively). */
     public <T> void put(Policy<T> policy, String id, T value) {
+        put(policy, id, value, clock.instant());
+    }
+
+    /**
+     * Stores a value with an explicit fetch time, e.g. data merged in without asking providers, which must not
+     * look fresher than it is.
+     */
+    public <T> void put(Policy<T> policy, String id, T value, Instant fetchedAt) {
         Entry entry = new Entry(Objects.requireNonNull(value, () -> "no value to cache for " + policy.name() + "/" + id),
-                clock.instant());
+                fetchedAt);
         l1(policy).put(id, entry);
         if (policy.persistent()) {
             writeL2(policy, id, entry);
         }
     }
 
-    private boolean isFresh(Entry entry, Policy<?> policy, Instant now) {
-        return entry.fetchedAt().plus(policy.freshFor()).isAfter(now);
+    private Entry cachedEntry(Policy<?> policy, String id) {
+        Cache<String, Entry> l1 = l1(policy);
+        Entry entry = l1.getIfPresent(id);
+        if (entry == null && policy.persistent()) {
+            entry = readL2(policy, id).orElse(null);
+            if (entry != null) {
+                l1.put(id, entry);
+            }
+        }
+        return entry;
+    }
+
+    private <T> boolean isFresh(Policy<T> policy, Entry entry) {
+        return policy.freshness().isFresh(value(entry), entry.fetchedAt(), clock.instant());
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Cached<T> cached(Entry entry, boolean stale) {
-        return new Cached<>((T) entry.value(), entry.fetchedAt(), stale);
+    private <T> T value(Entry entry) {
+        return (T) entry.value();
+    }
+
+    private <T> Cached<T> cached(Entry entry, boolean stale) {
+        return new Cached<>(value(entry), entry.fetchedAt(), stale);
     }
 
     private Cache<String, Entry> l1(Policy<?> policy) {

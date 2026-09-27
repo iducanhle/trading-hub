@@ -10,7 +10,9 @@ public enum Capability {
     EARNINGS_CALENDAR(EarningsCalendarProvider.class),
     RECOMMENDATIONS(RecommendationProvider.class),
     NEWS(NewsProvider.class),
-    PEERS(PeersProvider.class);
+    PEERS(PeersProvider.class),
+    /** Batch name/exchange lookup (not one of the spec's nine capabilities; used for peers and followed stocks). */
+    LISTINGS(ListingProvider.class);
 
     private final Class<? extends MarketDataProvider> type;
 

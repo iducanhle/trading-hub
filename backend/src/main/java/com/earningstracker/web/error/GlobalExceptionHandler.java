@@ -2,6 +2,7 @@ package com.earningstracker.web.error;
 
 import java.util.stream.Collectors;
 
+import com.earningstracker.provider.ProviderException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ApiError> handleApiException(ApiException ex) {
         return respond(ex.code(), ex.getMessage());
+    }
+
+    /** Provider failures that no cached copy could cover. */
+    @ExceptionHandler(ProviderException.class)
+    ResponseEntity<ApiError> handleProvider(ProviderException ex) {
+        log.info("Provider failure: {}", ex.getMessage());
+        return switch (ex.kind()) {
+            case NOT_FOUND -> respond(ErrorCode.SYMBOL_NOT_FOUND, "Unknown symbol");
+            case RATE_LIMITED -> respond(ErrorCode.RATE_LIMITED, "Data providers are rate limiting us; try again shortly");
+            default -> respond(ErrorCode.UPSTREAM_UNAVAILABLE, "Market data is temporarily unavailable");
+        };
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)

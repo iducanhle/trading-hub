@@ -2,6 +2,7 @@ package com.earningstracker.cache;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -13,6 +14,7 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 
 /** Firestore via the Admin SDK (bypasses security rules); blocking calls with a timeout. */
 public class FirestoreDocumentStore implements DocumentStore {
@@ -55,6 +57,16 @@ public class FirestoreDocumentStore implements DocumentStore {
     public void set(String collection, String id, Map<String, Object> data) {
         writes.incrementAndGet();
         await(firestore.collection(collection).document(id).set(data), collection, id);
+    }
+
+    @Override
+    public Map<String, Map<String, Object>> list(String collectionPath) {
+        List<QueryDocumentSnapshot> documents = await(firestore.collection(collectionPath).get(), collectionPath, "*")
+                .getDocuments();
+        reads.addAndGet(Math.max(1, documents.size()));
+        Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+        documents.forEach(document -> result.put(document.getId(), document.getData()));
+        return result;
     }
 
     @Override

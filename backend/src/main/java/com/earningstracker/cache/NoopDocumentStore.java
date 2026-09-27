@@ -23,6 +23,11 @@ public class NoopDocumentStore implements DocumentStore {
     }
 
     @Override
+    public Map<String, Map<String, Object>> list(String collectionPath) {
+        return Map.of();
+    }
+
+    @Override
     public boolean isPersistent() {
         return false;
     }

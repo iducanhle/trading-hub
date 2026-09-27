@@ -17,6 +17,12 @@ public interface DocumentStore {
 
     void set(String collection, String id, Map<String, Object> data);
 
+    /**
+     * Every document of a (sub)collection such as {@code users/{uid}/follows}, keyed by id. Costs one read per
+     * document (at least one per query).
+     */
+    Map<String, Map<String, Object>> list(String collectionPath);
+
     /** False for the no-op store used when Firebase is not configured. */
     boolean isPersistent();
 

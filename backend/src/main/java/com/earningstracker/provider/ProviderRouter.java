@@ -51,6 +51,13 @@ public class ProviderRouter {
                 .toList();
     }
 
+    /** Configured provider ids in fallback order, including disabled ones (source priority for merges). */
+    public List<String> chainIds(Capability capability, Region region) {
+        return chains.getOrDefault(capability, Map.of()).getOrDefault(region, List.of()).stream()
+                .map(MarketDataProvider::id)
+                .toList();
+    }
+
     /** The first provider that answers wins; failures move on to the next provider. */
     public <P extends MarketDataProvider, T> Sourced<T> first(Capability capability, Region region,
             Function<P, T> call) {

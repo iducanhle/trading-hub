@@ -45,6 +45,7 @@ import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.market.Symbols;
 import com.earningstracker.provider.EarningsProvider;
 import com.earningstracker.provider.FxRateProvider;
+import com.earningstracker.provider.ListingProvider;
 import com.earningstracker.provider.NewsProvider;
 import com.earningstracker.provider.PeersProvider;
 import com.earningstracker.provider.PriceHistoryProvider;
@@ -76,7 +77,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Component
 public class YahooProvider implements SymbolSearchProvider, QuoteProvider, ProfileProvider, PriceHistoryProvider,
-        EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider, SymbolValidator {
+        EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider, SymbolValidator, ListingProvider {
 
     public static final String ID = "yahoo";
     static final Map<String, Exchange> US_EXCHANGES = Map.of("NYQ", Exchange.NYSE, "NMS", Exchange.NASDAQ,
@@ -155,7 +156,8 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
                 Objects.requireNonNullElse(Json.number(meta.path("previousClose")), price));
         String currency = Json.text(meta.path("currency"));
         return Quote.of(symbol, Money.toMajor(price, currency), Money.toMajor(previousClose, currency),
-                Money.majorCurrency(currency), Instant.ofEpochSecond(time));
+                Money.majorCurrency(currency), Instant.ofEpochSecond(time),
+                Json.longNumber(meta.path("regularMarketVolume")));
     }
 
     @Override
@@ -314,6 +316,35 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
             result.forEach(quote -> Symbols.normalize(Json.text(quote.path("symbol"))).ifPresent(found::add));
         }
         return found;
+    }
+
+    /** One batch quote for all symbols (50 per request): names, exchanges and currencies. */
+    @Override
+    public List<SymbolMatch> listings(Collection<String> symbols) {
+        List<String> all = List.copyOf(symbols);
+        List<SymbolMatch> matches = new ArrayList<>();
+        for (int from = 0; from < all.size(); from += VALIDATION_BATCH) {
+            String batch = String.join(",", all.subList(from, Math.min(all.size(), from + VALIDATION_BATCH)));
+            JsonNode result = withCrumb(crumb -> http.getJson("/v7/finance/quote?symbols={s}&crumb={c}", batch, crumb))
+                    .path("quoteResponse").path("result");
+            for (JsonNode quote : result) {
+                Optional<String> symbol = Symbols.normalize(Json.text(quote.path("symbol")));
+                if (symbol.isEmpty() || !"EQUITY".equals(Json.text(quote.path("quoteType")))) {
+                    continue;
+                }
+                Exchange exchange = Symbols.region(symbol.get()) == Region.EU
+                        ? Symbols.euExchange(symbol.get()).orElseThrow()
+                        : usExchange(Json.text(quote.path("exchange")));
+                if (exchange != null) {
+                    String currency = Json.text(quote.path("currency"));
+                    matches.add(new SymbolMatch(symbol.get(),
+                            Objects.requireNonNullElse(Json.text(quote.path("longName")),
+                                    Objects.requireNonNullElse(Json.text(quote.path("shortName")), symbol.get())),
+                            exchange, currency == null ? exchange.currency() : Money.majorCurrency(currency)));
+                }
+            }
+        }
+        return matches;
     }
 
     private JsonNode chart(String symbol, String query) {

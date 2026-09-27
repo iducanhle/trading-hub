@@ -9,7 +9,7 @@
 | 0 – Setup | Done |
 | 1 – Skeleton | Done |
 | 2 – Providers | Done |
-| 3 – Domain + REST | Next (waiting for "continue") |
+| 3 – Domain + REST | In progress |
 | 4 – Jobs + email | Not started |
 | 5 – Deployment | Not started |
 
@@ -47,20 +47,25 @@
 - Live verification (2026-09-27): `LiveProvidersTest` (opt-in, `LIVE_PROVIDERS=true`) passed against the real Yahoo, Finnhub, Twelve Data and FMP APIs, and caught a null-handling bug the fixtures had missed (fixed). Running the app with the local `.env`: Yahoo session via the direct cookie + crumb, and "EU universe: all 333 symbols are known to Yahoo".
 - 89 tests (4 of them the opt-in live tests, skipped by default).
 
+**Phase 3 – Domain + REST** (in progress)
+- `domain`: `PerformanceCalculator`, `HistoryCalculator` (DAILY/WEEKLY/MONTHLY, partial periods, cursor pages), `EarningsMath` (result, surprise), `ReactionCalculator` (BMO/DMH/AMC/UNKNOWN), `EarningsStatsCalculator`, `EarningsMerger`; unit-tested with hand-checkable series.
+- `service`: `QuoteService` (L1 60 s), `ProfileService` (`symbols/`, 7 d, fill-in from next provider, `marketCapUsd`, favicon logo), `PriceService` (`prices/`, incremental top-up, refetch on split/correction), `EarningsService` (`earnings/`, accumulating merge, `record()` for jobs), `StockExtrasService` (news/recommendations/peers), `SearchService`, `CalendarService` (`earningsCalendar/`), `FollowService`, `FollowedEarningsService`, `ViewTracker` (`viewed/`), `StockService` (composes the stock detail responses).
+- `web`: `StockController`, `CalendarController`, contract DTOs (`Dtos`), provider failures → `SYMBOL_NOT_FOUND`/`RATE_LIMITED`/`UPSTREAM_UNAVAILABLE`. `docs/CONTRACT.md` gained "Implementation notes" (no field changes).
+- 138 tests (4 opt-in live tests skipped by default).
+
 ## In progress
 
-- Nothing. Waiting for "continue" to start Phase 3.
+**Phase 3 – Domain + REST** (done when all tests pass and the smoke script works locally):
+- [x] Pure, unit-tested calculators (§5): performance summary (w1/m1/ytd/y1, live quote when newer than the last bar); history aggregation DAILY/WEEKLY (ISO weeks)/MONTHLY with the unfinished period as `partial: true` and `before` cursor pagination; earnings result + surprise %; price reaction (BMO/DMH/AMC/UNKNOWN, `timeAssumed`, N = `app.earnings.window-days`); earnings stats (beat rate, streak, avg |reaction|).
+- [x] Earnings merge across providers via `ProviderRouter.all` (Finnhub → FMP → Yahoo): dedupe by fiscal (year, quarter) or report date, attach dateless fiscal rows to the first report within 100 days after the period end, max 12 quarters, accumulate in `earnings/{symbol}`.
+- [x] Price history service: `prices/{symbol}` (≤ 5 years, oldest first, compact `{d,o,h,l,c,v}`), incremental top-up, full refetch when overlapping bars disagree (split or correction), stale after 1 trading day.
+- [x] Profile service: `symbols/{symbol}` (7 days), `marketCapUsd` via `FxService`, logo fallback `https://www.google.com/s2/favicons?domain={domain}&sz=128` else null; fill missing fields (e.g. sector) from the next provider in the chain.
+- [x] Every endpoint in `docs/CONTRACT.md`: search, stock overview, prices (+ earnings markers), history, earnings, recommendations, news, peers, calendar (`earningsCalendar/{date}` docs, L1 10 min, ≤ 42 days, filters), followed earnings (`users/{uid}/follows`), `viewed/{symbol}` at most once per symbol per day.
+- [x] Validation → 400 `BAD_REQUEST`; `ProviderException` → `SYMBOL_NOT_FOUND` / `RATE_LIMITED` / `UPSTREAM_UNAVAILABLE`; `stale: true` when served from cache after a provider failure.
+- [ ] `backend/scripts/smoke.sh`: `/api/health`, then the main endpoints for AAPL and SAP.DE given a token.
+- [ ] Firebase emulator mode (local end-to-end test with real tokens and Firestore, nothing real touched).
 
 ## Next
-
-**Phase 3 – Domain + REST** (done when all tests pass and the smoke script works locally):
-- [ ] Pure, unit-tested calculators (§5): performance summary (w1/m1/ytd/y1, live quote when newer than the last bar); history aggregation DAILY/WEEKLY (ISO weeks)/MONTHLY with the unfinished period as `partial: true` and `before` cursor pagination; earnings result + surprise %; price reaction (BMO/DMH/AMC/UNKNOWN, `timeAssumed`, N = `app.earnings.window-days`); earnings stats (beat rate, streak, avg |reaction|).
-- [ ] Earnings merge across providers via `ProviderRouter.all` (Finnhub → FMP → Yahoo): dedupe by fiscal (year, quarter) or report date, attach dateless fiscal rows to the first report within 100 days after the period end, max 12 quarters, accumulate in `earnings/{symbol}`.
-- [ ] Price history service: `prices/{symbol}` (≤ 5 years, oldest first, compact `{d,o,h,l,c,v}`), incremental top-up, full refetch when overlapping bars disagree (split or correction), stale after 1 trading day.
-- [ ] Profile service: `symbols/{symbol}` (7 days), `marketCapUsd` via `FxService`, logo fallback `https://www.google.com/s2/favicons?domain={domain}&sz=128` else null; fill missing fields (e.g. sector) from the next provider in the chain.
-- [ ] Every endpoint in `docs/CONTRACT.md`: search, stock overview, prices (+ earnings markers), history, earnings, recommendations, news, peers, calendar (`earningsCalendar/{date}` docs, L1 10 min, ≤ 42 days, filters), followed earnings (`users/{uid}/follows`), `viewed/{symbol}` at most once per symbol per day.
-- [ ] Validation → 400 `BAD_REQUEST`; `ProviderException` → `SYMBOL_NOT_FOUND` / `RATE_LIMITED` / `UPSTREAM_UNAVAILABLE`; `stale: true` when served from cache after a provider failure.
-- [ ] `backend/scripts/smoke.sh`: `/api/health`, then the main endpoints for AAPL and SAP.DE given a token.
 
 Later: Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
 
@@ -125,4 +130,11 @@ Engineering:
 - **2026-09-27 — Startup validation uses Yahoo batch quotes** (50 symbols per request, ~7 requests) instead of one request per symbol; unknown symbols are logged and excluded from `validMembers()`. Disabled in tests (`app.universe.validate-on-startup=false`).
 - **2026-09-27 — L2 documents are `{data, updatedAt}`** (Jackson-converted maps; `updatedAt` a Firestore Timestamp), so any record type can be cached without Firestore mapping annotations. L1 keeps entries for max(1 day, 2× freshness), so a stale copy survives provider outages.
 - **2026-09-27 — Opt-in live provider test** (`LIVE_PROVIDERS=true ./mvnw test -Dtest=LiveProvidersTest`, ~25 real calls): Yahoo's endpoints are unofficial and can change, so there is a one-command check. It is skipped in normal builds and CI.
+- **2026-09-27 — Stock overview degrades instead of failing:** profile and quote are required, while price history and earnings are optional (their fields become null if unavailable without a cached copy). Components are fetched in parallel on virtual threads.
+- **2026-09-27 — Earnings history accumulates:** `earnings/{symbol}` stores the merged reports (up to 32) with their source. Each refresh merges fresh provider data into it (stored records rank by their original source), so quarters that fall out of a provider's window, such as Finnhub's one-month calendar, are kept. Jobs add observed calendar entries through `record()` without marking the history fresh.
+- **2026-09-27 — Price freshness follows the market:** `prices/{symbol}` is stale only when a completed, settled session (close + 30 min, weekdays) is missing and the last fetch is over 30 minutes old, so weekends and nights cost no provider calls.
+- **2026-09-27 — Followed earnings never call providers on the request path:** stored data only; symbols never loaded are fetched in the background (deduplicated) and show under `noUpcomingDate` meanwhile.
+- **2026-09-27 — New internal capability `LISTINGS`** (batch name/exchange lookup; Yahoo first for proper names, Finnhub directory as US fallback). Peers resolve in one call instead of 8 profile fetches.
+- **2026-09-27 — Search** asks the US and EU chains in parallel and interleaves the results after exact symbol matches, so neither region crowds out the other. Cached 10 min per query.
+- **2026-09-27 — Calendar span:** "max 42 days" is read as inclusive (`to − from + 1 ≤ 42`); documented in the contract's implementation notes.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

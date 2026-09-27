@@ -39,6 +39,8 @@ app:
   security:
     allowed-emails: ${ALLOWED_EMAILS:}
     cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  earnings:
+    window-days: 5              # N in the price-reaction window (§5)
   universe:
     resource: eu-universe.csv
     validate-on-startup: true
@@ -85,3 +87,4 @@ app:
       recommendations:   { US: [finnhub, yahoo], EU: [yahoo] }
       news:              { US: [finnhub, yahoo], EU: [yahoo] }
       peers:             { US: [finnhub, yahoo], EU: [yahoo] }
+      listings:          { US: [yahoo, finnhub], EU: [yahoo] }  # names/exchanges for peers (Yahoo: proper names)
