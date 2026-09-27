@@ -8,7 +8,7 @@
 |---|---|
 | 0 – Setup | Done |
 | 1 – Skeleton | Done |
-| 2 – Providers | Next (waiting for "continue") |
+| 2 – Providers | In progress |
 | 3 – Domain + REST | Not started |
 | 4 – Jobs + email | Not started |
 | 5 – Deployment | Not started |
@@ -38,23 +38,8 @@
 
 ## In progress
 
-- Nothing. Waiting for "continue" to start Phase 2.
-
-Phase 1 checklist (complete):
-- [x] Scaffold `backend/`: Spring Boot 4.1.1, Java 25, Maven wrapper.
-- [x] `application.yml` with `local` and `prod` profiles, typed config properties, `.env` loading for local runs.
-- [x] Firebase Admin SDK init (`FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`).
-- [x] Security filter: `Authorization: Bearer <ID token>` → `verifyIdToken`. Missing or invalid token → 401 `UNAUTHENTICATED`. Email not in `ALLOWED_EMAILS`, or `email_verified != true` → 403 `NOT_ALLOWED`. CORS from `CORS_ALLOWED_ORIGINS`.
-- [x] Global exception handler producing `{ code, message }` (CONTRACT "Errors").
-- [x] `GET /api/health` (public, `{ status: "UP" }`), `GET /api/me`, Actuator health only.
-- [x] `backend/Dockerfile` (multi-stage, runs on linux/arm64), `deploy/docker-compose.yml` + `deploy/Caddyfile`.
-- [x] Verify `docker build` (native and `--platform linux/arm64`), `docker run` + `/api/health`, and `caddy validate` on the Caddyfile.
-- [x] Security tests: missing token → 401; not allowlisted → 403; unverified email → 403.
-
-## Next
-
 **Phase 2 – Providers** (done when adapter tests pass and probe results are documented):
-- [ ] Probe step first: live calls to Yahoo (no key) and to Finnhub, Twelve Data and FMP (keys are in `backend/.env`). Record fields, limits, gaps and history depth in `docs/DATA-SOURCES.md`; mark anything unverifiable as **UNVERIFIED**; adjust the fallback chains to match.
+- [x] Probe step: live calls to Yahoo, Finnhub, Twelve Data and FMP; findings, gaps, UNVERIFIED items and the resulting fallback chains in [DATA-SOURCES.md](DATA-SOURCES.md).
 - [ ] One interface per capability (`SymbolSearchProvider`, `QuoteProvider`, `ProfileProvider`, `PriceHistoryProvider`, `EarningsProvider`, `EarningsCalendarProvider`, `RecommendationProvider`, `NewsProvider`, `PeersProvider`), routed by region through ordered fallback chains configured in `application.yml`.
 - [ ] Adapters (`RestClient`):
   - Finnhub (60/min).
@@ -67,6 +52,8 @@ Phase 1 checklist (complete):
 - [ ] FX to USD via Yahoo chart (`EURUSD=X`, …). Pence (GBp/GBX) → GBP.
 - [ ] `eu-universe.csv` (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX) validated at startup; list invalid symbols under Known issues.
 - [ ] Adapter tests with small recorded fixtures (MockWebServer or WireMock).
+
+## Next
 
 Later: Phase 3 calculators + all endpoints; Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
 
@@ -99,4 +86,10 @@ Notes for Phase 5:
 - **2026-09-27 — Dockerfile: no emulation for arm64.** Build stages use `--platform=$BUILDPLATFORM` (the jar is platform-independent) and the final `eclipse-temurin:25-jre` stage has no `RUN` step, so `buildx --platform linux/arm64` on x86 needs no QEMU. `--build-arg JAR_SOURCE=prebuilt` makes CI reuse the jar that `./mvnw verify` already tested instead of compiling twice. Runs as uid 1000 (`ubuntu` in both the image and on the Oracle VM, so the `chmod 600` key stays readable). Spring Boot layered extraction for smaller updates.
 - **2026-09-27 — Compose:** image `${APP_IMAGE:-ghcr.io/iducanhle/earnings-tracker-backend:latest}`; the service-account key is a compose secret mounted at `/run/secrets/firebase-sa.json`, and compose pins `GOOGLE_APPLICATION_CREDENTIALS` to that path whatever `.env` says. The healthcheck uses bash `/dev/tcp`, because the JRE image has neither curl nor wget (checked in Adoptium's Dockerfile). A missing `DOMAIN` fails fast.
 - **2026-09-27 — Caddy proxies only `/api/*` and the Swagger/OpenAPI paths**; everything else (including `/actuator`) is 404 at the edge. HSTS on, `Server` header removed, TCP 80/443 only (no HTTP/3, so the Oracle security list needs no UDP rule).
+- **2026-09-27 — Yahoo EU consent: decline, never agree.** The basic cookie + crumb flow works from Czechia; the consent fallback posts `reject`, which still yields a working crumb (verified). This is the privacy-preserving variant of yfinance's approach.
+- **2026-09-27 — Yahoo `sp_earnings` (visualization API) is the EU earnings-history source:** it has past report datetimes (and so report times), EPS estimate/actual, and the upcoming event with fiscal quarter/year. The older `earnings` entity is stale since 2025-05. It has no revenue, so EU revenue actuals come from `quoteSummary.earnings.financialsChart` (last 4 quarters).
+- **2026-09-27 — US search = Finnhub `/search?exchange=US` + Finnhub symbol directory** (`/stock/symbol?exchange=US`, one call per day) for exchange names and to drop OTC/ETF listings. The directory also names the ~1,000 weekly US calendar events without per-symbol profile calls. EU search = Yahoo search with `region=DE` (European listings first).
+- **2026-09-27 — EU news = Yahoo RSS** (`feeds.finance.yahoo.com/rss/2.0/headline?s=`), because Finnhub news is US-only and Yahoo search returns news only for text queries.
+- **2026-09-27 — A Finnhub `403` means "try the next provider", never "symbol not found"**: Finnhub answers `403` both for EU/premium data and for unknown symbols. `SYMBOL_NOT_FOUND` comes only from Yahoo's `404` (or empty results from every provider).
+- **2026-09-27 — FMP is US-only** (EU returns `402`), so it sits in the US earnings chain only.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).
