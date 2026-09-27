@@ -43,6 +43,15 @@ class FinnhubSymbolDirectory {
         this.clock = clock;
     }
 
+    /** Null-safe: immutable sets throw on contains(null), and some entries have no type. */
+    static boolean isEquity(String type) {
+        return type != null && EQUITY_TYPES.contains(type);
+    }
+
+    private static Exchange exchangeForMic(String mic) {
+        return mic == null ? null : EXCHANGES_BY_MIC.get(mic);
+    }
+
     /** Listing of a canonical US symbol; empty if it is not an equity on a supported exchange. */
     Optional<Listing> find(String symbol) {
         return Optional.ofNullable(listings().get(symbol));
@@ -89,9 +98,9 @@ class FinnhubSymbolDirectory {
         JsonNode all = http.getJson("/stock/symbol?exchange=US");
         Map<String, Listing> result = new HashMap<>();
         for (JsonNode entry : all) {
-            Exchange exchange = EXCHANGES_BY_MIC.get(Json.text(entry.path("mic")));
+            Exchange exchange = exchangeForMic(Json.text(entry.path("mic")));
             String symbol = Json.text(entry.path("symbol"));
-            if (exchange == null || symbol == null || !EQUITY_TYPES.contains(Json.text(entry.path("type")))) {
+            if (exchange == null || symbol == null || !isEquity(Json.text(entry.path("type")))) {
                 continue;
             }
             String canonical = Symbols.fromDotClass(symbol);

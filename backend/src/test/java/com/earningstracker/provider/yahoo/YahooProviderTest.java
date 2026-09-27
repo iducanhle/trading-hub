@@ -133,6 +133,15 @@ class YahooProviderTest {
     }
 
     @Test
+    void searchSkipsResultsWithoutAnExchange() {
+        routes.on("/q2/v1/finance/search", body(200, "{\"quotes\":[{\"symbol\":\"ABCD\",\"quoteType\":\"EQUITY\","
+                + "\"shortname\":\"No exchange\"},{\"symbol\":\"SAP\",\"quoteType\":\"EQUITY\",\"exchange\":\"NYQ\","
+                + "\"longname\":\"SAP SE\"}]}"));
+
+        assertThat(provider.search("sap", Region.US, 10)).extracting(SymbolMatch::symbol).containsExactly("SAP");
+    }
+
+    @Test
     void quoteNormalizesPenceToPounds() {
         Quote quote = provider.quote("AZN.L");
 

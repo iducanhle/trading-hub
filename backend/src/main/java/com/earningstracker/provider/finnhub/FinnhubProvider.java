@@ -86,7 +86,7 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
         JsonNode body = http.getJson("/search?q={q}&exchange=US", query);
         List<SymbolMatch> matches = new ArrayList<>();
         for (JsonNode result : body.path("result")) {
-            if (!FinnhubSymbolDirectory.EQUITY_TYPES.contains(Json.text(result.path("type")))) {
+            if (!FinnhubSymbolDirectory.isEquity(Json.text(result.path("type")))) {
                 continue;
             }
             String symbol = Symbols.fromDotClass(Objects.requireNonNullElse(Json.text(result.path("symbol")), ""));

@@ -129,7 +129,7 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
                 continue;
             }
             Exchange exchange = eu ? Symbols.euExchange(symbol.get()).orElseThrow()
-                    : US_EXCHANGES.get(Json.text(quote.path("exchange")));
+                    : usExchange(Json.text(quote.path("exchange")));
             if (exchange == null) {
                 continue;
             }
@@ -369,11 +369,16 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
         if (Symbols.region(symbol) == Region.EU) {
             return Symbols.euExchange(symbol).orElseThrow();
         }
-        Exchange exchange = US_EXCHANGES.get(yahooExchange);
+        Exchange exchange = usExchange(yahooExchange);
         if (exchange == null) {
             throw new ProviderException(ID, Kind.NOT_FOUND, symbol + " is not listed on NYSE, NASDAQ or NYSE American");
         }
         return exchange;
+    }
+
+    /** Null-safe: immutable maps throw on get(null). */
+    static Exchange usExchange(String yahooCode) {
+        return yahooCode == null ? null : US_EXCHANGES.get(yahooCode);
     }
 
     private static ZoneId zone(String name, ZoneId fallback) {

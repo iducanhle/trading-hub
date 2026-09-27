@@ -54,5 +54,20 @@
   "mic": "OOTC",
   "symbol": "SAPGF",
   "type": "Common Stock"
+ },
+ {
+  "currency": "USD",
+  "description": "NO TYPE INC",
+  "displaySymbol": "NOTYP",
+  "mic": "XNYS",
+  "symbol": "NOTYP",
+  "type": ""
+ },
+ {
+  "currency": "USD",
+  "description": "NO MIC INC",
+  "displaySymbol": "NOMIC",
+  "symbol": "NOMIC",
+  "type": "Common Stock"
  }
 ]
