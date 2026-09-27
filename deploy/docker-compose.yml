@@ -1,10 +1,19 @@
-# Earnings Tracker on the Oracle Cloud VM: the Spring Boot API behind Caddy (automatic HTTPS).
-# Lives in /opt/earnings-tracker next to .env, Caddyfile and firebase-sa.json (see docs/DEPLOYMENT-backend.md).
+# Earnings Tracker on the Oracle Cloud VM: the Spring Boot API behind Caddy (automatic HTTPS), plus a DuckDNS
+# updater that keeps DOMAIN pointed at the VM. Lives in /opt/earnings-tracker next to .env and firebase-sa.json;
+# CI copies this file and the Caddyfile there on every deploy (see docs/DEPLOYMENT-backend.md).
 #   docker compose pull && docker compose up -d
 name: earnings-tracker
 
+# Container logs are capped (3 × 10 MB per service) so they cannot fill the boot volume.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
 services:
   app:
+    # Rollback: set APP_IMAGE in .env to an older tag, e.g. ghcr.io/iducanhle/earnings-tracker-backend:sha-1a2b3c4
     image: ${APP_IMAGE:-ghcr.io/iducanhle/earnings-tracker-backend:latest}
     restart: unless-stopped
     env_file: .env
@@ -21,8 +30,10 @@ services:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
       interval: 30s
       timeout: 5s
-      start_period: 60s
+      start_period: 90s
+      start_interval: 5s
       retries: 3
+    logging: *logging
 
   caddy:
     image: caddy:2
@@ -38,6 +49,19 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    logging: *logging
+
+  # Every 5 minutes, tells DuckDNS the VM's current public IPv4 (it logs only "updated" or "something went wrong").
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    restart: unless-stopped
+    environment:
+      SUBDOMAINS: ${DUCKDNS_SUBDOMAIN:?Set DUCKDNS_SUBDOMAIN in .env}
+      TOKEN: ${DUCKDNS_TOKEN:?Set DUCKDNS_TOKEN in .env}
+      TZ: ${TZ:-Europe/Prague}
+      UPDATE_IP: ipv4
+      LOG_FILE: "false"
+    logging: *logging
 
 secrets:
   firebase-sa:

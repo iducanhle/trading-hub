@@ -1,0 +1,167 @@
+# Backend CI/CD: test with Maven, build the linux/arm64 image from the tested jar, push it to GHCR, and deploy it
+# to the Oracle VM over SSH. Setup (secrets, variable, first run): docs/DEPLOYMENT-backend.md, section 7.
+#
+# Repository secrets (Settings → Secrets and variables → Actions → Secrets):
+#   DEPLOY_HOST         the VM's address, e.g. yoursubdomain.duckdns.org
+#   DEPLOY_USER         SSH user on the VM: ubuntu
+#   DEPLOY_SSH_KEY      private key of a key pair made only for CI; its public key is in the VM's authorized_keys
+#   DEPLOY_KNOWN_HOSTS  the VM's host key line, from: ssh-keyscan -t ed25519 <DEPLOY_HOST>
+# Repository variable (same page → Variables):
+#   DEPLOY_ENABLED      "true" once the VM is ready; until then the deploy job is skipped
+# GITHUB_TOKEN (automatic) pushes the image to ghcr.io/<owner>/earnings-tracker-backend.
+name: Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - deploy/**
+      - .github/workflows/backend.yml
+  pull_request:
+    paths:
+      - backend/**
+      - .github/workflows/backend.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  # Pull requests: only the newest commit matters. main: never cancel a deploy halfway.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build and test
+        working-directory: backend
+        run: ./mvnw -B -ntp verify
+
+      - name: Keep the test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: backend/target/surefire-reports/
+          retention-days: 7
+
+      - name: Keep the jar for the image
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-jar
+          path: backend/target/earnings-tracker.jar
+          retention-days: 1
+          if-no-files-found: error
+
+  image:
+    name: Build and push the arm64 image
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # The jar that passed the tests; the Dockerfile's "prebuilt" stage copies it instead of compiling again.
+      - uses: actions/download-artifact@v8
+        with:
+          name: backend-jar
+          path: backend/target
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/earnings-tracker-backend
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      # Every build step runs on the runner's own platform and the arm64 stage only copies files, so no QEMU.
+      - uses: docker/build-push-action@v7
+        with:
+          context: backend
+          platforms: linux/arm64
+          build-args: JAR_SOURCE=prebuilt
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # One plain linux/arm64 image per tag, without attestation manifests.
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to the VM
+    needs: image
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: deploy
+
+      - name: Set up SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Copy the compose files
+        run: scp deploy/docker-compose.yml deploy/Caddyfile "$TARGET:/opt/earnings-tracker/"
+
+      - name: Pull the new image and restart
+        run: |
+          ssh "$TARGET" 'bash -s' <<'EOF'
+          set -euo pipefail
+          cd /opt/earnings-tracker
+          docker compose pull --quiet
+          docker compose up -d --remove-orphans
+          for _ in $(seq 1 36); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q app)")
+            if [ "$status" = healthy ]; then
+              echo "The app is healthy."
+              docker image prune -f > /dev/null
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "The app did not become healthy within 3 minutes. Last log lines:"
+          docker compose logs --tail 100 app
+          exit 1
+          EOF

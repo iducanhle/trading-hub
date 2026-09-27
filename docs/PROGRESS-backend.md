@@ -11,7 +11,7 @@
 | 2 – Providers | Done |
 | 3 – Domain + REST | Done |
 | 4 – Jobs + email | Done |
-| 5 – Deployment | Not started |
+| 5 – Deployment | Done |
 
 ## Done
 
@@ -93,21 +93,48 @@
   - `earnings-digest` → "Earnings tomorrow: NKE" (6 reads, 3 writes). A rerun → `alreadySent=1`, nothing sent.
   - `POST /api/notifications/test` → 202 `{"sentTo":"dev@example.com"}` with "[Test] Upcoming earnings: NKE, MU". Checked at phone width: logos, times, estimates, links. A second call within the minute → 429.
   - `prices-refresh` → 4 tracked symbols priced (11 reads, 3 writes).
+  - `eu-universe-refresh`:
+    - 999 s for 333 symbols (332 refreshed, 1 already fresh, 0 failures).
+    - About 1,000 Yahoo requests at 1/s, with no throttling.
+    - 999 reads, 664 writes.
+  - A second `calendar-refresh` right after, following a restart (so an empty memory cache):
+    - 6,999 reads and **96 writes**; unchanged events and days are not rewritten.
+    - 172 EU events added, e.g. SAP.DE on 2026-10-21 and UBSG.SW on 2026-10-28 (BMO).
+
+**Phase 5 – Deployment**
+- `deploy/docker-compose.yml` (final):
+  - Services: app, Caddy, and a DuckDNS updater (`lscr.io/linuxserver/duckdns`: every 5 min, IPv4, subdomain and token from `.env` and required).
+  - Log rotation (3 × 10 MB per container) and a healthcheck `start_interval` of 5 s, so deploys see "healthy" quickly. `APP_IMAGE` allows a rollback.
+  - Validated with `docker compose config`; missing required variables fail with a clear message.
+  - All three images publish linux/arm64 (checked with `docker buildx imagetools inspect`).
+- `.github/workflows/backend.yml` runs on pushes to `main` that touch `backend/**`, `deploy/**` or the workflow, and on manual dispatch. Pull requests run the tests only.
+  1. `./mvnw -B verify` on Temurin 25 with the Maven cache; test reports are kept on failure.
+  2. A linux/arm64 image built with buildx from the tested jar (`JAR_SOURCE=prebuilt`, no QEMU), pushed to GHCR as `latest` and `sha-<short>`, with a GitHub Actions layer cache.
+  3. Deploy over SSH with a pinned host key: copies `docker-compose.yml` and `Caddyfile`, runs `docker compose pull && up -d`, and waits up to 3 min for the healthcheck (otherwise it prints the log and fails). Then it prunes old images.
+  - Deploy runs only when the repository variable `DEPLOY_ENABLED` is `true`.
+  - Secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, plus the automatic `GITHUB_TOKEN`.
+- **Workflow lint passes:**
+  - actionlint 1.7.12, which also runs shellcheck 0.11 on the `run:` scripts: 0 findings.
+  - `shellcheck -S style` on `backend/scripts/*.sh`: clean.
+- `docs/DEPLOYMENT-backend.md` covers everything in §13 for a first-time deployer:
+  - Firebase, API keys, Gmail app password.
+  - Oracle Frankfurt: PAYG, $1 budget, A1 Flex 2 OCPU / 12 GB Ubuntu 24.04 aarch64, SSH, ports 80/443 in the security list and in iptables.
+  - DuckDNS, server setup, CI/CD, the verification checklist, operations, and $0 checks.
+  - Each step says what you should see; troubleshooting is included.
+- `backend/scripts/firebase-token.sh`: an ID token for an Email/Password user of the real project (sign-up with a verification email, then sign-in). The verification checklist needs it before the frontend exists.
+- `backend/README.md`: local development (quick start, emulators, jobs, email with a mail catcher, tests, Docker, configuration reference, code layout).
+- The arm64 image, rebuilt from the Phase 4 jar with `JAR_SOURCE=prebuilt`: 13 s, linux/arm64, uid 1000, 210 MB; the jar contains the email template.
 
 ## In progress
 
-Phase 5 – Deployment.
+Nothing: all phases are done.
 
 ## Next
 
-Phase 5 (see §14):
-- The final `docker-compose.yml` with a DuckDNS updater.
-- `.github/workflows/backend.yml`, with the workflow lint passing.
-- `docs/DEPLOYMENT-backend.md` and `backend/README.md`.
-
-Notes for Phase 5:
-- GHCR is free only for **public** packages; private packages get 500 MB storage and 1 GB transfer per month on the free plan. The image contains no secrets, so the guide should make the package public, or the workflow should prune old versions.
-- Build with `--build-arg JAR_SOURCE=prebuilt` after `./mvnw verify` (verified above).
+Nothing left in the backend spec. For the owner:
+- Deploy by following [DEPLOYMENT-backend.md](DEPLOYMENT-backend.md).
+- Set `MAIL_APP_PASSWORD` locally if you want the test email from your own machine.
+- The frontend (prompt 2) builds against [CONTRACT.md](CONTRACT.md).
 
 ## Known issues
 
@@ -122,6 +149,17 @@ Data gaps (details in `docs/DATA-SOURCES.md`); the API returns `null` for these,
 - **`COLTCZ.PR`** is a valid Yahoo symbol with almost no data (no name or currency in quotes).
 - **EU universe:** all 333 symbols valid on Yahoo as of 2026-09-27 (none to list as invalid). Index membership changes quarterly; the CSV is refreshed manually.
 - **UNVERIFIED:** Yahoo behaviour from the Frankfurt datacenter IP (the consent fallback is implemented and tested), Yahoo's real rate threshold, `BMO` as a Yahoo time type, FMP/Twelve Data daily reset times.
+
+Deployment:
+- **The deployment path is verified in pieces, not end to end.** The guide and the workflow could not be run against real Oracle, Firebase, DuckDNS and GitHub accounts from here. What was checked:
+  - the workflow is linted
+  - the compose file is validated
+  - the arm64 image builds
+  - the full compose stack with Caddy TLS ran locally in Phase 1
+
+  The first real run may hit renamed console labels or GitHub-side details; the guide's troubleshooting section covers the likely ones.
+- The DuckDNS updater was verified as configuration only: there is no real token here.
+- **A deploy has a 10–20 s gap:** there is a single instance and the container is recreated. There is no automatic rollback; see `APP_IMAGE` in the guide.
 
 Engineering:
 - Daily provider quotas are in-memory counters; a restart resets them (a provider 429 then falls back to the next provider).
@@ -194,4 +232,14 @@ Engineering:
 - **2026-09-27 — `calendar-refresh` never wipes data during an outage:** days are rewritten only when their events change, empty days are not written, and dates whose US chunk failed keep their stored US events.
 - **2026-09-27 — Mail configuration:** `spring.mail` maps `MAIL_USERNAME` and `MAIL_APP_PASSWORD`, with Gmail defaults: port 587, STARTTLS required, 10–15 s timeouts. `MAIL_HOST`, `MAIL_PORT`, `MAIL_SMTP_AUTH` and `MAIL_STARTTLS` exist only for local mail catchers. The Actuator mail health indicator is off, because it would open an SMTP connection on every health check.
 - **2026-09-27 — `jobRuns.stats.firestoreReads` and `firestoreWrites`** come from the `DocumentStore` counters over the run, including both `jobRuns` updates. They count everything the process did meanwhile, concurrent requests included, so they are an estimate, which is what §6 asks for.
+- **2026-09-27 — DuckDNS updater: the `linuxserver/duckdns` container instead of a cron job.** One `docker compose up -d` starts everything, the token stays in `.env`, the image is multi-arch, and it logs only "updated" or "something went wrong", never the token.
+- **2026-09-27 — CI copies `deploy/` to the VM on every deploy.** The VM's only local state is `.env`, the service-account key and the certificate volume, so compose and Caddy changes ship through git like code. Pushes that touch `deploy/**` trigger the workflow.
+- **2026-09-27 — The deploy job is gated by the repository variable `DEPLOY_ENABLED`.** The first push, before the VM exists, stays green and creates the GHCR package, which the guide then makes public.
+- **2026-09-27 — The GHCR package is public:** free and unlimited, and the image contains no secrets. The private alternative is documented (`docker login` with a `read:packages` token).
+- **2026-09-27 — Deploy safety:**
+  - a dedicated CI key, and the host key pinned through `DEPLOY_KNOWN_HOSTS` (no trust on first use)
+  - a health gate: the job fails and prints the log if the app is not healthy within 3 minutes
+  - no automatic rollback: pin `APP_IMAGE` to a `sha-…` tag instead
+- **2026-09-27 — Action versions are the current majors** (checked with the GitHub API on 2026-09-27): checkout v7, setup-java v6, upload-artifact v7, download-artifact v8, setup-buildx v4, login v4, metadata v6, build-push v7. Provenance and SBOM attestations are off, so each tag is one plain linux/arm64 image.
+- **2026-09-27 — The verification checklist gets tokens from the Identity Toolkit REST API with Email/Password,** because the frontend doesn't exist yet. The Web API key goes in the `X-Goog-Api-Key` header, and the password is read from the terminal, never from arguments or history.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).
