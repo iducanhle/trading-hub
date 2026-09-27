@@ -39,6 +39,9 @@ app:
   security:
     allowed-emails: ${ALLOWED_EMAILS:}
     cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  universe:
+    resource: eu-universe.csv
+    validate-on-startup: true
   # Findings behind these settings: docs/DATA-SOURCES.md
   providers:
     http:

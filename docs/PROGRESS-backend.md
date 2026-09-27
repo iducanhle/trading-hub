@@ -41,6 +41,9 @@
 - `market` package: `Exchange` registry (suffix, currency, timezone, session hours → BMO/DMH/AMC classification), `Symbols` (canonical validation, region, `BRK-B` ↔ `BRK.B`), `Money` (pence → GBP), `PriceBars` (drops the unfinished session), plain records shared by all providers.
 - `provider` package: 9 capability interfaces + `FxRateProvider`; `ProviderRouter` (per-region fallback chains from `app.providers.chains`, validated at startup; `first` and `all` modes); `ProviderHttp` (Resilience4j rate limiter + retry with exponential backoff and jitter, daily quotas, safe error mapping).
 - Adapters: `FinnhubProvider` (+ US symbol directory), `TwelveDataProvider`, `YahooProvider` (+ `YahooSession` cookie/crumb/consent, `YahooEarnings` merge), `FmpProvider`; 43 adapter and infrastructure tests on MockWebServer with small recorded fixtures.
+- Cache: `DocumentStore` (Firestore via Admin SDK; no-op without Firebase; read/write counters) and `TieredCache` (Caffeine L1 + Firestore L2 `{data, updatedAt}`, stale fallback, store failures degrade to memory).
+- `FxService`: USD rates for EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK via Yahoo, cached 24 h in L1 and `fx/latest`.
+- `eu-universe.csv`: 333 symbols (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX), built from Wikipedia constituent tables, all validated on Yahoo on 2026-09-27; `EuUniverse` re-validates in the background at startup (~7 batch requests).
 
 ## In progress
 
@@ -54,10 +57,10 @@
   - FMP (only when `FMP_API_KEY` is set).
 - [x] Symbol mapping canonical (Yahoo-style) ↔ provider formats (e.g. `BRK-B` ↔ `BRK.B`).
 - [x] Per-provider rate limiter + retry with exponential backoff and jitter. Missing keys: warn and fall back to Yahoo.
-- [ ] Cache layer: L1 Caffeine + L2 Firestore (via `FirebaseAppHolder`; L1 only when Firebase is absent), serving stale data with `stale: true` when a provider fails.
-- [ ] FX to USD via Yahoo chart (`EURUSD=X`, …). Pence (GBp/GBX) → GBP.
-- [ ] `eu-universe.csv` (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX) validated at startup; list invalid symbols under Known issues.
-- [ ] Adapter tests with small recorded fixtures (MockWebServer or WireMock).
+- [x] Cache layer: L1 Caffeine + L2 Firestore (via `FirebaseAppHolder`; L1 only when Firebase is absent), serving stale data with `stale: true` when a provider fails.
+- [x] FX to USD via Yahoo chart (`EURUSD=X`, …). Pence (GBp/GBX) → GBP.
+- [x] `eu-universe.csv` (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX) validated at startup; list invalid symbols under Known issues.
+- [x] Adapter tests with small recorded fixtures (MockWebServer or WireMock).
 
 ## Next
 
@@ -106,4 +109,7 @@ Notes for Phase 5:
 - **2026-09-27 — `EarningsReport.date` may be null** for rows that only know their fiscal period (Finnhub's last-4 EPS, Yahoo `earningsHistory` without a matching dated report). Phase 3's merge attaches them to a dated report or drops them. Quarter-level values attach to the first report within 100 days after the quarter end.
 - **2026-09-27 — Daily bars never include an unfinished session:** today's bar is dropped until 30 min after the exchange close (providers publish partial bars intraday).
 - **2026-09-27 — Yahoo quote = chart `range=1d`** (no crumb needed). A crumb is used only for quoteSummary, batch quotes and the visualization API; a 401/403 renews the session once.
+- **2026-09-27 — EU universe built from Wikipedia constituent tables** (queried through the MediaWiki API; PX from its component list as of August 2026, symbols found via Yahoo search or batch quote). Companies in two indices are listed once, under their primary market: `REN.AS`, `SHELL.AS`, `UNA.AS`, `IAG.MC`, `MTS.MC`, `STLAP.PA`, `STMMI.MI`, `ABB.ST` and `AZN.ST` are left out; users can still follow them. Membership is as of 2026-09-27; refreshing the CSV is a manual step (rerun the build).
+- **2026-09-27 — Startup validation uses Yahoo batch quotes** (50 symbols per request, ~7 requests) instead of one request per symbol; unknown symbols are logged and excluded from `validMembers()`. Disabled in tests (`app.universe.validate-on-startup=false`).
+- **2026-09-27 — L2 documents are `{data, updatedAt}`** (Jackson-converted maps; `updatedAt` a Firestore Timestamp), so any record type can be cached without Firestore mapping annotations. L1 keeps entries for max(1 day, 2× freshness), so a stale copy survives provider outages.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

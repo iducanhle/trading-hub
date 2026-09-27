@@ -54,6 +54,7 @@ import com.earningstracker.provider.ProviderException.Kind;
 import com.earningstracker.provider.QuoteProvider;
 import com.earningstracker.provider.RecommendationProvider;
 import com.earningstracker.provider.SymbolSearchProvider;
+import com.earningstracker.provider.SymbolValidator;
 import com.earningstracker.provider.http.Json;
 import com.earningstracker.provider.http.ProviderHttp;
 import com.earningstracker.provider.http.ProviderHttpFactory;
@@ -75,7 +76,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Component
 public class YahooProvider implements SymbolSearchProvider, QuoteProvider, ProfileProvider, PriceHistoryProvider,
-        EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider {
+        EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider, SymbolValidator {
 
     public static final String ID = "yahoo";
     static final Map<String, Exchange> US_EXCHANGES = Map.of("NYQ", Exchange.NYSE, "NMS", Exchange.NASDAQ,
@@ -302,6 +303,7 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
     }
 
     /** Symbols Yahoo knows, checked with batch quotes; unknown symbols are simply missing from the answer. */
+    @Override
     public Set<String> existingSymbols(Collection<String> symbols) {
         List<String> all = List.copyOf(symbols);
         Set<String> found = new HashSet<>();

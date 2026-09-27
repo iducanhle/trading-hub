@@ -1,0 +1,347 @@
+# EU seed universe for the earnings calendar: constituents of DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35,
+# FTSE MIB, OMX Stockholm 30 and PX, in Yahoo symbol format. Built 2026-09-27 from the constituent tables on
+# Wikipedia (PX: Prague Stock Exchange list as of August 2026); every symbol checked against Yahoo that day.
+# Companies in two indices are listed once, under their primary market. The app re-validates at startup.
+symbol,name
+# DAX
+ADS.DE,Adidas
+AIR.PA,Airbus
+ALV.DE,Allianz
+BAS.DE,BASF
+BAYN.DE,Bayer
+BEI.DE,Beiersdorf
+BMW.DE,BMW
+BNR.DE,Brenntag
+CBK.DE,Commerzbank
+CON.DE,Continental
+DTG.DE,Daimler Truck
+DBK.DE,Deutsche Bank
+DB1.DE,Deutsche Börse
+DHL.DE,Deutsche Post
+DTE.DE,Deutsche Telekom
+EOAN.DE,E.ON
+FRE.DE,Fresenius
+FME.DE,Fresenius Medical Care
+G1A.DE,GEA Group
+HNR1.DE,Hannover Re
+HEI.DE,Heidelberg Materials
+HEN3.DE,Henkel
+IFX.DE,Infineon Technologies
+MBG.DE,Mercedes-Benz Group
+MRK.DE,Merck
+MTX.DE,MTU Aero Engines
+MUV2.DE,Munich Re
+PAH3.DE,Porsche SE
+QIA.DE,Qiagen
+RHM.DE,Rheinmetall
+RWE.DE,RWE
+SAP.DE,SAP
+G24.DE,Scout24
+SIE.DE,Siemens
+ENR.DE,Siemens Energy
+SHL.DE,Siemens Healthineers
+SY1.DE,Symrise
+VOW3.DE,Volkswagen Group
+VNA.DE,Vonovia
+ZAL.DE,Zalando
+# CAC 40
+AC.PA,Accor
+AI.PA,Air Liquide
+MT.AS,ArcelorMittal
+CS.PA,Axa
+BNP.PA,BNP Paribas
+EN.PA,Bouygues
+BVI.PA,Bureau Veritas
+CAP.PA,Capgemini
+CA.PA,Carrefour
+ACA.PA,Crédit Agricole
+BN.PA,Danone
+DSY.PA,Dassault Systèmes
+EDEN.PA,Edenred
+ENGI.PA,Engie
+EL.PA,EssilorLuxottica
+ERF.PA,Eurofins Scientific
+RMS.PA,Hermès
+KER.PA,Kering
+OR.PA,L'Oréal
+LR.PA,Legrand
+MC.PA,LVMH
+ML.PA,Michelin
+ORA.PA,Orange
+RI.PA,Pernod Ricard
+PUB.PA,Publicis
+RNO.PA,Renault
+SAF.PA,Safran
+SGO.PA,Saint-Gobain
+SAN.PA,Sanofi
+SU.PA,Schneider Electric
+GLE.PA,Société Générale
+STMPA.PA,STMicroelectronics
+TEP.PA,Teleperformance
+HO.PA,Thales
+TTE.PA,TotalEnergies
+URW.PA,Unibail-Rodamco-Westfield
+VIE.PA,Veolia
+DG.PA,Vinci
+# AEX
+ABN.AS,ABN AMRO
+ADYEN.AS,Adyen
+AGN.AS,Aegon
+AD.AS,Ahold Delhaize
+AKZA.AS,AkzoNobel
+ASM.AS,ASM International
+ASML.AS,ASML Holding
+ASRNL.AS,ASR Nederland
+BESI.AS,BE Semiconductors
+DSFIR.AS,DSM Firmenich AG
+EXO.AS,Exor
+HEIA.AS,Heineken
+IMCD.AS,IMCD
+INGA.AS,ING Group
+KPN.AS,KPN
+NN.AS,NN Group
+PHIA.AS,Philips
+PRX.AS,Prosus
+RAND.AS,Randstad
+UMG.AS,Universal Music Group
+WKL.AS,Wolters Kluwer
+# FTSE 100
+III.L,3i
+ABDN.L,Aberdeen Group
+ADM.L,Admiral Group
+AAF.L,Airtel Africa
+ALW.L,Alliance Witan
+AAL.L,Anglo American plc
+ANTO.L,Antofagasta plc
+ABF.L,Associated British Foods
+AZN.L,AstraZeneca
+AUTO.L,Autotrader Group
+AV.L,Aviva
+BAB.L,Babcock International
+BA.L,BAE Systems
+BARC.L,Barclays
+BTRW.L,Barratt Redrow
+BEZ.L,Beazley
+BP.L,BP
+BATS.L,British American Tobacco
+BLND.L,British Land
+BT-A.L,BT Group
+BNZL.L,Bunzl
+BRBY.L,Burberry Group
+CNA.L,Centrica
+CCEP.L,Coca-Cola Europacific Partners
+CCH.L,Coca-Cola HBC
+CPG.L,Compass Group
+CCC.L,Computacenter
+CTEC.L,Convatec
+CRDA.L,Croda International
+DCC.L,DCC Energy
+DGE.L,Diageo
+DPLM.L,Diploma
+EZJ.L,EasyJet
+EDV.L,Endeavour Mining
+EXPN.L,Experian
+FCIT.L,F & C Investment Trust
+FRES.L,Fresnillo plc
+GAW.L,Games Workshop
+GLEN.L,Glencore
+GSK.L,GSK plc
+HLN.L,Haleon
+HLMA.L,Halma plc
+HSX.L,Hiscox
+HWDN.L,Howdens Joinery
+HSBA.L,HSBC
+ICG.L,ICG
+IGG.L,IG Group
+IHG.L,IHG Hotels & Resorts
+IMI.L,IMI
+IMB.L,Imperial Brands
+INF.L,Informa
+IAG.L,International Airlines Group
+ITRK.L,Intertek
+INVP.L,Investec
+ITH.L,Ithaca Energy
+JD.L,JD Sports
+BGEO.L,Lion Finance Group
+KGF.L,Kingfisher plc
+LAND.L,Land Securities
+LGEN.L,Legal & General
+LLOY.L,Lloyds Banking Group
+LMP.L,LondonMetric Property
+LSEG.L,London Stock Exchange Group
+MNG.L,M&G
+MKS.L,Marks & Spencer
+MRO.L,Melrose Industries
+MTLN.L,Metlen Energy & Metals
+NG.L,National Grid plc
+NWG.L,NatWest Group
+NXT.L,Next plc
+PSON.L,Pearson plc
+PSH.L,Pershing Square Holdings
+PCT.L,Polar Capital Technology Trust
+PRU.L,Prudential plc
+RKT.L,Reckitt
+REL.L,RELX
+RTO.L,Rentokil Initial
+RIO.L,Rio Tinto
+RR.L,Rolls-Royce Holdings
+SGE.L,Sage Group
+SBRY.L,Sainsbury's
+SDR.L,Schroders
+SMT.L,Scottish Mortgage Investment Trust
+SGRO.L,Segro
+SVT.L,Severn Trent
+SHEL.L,Shell plc
+SMIN.L,Smiths Group
+SN.L,Smith & Nephew
+SPX.L,Spirax Group
+SSE.L,SSE plc
+STAN.L,Standard Chartered
+SDLF.L,Standard Life
+STJ.L,St. James's Place
+TSCO.L,Tesco
+BBOX.L,Tritax Big Box REIT
+ULVR.L,Unilever
+UU.L,United Utilities
+VOD.L,Vodafone Group
+WEIR.L,Weir
+WTB.L,Whitbread
+# SMI
+NOVN.SW,Novartis International AG
+ROP.SW,Roche Holding AG
+NESN.SW,Nestlé SA
+ABBN.SW,ABB Ltd
+UBSG.SW,UBS Group AG
+CFR.SW,Compagnie Financière Richemont SA
+ZURN.SW,Zurich Insurance Group AG
+HOLN.SW,Holcim Limited
+SREN.SW,Swiss Reinsurance Company Ltd
+LONN.SW,Lonza Group AG
+SCMN.SW,Swisscom AG
+GIVN.SW,Givaudan SA
+ALC.SW,Alcon Inc
+SIKA.SW,Sika AG
+AMRZ.SW,Amrize AG
+SLHN.SW,Swiss Life Holding AG
+KNIN.SW,Kuehne + Nagel
+GEBN.SW,Geberit AG
+PGHN.SW,Partners Group Holding AG
+LOGN.SW,Logitech International SA
+# IBEX 35
+ACS.MC,ACS
+ACX.MC,Acerinox
+AMS.MC,Amadeus IT Group
+ANA.MC,Acciona
+ANE.MC,Acciona Energía
+BBVA.MC,BBVA
+BKT.MC,Bankinter
+CABK.MC,CaixaBank
+CLNX.MC,Cellnex Telecom
+COL.MC,Inmobiliaria Colonial
+AENA.MC,AENA
+ELE.MC,Endesa
+ENG.MC,Enagás
+FDR.MC,Fluidra
+FER.MC,Ferrovial
+GRF.MC,Grifols
+IBE.MC,Iberdrola
+IDR.MC,Indra
+ITX.MC,Inditex
+LOG.MC,Logista
+MAP.MC,Mapfre
+MRL.MC,Merlin Properties
+NTGY.MC,Naturgy
+PUIG.MC,Puig
+RED.MC,Redeia Corporación
+REP.MC,Repsol
+ROVI.MC,Laboratorios Rovi [es]
+SAB.MC,Banco Sabadell
+SAN.MC,Santander
+SCYR.MC,Sacyr
+SLR.MC,Solaria
+TEF.MC,Telefónica
+UNI.MC,Unicaja
+# FTSE MIB
+A2A.MI,A2A
+AMP.MI,Amplifon
+AVIO.MI,Avio
+AZM.MI,Azimut
+BMED.MI,Banca Mediolanum
+BMPS.MI,Banca Monte dei Paschi di Siena
+BAMI.MI,Banco BPM
+BPE.MI,BPER Banca
+BC.MI,Brunello Cucinelli
+BZU.MI,Buzzi
+CPR.MI,Campari
+DIA.MI,Diasorin
+ENEL.MI,Enel
+ENI.MI,Eni
+RACE.MI,Ferrari
+FCT.MI,Fincantieri
+FBK.MI,FinecoBank
+G.MI,Generali
+HER.MI,Hera
+ISP.MI,Intesa Sanpaolo
+INW.MI,INWIT
+IG.MI,Italgas
+IVG.MI,Iveco
+LDO.MI,Leonardo
+LTMC.MI,Lottomatica Group
+MB.MI,Mediobanca
+MONC.MI,Moncler
+NEXI.MI,Nexi
+PST.MI,Poste italiane
+PRY.MI,Prysmian
+REC.MI,Recordati
+SPM.MI,Saipem
+SRG.MI,Snam
+STLAM.MI,Stellantis
+TIT.MI,Telecom Italia
+TEN.MI,Tenaris
+TRN.MI,Terna
+UCG.MI,UniCredit
+UNI.MI,Unipol
+# OMXS30
+ADDT-B.ST,Addtech B
+ALFA.ST,Alfa Laval
+ASSA-B.ST,Assa Abloy B
+ATCO-A.ST,Atlas Copco A
+BOL.ST,Boliden
+EPI-A.ST,Epiroc A
+EQT.ST,EQT
+ERIC-B.ST,Ericsson B
+ESSITY-B.ST,Essity B
+EVO.ST,Evolution
+SHB-A.ST,Handelsbanken A
+HM-B.ST,Hennes & Mauritz B
+HEXA-B.ST,Hexagon B
+INDU-C.ST,Industrivärden C
+INVE-B.ST,Investor B
+LIFCO-B.ST,Lifco B
+NIBE-B.ST,Nibe Industrier B
+NDA-SE.ST,Nordea Bank Abp
+SAAB-B.ST,Saab B
+SAND.ST,Sandvik
+SCA-B.ST,SCA B
+SEB-A.ST,SEB A
+SKA-B.ST,Skanska B
+SKF-B.ST,SKF B
+SWED-A.ST,Swedbank A
+TEL2-B.ST,Tele2 B
+TELIA.ST,Telia Company
+VOLV-B.ST,Volvo B
+# PX
+CEZ.PR,"CEZ, a. s."
+KOMB.PR,"Komercní banka, a.s."
+MONET.PR,"MONETA Money Bank, a.s."
+TABAK.PR,Philip Morris CR a.s.
+DSPW.PR,Doosan Skoda Power a.s.
+PRIUA.PR,Primoco UAV SE
+GEV.PR,"GEVORKYAN, a.s."
+KARIN.PR,KARO Leather a.s.
+PEN.PR,Photon Energy N.V.
+ERBAG.PR,Erste Group Bank
+VIG.PR,Vienna Insurance Group
+CSG.PR,CSG (Czechoslovak Group)
+COLTCZ.PR,Colt CZ Group
+KOFOL.PR,Kofola ČeskoSlovensko
