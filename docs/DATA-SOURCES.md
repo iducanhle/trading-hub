@@ -90,7 +90,7 @@ Configured in `application.yml` (`app.providers.chains`). Providers without a ke
 | Quote | Finnhub → Yahoo | Yahoo |
 | Profile + key stats | Finnhub → Yahoo | Yahoo |
 | Daily price history | Twelve Data → Yahoo | Yahoo |
-| Earnings history (merged, preference in this order) | Finnhub → FMP → Yahoo | Yahoo |
+| Earnings history (merged, preference in this order) | Finnhub calendar → FMP → Yahoo → Finnhub EPS surprises (`finnhub-eps`, fills gaps such as fiscal periods) | Yahoo |
 | Market-wide earnings calendar | Finnhub | none; built from the EU universe + followed/viewed symbols |
 | Recommendations | Finnhub → Yahoo | Yahoo |
 | News | Finnhub → Yahoo (RSS) | Yahoo (RSS) |

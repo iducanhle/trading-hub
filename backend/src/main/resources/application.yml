@@ -82,7 +82,7 @@ app:
       quote:             { US: [finnhub, yahoo], EU: [yahoo] }
       profile:           { US: [finnhub, yahoo], EU: [yahoo] }
       price-history:     { US: [twelvedata, yahoo], EU: [yahoo] }
-      earnings:          { US: [finnhub, fmp, yahoo], EU: [yahoo] }
+      earnings:          { US: [finnhub, fmp, yahoo, finnhub-eps], EU: [yahoo] }  # finnhub = calendar; finnhub-eps = EPS surprises, fills gaps
       earnings-calendar: { US: [finnhub], EU: [] }
       recommendations:   { US: [finnhub, yahoo], EU: [yahoo] }
       news:              { US: [finnhub, yahoo], EU: [yahoo] }

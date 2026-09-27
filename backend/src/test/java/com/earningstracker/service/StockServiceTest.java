@@ -189,6 +189,22 @@ class StockServiceTest {
     }
 
     @Test
+    void storageKeepsOneRowPerSourceAndQuarter() {
+        List<com.earningstracker.domain.EarningsMerger.SourcedReport> stored = List.of(
+                new com.earningstracker.domain.EarningsMerger.SourcedReport("finnhub", report("AAPL", "2026-10-28", ReportTime.UNKNOWN, 4, 1.95, null)),
+                new com.earningstracker.domain.EarningsMerger.SourcedReport("fmp", report("AAPL", "2026-10-29", ReportTime.UNKNOWN, null, 1.99, null)),
+                new com.earningstracker.domain.EarningsMerger.SourcedReport("finnhub", report("AAPL", "2026-07-30", ReportTime.AMC, 3, 1.90, 1.91)));
+        List<com.earningstracker.domain.EarningsMerger.SourcedReport> fresh = List.of(
+                new com.earningstracker.domain.EarningsMerger.SourcedReport("finnhub", report("AAPL", "2026-10-29", ReportTime.AMC, 4, 2.02, null)));
+
+        List<com.earningstracker.domain.EarningsMerger.SourcedReport> rows = EarningsService.upsert(stored, fresh);
+
+        assertThat(rows).hasSize(3); // the fresh Finnhub Q4 row replaced the stored one; the rest is kept
+        assertThat(rows).filteredOn(r -> r.source().equals("finnhub")).extracting(r -> r.report().epsEstimate())
+                .containsExactlyInAnyOrder(2.02, 1.90);
+    }
+
+    @Test
     void calendarFiltersAndSortsByMarketCap() {
         LocalDate day = LocalDate.of(2026, 10, 21);
         f.calendar.saveDay(day, List.of(event("AAPL", Region.US, null), event("SAP.DE", Region.EU, 244e9),

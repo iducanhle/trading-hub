@@ -30,8 +30,7 @@ class EarningsMergerTest {
         List<SourcedReport> merged = EarningsMerger.merge(List.of(
                 report("yahoo", "2026-07-31", ReportTime.UNKNOWN, null, null, 1.89, 2.02, null, null, null),
                 report("fmp", "2026-07-30", ReportTime.UNKNOWN, null, null, 1.89, 2.02, 109e9, 109.4e9, null),
-                report("finnhub", "2026-07-30", ReportTime.AMC, 3, 2026, 1.90, 1.91, null, null, null)),
-                List.of(), PRIORITY);
+                report("finnhub", "2026-07-30", ReportTime.AMC, 3, 2026, 1.90, 1.91, null, null, null)), PRIORITY);
 
         assertThat(merged).hasSize(1);
         EarningsReport q = merged.getFirst().report();
@@ -45,36 +44,19 @@ class EarningsMergerTest {
     }
 
     @Test
-    void storedRecordsRankByTheirOriginalSource() {
-        List<SourcedReport> stored = List.of(report("finnhub", "2026-04-30", ReportTime.AMC, 2, 2026, 1.95, 2.01, null,
-                null, null));
-        List<SourcedReport> fresh = List.of(
-                report("yahoo", "2026-04-30", ReportTime.UNKNOWN, null, null, 1.94, 2.05, null, null, null));
-
-        EarningsReport q = EarningsMerger.merge(fresh, stored, PRIORITY).getFirst().report();
-
-        assertThat(q.epsActual()).isEqualTo(2.01); // stored Finnhub outranks fresh Yahoo
-        assertThat(q.time()).isEqualTo(ReportTime.AMC);
-    }
-
-    @Test
-    void freshDataOutranksStoredDataFromTheSameSource() {
-        List<SourcedReport> stored = List.of(report("finnhub", "2026-10-28", ReportTime.UNKNOWN, 4, 2026, 1.95, null, null,
-                null, null));
-        List<SourcedReport> fresh = List.of(report("finnhub", "2026-10-28", ReportTime.AMC, 4, 2026, 2.02, null, 115e9,
-                null, null));
-
-        EarningsReport q = EarningsMerger.merge(fresh, stored, PRIORITY).getFirst().report();
-
-        assertThat(q.epsEstimate()).isEqualTo(2.02);
-        assertThat(q.revenueEstimate()).isEqualTo(115e9);
+    void identifiesTheSameQuarterByFiscalPeriodThenDateThenPeriodEnd() {
+        EarningsReport q3 = report("finnhub", "2026-07-30", ReportTime.AMC, 3, 2026, null, null, null, null, null).report();
+        assertThat(EarningsMerger.sameQuarter(q3, report("yahoo", "2026-08-03", ReportTime.AMC, 3, 2026, null, null, null, null, null).report())).isTrue();
+        assertThat(EarningsMerger.sameQuarter(q3, report("yahoo", "2026-07-31", ReportTime.AMC, 4, 2026, null, null, null, null, null).report())).isFalse();
+        assertThat(EarningsMerger.sameQuarter(q3, report("fmp", "2026-08-04", ReportTime.UNKNOWN, null, null, null, null, null, null, null).report())).isTrue();
+        assertThat(EarningsMerger.sameQuarter(dateless("a", "2026-06-30", null, null, 1.0).report(), dateless("b", "2026-06-30", null, null, 2.0).report())).isTrue();
     }
 
     @Test
     void aConfirmedDateWinsOverAnEstimatedOne() {
         List<SourcedReport> merged = EarningsMerger.merge(List.of(
                 report("finnhub", "2026-10-28", ReportTime.UNKNOWN, 4, 2026, 2.02, null, null, null, null),
-                report("yahoo", "2026-10-29", ReportTime.AMC, 4, 2026, 1.98, null, null, null, true)), List.of(), PRIORITY);
+                report("yahoo", "2026-10-29", ReportTime.AMC, 4, 2026, 1.98, null, null, null, true)), PRIORITY);
 
         assertThat(merged).hasSize(1);
         EarningsReport q = merged.getFirst().report();
@@ -88,7 +70,7 @@ class EarningsMergerTest {
     void differentFiscalQuartersStaySeparateEvenWithCloseDates() {
         List<SourcedReport> merged = EarningsMerger.merge(List.of(
                 report("finnhub", "2026-07-30", ReportTime.AMC, 3, 2026, null, 1.0, null, null, null),
-                report("yahoo", "2026-08-02", ReportTime.AMC, 4, 2026, null, 2.0, null, null, null)), List.of(), PRIORITY);
+                report("yahoo", "2026-08-02", ReportTime.AMC, 4, 2026, null, 2.0, null, null, null)), PRIORITY);
 
         assertThat(merged).hasSize(2);
     }
@@ -99,7 +81,7 @@ class EarningsMergerTest {
                 report("fmp", "2026-07-30", ReportTime.UNKNOWN, null, null, 1.89, null, null, null, null),
                 report("fmp", "2026-04-30", ReportTime.UNKNOWN, null, null, 1.95, null, null, null, null),
                 dateless("finnhub", "2026-06-30", 3, 2026, 1.91),
-                dateless("finnhub", "2024-06-30", 3, 2024, 1.40)), List.of(), PRIORITY);
+                dateless("finnhub", "2024-06-30", 3, 2024, 1.40)), PRIORITY);
 
         assertThat(merged).extracting(s -> s.report().date())
                 .containsExactly(LocalDate.of(2026, 7, 30), LocalDate.of(2026, 4, 30)); // newest first; 2024 row dropped

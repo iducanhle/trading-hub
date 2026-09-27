@@ -69,6 +69,11 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
         this.clock = clock;
     }
 
+    /** Shared with {@link FinnhubEpsProvider} so both use one rate limiter. */
+    ProviderHttp http() {
+        return http;
+    }
+
     @Override
     public String id() {
         return ID;
@@ -147,44 +152,18 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
     }
 
     /**
-     * The per-symbol calendar (on the free tier: upcoming quarters and about a month back) plus the last four
-     * reported EPS values; the latter have a fiscal period but no report date.
+     * The per-symbol calendar: on the free tier, upcoming quarters and about a month back. Finnhub's EPS surprises
+     * are a separate provider ({@link FinnhubEpsProvider}) so they can rank after FMP and Yahoo.
      */
     @Override
     public List<EarningsReport> earnings(String symbol) {
         requireUs(symbol);
-        String finnhubSymbol = Symbols.toDotClass(symbol);
         LocalDate today = LocalDate.now(clock);
-        JsonNode calendar = http.getJson("/calendar/earnings?symbol={s}&from={from}&to={to}", finnhubSymbol,
+        JsonNode calendar = http.getJson("/calendar/earnings?symbol={s}&from={from}&to={to}", Symbols.toDotClass(symbol),
                 today.minusYears(1), today.plusYears(1));
         List<EarningsReport> reports = new ArrayList<>();
         for (JsonNode row : calendar.path("earningsCalendar")) {
             reports.add(calendarRow(symbol, row));
-        }
-        JsonNode surprises;
-        try {
-            surprises = http.getJson("/stock/earnings?symbol={s}", finnhubSymbol);
-        } catch (ProviderException e) {
-            log.debug("Finnhub EPS surprises unavailable for {}: {}", symbol, e.getMessage());
-            return reports;
-        }
-        for (JsonNode row : surprises) {
-            Integer year = Json.intNumber(row.path("year"));
-            Integer quarter = Json.intNumber(row.path("quarter"));
-            LocalDate periodEnd = date(Json.text(row.path("period")));
-            Double estimate = Json.number(row.path("estimate"));
-            Double actual = Json.number(row.path("actual"));
-            int match = indexOf(reports, year, quarter);
-            if (match >= 0) {
-                EarningsReport r = reports.get(match);
-                reports.set(match, new EarningsReport(symbol, r.date(), r.time(), periodEnd, r.fiscalQuarter(),
-                        r.fiscalYear(), r.currency(), firstNonNull(r.epsEstimate(), estimate),
-                        firstNonNull(r.epsActual(), actual), r.revenueEstimate(), r.revenueActual(),
-                        r.dateConfirmed()));
-            } else {
-                reports.add(new EarningsReport(symbol, null, ReportTime.UNKNOWN, periodEnd, quarter, year, "USD",
-                        estimate, actual, null, null, null));
-            }
         }
         return reports;
     }
@@ -316,15 +295,6 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
         }
     }
 
-    private static int indexOf(List<EarningsReport> reports, Integer year, Integer quarter) {
-        for (int i = 0; i < reports.size(); i++) {
-            EarningsReport r = reports.get(i);
-            if (year != null && quarter != null && year.equals(r.fiscalYear()) && quarter.equals(r.fiscalQuarter())) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     private static void requireUs(String symbol) {
         if (Symbols.region(symbol) != Region.US) {
@@ -344,7 +314,4 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
         return value == null || value.length() < 10 ? null : LocalDate.parse(value.substring(0, 10));
     }
 
-    private static Double firstNonNull(Double a, Double b) {
-        return a != null ? a : b;
-    }
 }

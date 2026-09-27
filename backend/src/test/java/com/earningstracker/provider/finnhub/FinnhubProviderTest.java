@@ -130,39 +130,34 @@ class FinnhubProviderTest {
     }
 
     @Test
-    void earningsCombinesTheCalendarWithTheLastReportedEps() {
+    void earningsAreThePerSymbolCalendar() {
         List<EarningsReport> reports = provider.earnings("AAPL");
 
-        assertThat(reports).hasSize(7);
+        assertThat(reports).hasSize(3);
         EarningsReport next = reports.stream().filter(r -> LocalDate.of(2026, 10, 28).equals(r.date())).findFirst()
                 .orElseThrow();
         assertThat(next.time()).isEqualTo(ReportTime.AMC);
         assertThat(next.fiscalQuarter()).isEqualTo(4);
         assertThat(next.fiscalYear()).isEqualTo(2026);
         assertThat(next.revenueEstimate()).isEqualTo(115_327_453_620.0);
-        EarningsReport reported = reports.stream().filter(r -> LocalDate.of(2026, 6, 30).equals(r.periodEnd()))
-                .findFirst().orElseThrow();
-        assertThat(reported.date()).isNull();
-        assertThat(reported.epsActual()).isEqualTo(1.91);
-        assertThat(reported.fiscalQuarter()).isEqualTo(3);
         RecordedRequest calendar = routes.requests("/calendar/earnings").getFirst();
         assertThat(calendar.getUrl().queryParameter("from")).isEqualTo("2025-09-27");
         assertThat(calendar.getUrl().queryParameter("to")).isEqualTo("2027-09-27");
     }
 
     @Test
-    void earningsAttachReportedEpsToTheMatchingFiscalQuarter() {
-        routes.on("/calendar/earnings", body(200, "{\"earningsCalendar\":[{\"symbol\":\"AAPL\",\"date\":\"2026-07-30\","
-                + "\"hour\":\"amc\",\"quarter\":3,\"year\":2026,\"epsEstimate\":1.9,\"epsActual\":null,"
-                + "\"revenueEstimate\":0,\"revenueActual\":null}]}"));
+    void epsSurprisesAreASeparateLowerRankedProviderWithoutReportDates() {
+        FinnhubEpsProvider eps = new FinnhubEpsProvider(provider);
 
-        EarningsReport merged = provider.earnings("AAPL").stream()
-                .filter(r -> LocalDate.of(2026, 7, 30).equals(r.date())).findFirst().orElseThrow();
+        List<EarningsReport> reports = eps.earnings("AAPL");
 
-        assertThat(merged.epsEstimate()).isEqualTo(1.9);
-        assertThat(merged.epsActual()).isEqualTo(1.91);
-        assertThat(merged.periodEnd()).isEqualTo(LocalDate.of(2026, 6, 30));
-        assertThat(merged.revenueEstimate()).isNull(); // Finnhub sends 0 for "no estimate"
+        assertThat(eps.id()).isEqualTo("finnhub-eps");
+        assertThat(reports).hasSize(4).allMatch(r -> r.date() == null);
+        EarningsReport latest = reports.getFirst();
+        assertThat(latest.periodEnd()).isEqualTo(LocalDate.of(2026, 6, 30));
+        assertThat(latest.fiscalQuarter()).isEqualTo(3);
+        assertThat(latest.fiscalYear()).isEqualTo(2026);
+        assertThat(latest.epsActual()).isEqualTo(1.91);
     }
 
     @Test

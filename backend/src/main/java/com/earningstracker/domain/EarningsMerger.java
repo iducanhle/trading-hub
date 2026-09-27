@@ -12,16 +12,15 @@ import com.earningstracker.market.EarningsReport;
 import com.earningstracker.market.ReportTime;
 
 /**
- * Merges reports from several providers (and earlier runs) into one record per quarter (§5): quarters are the same
- * when their fiscal (year, quarter) match or, lacking fiscal data, their report dates are within
- * {@value #DATE_TOLERANCE_DAYS} days. Each field takes the first non-null value in source priority order; stored
- * records rank by their original source, after fresh data from the same source. Rows without a report date
- * attach to the first report within {@value #MAX_REPORT_LAG_DAYS} days after their fiscal period end, or are
- * dropped: a quarter is never shown without a date.
+ * Merges reports from several providers into one record per quarter (§5): quarters are the same when their fiscal
+ * (year, quarter) match or, lacking fiscal data, their report dates are within {@value #DATE_TOLERANCE_DAYS} days.
+ * Each field takes the first non-null value in source priority order. Rows without a report date attach to the
+ * first report within {@value #MAX_REPORT_LAG_DAYS} days after their fiscal period end, or are dropped: a quarter
+ * is never shown without a date.
  */
 public final class EarningsMerger {
 
-    /** A report tagged with the provider it came from; also the persisted form in {@code earnings/{symbol}}. */
+    /** A report tagged with the provider it came from; the stored form in {@code earnings/{symbol}}. */
     public record SourcedReport(String source, EarningsReport report) {
     }
 
@@ -38,21 +37,18 @@ public final class EarningsMerger {
     }
 
     /**
-     * @param fresh    reports fetched now, in any order
-     * @param stored   reports persisted by earlier runs
+     * @param reports  rows from any providers, in any order
      * @param priority provider ids, most trusted first (unknown sources rank last)
      * @return one report per quarter, newest first
      */
-    public static List<SourcedReport> merge(List<SourcedReport> fresh, List<SourcedReport> stored,
-            List<String> priority) {
+    public static List<SourcedReport> merge(List<SourcedReport> reports, List<String> priority) {
         List<Candidate> candidates = new ArrayList<>();
-        fresh.forEach(s -> candidates.add(new Candidate(s, rank(priority, s.source()) * 2)));
-        stored.forEach(s -> candidates.add(new Candidate(s, rank(priority, s.source()) * 2 + 1)));
+        reports.forEach(s -> candidates.add(new Candidate(s, rank(priority, s.source()))));
         candidates.sort(Comparator.comparingInt(Candidate::rank));
 
         List<List<Candidate>> clusters = new ArrayList<>();
         candidates.stream().filter(c -> c.r().date() != null).forEach(candidate -> clusters.stream()
-                .filter(cluster -> sameQuarter(cluster, candidate.r()))
+                .filter(cluster -> cluster.stream().anyMatch(m -> sameQuarter(m.r(), candidate.r())))
                 .findFirst()
                 .ifPresentOrElse(cluster -> cluster.add(candidate), () -> clusters.add(new ArrayList<>(List.of(candidate)))));
         candidates.stream().filter(c -> c.r().date() == null).forEach(candidate -> attachDateless(clusters, candidate));
@@ -63,25 +59,23 @@ public final class EarningsMerger {
                 .toList();
     }
 
+    /**
+     * Whether two rows describe the same quarter: fiscal (year, quarter) decides when both have it; otherwise report
+     * dates within the tolerance, or equal fiscal period ends.
+     */
+    public static boolean sameQuarter(EarningsReport a, EarningsReport b) {
+        if (hasFiscal(a) && hasFiscal(b)) {
+            return a.fiscalYear().equals(b.fiscalYear()) && a.fiscalQuarter().equals(b.fiscalQuarter());
+        }
+        if (a.date() != null && b.date() != null) {
+            return Math.abs(ChronoUnit.DAYS.between(a.date(), b.date())) <= DATE_TOLERANCE_DAYS;
+        }
+        return a.periodEnd() != null && a.periodEnd().equals(b.periodEnd());
+    }
+
     private static int rank(List<String> priority, String source) {
         int index = priority.indexOf(source);
         return index < 0 ? priority.size() : index;
-    }
-
-    private static boolean sameQuarter(List<Candidate> cluster, EarningsReport report) {
-        for (Candidate member : cluster) {
-            EarningsReport other = member.r();
-            if (hasFiscal(report) && hasFiscal(other)) {
-                if (report.fiscalYear().equals(other.fiscalYear()) && report.fiscalQuarter().equals(other.fiscalQuarter())) {
-                    return true;
-                }
-                continue; // fiscal data is decisive when both sides have it
-            }
-            if (Math.abs(ChronoUnit.DAYS.between(report.date(), other.date())) <= DATE_TOLERANCE_DAYS) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /** A row known only by fiscal period: same fiscal quarter, same period end, or the first report after it. */
@@ -103,6 +97,7 @@ public final class EarningsMerger {
             target = clusters.stream()
                     .filter(cluster -> cluster.stream().noneMatch(m -> m.r().periodEnd() != null
                             && !m.r().periodEnd().equals(periodEnd)))
+                    .filter(cluster -> cluster.stream().noneMatch(m -> hasFiscal(m.r()) && hasFiscal(report)))
                     .filter(cluster -> {
                         LocalDate date = firstDate(cluster);
                         return date.isAfter(periodEnd) && !date.isAfter(periodEnd.plusDays(MAX_REPORT_LAG_DAYS));

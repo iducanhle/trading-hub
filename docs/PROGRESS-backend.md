@@ -9,8 +9,8 @@
 | 0 – Setup | Done |
 | 1 – Skeleton | Done |
 | 2 – Providers | Done |
-| 3 – Domain + REST | In progress |
-| 4 – Jobs + email | Not started |
+| 3 – Domain + REST | Done |
+| 4 – Jobs + email | In progress |
 | 5 – Deployment | Not started |
 
 ## Done
@@ -47,27 +47,27 @@
 - Live verification (2026-09-27): `LiveProvidersTest` (opt-in, `LIVE_PROVIDERS=true`) passed against the real Yahoo, Finnhub, Twelve Data and FMP APIs, and caught a null-handling bug the fixtures had missed (fixed). Running the app with the local `.env`: Yahoo session via the direct cookie + crumb, and "EU universe: all 333 symbols are known to Yahoo".
 - 89 tests (4 of them the opt-in live tests, skipped by default).
 
-**Phase 3 – Domain + REST** (in progress)
+**Phase 3 – Domain + REST**
 - `domain`: `PerformanceCalculator`, `HistoryCalculator` (DAILY/WEEKLY/MONTHLY, partial periods, cursor pages), `EarningsMath` (result, surprise), `ReactionCalculator` (BMO/DMH/AMC/UNKNOWN), `EarningsStatsCalculator`, `EarningsMerger`; unit-tested with hand-checkable series.
 - `service`: `QuoteService` (L1 60 s), `ProfileService` (`symbols/`, 7 d, fill-in from next provider, `marketCapUsd`, favicon logo), `PriceService` (`prices/`, incremental top-up, refetch on split/correction), `EarningsService` (`earnings/`, accumulating merge, `record()` for jobs), `StockExtrasService` (news/recommendations/peers), `SearchService`, `CalendarService` (`earningsCalendar/`), `FollowService`, `FollowedEarningsService`, `ViewTracker` (`viewed/`), `StockService` (composes the stock detail responses).
 - `web`: `StockController`, `CalendarController`, contract DTOs (`Dtos`), provider failures → `SYMBOL_NOT_FOUND`/`RATE_LIMITED`/`UPSTREAM_UNAVAILABLE`. `docs/CONTRACT.md` gained "Implementation notes" (no field changes).
-- 138 tests (4 opt-in live tests skipped by default).
+- Firebase emulator mode (`FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST`; refused in prod), `backend/emulator/firebase.json`, `scripts/emulator-token.sh` (verified test user → ID token), `scripts/smoke.sh`.
+- End-to-end run (2026-09-27): local Auth + Firestore emulators, real provider APIs, `smoke.sh` passed all 23 checks (health, me, search, all stock endpoints for AAPL and SAP.DE, calendar, followed earnings, 404, 400) in 33 s from cold caches. Firestore received `symbols/`, `prices/`, `earnings/`, `viewed/`, `fx/latest`. Spot checks: AAPL merges Finnhub (fiscal quarter, AMC), FMP (revenue) and Yahoo (sector, confirmed date); SAP.DE has 12 quarters with reactions, verified by hand against the bars.
+- The run exposed two earnings-merge issues, fixed: Finnhub EPS surprises outranked FMP/Yahoo (AAPL showed MISS; now BEAT), and merged records were stored with a single source tag (see Decisions).
+- 139 tests (4 opt-in live tests skipped by default).
 
 ## In progress
 
-**Phase 3 – Domain + REST** (done when all tests pass and the smoke script works locally):
-- [x] Pure, unit-tested calculators (§5): performance summary (w1/m1/ytd/y1, live quote when newer than the last bar); history aggregation DAILY/WEEKLY (ISO weeks)/MONTHLY with the unfinished period as `partial: true` and `before` cursor pagination; earnings result + surprise %; price reaction (BMO/DMH/AMC/UNKNOWN, `timeAssumed`, N = `app.earnings.window-days`); earnings stats (beat rate, streak, avg |reaction|).
-- [x] Earnings merge across providers via `ProviderRouter.all` (Finnhub → FMP → Yahoo): dedupe by fiscal (year, quarter) or report date, attach dateless fiscal rows to the first report within 100 days after the period end, max 12 quarters, accumulate in `earnings/{symbol}`.
-- [x] Price history service: `prices/{symbol}` (≤ 5 years, oldest first, compact `{d,o,h,l,c,v}`), incremental top-up, full refetch when overlapping bars disagree (split or correction), stale after 1 trading day.
-- [x] Profile service: `symbols/{symbol}` (7 days), `marketCapUsd` via `FxService`, logo fallback `https://www.google.com/s2/favicons?domain={domain}&sz=128` else null; fill missing fields (e.g. sector) from the next provider in the chain.
-- [x] Every endpoint in `docs/CONTRACT.md`: search, stock overview, prices (+ earnings markers), history, earnings, recommendations, news, peers, calendar (`earningsCalendar/{date}` docs, L1 10 min, ≤ 42 days, filters), followed earnings (`users/{uid}/follows`), `viewed/{symbol}` at most once per symbol per day.
-- [x] Validation → 400 `BAD_REQUEST`; `ProviderException` → `SYMBOL_NOT_FOUND` / `RATE_LIMITED` / `UPSTREAM_UNAVAILABLE`; `stale: true` when served from cache after a provider failure.
-- [ ] `backend/scripts/smoke.sh`: `/api/health`, then the main endpoints for AAPL and SAP.DE given a token.
-- [ ] Firebase emulator mode (local end-to-end test with real tokens and Firestore, nothing real touched).
-
+**Phase 4 – Jobs + email** (done when a job run can be triggered manually and the test email arrives):
+- [ ] Job framework: lock per job (no overlapping runs), `jobRuns/{jobName}` (`lastStart`, `lastSuccess`, `lastError`, `stats` incl. estimated Firestore reads/writes), Europe/Prague schedules.
+- [ ] `calendar-refresh` (daily 06:00; also at startup if the last success is older than 24 h): Finnhub US calendar in 7-day chunks from today−14 to today+45, profile enrichment (marketCapUsd, logo; nearest dates first, ≤ 1,500 calls, 30-day profile cache), followed + recently viewed EU symbols, FX refresh; writes `earningsCalendar/*` and `earnings/*`.
+- [ ] `eu-universe-refresh` (Sunday 03:00): next earnings dates and market caps for the EU universe via Yahoo, ≤ 1 req/s.
+- [ ] `prices-refresh` (daily 23:30): incremental bars for followed + recently viewed symbols; actuals for reports of the last 7 days.
+- [ ] `earnings-digest` (daily 12:00): §8 email via Gmail SMTP + Thymeleaf HTML + plain-text alternative, idempotent via `notificationLog/{uid}_{date}`.
+- [ ] `POST /api/admin/jobs/{jobName}/run` (202), `POST /api/notifications/test` (202 `{ sentTo }`).
 ## Next
 
-Later: Phase 4 jobs + email; Phase 5 deployment docs + CI (see §14).
+Later: Phase 5 deployment docs + CI (see §14).
 
 Notes for Phase 5:
 - GHCR is free only for **public** packages; private packages get 500 MB storage and 1 GB transfer per month on the free plan. The image contains no secrets, so the guide should make the package public, or the workflow should prune old versions.
@@ -82,7 +82,7 @@ Data gaps (details in `docs/DATA-SOURCES.md`); the API returns `null` for these,
 - **Small caps** (e.g. CEZ.PR) often lack analyst estimates; Yahoo reports missing revenue estimates as 0, which becomes `null`.
 - **FMP free tier covers only some US symbols** (AAPL yes; BRK-B, SNOW no); Finnhub + Yahoo still cover them.
 - **Peers:** Yahoo returns at most 5 (EU); **EU news** (Yahoo RSS) has no source name or image.
-- **Providers can disagree** on EPS actuals and upcoming dates; the merge order decides (Finnhub → FMP → Yahoo).
+- **Providers can disagree** on EPS actuals and upcoming dates; the merge order decides (Finnhub calendar → FMP → Yahoo → Finnhub EPS surprises). Example: Finnhub's EPS-surprise endpoint reports AAPL FQ3-2026 actual 1.91 while FMP and Yahoo report 2.02; the displayed value is 2.02.
 - **`COLTCZ.PR`** is a valid Yahoo symbol with almost no data (no name or currency in quotes).
 - **EU universe:** all 333 symbols valid on Yahoo as of 2026-09-27 (none to list as invalid). Index membership changes quarterly; the CSV is refreshed manually.
 - **UNVERIFIED:** Yahoo behaviour from the Frankfurt datacenter IP (the consent fallback is implemented and tested), Yahoo's real rate threshold, `BMO` as a Yahoo time type, FMP/Twelve Data daily reset times.
@@ -137,4 +137,7 @@ Engineering:
 - **2026-09-27 — New internal capability `LISTINGS`** (batch name/exchange lookup; Yahoo first for proper names, Finnhub directory as US fallback). Peers resolve in one call instead of 8 profile fetches.
 - **2026-09-27 — Search** asks the US and EU chains in parallel and interleaves the results after exact symbol matches, so neither region crowds out the other. Cached 10 min per query.
 - **2026-09-27 — Calendar span:** "max 42 days" is read as inclusive (`to − from + 1 ≤ 42`); documented in the contract's implementation notes.
+- **2026-09-27 — Finnhub's EPS surprises are a separate chain entry `finnhub-eps`, ranked after Yahoo.** The spec prefers "Finnhub *calendar* → FMP → Yahoo"; `/stock/earnings` is not the calendar and its actuals can disagree with FMP and Yahoo (AAPL: 1.91 vs 2.02). It still supplies fiscal quarters when nobody else has them. It shares Finnhub's rate limiter.
+- **2026-09-27 — `earnings/{symbol}` stores raw per-provider rows**, one per provider per quarter (a newer row from the same provider replaces the older one; ≤ 24 per provider). The merged view is computed on every read. Storing merged records tagged with one source would have let FMP- or Yahoo-derived values outrank fresh FMP data forever.
+- **2026-09-27 — Firebase emulator mode for local end-to-end tests:** when `FIREBASE_AUTH_EMULATOR_HOST` is set the backend starts without a key (project `demo-earnings-tracker` unless configured) and the Admin SDK uses the emulators. It is refused when `app.firebase.required=true` (prod), because emulator tokens are unsigned.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).
