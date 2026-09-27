@@ -39,3 +39,46 @@ app:
   security:
     allowed-emails: ${ALLOWED_EMAILS:}
     cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  # Findings behind these settings: docs/DATA-SOURCES.md
+  providers:
+    http:
+      connect-timeout: 5s
+      read-timeout: 20s
+      max-attempts: 3
+      initial-backoff: 500ms
+      permit-timeout: 30s
+    finnhub:
+      api-key: ${FINNHUB_API_KEY:}
+      base-url: https://finnhub.io/api/v1
+      min-interval: 1100ms      # free tier: 60 calls/min
+    twelvedata:
+      api-key: ${TWELVEDATA_API_KEY:}
+      base-url: https://api.twelvedata.com
+      min-interval: 7500ms      # free tier: 8 calls/min
+      daily-limit: 790          # free tier: 800/day
+    fmp:
+      api-key: ${FMP_API_KEY:}
+      base-url: https://financialmodelingprep.com/stable
+      min-interval: 1s
+      daily-limit: 240          # free tier: 250/day
+    yahoo:
+      query1-url: https://query1.finance.yahoo.com
+      query2-url: https://query2.finance.yahoo.com
+      cookie-url: https://fc.yahoo.com/
+      consent-url: https://guce.yahoo.com/consent
+      consent-post-url: https://consent.yahoo.com/v2/collectConsent
+      copy-consent-url: https://guce.yahoo.com/copyConsent
+      rss-url: https://feeds.finance.yahoo.com/rss/2.0/headline
+      user-agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+      min-interval: 1s          # self-imposed: at most 1 request per second
+    # Provider ids in fallback order, per capability and region. Providers without an API key are skipped.
+    chains:
+      search:            { US: [finnhub, yahoo], EU: [yahoo] }
+      quote:             { US: [finnhub, yahoo], EU: [yahoo] }
+      profile:           { US: [finnhub, yahoo], EU: [yahoo] }
+      price-history:     { US: [twelvedata, yahoo], EU: [yahoo] }
+      earnings:          { US: [finnhub, fmp, yahoo], EU: [yahoo] }
+      earnings-calendar: { US: [finnhub], EU: [] }
+      recommendations:   { US: [finnhub, yahoo], EU: [yahoo] }
+      news:              { US: [finnhub, yahoo], EU: [yahoo] }
+      peers:             { US: [finnhub, yahoo], EU: [yahoo] }

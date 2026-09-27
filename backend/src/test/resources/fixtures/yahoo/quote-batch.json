@@ -1,0 +1,32 @@
+{
+ "quoteResponse": {
+  "result": [
+   {
+    "symbol": "AAPL",
+    "currency": "USD",
+    "marketCap": 4977636933632
+   },
+   {
+    "symbol": "SAP.DE",
+    "currency": "EUR",
+    "marketCap": 214589652992
+   },
+   {
+    "symbol": "AZN.L",
+    "currency": "GBp",
+    "marketCap": 194668445696
+   },
+   {
+    "symbol": "CEZ.PR",
+    "currency": "CZK",
+    "marketCap": 724157005824
+   },
+   {
+    "symbol": "VOLV-B.ST",
+    "currency": "SEK",
+    "marketCap": 661278621696
+   }
+  ],
+  "error": null
+ }
+}

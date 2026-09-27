@@ -1,0 +1,55 @@
+{
+ "chart": {
+  "result": [
+   {
+    "meta": {
+     "currency": "GBp",
+     "exchangeName": "LSE",
+     "fullExchangeName": "LSE",
+     "instrumentType": "EQUITY",
+     "exchangeTimezoneName": "Europe/London",
+     "regularMarketPrice": 12552,
+     "regularMarketTime": 1790351140,
+     "chartPreviousClose": 12400
+    },
+    "timestamp": [
+     1790146800,
+     1790233200,
+     1790319600
+    ],
+    "indicators": {
+     "quote": [
+      {
+       "open": [
+        12564,
+        12418,
+        12400
+       ],
+       "high": [
+        12662,
+        12506,
+        12614
+       ],
+       "low": [
+        12430,
+        12316,
+        12398
+       ],
+       "close": [
+        12430,
+        12400,
+        12552
+       ],
+       "volume": [
+        1690605,
+        2112194,
+        1735781
+       ]
+      }
+     ]
+    }
+   }
+  ],
+  "error": null
+ }
+}

@@ -1,0 +1,55 @@
+{
+ "chart": {
+  "result": [
+   {
+    "meta": {
+     "currency": "USD",
+     "exchangeName": "NMS",
+     "fullExchangeName": "NasdaqGS",
+     "instrumentType": "EQUITY",
+     "exchangeTimezoneName": "America/New_York",
+     "regularMarketPrice": 341.07,
+     "regularMarketTime": 1790366401,
+     "chartPreviousClose": 335.92
+    },
+    "timestamp": [
+     1790170200,
+     1790256600,
+     1790343000
+    ],
+    "indicators": {
+     "quote": [
+      {
+       "open": [
+        341.0799865722656,
+        336.7200012207031,
+        336.0400085449219
+       ],
+       "high": [
+        341.79998779296875,
+        338.9100036621094,
+        341.6700134277344
+       ],
+       "low": [
+        335.5,
+        334.29998779296875,
+        334.5299987792969
+       ],
+       "close": [
+        null,
+        335.9200134277344,
+        341.07000732421875
+       ],
+       "volume": [
+        31658800,
+        24733100,
+        29950100
+       ]
+      }
+     ]
+    }
+   }
+  ],
+  "error": null
+ }
+}

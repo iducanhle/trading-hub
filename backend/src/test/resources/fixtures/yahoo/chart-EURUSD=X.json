@@ -1,0 +1,21 @@
+{
+ "chart": {
+  "result": [
+   {
+    "meta": {
+     "currency": "USD",
+     "symbol": "EURUSD=X",
+     "regularMarketPrice": 1.1401,
+     "regularMarketTime": 1790449497
+    },
+    "timestamp": [],
+    "indicators": {
+     "quote": [
+      {}
+     ]
+    }
+   }
+  ],
+  "error": null
+ }
+}

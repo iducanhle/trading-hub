@@ -1,0 +1,13 @@
+{
+ "metric": {
+  "52WeekHigh": 345.34,
+  "52WeekLow": 243.42,
+  "peTTM": 38.6073,
+  "epsTTM": 8.723299999999998,
+  "3MonthAverageTradingVolume": 51.87837,
+  "10DayAverageTradingVolume": 41.31066,
+  "marketCapitalization": 4977637
+ },
+ "metricType": "all",
+ "symbol": "AAPL"
+}

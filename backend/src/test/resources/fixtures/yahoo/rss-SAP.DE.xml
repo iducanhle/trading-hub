@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>SAP.DE News</title>
+<item><title>Sample headline 1 &amp; more</title><link>https://finance.yahoo.com/technology/ai/articles/sap-se-sap-ai-deepen-215039961.html?.tsrc=rss</link><pubDate>Fri, 25 Sep 2026 21:50:39 +0000</pubDate><description>Sample summary 1</description><guid>id-1</guid></item>
+<item><title>Sample headline 2 &amp; more</title><link>https://finance.yahoo.com/markets/stocks/articles/sap-stock-rises-itochu-tests-162614504.html?.tsrc=rss</link><pubDate>Fri, 25 Sep 2026 16:26:14 +0000</pubDate><description>Sample summary 2</description><guid>id-2</guid></item>
+<item><title>Sample headline 3 &amp; more</title><link>https://finance.yahoo.com/technology/ai/articles/saps-ai-platform-support-cloud-120800912.html?.tsrc=rss</link><pubDate>Fri, 25 Sep 2026 12:08:00 +0000</pubDate><description>Sample summary 3</description><guid>id-3</guid></item>
+</channel></rss>

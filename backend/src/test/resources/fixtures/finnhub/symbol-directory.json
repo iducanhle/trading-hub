@@ -1,0 +1,58 @@
+[
+ {
+  "currency": "USD",
+  "description": "APPLE INC",
+  "displaySymbol": "AAPL",
+  "mic": "XNAS",
+  "symbol": "AAPL",
+  "type": "Common Stock"
+ },
+ {
+  "currency": "USD",
+  "description": "SS SPDR S&P 500 ETF TRUST-US",
+  "displaySymbol": "SPY",
+  "mic": "ARCX",
+  "symbol": "SPY",
+  "type": "ETP"
+ },
+ {
+  "currency": "USD",
+  "description": "BERKSHIRE HATHAWAY INC-CL B",
+  "displaySymbol": "BRK.B",
+  "mic": "XNYS",
+  "symbol": "BRK.B",
+  "type": "Common Stock"
+ },
+ {
+  "currency": "USD",
+  "description": "TAIWAN SEMICONDUCTOR-SP ADR",
+  "displaySymbol": "TSM",
+  "mic": "XNYS",
+  "symbol": "TSM",
+  "type": "ADR"
+ },
+ {
+  "currency": "USD",
+  "description": "SAP SE-SPONSORED ADR",
+  "displaySymbol": "SAP",
+  "mic": "XNYS",
+  "symbol": "SAP",
+  "type": "ADR"
+ },
+ {
+  "currency": "USD",
+  "description": "REALTY INCOME CORP",
+  "displaySymbol": "O",
+  "mic": "XNYS",
+  "symbol": "O",
+  "type": "REIT"
+ },
+ {
+  "currency": "USD",
+  "description": "SAP SE (OTC)",
+  "displaySymbol": "SAPGF",
+  "mic": "OOTC",
+  "symbol": "SAPGF",
+  "type": "Common Stock"
+ }
+]

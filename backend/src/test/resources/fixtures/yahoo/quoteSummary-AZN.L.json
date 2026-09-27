@@ -1,0 +1,447 @@
+{
+ "quoteSummary": {
+  "result": [
+   {
+    "price": {
+     "currency": "GBp",
+     "exchange": "LSE",
+     "exchangeName": "LSE",
+     "quoteType": "EQUITY",
+     "longName": "AstraZeneca PLC",
+     "shortName": "ASTRAZENECA PLC ORD SHS $0.25",
+     "marketCap": {
+      "raw": 194667184128,
+      "fmt": "194.67B",
+      "longFmt": "194,667,184,128.00"
+     },
+     "regularMarketPrice": {
+      "raw": 12552,
+      "fmt": "12,552.00"
+     }
+    },
+    "summaryDetail": {
+     "currency": "GBp",
+     "marketCap": {
+      "raw": 194667184128,
+      "fmt": "194.67B",
+      "longFmt": "194,667,184,128"
+     },
+     "trailingPE": {
+      "raw": 25.05389,
+      "fmt": "25.05"
+     },
+     "fiftyTwoWeekHigh": {
+      "raw": 15732,
+      "fmt": "15,732.00"
+     },
+     "fiftyTwoWeekLow": {
+      "raw": 9892,
+      "fmt": "9,892.00"
+     },
+     "averageVolume": {
+      "raw": 3362622,
+      "fmt": "3.36M",
+      "longFmt": "3,362,622"
+     }
+    },
+    "defaultKeyStatistics": {
+     "trailingEps": {
+      "raw": 5.01,
+      "fmt": "5.01"
+     }
+    },
+    "assetProfile": {
+     "sector": "Healthcare",
+     "industry": "Drug Manufacturers - General",
+     "website": "https://www.astrazeneca.com",
+     "country": "United Kingdom"
+    },
+    "earnings": {
+     "financialCurrency": "USD",
+     "financialsChart": {
+      "yearly": [
+       {
+        "date": 2022,
+        "revenue": {
+         "raw": 44351000000,
+         "fmt": "44.35B",
+         "longFmt": "44,351,000,000"
+        },
+        "earnings": {
+         "raw": 3288000000,
+         "fmt": "3.29B",
+         "longFmt": "3,288,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.07413587,
+         "fmt": "7.41%"
+        }
+       },
+       {
+        "date": 2023,
+        "revenue": {
+         "raw": 45811000000,
+         "fmt": "45.81B",
+         "longFmt": "45,811,000,000"
+        },
+        "earnings": {
+         "raw": 5961000000,
+         "fmt": "5.96B",
+         "longFmt": "5,961,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.13012159,
+         "fmt": "13.01%"
+        }
+       },
+       {
+        "date": 2024,
+        "revenue": {
+         "raw": 54073000000,
+         "fmt": "54.07B",
+         "longFmt": "54,073,000,000"
+        },
+        "earnings": {
+         "raw": 7035000000,
+         "fmt": "7.04B",
+         "longFmt": "7,035,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.13010189,
+         "fmt": "13.01%"
+        }
+       },
+       {
+        "date": 2025,
+        "revenue": {
+         "raw": 58739000000,
+         "fmt": "58.74B",
+         "longFmt": "58,739,000,000"
+        },
+        "earnings": {
+         "raw": 10225000000,
+         "fmt": "10.22B",
+         "longFmt": "10,225,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.17407516,
+         "fmt": "17.41%"
+        }
+       }
+      ],
+      "quarterly": [
+       {
+        "date": "3Q2025",
+        "fiscalQuarter": "3Q2025",
+        "revenue": {
+         "raw": 15191000000,
+         "fmt": "15.19B",
+         "longFmt": "15,191,000,000"
+        },
+        "earnings": {
+         "raw": 2533000000,
+         "fmt": "2.53B",
+         "longFmt": "2,533,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.16674346,
+         "fmt": "16.67%"
+        }
+       },
+       {
+        "date": "4Q2025",
+        "fiscalQuarter": "4Q2025",
+        "revenue": {
+         "raw": 15503000000,
+         "fmt": "15.5B",
+         "longFmt": "15,503,000,000"
+        },
+        "earnings": {
+         "raw": 2326000000,
+         "fmt": "2.33B",
+         "longFmt": "2,326,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.15003549,
+         "fmt": "15.00%"
+        }
+       },
+       {
+        "date": "1Q2026",
+        "fiscalQuarter": "1Q2026",
+        "revenue": {
+         "raw": 15288000000,
+         "fmt": "15.29B",
+         "longFmt": "15,288,000,000"
+        },
+        "earnings": {
+         "raw": 3080000000,
+         "fmt": "3.08B",
+         "longFmt": "3,080,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.20146519,
+         "fmt": "20.15%"
+        }
+       },
+       {
+        "date": "2Q2026",
+        "fiscalQuarter": "2Q2026",
+        "revenue": {
+         "raw": 15384000000,
+         "fmt": "15.38B",
+         "longFmt": "15,384,000,000"
+        },
+        "earnings": {
+         "raw": 2507000000,
+         "fmt": "2.51B",
+         "longFmt": "2,507,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.16296151,
+         "fmt": "16.30%"
+        }
+       }
+      ]
+     }
+    },
+    "earningsHistory": {
+     "history": [
+      {
+       "maxAge": 1,
+       "epsActual": {
+        "raw": 2.38,
+        "fmt": "2.38"
+       },
+       "epsEstimate": {
+        "raw": 2.26974,
+        "fmt": "2.27"
+       },
+       "epsDifference": {
+        "raw": 0.11,
+        "fmt": "0.11"
+       },
+       "surprisePercent": {
+        "raw": 0.048600003,
+        "fmt": "4.86%"
+       },
+       "quarter": {
+        "raw": 1759190400,
+        "fmt": "2025-09-30"
+       },
+       "currency": "USD",
+       "period": "-4q"
+      },
+      {
+       "maxAge": 1,
+       "epsActual": {
+        "raw": 2.12,
+        "fmt": "2.12"
+       },
+       "epsEstimate": {
+        "raw": 2.07851,
+        "fmt": "2.08"
+       },
+       "epsDifference": {
+        "raw": 0.04,
+        "fmt": "0.04"
+       },
+       "surprisePercent": {
+        "raw": 0.02,
+        "fmt": "2.00%"
+       },
+       "quarter": {
+        "raw": 1767139200,
+        "fmt": "2025-12-31"
+       },
+       "currency": "USD",
+       "period": "-3q"
+      },
+      {
+       "maxAge": 1,
+       "epsActual": {
+        "raw": 2.58,
+        "fmt": "2.58"
+       },
+       "epsEstimate": {
+        "raw": 2.52067,
+        "fmt": "2.52"
+       },
+       "epsDifference": {
+        "raw": 0.06,
+        "fmt": "0.06"
+       },
+       "surprisePercent": {
+        "raw": 0.0235,
+        "fmt": "2.35%"
+       },
+       "quarter": {
+        "raw": 1774915200,
+        "fmt": "2026-03-31"
+       },
+       "currency": "USD",
+       "period": "-2q"
+      },
+      {
+       "maxAge": 1,
+       "epsActual": {
+        "raw": 2.63,
+        "fmt": "2.63"
+       },
+       "epsEstimate": {
+        "raw": 2.47468,
+        "fmt": "2.47"
+       },
+       "epsDifference": {
+        "raw": 0.16,
+        "fmt": "0.16"
+       },
+       "surprisePercent": {
+        "raw": 0.062800005,
+        "fmt": "6.28%"
+       },
+       "quarter": {
+        "raw": 1782777600,
+        "fmt": "2026-06-30"
+       },
+       "currency": "USD",
+       "period": "-1q"
+      }
+     ],
+     "defaultMethodology": "nongaap",
+     "maxAge": 86400
+    },
+    "calendarEvents": {
+     "earnings": {
+      "earningsDate": [
+       {
+        "raw": 1793374200,
+        "fmt": "2026-10-30"
+       }
+      ],
+      "earningsAverage": {
+       "raw": 2.62517,
+       "fmt": "2.63"
+      },
+      "revenueAverage": {
+       "raw": 16074571160,
+       "fmt": "16.07B",
+       "longFmt": "16,074,571,160"
+      },
+      "isEarningsDateEstimate": false
+     }
+    },
+    "earningsTrend": {
+     "trend": [
+      {
+       "period": "0q",
+       "endDate": "2026-09-30",
+       "earningsEstimate": {
+        "avg": {
+         "raw": 2.62517,
+         "fmt": "2.63"
+        }
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 16074571160,
+         "fmt": "16.07B",
+         "longFmt": "16,074,571,160"
+        }
+       }
+      },
+      {
+       "period": "+1q",
+       "endDate": "2026-12-31",
+       "earningsEstimate": {
+        "avg": {
+         "raw": 2.3755,
+         "fmt": "2.38"
+        }
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 16702574219,
+         "fmt": "16.7B",
+         "longFmt": "16,702,574,219"
+        }
+       }
+      },
+      {
+       "period": "0y",
+       "endDate": "2026-12-31",
+       "earningsEstimate": {
+        "avg": {
+         "raw": 10.25368,
+         "fmt": "10.25"
+        }
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 63165773650,
+         "fmt": "63.17B",
+         "longFmt": "63,165,773,650"
+        }
+       }
+      },
+      {
+       "period": "+1y",
+       "endDate": "2027-12-31",
+       "earningsEstimate": {
+        "avg": {
+         "raw": 11.44976,
+         "fmt": "11.45"
+        }
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 67011470460,
+         "fmt": "67.01B",
+         "longFmt": "67,011,470,460"
+        }
+       }
+      }
+     ]
+    },
+    "recommendationTrend": {
+     "trend": [
+      {
+       "period": "0m",
+       "strongBuy": 6,
+       "buy": 14,
+       "hold": 4,
+       "sell": 1,
+       "strongSell": 0
+      },
+      {
+       "period": "-1m",
+       "strongBuy": 5,
+       "buy": 14,
+       "hold": 3,
+       "sell": 2,
+       "strongSell": 0
+      },
+      {
+       "period": "-2m",
+       "strongBuy": 4,
+       "buy": 14,
+       "hold": 4,
+       "sell": 2,
+       "strongSell": 0
+      },
+      {
+       "period": "-3m",
+       "strongBuy": 4,
+       "buy": 15,
+       "hold": 3,
+       "sell": 2,
+       "strongSell": 0
+      }
+     ],
+     "maxAge": 86400
+    }
+   }
+  ],
+  "error": null
+ }
+}

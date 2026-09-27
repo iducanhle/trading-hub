@@ -1,0 +1,48 @@
+{
+ "earningsCalendar": [
+  {
+   "symbol": "AAPL",
+   "date": "2026-09-18",
+   "hour": "bmo",
+   "quarter": 2,
+   "year": 2026,
+   "epsEstimate": -1.0336,
+   "epsActual": -8.75,
+   "revenueEstimate": 0,
+   "revenueActual": 0
+  },
+  {
+   "symbol": "BRK.B",
+   "date": "2026-09-18",
+   "hour": "amc",
+   "quarter": 2,
+   "year": 2026,
+   "epsEstimate": -0.5406,
+   "epsActual": -0.96,
+   "revenueEstimate": 0,
+   "revenueActual": 0
+  },
+  {
+   "symbol": "TSM",
+   "date": "2026-09-18",
+   "hour": "",
+   "quarter": 2,
+   "year": 2026,
+   "epsEstimate": null,
+   "epsActual": null,
+   "revenueEstimate": null,
+   "revenueActual": null
+  },
+  {
+   "symbol": "SAPGF",
+   "date": "2026-09-18",
+   "hour": "",
+   "quarter": 2,
+   "year": 2026,
+   "epsEstimate": null,
+   "epsActual": null,
+   "revenueEstimate": null,
+   "revenueActual": null
+  }
+ ]
+}

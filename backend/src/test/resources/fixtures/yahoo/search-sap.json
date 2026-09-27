@@ -1,0 +1,61 @@
+{
+ "quotes": [
+  {
+   "symbol": "SAP",
+   "quoteType": "EQUITY",
+   "exchange": "NYQ",
+   "exchDisp": "NYSE",
+   "shortname": "SAP  SE",
+   "longname": "SAP SE"
+  },
+  {
+   "symbol": "SAP.DE",
+   "quoteType": "EQUITY",
+   "exchange": "GER",
+   "exchDisp": "XETRA",
+   "shortname": "SAP SE                        I",
+   "longname": "SAP SE"
+  },
+  {
+   "symbol": "SAP.TO",
+   "quoteType": "EQUITY",
+   "exchange": "TOR",
+   "exchDisp": "Toronto",
+   "shortname": "SAPUTO INC.",
+   "longname": "Saputo Inc."
+  },
+  {
+   "symbol": "SAPGF",
+   "quoteType": "EQUITY",
+   "exchange": "PNK",
+   "exchDisp": "OTC Markets",
+   "shortname": "SAP SE",
+   "longname": "SAP SE"
+  },
+  {
+   "symbol": "SPPJY",
+   "quoteType": "EQUITY",
+   "exchange": "OQX",
+   "exchDisp": "OQX",
+   "shortname": "Sappi Ltd.",
+   "longname": "Sappi Limited"
+  },
+  {
+   "symbol": "SAP.JO",
+   "quoteType": "EQUITY",
+   "exchange": "JNB",
+   "exchDisp": "Johannesburg Stock Exchange",
+   "shortname": "Sappi Ltd",
+   "longname": "Sappi Limited"
+  },
+  {
+   "symbol": "SAPR11.SA",
+   "quoteType": "EQUITY",
+   "exchange": "SAO",
+   "exchDisp": "São Paulo",
+   "shortname": "SANEPAR     UNT     N2",
+   "longname": "Companhia de Saneamento do Paraná - SANEPAR"
+  }
+ ],
+ "news": []
+}

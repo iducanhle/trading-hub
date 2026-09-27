@@ -1,0 +1,60 @@
+{
+ "finance": {
+  "result": [
+   {
+    "documents": [
+     {
+      "columns": [
+       {
+        "id": "ticker"
+       },
+       {
+        "id": "startdatetime"
+       },
+       {
+        "id": "startdatetimetype"
+       },
+       {
+        "id": "epsestimate"
+       },
+       {
+        "id": "epsactual"
+       }
+      ],
+      "rows": [
+       [
+        "CEZ.PR",
+        "2026-11-12T14:30:00.000Z",
+        "TNS",
+        null,
+        null
+       ],
+       [
+        "CEZ.PR",
+        "2026-03-12T07:02:00.000Z",
+        "TAS",
+        9.57,
+        11.1
+       ],
+       [
+        "CEZ.PR",
+        "2025-11-11T06:26:17.000Z",
+        "TAS",
+        9.2,
+        10.3
+       ],
+       [
+        "CEZ.PR",
+        "2025-08-06T00:00:00.000Z",
+        "TAS",
+        9.03,
+        7.4
+       ]
+      ]
+     }
+    ]
+   }
+  ],
+  "error": null
+ }
+}

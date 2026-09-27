@@ -9,7 +9,7 @@ What the free data providers really return, from live probes run on **2026-09-27
 | **Finnhub** | US only. Every EU symbol and every unknown symbol returns `403` | US search, quote, profile, key stats, earnings calendar, recent EPS, recommendations, news, peers, US symbol directory | 60 calls/min (headers `x-ratelimit-limit/remaining/reset`) |
 | **Twelve Data** | US only (EU: `404 … available starting with the Grow plan`) | US daily OHLCV | 8 credits/min, 800/day, 1 credit per call, including `/api_usage` |
 | **Yahoo Finance** (unofficial) | US + all supported EU exchanges | Everything for EU; fallback for US; FX; EU universe validation | Self-limited to ≤ 1 req/s (Yahoo's real threshold is **UNVERIFIED**) |
-| **FMP** (stable API) | US only (EU: `402 Premium Query Parameter`) | Historical US earnings: report dates, EPS and revenue, estimate vs actual | 250 calls/day (from FMP's docs; not exhausted in the probe) |
+| **FMP** (stable API) | **Some** US symbols only: AAPL works; BRK-B, SNOW and all EU symbols answer `402 Premium Query Parameter` | Historical US earnings: report dates, EPS and revenue, estimate vs actual | 250 calls/day (from FMP's docs; not exhausted in the probe) |
 
 ## Finnhub (`https://finnhub.io/api/v1`, header `X-Finnhub-Token`)
 
@@ -70,11 +70,13 @@ What the free data providers really return, from live probes run on **2026-09-27
 - **LSE:** `AZN.L` prices, OHLC and 52-week values are in pence (`currency: "GBp"`, 12552), but `marketCap` is in **GBP** (194.7 bn) and `trailingEps` is in **GBP** (`trailingPE` = 125.52 / 5.01). Normalize pence by dividing by 100 and relabelling as `GBP`.
 - **Earnings currency ≠ trading currency:** earnings EPS and revenue are in `financialCurrency`, which differs from the trading currency for some stocks (**AZN.L reports in USD**). Every earnings value carries its own currency (`EarningsQuarter.currency` in the contract).
 
-## FMP (`https://financialmodelingprep.com/stable`, query `apikey`)
+## FMP (`https://financialmodelingprep.com/stable`, header `apikey`)
+
+The key also works as an `apikey` **header** (verified), so it never appears in URLs or error messages. Without a key: `401 Invalid API KEY`.
 
 | Endpoint | Findings |
 |---|---|
-| `/earnings?symbol=` | **165 rows for AAPL** (1985 → next report 2026-10-29): `{date (report date), epsActual, epsEstimated, revenueActual, revenueEstimated, lastUpdated}`. No fiscal quarter/year, no report time. EU symbols: `402`. |
+| `/earnings?symbol=` | **165 rows for AAPL** (1985 → next report 2026-10-29): `{date (report date), epsActual, epsEstimated, revenueActual, revenueEstimated, lastUpdated}`. No fiscal quarter/year, no report time. The free tier covers only a subset of US symbols (`BRK-B` and `SNOW` → `402`); EU symbols: `402`. |
 | `/earnings-calendar` | 1 row for a 7-day window: not usable on the free tier. |
 | legacy `/api/v3/...` | `403 Legacy Endpoint`: only for subscriptions from before 2025-08-31. |
 

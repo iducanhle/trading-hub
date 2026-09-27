@@ -1,0 +1,35 @@
+[
+ {
+  "category": "company",
+  "datetime": 1790437800,
+  "headline": "Sample headline 1",
+  "id": 142439316,
+  "image": "https://s.yimg.com/rz/stage/p/yahoo_finance_en-US_h_p_finance_2.png",
+  "related": "AAPL",
+  "source": "Yahoo",
+  "summary": "Sample summary 1",
+  "url": "https://finnhub.io/api/news?id=2b5166a182adcc0ae68ee08893cc938f55d81d7ccd3d29278e36df06bfc30bd9"
+ },
+ {
+  "category": "company",
+  "datetime": 1790436774,
+  "headline": "Sample headline 2",
+  "id": 142438703,
+  "image": "",
+  "related": "AAPL",
+  "source": "Yahoo",
+  "summary": "Sample summary 2",
+  "url": "https://finnhub.io/api/news?id=5cd135f9d84fb4ec9a0e1e48e0bb5cddb69504c96e4abfaebcfa96535f35ffdd"
+ },
+ {
+  "category": "company",
+  "datetime": 1790436420,
+  "headline": "Sample headline 3",
+  "id": 142438690,
+  "image": "https://s.yimg.com/rz/stage/p/yahoo_finance_en-US_h_p_finance_2.png",
+  "related": "AAPL",
+  "source": "Yahoo",
+  "summary": "",
+  "url": "https://finnhub.io/api/news?id=4f5defc81f8010b9fad362a7d3652e507bdcae3903427d40d98caaf521341c4b"
+ }
+]

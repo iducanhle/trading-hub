@@ -1,0 +1,139 @@
+{
+ "finance": {
+  "result": [
+   {
+    "documents": [
+     {
+      "columns": [
+       {
+        "id": "ticker",
+        "label": "Symbol",
+        "type": "STRING"
+       },
+       {
+        "id": "companyshortname",
+        "label": "Company Name",
+        "type": "STRING"
+       },
+       {
+        "id": "eventname",
+        "label": "Event Name",
+        "type": "STRING"
+       },
+       {
+        "id": "startdatetime",
+        "label": "Event Start Date",
+        "type": "DATE"
+       },
+       {
+        "id": "startdatetimetype",
+        "label": "Event Start Date",
+        "type": "STRING"
+       },
+       {
+        "id": "timeZoneShortName",
+        "label": "Timezone short name",
+        "type": "STRING"
+       },
+       {
+        "id": "epsestimate",
+        "label": "EPS Estimate",
+        "type": "NUMBER"
+       },
+       {
+        "id": "epsactual",
+        "label": "Reported EPS",
+        "type": "NUMBER"
+       },
+       {
+        "id": "epssurprisepct",
+        "label": "Surprise (%)",
+        "type": "NUMBER"
+       },
+       {
+        "id": "eventtype",
+        "label": "Event Type",
+        "type": "STRING"
+       }
+      ],
+      "rows": [
+       [
+        "SAP.DE",
+        "SAP SE",
+        "Q3 2026 Earnings Announcement",
+        "2026-10-21T15:30:00.000Z",
+        "TNS",
+        "CEST",
+        1.83,
+        null,
+        0,
+        "EAD"
+       ],
+       [
+        "SAP.DE",
+        "SAP SE",
+        null,
+        "2026-07-23T00:00:00.000Z",
+        "TAS",
+        "CEST",
+        1.75,
+        1.59,
+        -9.29,
+        "ERA"
+       ],
+       [
+        "SAP.DE",
+        "SAP SE",
+        null,
+        "2026-04-23T20:05:00.000Z",
+        "TAS",
+        "CEST",
+        1.66,
+        1.72,
+        3.66,
+        "ERA"
+       ],
+       [
+        "SAP.DE",
+        "SAP SE",
+        null,
+        "2026-01-29T05:21:28.000Z",
+        "TAS",
+        "CET",
+        1.51,
+        1.62,
+        7.6,
+        "ERA"
+       ],
+       [
+        "SAP.DE",
+        "SAP SE",
+        null,
+        "2025-10-22T20:05:00.000Z",
+        "TAS",
+        "CEST",
+        1.5,
+        1.59,
+        5.65,
+        "ERA"
+       ],
+       [
+        "SAP.DE",
+        "SAP SE",
+        null,
+        "2025-07-22T20:05:00.000Z",
+        "TAS",
+        "CEST",
+        1.45,
+        1.5,
+        3.77,
+        "ERA"
+       ]
+      ]
+     }
+    ]
+   }
+  ],
+  "error": null
+ }
+}

@@ -1,0 +1,384 @@
+{
+ "quoteSummary": {
+  "result": [
+   {
+    "price": {
+     "currency": "CZK",
+     "exchange": "PRA",
+     "exchangeName": "Prague",
+     "quoteType": "EQUITY",
+     "longName": "CEZ, a. s.",
+     "shortName": "CEZ",
+     "marketCap": {
+      "raw": 724157005824,
+      "fmt": "724.16B",
+      "longFmt": "724,157,005,824.00"
+     },
+     "regularMarketPrice": {
+      "raw": 1349,
+      "fmt": "1,349.00"
+     }
+    },
+    "summaryDetail": {
+     "currency": "CZK",
+     "marketCap": {
+      "raw": 724157005824,
+      "fmt": "724.16B",
+      "longFmt": "724,157,005,824"
+     },
+     "trailingPE": {
+      "raw": 25.046417,
+      "fmt": "25.05"
+     },
+     "fiftyTwoWeekHigh": {
+      "raw": 1398,
+      "fmt": "1,398.00"
+     },
+     "fiftyTwoWeekLow": {
+      "raw": 1086,
+      "fmt": "1,086.00"
+     },
+     "averageVolume": {
+      "raw": 103088,
+      "fmt": "103.09k",
+      "longFmt": "103,088"
+     }
+    },
+    "defaultKeyStatistics": {
+     "trailingEps": {
+      "raw": 53.86,
+      "fmt": "53.86"
+     }
+    },
+    "assetProfile": {
+     "sector": "Utilities",
+     "industry": "Utilities - Regulated Electric",
+     "website": "https://www.cez.cz",
+     "country": "Czech Republic"
+    },
+    "earnings": {
+     "financialCurrency": "CZK",
+     "financialsChart": {
+      "yearly": [
+       {
+        "date": 2022,
+        "revenue": {
+         "raw": 288485000000,
+         "fmt": "288.49B",
+         "longFmt": "288,485,000,000"
+        },
+        "earnings": {
+         "raw": 80786000000,
+         "fmt": "80.79B",
+         "longFmt": "80,786,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.28003535,
+         "fmt": "28.00%"
+        }
+       },
+       {
+        "date": 2023,
+        "revenue": {
+         "raw": 340585000000,
+         "fmt": "340.58B",
+         "longFmt": "340,585,000,000"
+        },
+        "earnings": {
+         "raw": 29524000000,
+         "fmt": "29.52B",
+         "longFmt": "29,524,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.08668615,
+         "fmt": "8.67%"
+        }
+       },
+       {
+        "date": 2024,
+        "revenue": {
+         "raw": 344709000000,
+         "fmt": "344.71B",
+         "longFmt": "344,709,000,000"
+        },
+        "earnings": {
+         "raw": 29933000000,
+         "fmt": "29.93B",
+         "longFmt": "29,933,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.08683556,
+         "fmt": "8.68%"
+        }
+       },
+       {
+        "date": 2025,
+        "revenue": {
+         "raw": 333388000000,
+         "fmt": "333.39B",
+         "longFmt": "333,388,000,000"
+        },
+        "earnings": {
+         "raw": 28107000000,
+         "fmt": "28.11B",
+         "longFmt": "28,107,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.08430718,
+         "fmt": "8.43%"
+        }
+       }
+      ],
+      "quarterly": [
+       {
+        "date": "3Q2025",
+        "fiscalQuarter": "3Q2025",
+        "revenue": {
+         "raw": 72861000000,
+         "fmt": "72.86B",
+         "longFmt": "72,861,000,000"
+        },
+        "earnings": {
+         "raw": 5513000000,
+         "fmt": "5.51B",
+         "longFmt": "5,513,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.075664625,
+         "fmt": "7.57%"
+        }
+       },
+       {
+        "date": "4Q2025",
+        "fiscalQuarter": "4Q2025",
+        "revenue": {
+         "raw": 92986000000,
+         "fmt": "92.99B",
+         "longFmt": "92,986,000,000"
+        },
+        "earnings": {
+         "raw": 5945000000,
+         "fmt": "5.95B",
+         "longFmt": "5,945,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.063934356,
+         "fmt": "6.39%"
+        }
+       },
+       {
+        "date": "1Q2026",
+        "fiscalQuarter": "1Q2026",
+        "revenue": {
+         "raw": 84981000000,
+         "fmt": "84.98B",
+         "longFmt": "84,981,000,000"
+        },
+        "earnings": {
+         "raw": 13498000000,
+         "fmt": "13.5B",
+         "longFmt": "13,498,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.15883552,
+         "fmt": "15.88%"
+        }
+       },
+       {
+        "date": "2Q2026",
+        "fiscalQuarter": "2Q2026",
+        "revenue": {
+         "raw": 74746000000,
+         "fmt": "74.75B",
+         "longFmt": "74,746,000,000"
+        },
+        "earnings": {
+         "raw": 3600000000,
+         "fmt": "3.6B",
+         "longFmt": "3,600,000,000"
+        },
+        "profitMargin": {
+         "raw": 0.04816311,
+         "fmt": "4.82%"
+        }
+       }
+      ]
+     }
+    },
+    "earningsHistory": {
+     "history": [
+      {
+       "maxAge": 1,
+       "epsActual": {
+        "raw": 10.3,
+        "fmt": "10.3"
+       },
+       "epsEstimate": {
+        "raw": 9.19698,
+        "fmt": "9.2"
+       },
+       "epsDifference": {
+        "raw": 1.1,
+        "fmt": "1.1"
+       },
+       "surprisePercent": {
+        "raw": 0.119899996,
+        "fmt": "11.99%"
+       },
+       "quarter": {
+        "raw": 1759190400,
+        "fmt": "2025-09-30"
+       },
+       "currency": "CZK",
+       "period": "-4q"
+      },
+      {
+       "maxAge": 1,
+       "epsActual": {
+        "raw": 11.1,
+        "fmt": "11.1"
+       },
+       "epsEstimate": {
+        "raw": 9.56851,
+        "fmt": "9.57"
+       },
+       "epsDifference": {
+        "raw": 1.53,
+        "fmt": "1.53"
+       },
+       "surprisePercent": {
+        "raw": 0.1601,
+        "fmt": "16.01%"
+       },
+       "quarter": {
+        "raw": 1767139200,
+        "fmt": "2025-12-31"
+       },
+       "currency": "CZK",
+       "period": "-3q"
+      }
+     ],
+     "defaultMethodology": "nongaap",
+     "maxAge": 86400
+    },
+    "calendarEvents": {
+     "earnings": {
+      "earningsDate": [
+       {
+        "raw": 1794493800,
+        "fmt": "2026-11-12"
+       }
+      ],
+      "earningsAverage": {},
+      "revenueAverage": {},
+      "isEarningsDateEstimate": false
+     }
+    },
+    "earningsTrend": {
+     "trend": [
+      {
+       "period": "0q",
+       "endDate": "2026-09-30",
+       "earningsEstimate": {
+        "avg": {}
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 0,
+         "fmt": null,
+         "longFmt": "0"
+        }
+       }
+      },
+      {
+       "period": "+1q",
+       "endDate": null,
+       "earningsEstimate": {
+        "avg": {}
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 0,
+         "fmt": null,
+         "longFmt": "0"
+        }
+       }
+      },
+      {
+       "period": "0y",
+       "endDate": "2026-12-31",
+       "earningsEstimate": {
+        "avg": {
+         "raw": 65.03385,
+         "fmt": "65.03"
+        }
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 317492986500,
+         "fmt": "317.49B",
+         "longFmt": "317,492,986,500"
+        }
+       }
+      },
+      {
+       "period": "+1y",
+       "endDate": "2027-12-31",
+       "earningsEstimate": {
+        "avg": {
+         "raw": 61.83363,
+         "fmt": "61.83"
+        }
+       },
+       "revenueEstimate": {
+        "avg": {
+         "raw": 301224483740,
+         "fmt": "301.22B",
+         "longFmt": "301,224,483,740"
+        }
+       }
+      }
+     ]
+    },
+    "recommendationTrend": {
+     "trend": [
+      {
+       "period": "0m",
+       "strongBuy": 1,
+       "buy": 1,
+       "hold": 3,
+       "sell": 6,
+       "strongSell": 0
+      },
+      {
+       "period": "-1m",
+       "strongBuy": 1,
+       "buy": 1,
+       "hold": 2,
+       "sell": 7,
+       "strongSell": 0
+      },
+      {
+       "period": "-2m",
+       "strongBuy": 1,
+       "buy": 1,
+       "hold": 2,
+       "sell": 6,
+       "strongSell": 0
+      },
+      {
+       "period": "-3m",
+       "strongBuy": 1,
+       "buy": 0,
+       "hold": 1,
+       "sell": 7,
+       "strongSell": 1
+      }
+     ],
+     "maxAge": 86400
+    }
+   }
+  ],
+  "error": null
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "finance": {
+  "result": [
+   {
+    "symbol": "SAP.DE",
+    "recommendedSymbols": [
+     {
+      "symbol": "SIE.DE",
+      "score": 0.11882
+     },
+     {
+      "symbol": "ALV.DE",
+      "score": 0.11126
+     },
+     {
+      "symbol": "BAS.DE",
+      "score": 0.103622
+     },
+     {
+      "symbol": "DTE.DE",
+      "score": 0.093236
+     },
+     {
+      "symbol": "BAYN.DE",
+      "score": 0.08711
+     }
+    ]
+   }
+  ],
+  "error": null
+ }
+}

@@ -36,18 +36,24 @@
   - `caddy validate` (Caddy 2.11.4): valid, already formatted.
 - Tests (21, all green): security integration tests (401 missing/invalid token, 403 not allowlisted, 403 unverified, 200 `/api/me`, 404 format, CORS preflight allow/deny, public docs, protected actuator), allowlist, Firebase startup, `.env` parser.
 
+**Phase 2 – Providers** (in progress)
+- Probe results in `docs/DATA-SOURCES.md`.
+- `market` package: `Exchange` registry (suffix, currency, timezone, session hours → BMO/DMH/AMC classification), `Symbols` (canonical validation, region, `BRK-B` ↔ `BRK.B`), `Money` (pence → GBP), `PriceBars` (drops the unfinished session), plain records shared by all providers.
+- `provider` package: 9 capability interfaces + `FxRateProvider`; `ProviderRouter` (per-region fallback chains from `app.providers.chains`, validated at startup; `first` and `all` modes); `ProviderHttp` (Resilience4j rate limiter + retry with exponential backoff and jitter, daily quotas, safe error mapping).
+- Adapters: `FinnhubProvider` (+ US symbol directory), `TwelveDataProvider`, `YahooProvider` (+ `YahooSession` cookie/crumb/consent, `YahooEarnings` merge), `FmpProvider`; 43 adapter and infrastructure tests on MockWebServer with small recorded fixtures.
+
 ## In progress
 
 **Phase 2 – Providers** (done when adapter tests pass and probe results are documented):
 - [x] Probe step: live calls to Yahoo, Finnhub, Twelve Data and FMP; findings, gaps, UNVERIFIED items and the resulting fallback chains in [DATA-SOURCES.md](DATA-SOURCES.md).
-- [ ] One interface per capability (`SymbolSearchProvider`, `QuoteProvider`, `ProfileProvider`, `PriceHistoryProvider`, `EarningsProvider`, `EarningsCalendarProvider`, `RecommendationProvider`, `NewsProvider`, `PeersProvider`), routed by region through ordered fallback chains configured in `application.yml`.
-- [ ] Adapters (`RestClient`):
+- [x] One interface per capability (`SymbolSearchProvider`, `QuoteProvider`, `ProfileProvider`, `PriceHistoryProvider`, `EarningsProvider`, `EarningsCalendarProvider`, `RecommendationProvider`, `NewsProvider`, `PeersProvider`), routed by region through ordered fallback chains configured in `application.yml`.
+- [x] Adapters (`RestClient`):
   - Finnhub (60/min).
   - Twelve Data (8/min, 800/day, with a daily call counter).
   - Yahoo (cookie + crumb, EU consent redirect, realistic User-Agent, ≤1 req/s, isolated in one adapter).
   - FMP (only when `FMP_API_KEY` is set).
-- [ ] Symbol mapping canonical (Yahoo-style) ↔ provider formats (e.g. `BRK-B` ↔ `BRK.B`).
-- [ ] Per-provider rate limiter + retry with exponential backoff and jitter. Missing keys: warn and fall back to Yahoo.
+- [x] Symbol mapping canonical (Yahoo-style) ↔ provider formats (e.g. `BRK-B` ↔ `BRK.B`).
+- [x] Per-provider rate limiter + retry with exponential backoff and jitter. Missing keys: warn and fall back to Yahoo.
 - [ ] Cache layer: L1 Caffeine + L2 Firestore (via `FirebaseAppHolder`; L1 only when Firebase is absent), serving stale data with `stale: true` when a provider fails.
 - [ ] FX to USD via Yahoo chart (`EURUSD=X`, …). Pence (GBp/GBX) → GBP.
 - [ ] `eu-universe.csv` (DAX 40, CAC 40, AEX, FTSE 100, SMI, IBEX 35, FTSE MIB, OMXS30, PX) validated at startup; list invalid symbols under Known issues.
@@ -92,4 +98,12 @@ Notes for Phase 5:
 - **2026-09-27 — EU news = Yahoo RSS** (`feeds.finance.yahoo.com/rss/2.0/headline?s=`), because Finnhub news is US-only and Yahoo search returns news only for text queries.
 - **2026-09-27 — A Finnhub `403` means "try the next provider", never "symbol not found"**: Finnhub answers `403` both for EU/premium data and for unknown symbols. `SYMBOL_NOT_FOUND` comes only from Yahoo's `404` (or empty results from every provider).
 - **2026-09-27 — FMP is US-only** (EU returns `402`), so it sits in the US earnings chain only.
+- **2026-09-27 — Resilience4j core modules** (`ratelimiter`, `retry`) without the Spring Boot integration, avoiding Boot 4 compatibility risk. Each provider gets a smooth limiter (1 permit per `min-interval`: Finnhub 1.1 s, Twelve Data 7.5 s, Yahoo 1 s, FMP 1 s). Only transient failures are retried (5xx, 429, I/O): 3 attempts, backoff 500 ms doubling with ±50% jitter. A retried attempt takes a new permit.
+- **2026-09-27 — Daily quotas are in-memory counters per UTC day** (Twelve Data 790, FMP 240: margins below 800/250). A restart resets them; if a provider then answers 429 the chain falls back, which is acceptable for two users.
+- **2026-09-27 — API keys travel only in headers** (`X-Finnhub-Token`, `Authorization: apikey`, `apikey`), so they never appear in URLs, and `ProviderException` messages never contain URLs. Tests assert that no request target contains the key.
+- **2026-09-27 — Zero estimates become `null`** (Yahoo `earningsTrend`/`calendarEvents` revenue, Finnhub calendar `revenueEstimate`): providers use 0 for "no estimate". Actuals keep genuine zeros (pre-revenue companies).
+- **2026-09-27 — Router outcome when every provider fails:** `NOT_FOUND` only if some provider said not-found and nothing failed transiently (a timeout proves nothing); `RATE_LIMITED` if all were rate limits; `UNSUPPORTED` if all declined; else `UNAVAILABLE`. Unexpected adapter exceptions count as `BAD_RESPONSE` and the chain moves on.
+- **2026-09-27 — `EarningsReport.date` may be null** for rows that only know their fiscal period (Finnhub's last-4 EPS, Yahoo `earningsHistory` without a matching dated report). Phase 3's merge attaches them to a dated report or drops them. Quarter-level values attach to the first report within 100 days after the quarter end.
+- **2026-09-27 — Daily bars never include an unfinished session:** today's bar is dropped until 30 min after the exchange close (providers publish partial bars intraday).
+- **2026-09-27 — Yahoo quote = chart `range=1d`** (no crumb needed). A crumb is used only for quoteSummary, batch quotes and the visualization API; a 401/403 renews the session once.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).
