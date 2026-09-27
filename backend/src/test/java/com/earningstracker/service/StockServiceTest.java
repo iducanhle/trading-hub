@@ -131,7 +131,7 @@ class StockServiceTest {
         assertThat(weekly.period()).isEqualTo("WEEKLY");
         assertThat(weekly.rows()).extracting(Dtos.HistoryRow::periodStart).containsExactly(LocalDate.of(2026, 9, 21),
                 LocalDate.of(2026, 9, 14), LocalDate.of(2026, 9, 7));
-        assertThat(weekly.rows().getFirst().partial()).isFalse(); // Saturday: the week is over
+        assertThat(weekly.rows().getFirst().partial()).isFalse(); // Sunday: the week is over
         assertThat(weekly.nextBefore()).isEqualTo(LocalDate.of(2026, 9, 7));
 
         Dtos.History july = f.stocks.history(SAP, HistoryCalculator.Period.DAILY, LocalDate.of(2026, 7, 24), 1);

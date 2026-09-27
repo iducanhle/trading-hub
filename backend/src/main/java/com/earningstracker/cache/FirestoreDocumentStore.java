@@ -15,6 +15,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.SetOptions;
 
 /** Firestore via the Admin SDK (bypasses security rules); blocking calls with a timeout. */
 public class FirestoreDocumentStore implements DocumentStore {
@@ -57,6 +58,12 @@ public class FirestoreDocumentStore implements DocumentStore {
     public void set(String collection, String id, Map<String, Object> data) {
         writes.incrementAndGet();
         await(firestore.collection(collection).document(id).set(data), collection, id);
+    }
+
+    @Override
+    public void merge(String collection, String id, Map<String, Object> fields) {
+        writes.incrementAndGet();
+        await(firestore.collection(collection).document(id).set(fields, SetOptions.merge()), collection, id);
     }
 
     @Override

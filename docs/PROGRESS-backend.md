@@ -10,7 +10,7 @@
 | 1 – Skeleton | Done |
 | 2 – Providers | Done |
 | 3 – Domain + REST | Done |
-| 4 – Jobs + email | In progress |
+| 4 – Jobs + email | Done |
 | 5 – Deployment | Not started |
 
 ## Done
@@ -56,18 +56,54 @@
 - The run exposed two earnings-merge issues, fixed: Finnhub EPS surprises outranked FMP/Yahoo (AAPL showed MISS; now BEAT), and merged records were stored with a single source tag (see Decisions).
 - 139 tests (4 opt-in live tests skipped by default).
 
+**Phase 4 – Jobs + email**
+- `jobs`:
+  - `JobRunner`: one lock per job, so runs never overlap. Manual triggers run in the background. Every run is recorded in `jobRuns/{jobName}`: `lastStart`, `lastSuccess`, `lastResult`, `lastError`, and `stats` with the measured Firestore reads and writes.
+  - `JobScheduler`: the Europe/Prague crons, plus a `calendar-refresh` at startup when its last success is older than 24 h. `JOBS_ENABLED=false` turns both off.
+  - `TrackedSymbols`: symbols followed by any user, plus those viewed in the last 30 days.
+- `calendar-refresh` (06:00):
+  - Refreshes FX rates and the profiles of followed stocks.
+  - Fetches the Finnhub US calendar in 7-day chunks from today−14 to today+45. Names come from one `LISTINGS` batch. Market cap and logo come from profile basics: nearest dates first, at most 1,500 calls per run, reusing profiles up to 30 days old.
+  - Records every event in `earnings/{symbol}`.
+  - EU: stored data for the universe, plus a fresh fetch for followed and viewed symbols.
+  - Writes `earningsCalendar/{date}` only when the day changed. A failed US chunk keeps that range's stored US events.
+- `eu-universe-refresh` (Sunday 03:00): earnings and market cap for the 333 universe symbols, through Yahoo's 1 req/s limiter. Symbols refreshed in the last 6 days are skipped, so a rerun resumes where the last one stopped.
+- `prices-refresh` (23:30): incremental bars for tracked symbols, plus a fresh earnings fetch wherever a report from the last 7 days still lacks its actual.
+- `earnings-digest` (12:00) and the `notification` package:
+  - `UserDirectory` reads the settings in `users/{uid}`, with the contract defaults.
+  - `DigestService` lists followed stocks with a date in [today+1, today+notifyDaysBefore], from stored data.
+  - Thymeleaf template `templates/email/digest.html` (inline CSS; logo or initials, date, report time, EPS and revenue estimates, links to `{APP_BASE_URL}/stock/{symbol}`) plus a plain-text part. Sent through Gmail SMTP (587, STARTTLS).
+  - Recipients must still be allowlisted and verified (checked through Firebase Auth).
+  - `notificationLog/{uid}_{date}` is written after a successful send, so reruns skip users who already got theirs.
+- Endpoints (contract implementation notes updated; no field changes):
+  - `POST /api/admin/jobs/{jobName}/run` → 202 `{ jobName, startedAt }`.
+  - `POST /api/notifications/test` → 202 `{ sentTo }`: a 7-day window or sample data, 1 per minute per user, 503 without mail settings.
+- Tests (158 in total; the 4 opt-in live tests are skipped):
+  - `JobRunnerTest`: stats, `jobRuns`, failures, the lock.
+  - `CalendarRefreshJobTest`: chunks, the profile budget, change-only writes, outages.
+  - `EarningsDigestJobTest`, with real SMTP into GreenMail: subjects, both parts, links, per-user windows, allowlist and verification, idempotency, a failed send, no mail settings.
+  - `TestEmailIntegrationTest`: the full Spring context with env-var mail config, Thymeleaf auto-configuration and GreenMail.
+  - Web tests for the admin and test-email endpoints.
+- Live run (2026-09-27) against the Auth and Firestore emulators with the real providers. Mail went to a local GreenMail catcher, so no real email was sent.
+  - Manual trigger of `calendar-refresh` → 202. A second trigger while it ran returned the running job's `startedAt`; an unknown job → 400.
+  - `calendar-refresh`, with the budget lowered to 60 profile calls:
+    - 159 s; 3,496 US events for 3,466 symbols (all 9 chunks); 45 of 60 days written.
+    - **7,329 Firestore reads and 3,573 writes** (first run into an empty database).
+    - `/api/calendar` then served the days sorted by market cap (e.g. MU on 2026-09-30, cross-checked against its quote).
+  - `earnings-digest` → "Earnings tomorrow: NKE" (6 reads, 3 writes). A rerun → `alreadySent=1`, nothing sent.
+  - `POST /api/notifications/test` → 202 `{"sentTo":"dev@example.com"}` with "[Test] Upcoming earnings: NKE, MU". Checked at phone width: logos, times, estimates, links. A second call within the minute → 429.
+  - `prices-refresh` → 4 tracked symbols priced (11 reads, 3 writes).
+
 ## In progress
 
-**Phase 4 – Jobs + email** (done when a job run can be triggered manually and the test email arrives):
-- [ ] Job framework: lock per job (no overlapping runs), `jobRuns/{jobName}` (`lastStart`, `lastSuccess`, `lastError`, `stats` incl. estimated Firestore reads/writes), Europe/Prague schedules.
-- [ ] `calendar-refresh` (daily 06:00; also at startup if the last success is older than 24 h): Finnhub US calendar in 7-day chunks from today−14 to today+45, profile enrichment (marketCapUsd, logo; nearest dates first, ≤ 1,500 calls, 30-day profile cache), followed + recently viewed EU symbols, FX refresh; writes `earningsCalendar/*` and `earnings/*`.
-- [ ] `eu-universe-refresh` (Sunday 03:00): next earnings dates and market caps for the EU universe via Yahoo, ≤ 1 req/s.
-- [ ] `prices-refresh` (daily 23:30): incremental bars for followed + recently viewed symbols; actuals for reports of the last 7 days.
-- [ ] `earnings-digest` (daily 12:00): §8 email via Gmail SMTP + Thymeleaf HTML + plain-text alternative, idempotent via `notificationLog/{uid}_{date}`.
-- [ ] `POST /api/admin/jobs/{jobName}/run` (202), `POST /api/notifications/test` (202 `{ sentTo }`).
+Phase 5 – Deployment.
+
 ## Next
 
-Later: Phase 5 deployment docs + CI (see §14).
+Phase 5 (see §14):
+- The final `docker-compose.yml` with a DuckDNS updater.
+- `.github/workflows/backend.yml`, with the workflow lint passing.
+- `docs/DEPLOYMENT-backend.md` and `backend/README.md`.
 
 Notes for Phase 5:
 - GHCR is free only for **public** packages; private packages get 500 MB storage and 1 GB transfer per month on the free plan. The image contains no secrets, so the guide should make the package public, or the workflow should prune old versions.
@@ -89,6 +125,10 @@ Data gaps (details in `docs/DATA-SOURCES.md`); the API returns `null` for these,
 
 Engineering:
 - Daily provider quotas are in-memory counters; a restart resets them (a provider 429 then falls back to the next provider).
+- **Job locks and the test-email rate limit are in memory**: correct for the single VM instance, not for several instances.
+- **A digest missed because the server was down at 12:00 is not sent later.** Only `calendar-refresh` catches up at startup. Trigger `earnings-digest` manually; it is idempotent per user and day.
+- **Jobs and requests share Finnhub's rate limiter.** While `calendar-refresh` enriches profiles (up to 1,500 calls, about 28 min from 06:00), Finnhub-backed requests wait up to 30 s for a permit and then fall back to Yahoo.
+- **Firestore budget:** the first `calendar-refresh` into an empty database measured 7.3k reads and 3.6k writes. Later runs write only changed events, days and new profiles. While the process keeps running they read mostly from the in-memory cache; after a restart the next run reads from Firestore again (about 7k reads). Both stay well under the free 50k reads and 20k writes per day.
 - **Tooling quirk (Windows):** `kill $!` from Git Bash may not stop a `java.exe` started in the background; stop it with PowerShell `Stop-Process -Id <pid>` (find it with `Get-NetTCPConnection -LocalPort 8080`).
 - Malformed URLs rejected by Tomcat itself (an encoded slash `%2F`) get Tomcat's HTML 400 page instead of the JSON error body, because they never reach Spring. Valid symbols never contain these characters.
 
@@ -140,4 +180,18 @@ Engineering:
 - **2026-09-27 — Finnhub's EPS surprises are a separate chain entry `finnhub-eps`, ranked after Yahoo.** The spec prefers "Finnhub *calendar* → FMP → Yahoo"; `/stock/earnings` is not the calendar and its actuals can disagree with FMP and Yahoo (AAPL: 1.91 vs 2.02). It still supplies fiscal quarters when nobody else has them. It shares Finnhub's rate limiter.
 - **2026-09-27 — `earnings/{symbol}` stores raw per-provider rows**, one per provider per quarter (a newer row from the same provider replaces the older one; ≤ 24 per provider). The merged view is computed on every read. Storing merged records tagged with one source would have let FMP- or Yahoo-derived values outrank fresh FMP data forever.
 - **2026-09-27 — Firebase emulator mode for local end-to-end tests:** when `FIREBASE_AUTH_EMULATOR_HOST` is set the backend starts without a key (project `demo-earnings-tracker` unless configured) and the Admin SDK uses the emulators. It is refused when `app.firebase.required=true` (prod), because emulator tokens are unsigned.
+- **2026-09-27 — Admin job triggers are open to every allowlisted user** (two users, no roles). They return 202 at once and run in the background. Triggering a running job returns that run's `startedAt` instead of starting another.
+- **2026-09-27 — Test email:**
+  - It is sent before the endpoint answers, so SMTP problems surface as 503 instead of vanishing.
+  - It looks 7 days ahead (the widest `notifyDaysBefore`), so real followed stocks show up more often than in a 1-day digest. With none, it falls back to sample data, marked as such.
+  - Its subject starts with `[Test]`, and it is limited to 1 per minute per user (in memory).
+- **2026-09-27 — Digest subject:** "Earnings tomorrow: …" when every listed report is tomorrow, otherwise "Upcoming earnings: …". §8's "if the range covers more than one day" is read as the reports' dates, so a 3-day window holding only tomorrow's reports still says "tomorrow". The subject lists at most 5 symbols, then "+N more".
+- **2026-09-27 — Digest recipients are re-checked against the allowlist and `email_verified`** through Firebase Auth (`getUser`), because a `users/{uid}` document can outlive the user's access. The digest reads stored data only, so it makes no provider calls at 12:00. A followed symbol that was never loaded is fetched in the background for the next day.
+- **2026-09-27 — Digest failures:**
+  - `notificationLog` is written only after a successful send.
+  - A failed send fails the run (recorded in `jobRuns.lastError`), and a rerun sends only the missing digests.
+  - Without mail settings the job logs a warning and records `skipped`, so machines that never send mail don't log a failure every day.
+- **2026-09-27 — `calendar-refresh` never wipes data during an outage:** days are rewritten only when their events change, empty days are not written, and dates whose US chunk failed keep their stored US events.
+- **2026-09-27 — Mail configuration:** `spring.mail` maps `MAIL_USERNAME` and `MAIL_APP_PASSWORD`, with Gmail defaults: port 587, STARTTLS required, 10–15 s timeouts. `MAIL_HOST`, `MAIL_PORT`, `MAIL_SMTP_AUTH` and `MAIL_STARTTLS` exist only for local mail catchers. The Actuator mail health indicator is off, because it would open an SMTP connection on every health check.
+- **2026-09-27 — `jobRuns.stats.firestoreReads` and `firestoreWrites`** come from the `DocumentStore` counters over the run, including both `jobRuns` updates. They count everything the process did meanwhile, concurrent requests included, so they are an estimate, which is what §6 asks for.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

@@ -84,6 +84,16 @@ public class CalendarService {
         days.put(date, List.copyOf(events));
     }
 
+    /** Writes the day only if its events changed (saves Firestore writes on the daily rebuild). */
+    public boolean saveDayIfChanged(LocalDate date, List<Dtos.EarningsEvent> events) {
+        if (Set.copyOf(storedDay(date)).equals(Set.copyOf(events))) {
+            days.put(date, List.copyOf(events));
+            return false;
+        }
+        saveDay(date, events);
+        return true;
+    }
+
     /** One day's stored events, bypassing the memory cache (jobs merge into it). */
     public List<Dtos.EarningsEvent> storedDay(LocalDate date) {
         return store.get(COLLECTION, date.toString()).map(this::events).orElseGet(List::of);

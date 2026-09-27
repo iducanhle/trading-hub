@@ -17,6 +17,9 @@ public interface DocumentStore {
 
     void set(String collection, String id, Map<String, Object> data);
 
+    /** Writes the given top-level fields, keeping the document's other fields. */
+    void merge(String collection, String id, Map<String, Object> fields);
+
     /**
      * Every document of a (sub)collection such as {@code users/{uid}/follows}, keyed by id. Costs one read per
      * document (at least one per query).

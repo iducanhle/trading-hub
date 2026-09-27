@@ -45,7 +45,16 @@ public class InMemoryDocumentStore implements DocumentStore {
     public void set(String collection, String id, Map<String, Object> data) {
         check();
         writes.incrementAndGet();
-        documents.put(collection + "/" + id, Map.copyOf(data));
+        documents.put(collection + "/" + id, java.util.Collections.unmodifiableMap(new LinkedHashMap<>(data)));
+    }
+
+    @Override
+    public void merge(String collection, String id, Map<String, Object> fields) {
+        check();
+        writes.incrementAndGet();
+        Map<String, Object> merged = new LinkedHashMap<>(peek(collection, id).orElse(Map.of()));
+        merged.putAll(fields);
+        documents.put(collection + "/" + id, java.util.Collections.unmodifiableMap(merged));
     }
 
     @Override

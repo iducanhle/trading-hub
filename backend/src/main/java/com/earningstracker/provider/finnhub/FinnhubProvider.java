@@ -126,6 +126,16 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
 
     @Override
     public CompanyProfile profile(String symbol) {
+        return profile(symbol, true);
+    }
+
+    /** {@code /stock/profile2} only (one call instead of two): what the calendar needs, without key stats. */
+    @Override
+    public CompanyProfile basics(String symbol) {
+        return profile(symbol, false);
+    }
+
+    private CompanyProfile profile(String symbol, boolean withMetrics) {
         requireUs(symbol);
         String finnhubSymbol = Symbols.toDotClass(symbol);
         JsonNode profile = http.getJson("/stock/profile2?symbol={s}", finnhubSymbol);
@@ -137,7 +147,7 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
         if (exchange == null) {
             throw new ProviderException(ID, Kind.NOT_FOUND, symbol + " is not listed on NYSE, NASDAQ or NYSE American");
         }
-        JsonNode metric = metrics(finnhubSymbol);
+        JsonNode metric = withMetrics ? metrics(finnhubSymbol) : MissingNode.getInstance();
         String currency = Objects.requireNonNullElse(Json.text(profile.path("currency")), "USD");
         Double marketCapMillions = Json.number(profile.path("marketCapitalization"));
         Double avgVolumeMillions = Json.number(metric.path("3MonthAverageTradingVolume"));

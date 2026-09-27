@@ -1,8 +1,10 @@
 package com.earningstracker.service;
 
 import java.net.URI;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.earningstracker.cache.TieredCache;
 import com.earningstracker.cache.TieredCache.Cached;
@@ -33,12 +35,14 @@ public class ProfileService {
     private final TieredCache.Policy<StockProfile> policy;
     private final ProviderRouter router;
     private final FxService fx;
+    private final Clock clock;
 
-    public ProfileService(TieredCache cache, ProviderRouter router, FxService fx) {
+    public ProfileService(TieredCache cache, ProviderRouter router, FxService fx, Clock clock) {
         this.cache = cache;
         this.policy = cache.policy("symbols", StockProfile.class, FRESH_FOR, true);
         this.router = router;
         this.fx = fx;
+        this.clock = clock;
     }
 
     public Cached<StockProfile> profile(String symbol) {
@@ -60,6 +64,31 @@ public class ProfileService {
         StockProfile profile = load(symbol);
         cache.put(policy, symbol, profile);
         return profile;
+    }
+
+    /**
+     * Market cap and logo for the calendar job: a stored profile younger than {@code maxAge} is reused; otherwise
+     * the cheap {@code basics} call is made while {@code budget} lasts. The result is stored as if it were
+     * already {@link #FRESH_FOR} old, so the stock page still fetches the full profile with key stats.
+     */
+    public Optional<StockProfile> basics(String symbol, Duration maxAge, AtomicInteger budget) {
+        Optional<Cached<StockProfile>> stored = cache.stored(policy, symbol);
+        if (stored.isPresent() && stored.get().fetchedAt().isAfter(clock.instant().minus(maxAge))) {
+            return Optional.of(stored.get().value());
+        }
+        if (budget.getAndDecrement() <= 0) {
+            return stored.map(Cached::value);
+        }
+        try {
+            CompanyProfile basic = router.<ProfileProvider, CompanyProfile>first(Capability.PROFILE,
+                    Symbols.region(symbol), p -> p.basics(symbol)).value();
+            StockProfile profile = toProfile(symbol, basic, basic.sector(), basic.industry(), basic.website());
+            cache.put(policy, symbol, profile, clock.instant().minus(FRESH_FOR));
+            return Optional.of(profile);
+        } catch (ProviderException e) {
+            log.debug("No basics for {}: {}", symbol, e.getMessage());
+            return stored.map(Cached::value);
+        }
     }
 
     private StockProfile load(String symbol) {
@@ -90,6 +119,11 @@ public class ProfileService {
                 }
             }
         }
+        return toProfile(symbol, profile, sector, industry, website);
+    }
+
+    private StockProfile toProfile(String symbol, CompanyProfile profile, String sector, String industry,
+            String website) {
         return new StockProfile(symbol, profile.name(), profile.exchange(), profile.currency(),
                 profile.financialCurrency(), sector, industry, website,
                 profile.logoUrl() != null ? profile.logoUrl() : faviconFor(website),

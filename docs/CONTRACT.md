@@ -168,6 +168,15 @@ Behaviour the tables above leave open, as the backend implements it. No field na
 - **`GET /api/calendar`**: `from` and `to` are required and inclusive, at most 42 days (`to − from + 1 ≤ 42`). Events come from the daily calendar job, so a date it has not covered yet is empty.
 - **`GET /api/followed/earnings`** uses stored data only. A followed stock whose earnings have never been loaded is listed in `noUpcomingDate` and loaded in the background, so it normally appears on the next request.
 - **`asOf` / `stale` on combined responses** (overview, prices, earnings): `asOf` is the oldest fetch time among the data used. `stale` is true if any of it was served from cache after a provider failure.
+- **`POST /api/notifications/test`** (no request body) sends the email before answering:
+  - It goes to `settings.notificationEmail` if set, otherwise the account email. `sentTo` is that address.
+  - It lists the caller's followed stocks with an earnings date in the next 7 days, or sample data (marked as such) if there are none. The subject starts with `[Test]`.
+  - One per minute per user; a second call within the minute returns 429 `RATE_LIMITED`.
+  - 503 `UPSTREAM_UNAVAILABLE` when the server has no mail settings or the mail server refuses the message.
+- **`POST /api/admin/jobs/{jobName}/run`** (no request body) is open to every allowed user:
+  - It starts the job in the background and answers at once. `startedAt` is an ISO-8601 UTC timestamp.
+  - If that job is already running, the response carries the running job's `startedAt` and no second run starts.
+  - An unknown `jobName` returns 400. The outcome is recorded in the backend-only `jobRuns/{jobName}` document (Firebase console).
 
 ---
 
@@ -178,3 +187,4 @@ Behaviour the tables above leave open, as the backend implements it. No field na
 | 2026-09-26 | v1: initial contract, verbatim from the prompt. |
 | 2026-09-27 | Errors: added `404 NOT_FOUND` (unknown endpoint), `405 METHOD_NOT_ALLOWED` and `500 INTERNAL_ERROR`, so every error response has a documented code. |
 | 2026-09-27 | Added "Implementation notes": defaults, limits, cursor paging, marker and quarter semantics, the inclusive 42-day calendar span. No field changes. |
+| 2026-09-27 | Implementation notes for `POST /api/notifications/test` (recipient, 7-day window, sample data, 429, 503) and `POST /api/admin/jobs/{jobName}/run` (background start, already-running behaviour, 400). No field changes. |

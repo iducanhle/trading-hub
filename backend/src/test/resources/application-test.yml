@@ -8,3 +8,7 @@ app:
     cors-allowed-origins: https://app.example.com,http://localhost:4200
   universe:
     validate-on-startup: false # no network calls in tests
+  jobs:
+    enabled: false # no schedules or startup runs in tests
+  mail:
+    base-url: https://app.example.com

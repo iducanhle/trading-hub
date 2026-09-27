@@ -14,7 +14,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.earningstracker.domain.HistoryCalculator;
+import com.earningstracker.jobs.JobRunner;
 import com.earningstracker.market.Region;
+import com.earningstracker.notification.DigestService;
 import com.earningstracker.provider.ProviderException;
 import com.earningstracker.provider.ProviderException.Kind;
 import com.earningstracker.security.AuthenticatedUser;
@@ -25,6 +27,8 @@ import com.earningstracker.service.PriceRange;
 import com.earningstracker.service.SearchService;
 import com.earningstracker.service.StockService;
 import com.earningstracker.web.dto.Dtos;
+import com.earningstracker.web.error.ApiException;
+import com.earningstracker.web.error.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +57,10 @@ class ApiControllerTest {
     private CalendarService calendar;
     @MockitoBean
     private FollowedEarningsService followed;
+    @MockitoBean
+    private JobRunner jobs;
+    @MockitoBean
+    private DigestService digest;
 
     @BeforeEach
     void signIn() {
@@ -61,6 +69,10 @@ class ApiControllerTest {
 
     private MockMvcTester.MockMvcRequestBuilder get(String uri) {
         return mvc.get().uri(uri).header(HttpHeaders.AUTHORIZATION, "Bearer t");
+    }
+
+    private MockMvcTester.MockMvcRequestBuilder post(String uri) {
+        return mvc.post().uri(uri).header(HttpHeaders.AUTHORIZATION, "Bearer t");
     }
 
     private void assertBadRequest(String uri) {
@@ -157,10 +169,39 @@ class ApiControllerTest {
     }
 
     @Test
+    void adminTriggerStartsTheJobInTheBackground() {
+        given(jobs.trigger("calendar-refresh", "manual")).willReturn(Instant.parse("2026-09-27T10:00:00Z"));
+
+        assertThat(post("/api/admin/jobs/calendar-refresh/run")).hasStatus(HttpStatus.ACCEPTED).bodyJson()
+                .isStrictlyEqualTo("{\"jobName\":\"calendar-refresh\",\"startedAt\":\"2026-09-27T10:00:00Z\"}");
+    }
+
+    @Test
+    void adminTriggerRejectsUnknownJobsAndOtherMethods() {
+        given(jobs.trigger("nope", "manual")).willThrow(new ApiException(ErrorCode.BAD_REQUEST, "Unknown job 'nope'"));
+
+        assertThat(post("/api/admin/jobs/nope/run")).hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson().extractingPath("$.code").isEqualTo("BAD_REQUEST");
+        assertThat(get("/api/admin/jobs/calendar-refresh/run")).hasStatus(HttpStatus.METHOD_NOT_ALLOWED)
+                .bodyJson().extractingPath("$.code").isEqualTo("METHOD_NOT_ALLOWED");
+    }
+
+    @Test
+    void testEmailNeedsMailSettings() {
+        given(digest.isConfigured()).willReturn(false);
+
+        assertThat(post("/api/notifications/test")).hasStatus(HttpStatus.SERVICE_UNAVAILABLE)
+                .bodyJson().extractingPath("$.code").isEqualTo("UPSTREAM_UNAVAILABLE");
+    }
+
+    @Test
     void everyEndpointNeedsAToken() {
         for (String uri : List.of("/api/search?q=sap", "/api/stocks/AAPL", "/api/calendar?from=2026-10-01&to=2026-10-02",
                 "/api/followed/earnings")) {
             assertThat(mvc.get().uri(uri)).hasStatus(HttpStatus.UNAUTHORIZED);
+        }
+        for (String uri : List.of("/api/notifications/test", "/api/admin/jobs/calendar-refresh/run")) {
+            assertThat(mvc.post().uri(uri)).hasStatus(HttpStatus.UNAUTHORIZED);
         }
         given(search.results(anyString(), anyInt())).willReturn(List.of());
         assertThat(get("/api/search?q=sap")).hasStatusOk();

@@ -85,13 +85,24 @@ public class EarningsService {
 
     /**
      * Adds rows seen elsewhere (calendar jobs) without calling providers. The stored fetch time is kept, so the next
-     * on-demand read still asks the providers for the full history.
+     * on-demand read still asks the providers for the full history. Returns whether anything changed.
      */
-    public void record(String symbol, String source, List<EarningsReport> observed) {
+    public boolean record(String symbol, String source, List<EarningsReport> observed) {
         Optional<Cached<StoredEarnings>> previous = cache.stored(policy, symbol);
-        List<SourcedReport> rows = upsert(previous.map(c -> c.value().reports()).orElse(List.of()),
-                observed.stream().map(r -> new SourcedReport(source, r)).toList());
+        List<SourcedReport> before = previous.map(c -> c.value().reports()).orElse(List.of());
+        List<SourcedReport> rows = upsert(before, observed.stream().map(r -> new SourcedReport(source, r)).toList());
+        if (Set.copyOf(rows).equals(Set.copyOf(before))) {
+            return false; // nothing new: save the Firestore write
+        }
         cache.put(policy, symbol, new StoredEarnings(rows), previous.map(Cached::fetchedAt).orElse(Instant.EPOCH));
+        return true;
+    }
+
+    /** Fetches from the providers now, whatever the age of the stored data (jobs filling in actuals). */
+    public List<EarningsReport> refreshNow(String symbol) {
+        StoredEarnings fresh = fetch(symbol, cache.stored(policy, symbol).map(Cached::value).orElse(null));
+        cache.put(policy, symbol, fresh);
+        return merged(symbol, fresh);
     }
 
     private StoredEarnings fetch(String symbol, StoredEarnings previous) {

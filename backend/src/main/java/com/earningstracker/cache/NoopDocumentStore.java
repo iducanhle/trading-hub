@@ -23,6 +23,11 @@ public class NoopDocumentStore implements DocumentStore {
     }
 
     @Override
+    public void merge(String collection, String id, Map<String, Object> fields) {
+        // nothing to persist to
+    }
+
+    @Override
     public Map<String, Map<String, Object>> list(String collectionPath) {
         return Map.of();
     }

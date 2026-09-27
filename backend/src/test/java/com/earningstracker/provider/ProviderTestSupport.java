@@ -23,7 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Fixtures, a fixed clock and fast HTTP settings for provider adapter tests. */
 public final class ProviderTestSupport {
 
-    /** Saturday 2026-09-27 10:00 UTC, the day the fixtures were recorded. */
+    /** Sunday 2026-09-27 10:00 UTC, the day the fixtures were recorded. */
     public static final Instant NOW = Instant.parse("2026-09-27T10:00:00Z");
     public static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
     public static final JsonMapper JSON = JsonMapper.builder().build();

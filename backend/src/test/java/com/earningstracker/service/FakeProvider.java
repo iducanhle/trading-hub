@@ -16,6 +16,7 @@ import com.earningstracker.market.Quote;
 import com.earningstracker.market.RecommendationTrend;
 import com.earningstracker.market.Region;
 import com.earningstracker.market.SymbolMatch;
+import com.earningstracker.provider.EarningsCalendarProvider;
 import com.earningstracker.provider.EarningsProvider;
 import com.earningstracker.provider.FxRateProvider;
 import com.earningstracker.provider.ListingProvider;
@@ -30,19 +31,22 @@ import com.earningstracker.provider.RecommendationProvider;
 import com.earningstracker.provider.SymbolSearchProvider;
 
 /** One in-memory provider for every capability; set {@code failing} to simulate an outage. */
-class FakeProvider implements QuoteProvider, ProfileProvider, PriceHistoryProvider, EarningsProvider,
-        RecommendationProvider, NewsProvider, PeersProvider, ListingProvider, SymbolSearchProvider, FxRateProvider {
+public class FakeProvider implements QuoteProvider, ProfileProvider, PriceHistoryProvider, EarningsProvider,
+        EarningsCalendarProvider, RecommendationProvider, NewsProvider, PeersProvider, ListingProvider,
+        SymbolSearchProvider, FxRateProvider {
 
-    final Map<String, Quote> quotes = new HashMap<>();
-    final Map<String, CompanyProfile> profiles = new HashMap<>();
-    final Map<String, List<PriceBar>> bars = new HashMap<>();
-    final Map<String, List<EarningsReport>> earnings = new HashMap<>();
-    final Map<String, List<String>> peers = new HashMap<>();
-    final Map<String, SymbolMatch> listings = new HashMap<>();
-    final Map<Region, List<SymbolMatch>> searchResults = new HashMap<>();
-    final List<LocalDate> barRequests = new ArrayList<>();
-    final AtomicInteger calls = new AtomicInteger();
-    volatile boolean failing;
+    public final Map<String, Quote> quotes = new HashMap<>();
+    public final Map<String, CompanyProfile> profiles = new HashMap<>();
+    public final Map<String, List<PriceBar>> bars = new HashMap<>();
+    public final Map<String, List<EarningsReport>> earnings = new HashMap<>();
+    public final Map<String, List<String>> peers = new HashMap<>();
+    public final Map<String, SymbolMatch> listings = new HashMap<>();
+    public final Map<Region, List<SymbolMatch>> searchResults = new HashMap<>();
+    public final List<EarningsReport> calendar = new ArrayList<>();
+    public final List<LocalDate> calendarRequests = new ArrayList<>();
+    public final List<LocalDate> barRequests = new ArrayList<>();
+    public final AtomicInteger calls = new AtomicInteger();
+    public volatile boolean failing;
 
     @Override
     public String id() {
@@ -79,6 +83,14 @@ class FakeProvider implements QuoteProvider, ProfileProvider, PriceHistoryProvid
     @Override
     public List<EarningsReport> earnings(String symbol) {
         return answer(earnings.get(symbol), symbol);
+    }
+
+    @Override
+    public List<EarningsReport> calendar(LocalDate from, LocalDate to) {
+        calendarRequests.add(from);
+        return answer(calendar, "calendar").stream()
+                .filter(r -> !r.date().isBefore(from) && !r.date().isAfter(to))
+                .toList();
     }
 
     @Override

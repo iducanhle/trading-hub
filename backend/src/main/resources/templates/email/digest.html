@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title th:text="${title}">Upcoming earnings</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2933;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="max-width:600px;background:#ffffff;border-radius:12px;border:1px solid #e4e7eb;">
+        <tr>
+          <td style="padding:24px 24px 8px 24px;">
+            <div style="font-size:13px;color:#7b8794;letter-spacing:0.4px;text-transform:uppercase;">
+              Earnings Tracker<span th:if="${test}"> · test email</span>
+            </div>
+            <h1 style="margin:6px 0 0 0;font-size:22px;line-height:28px;font-weight:600;" th:text="${title}">Upcoming earnings</h1>
+            <p th:if="${sample}" style="margin:10px 0 0 0;font-size:14px;line-height:20px;color:#7b8794;">
+              You don't follow any stocks reporting soon, so this shows sample data.
+            </p>
+          </td>
+        </tr>
+        <tr th:each="row : ${rows}">
+          <td style="padding:12px 24px;border-top:1px solid #f0f2f4;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="44" valign="top" style="padding-top:2px;">
+                  <img th:if="${row.logoUrl != null}" th:src="${row.logoUrl}" th:alt="${row.symbol}" width="36" height="36"
+                       style="display:block;width:36px;height:36px;border-radius:8px;border:1px solid #e4e7eb;object-fit:contain;background:#ffffff;">
+                  <div th:if="${row.logoUrl == null}" th:text="${row.initials}"
+                       style="width:36px;height:36px;border-radius:8px;background:#e8eefc;color:#3a5bd9;font-size:14px;font-weight:600;line-height:36px;text-align:center;">AB</div>
+                </td>
+                <td valign="top">
+                  <div style="font-size:16px;line-height:22px;font-weight:600;">
+                    <a th:href="${row.url}" th:text="${row.name}" style="color:#1f2933;text-decoration:none;">Company</a>
+                    <span th:text="${row.symbol}" style="font-size:13px;font-weight:500;color:#7b8794;margin-left:4px;">SYM</span>
+                  </div>
+                  <div style="font-size:14px;line-height:20px;color:#3e4c59;margin-top:2px;">
+                    <span th:text="${row.date}">Mon, 1 Jan 2026</span> · <span th:text="${row.time}">After close</span>
+                  </div>
+                  <div style="font-size:13px;line-height:20px;color:#616e7c;margin-top:2px;">
+                    EPS est. <strong th:text="${row.eps}" style="color:#1f2933;font-weight:600;">1.00 USD</strong>
+                    &nbsp;·&nbsp; Revenue est. <strong th:text="${row.revenue}" style="color:#1f2933;font-weight:600;">1.00B USD</strong>
+                  </div>
+                </td>
+                <td width="64" align="right" valign="middle">
+                  <a th:href="${row.url}"
+                     style="display:inline-block;padding:6px 12px;border-radius:6px;background:#3a5bd9;color:#ffffff;font-size:13px;font-weight:600;text-decoration:none;">View</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 24px 24px 24px;border-top:1px solid #f0f2f4;font-size:12px;line-height:18px;color:#9aa5b1;">
+            Dates are in the exchange's local time; estimates come from public data providers and may change.<br>
+            <a th:href="${settingsUrl}" style="color:#3a5bd9;">Manage notifications</a> ·
+            <a th:href="${appUrl}" style="color:#3a5bd9;">Open Earnings Tracker</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

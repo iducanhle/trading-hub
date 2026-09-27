@@ -25,20 +25,20 @@ import com.earningstracker.provider.ProviderTestSupport;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /** The real service graph around a {@link FakeProvider}, an in-memory store and a movable clock. */
-class ServiceFixture {
+public class ServiceFixture {
 
-    static final class MutableClock extends Clock {
+    public static final class MutableClock extends Clock {
         private Instant now;
 
-        MutableClock(Instant now) {
+        public MutableClock(Instant now) {
             this.now = now;
         }
 
-        void set(Instant instant) {
+        public void set(Instant instant) {
             now = instant;
         }
 
-        void advance(Duration duration) {
+        public void advance(Duration duration) {
             now = now.plus(duration);
         }
 
@@ -74,39 +74,39 @@ class ServiceFixture {
         }
     }
 
-    /** Saturday 2026-09-27 10:00 UTC. */
-    final MutableClock clock = new MutableClock(Instant.parse("2026-09-27T10:00:00Z"));
-    final InMemoryDocumentStore store = new InMemoryDocumentStore();
-    final FakeProvider provider = new FakeProvider();
-    final ExecutorService executor = MoreExecutors.newDirectExecutorService();
-    final TieredCache cache = new TieredCache(store, ProviderTestSupport.JSON, clock);
-    final ProviderRouter router = new ProviderRouter(List.of(provider), new ProviderSettings(allChains(), null));
-    final FxService fx = new FxService(cache, provider);
-    final ProfileService profiles = new ProfileService(cache, router, fx);
-    final QuoteService quotes = new QuoteService(cache, router);
-    final PriceService prices = new PriceService(cache, router, ProviderTestSupport.JSON, clock);
-    final EarningsService earnings = new EarningsService(cache, router, ProviderTestSupport.JSON, executor);
-    final StockExtrasService extras = new StockExtrasService(cache, router, ProviderTestSupport.JSON);
-    final ViewTracker views = new ViewTracker(store, executor, clock);
-    final FollowService follows = new FollowService(store, cache, ProviderTestSupport.JSON);
-    final StockService stocks = new StockService(profiles, quotes, prices, earnings, extras, views,
+    /** Sunday 2026-09-27 10:00 UTC. */
+    public final MutableClock clock = new MutableClock(Instant.parse("2026-09-27T10:00:00Z"));
+    public final InMemoryDocumentStore store = new InMemoryDocumentStore();
+    public final FakeProvider provider = new FakeProvider();
+    public final ExecutorService executor = MoreExecutors.newDirectExecutorService();
+    public final TieredCache cache = new TieredCache(store, ProviderTestSupport.JSON, clock);
+    public final ProviderRouter router = new ProviderRouter(List.of(provider), new ProviderSettings(allChains(), null));
+    public final FxService fx = new FxService(cache, provider);
+    public final ProfileService profiles = new ProfileService(cache, router, fx, clock);
+    public final QuoteService quotes = new QuoteService(cache, router);
+    public final PriceService prices = new PriceService(cache, router, ProviderTestSupport.JSON, clock);
+    public final EarningsService earnings = new EarningsService(cache, router, ProviderTestSupport.JSON, executor);
+    public final StockExtrasService extras = new StockExtrasService(cache, router, ProviderTestSupport.JSON);
+    public final ViewTracker views = new ViewTracker(store, executor, clock);
+    public final FollowService follows = new FollowService(store, cache, ProviderTestSupport.JSON);
+    public final StockService stocks = new StockService(profiles, quotes, prices, earnings, extras, views,
             new EarningsProperties(5), executor, clock);
-    final CalendarService calendar = new CalendarService(store, follows, ProviderTestSupport.JSON, clock);
-    final FollowedEarningsService followed = new FollowedEarningsService(follows, earnings, profiles, clock);
-    final SearchService search = new SearchService(cache, router, ProviderTestSupport.JSON, executor, profiles);
+    public final CalendarService calendar = new CalendarService(store, follows, ProviderTestSupport.JSON, clock);
+    public final FollowedEarningsService followed = new FollowedEarningsService(follows, earnings, profiles, clock);
+    public final SearchService search = new SearchService(cache, router, ProviderTestSupport.JSON, executor, profiles);
 
     private static Map<Capability, Map<Region, List<String>>> allChains() {
         Map<Capability, Map<Region, List<String>>> chains = new EnumMap<>(Capability.class);
         for (Capability capability : Capability.values()) {
-            if (capability != Capability.EARNINGS_CALENDAR) {
-                chains.put(capability, Map.of(Region.US, List.of("fake"), Region.EU, List.of("fake")));
-            }
+            chains.put(capability, capability == Capability.EARNINGS_CALENDAR
+                    ? Map.of(Region.US, List.of("fake"), Region.EU, List.of())
+                    : Map.of(Region.US, List.of("fake"), Region.EU, List.of("fake")));
         }
         return chains;
     }
 
     /** Bars on every weekday; bar i has close 100 + i (open 0.5 lower). */
-    static List<PriceBar> weekdays(String from, String to) {
+    public static List<PriceBar> weekdays(String from, String to) {
         List<PriceBar> bars = new ArrayList<>();
         int i = 0;
         for (LocalDate d = LocalDate.parse(from); !d.isAfter(LocalDate.parse(to)); d = d.plusDays(1)) {
