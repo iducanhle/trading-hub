@@ -1,0 +1,21 @@
+[
+  { "symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ", "region": "US", "currency": "USD", "logoUrl": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/AAPL.png" },
+  { "symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "NVDA", "name": "NVIDIA Corporation", "exchange": "NASDAQ", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "AMZN", "name": "Amazon.com, Inc.", "exchange": "NASDAQ", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "META", "name": "Meta Platforms, Inc.", "exchange": "NASDAQ", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "BRK-B", "name": "Berkshire Hathaway Inc.", "exchange": "NYSE", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "JPM", "name": "JPMorgan Chase & Co.", "exchange": "NYSE", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "ORCL", "name": "Oracle Corporation", "exchange": "NYSE", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "SAP.DE", "name": "SAP SE", "exchange": "XETRA", "region": "EU", "currency": "EUR", "logoUrl": null },
+  { "symbol": "SAP", "name": "SAP SE", "exchange": "NYSE", "region": "US", "currency": "USD", "logoUrl": null },
+  { "symbol": "ASML.AS", "name": "ASML Holding N.V.", "exchange": "Euronext Amsterdam", "region": "EU", "currency": "EUR", "logoUrl": null },
+  { "symbol": "MC.PA", "name": "LVMH Moët Hennessy Louis Vuitton SE", "exchange": "Euronext Paris", "region": "EU", "currency": "EUR", "logoUrl": null },
+  { "symbol": "AZN.L", "name": "AstraZeneca PLC", "exchange": "London Stock Exchange", "region": "EU", "currency": "GBP", "logoUrl": null },
+  { "symbol": "NESN.SW", "name": "Nestlé S.A.", "exchange": "SIX Swiss Exchange", "region": "EU", "currency": "CHF", "logoUrl": null },
+  { "symbol": "CEZ.PR", "name": "ČEZ, a. s.", "exchange": "Prague Stock Exchange", "region": "EU", "currency": "CZK", "logoUrl": null },
+  { "symbol": "SIE.DE", "name": "Siemens Aktiengesellschaft", "exchange": "XETRA", "region": "EU", "currency": "EUR", "logoUrl": null },
+  { "symbol": "DTE.DE", "name": "Deutsche Telekom AG", "exchange": "XETRA", "region": "EU", "currency": "EUR", "logoUrl": null },
+  { "symbol": "NOVO-B.CO", "name": "Novo Nordisk A/S", "exchange": "Nasdaq Copenhagen", "region": "EU", "currency": "DKK", "logoUrl": null }
+]

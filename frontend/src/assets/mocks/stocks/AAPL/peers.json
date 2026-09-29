@@ -1,0 +1,50 @@
+[
+ {
+  "symbol": "MSFT",
+  "name": "Microsoft Corporation",
+  "exchange": "NASDAQ",
+  "region": "US",
+  "currency": "USD",
+  "logoUrl": null
+ },
+ {
+  "symbol": "GOOGL",
+  "name": "Alphabet Inc.",
+  "exchange": "NASDAQ",
+  "region": "US",
+  "currency": "USD",
+  "logoUrl": null
+ },
+ {
+  "symbol": "META",
+  "name": "Meta Platforms, Inc.",
+  "exchange": "NASDAQ",
+  "region": "US",
+  "currency": "USD",
+  "logoUrl": null
+ },
+ {
+  "symbol": "AMZN",
+  "name": "Amazon.com, Inc.",
+  "exchange": "NASDAQ",
+  "region": "US",
+  "currency": "USD",
+  "logoUrl": null
+ },
+ {
+  "symbol": "NVDA",
+  "name": "NVIDIA Corporation",
+  "exchange": "NASDAQ",
+  "region": "US",
+  "currency": "USD",
+  "logoUrl": null
+ },
+ {
+  "symbol": "ORCL",
+  "name": "Oracle Corporation",
+  "exchange": "NYSE",
+  "region": "US",
+  "currency": "USD",
+  "logoUrl": null
+ }
+]

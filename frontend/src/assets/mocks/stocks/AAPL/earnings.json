@@ -1,0 +1,232 @@
+{
+ "upcoming": {
+  "symbol": "AAPL",
+  "name": "Apple Inc.",
+  "exchange": "NASDAQ",
+  "region": "US",
+  "logoUrl": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/AAPL.png",
+  "date": "2026-10-29",
+  "time": "AMC",
+  "fiscalQuarter": 4,
+  "fiscalYear": 2026,
+  "currency": "USD",
+  "epsEstimate": 1.77,
+  "epsActual": null,
+  "revenueEstimate": 102300000000,
+  "revenueActual": null,
+  "marketCapUsd": 3780000000000
+ },
+ "quarters": [
+  {
+   "date": "2026-07-30",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 3,
+   "fiscalYear": 2026,
+   "currency": "USD",
+   "eps": {
+    "estimate": 1.43,
+    "actual": 1.57,
+    "surprisePercent": 9.79
+   },
+   "revenue": {
+    "estimate": 89300000000,
+    "actual": 94000000000,
+    "surprisePercent": 5.26
+   },
+   "result": "BEAT",
+   "reaction": {
+    "preRunUpPercent": 2.1,
+    "gapPercent": 1.8,
+    "reactionDayPercent": 2.4,
+    "driftPercent": 1.2
+   }
+  },
+  {
+   "date": "2026-04-30",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 2,
+   "fiscalYear": 2026,
+   "currency": "USD",
+   "eps": {
+    "estimate": 1.62,
+    "actual": 1.65,
+    "surprisePercent": 1.85
+   },
+   "revenue": {
+    "estimate": 94500000000,
+    "actual": 95400000000,
+    "surprisePercent": 0.95
+   },
+   "result": "BEAT",
+   "reaction": {
+    "preRunUpPercent": 1.2,
+    "gapPercent": -0.8,
+    "reactionDayPercent": -1.1,
+    "driftPercent": 0.4
+   }
+  },
+  {
+   "date": "2026-01-29",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 1,
+   "fiscalYear": 2026,
+   "currency": "USD",
+   "eps": {
+    "estimate": 2.35,
+    "actual": 2.4,
+    "surprisePercent": 2.13
+   },
+   "revenue": {
+    "estimate": 124000000000,
+    "actual": 124300000000,
+    "surprisePercent": 0.24
+   },
+   "result": "BEAT",
+   "reaction": {
+    "preRunUpPercent": 3.1,
+    "gapPercent": 0.5,
+    "reactionDayPercent": -0.7,
+    "driftPercent": 2.9
+   }
+  },
+  {
+   "date": "2025-10-30",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 4,
+   "fiscalYear": 2025,
+   "currency": "USD",
+   "eps": {
+    "estimate": 1.6,
+    "actual": 1.64,
+    "surprisePercent": 2.5
+   },
+   "revenue": {
+    "estimate": 94200000000,
+    "actual": 94900000000,
+    "surprisePercent": 0.74
+   },
+   "result": "BEAT",
+   "reaction": {
+    "preRunUpPercent": -0.4,
+    "gapPercent": 2.2,
+    "reactionDayPercent": 1.9,
+    "driftPercent": 0.8
+   }
+  },
+  {
+   "date": "2025-07-31",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 3,
+   "fiscalYear": 2025,
+   "currency": "USD",
+   "eps": {
+    "estimate": 1.35,
+    "actual": 1.4,
+    "surprisePercent": 3.7
+   },
+   "revenue": {
+    "estimate": 85500000000,
+    "actual": 85800000000,
+    "surprisePercent": 0.35
+   },
+   "result": "BEAT",
+   "reaction": {
+    "preRunUpPercent": 0.9,
+    "gapPercent": -1.3,
+    "reactionDayPercent": -0.7,
+    "driftPercent": -2.1
+   }
+  },
+  {
+   "date": "2025-05-01",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 2,
+   "fiscalYear": 2025,
+   "currency": "USD",
+   "eps": {
+    "estimate": 1.5,
+    "actual": 1.51,
+    "surprisePercent": 0.67
+   },
+   "revenue": {
+    "estimate": 90200000000,
+    "actual": 90800000000,
+    "surprisePercent": 0.67
+   },
+   "result": "INLINE",
+   "reaction": {
+    "preRunUpPercent": -1.9,
+    "gapPercent": -3.1,
+    "reactionDayPercent": -3.7,
+    "driftPercent": -1.2
+   }
+  },
+  {
+   "date": "2025-01-30",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 1,
+   "fiscalYear": 2025,
+   "currency": "USD",
+   "eps": {
+    "estimate": 2.4,
+    "actual": 2.35,
+    "surprisePercent": -2.08
+   },
+   "revenue": {
+    "estimate": 124100000000,
+    "actual": 124300000000,
+    "surprisePercent": 0.16
+   },
+   "result": "MISS",
+   "reaction": {
+    "preRunUpPercent": -1.2,
+    "gapPercent": 0.9,
+    "reactionDayPercent": -0.7,
+    "driftPercent": 1.6
+   }
+  },
+  {
+   "date": "2024-10-31",
+   "time": "AMC",
+   "timeAssumed": false,
+   "fiscalQuarter": 4,
+   "fiscalYear": 2024,
+   "currency": "USD",
+   "eps": {
+    "estimate": 1.6,
+    "actual": 1.64,
+    "surprisePercent": 2.5
+   },
+   "revenue": {
+    "estimate": 94500000000,
+    "actual": 94900000000,
+    "surprisePercent": 0.42
+   },
+   "result": "BEAT",
+   "reaction": {
+    "preRunUpPercent": -0.9,
+    "gapPercent": -1.4,
+    "reactionDayPercent": -1.3,
+    "driftPercent": 0.3
+   }
+  }
+ ],
+ "stats": {
+  "quartersAnalyzed": 8,
+  "beatRate": 75,
+  "streak": {
+   "result": "BEAT",
+   "count": 5
+  },
+  "avgAbsReactionPercent": 1.56
+ },
+ "asOf": "2026-09-29T20:05:00Z",
+ "stale": false
+}

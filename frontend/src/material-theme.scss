@@ -1,0 +1,50 @@
+@use '@angular/material' as mat;
+
+// Material 3 theme: one accent (azure) on neutral surfaces.
+// `theme-type: color-scheme` emits light-dark() values, so the `color-scheme` that ThemeService (and the boot
+// script in index.html) sets on <html> switches every Material component between light and dark.
+// Tailwind reads the same --mat-sys-* tokens (see styles.css), so both always agree.
+$font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        plain-family: $font,
+        brand-family: $font,
+      ),
+      density: 0,
+    )
+  );
+
+  // Visible focus rings for keyboard users on every Material component.
+  @include mat.strong-focus-indicators();
+
+  // Tonal surfaces instead of shadows, and full-width snackbars above the bottom tab bar on phones.
+  @include mat.snack-bar-overrides(
+    (
+      container-shape: 12px,
+    )
+  );
+  @include mat.bottom-sheet-overrides(
+    (
+      container-shape: 28px,
+      container-background-color: var(--mat-sys-surface-container-low),
+    )
+  );
+  @include mat.button-toggle-overrides(
+    (
+      shape: 999px,
+    )
+  );
+}
+
+html.dark {
+  color-scheme: dark;
+}
