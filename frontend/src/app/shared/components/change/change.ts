@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, booleanAttribute, computed, input } from '@angular/core';
 import { formatPercent, toneOf } from '../../utils/format';
 
 const TONE_TEXT = { gain: 'text-gain', loss: 'text-loss', flat: 'text-on-surface-variant' } as const;
@@ -17,7 +17,7 @@ const TONE_PILL = {
 export class Change {
   readonly value = input<number | null | undefined>(null);
   readonly digits = input(2);
-  readonly pill = input(false);
+  readonly pill = input(false, { transform: booleanAttribute });
 
   protected readonly text = computed(() => formatPercent(this.value(), this.digits()));
   protected readonly classes = computed(() => {

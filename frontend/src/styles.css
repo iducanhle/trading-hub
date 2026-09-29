@@ -53,6 +53,12 @@
     --app-gain-container: light-dark(#dcf5e4, #10361f);
     --app-loss-container: light-dark(#fde2df, #45140f);
     --app-neutral-mark: light-dark(#8a8f98, #8f949d);
+    /* Analyst recommendation scale, strong buy → strong sell. */
+    --app-rec-strong-buy: light-dark(#0b6b35, #3fbf73);
+    --app-rec-buy: light-dark(#5aa469, #8fd6a0);
+    --app-rec-hold: light-dark(#d4a72c, #e5c663);
+    --app-rec-sell: light-dark(#e07b39, #f2a36f);
+    --app-rec-strong-sell: light-dark(#b3261e, #ff8a80);
     --app-bottom-nav-height: 4rem;
   }
 

@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { errorMessage } from '../../../core/api/api-error';
 import { Icon } from '../../icon/icon';
@@ -27,7 +27,7 @@ export class ErrorState {
   readonly error = input<unknown>();
   /** Overrides the message derived from the error. */
   readonly message = input<string>();
-  readonly compact = input(false);
+  readonly compact = input(false, { transform: booleanAttribute });
   readonly retry = output<void>();
 
   protected readonly text = computed(() => this.message() ?? errorMessage(this.error()));

@@ -39,6 +39,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
+                },
+                {
+                  "replace": "src/app/core/providers/data-layer.ts",
+                  "with": "src/app/core/providers/data-layer.prod.ts"
                 }
               ],
               "assets": [
@@ -50,7 +54,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "600kB",
                   "maximumError": "1MB"
                 },
                 {

@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Routes } from '@angular/router';
 import { allowedGuard, authGuard, guestGuard, signedInGuard } from './core/auth/auth.guards';
 import { Shell } from './core/layout/shell';
 
@@ -44,6 +44,7 @@ export const routes: Routes = [
       },
       {
         path: 'stock/:symbol',
+        title: (route: ActivatedRouteSnapshot) => (route.paramMap.get('symbol') ?? '').toUpperCase(),
         loadComponent: () => import('./features/stock-detail/stock-detail-page').then((m) => m.StockDetailPage),
       },
       {

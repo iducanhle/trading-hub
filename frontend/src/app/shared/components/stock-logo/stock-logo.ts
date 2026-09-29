@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal } from '@angular/core';
+import { Component, booleanAttribute, computed, input, linkedSignal } from '@angular/core';
 import { Icon } from '../../icon/icon';
 import { symbolColor, symbolInitials } from '../../utils/symbols';
 
@@ -50,7 +50,7 @@ export class StockLogo {
   readonly logoUrl = input<string | null | undefined>(null);
   readonly size = input(40);
   /** Adds a small star: the user follows this stock. */
-  readonly followed = input(false);
+  readonly followed = input(false, { transform: booleanAttribute });
 
   /** Resets whenever the URL changes. */
   protected readonly failed = linkedSignal({ source: this.logoUrl, computation: () => false });
