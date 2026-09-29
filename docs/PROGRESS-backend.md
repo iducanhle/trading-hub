@@ -140,7 +140,7 @@ Nothing left in the backend spec. For the owner:
 - Oracle VM in Frankfurt (A1.Flex, 1 OCPU / 6 GB, because 2 OCPU hit "out of host capacity"; it can be resized later), Ubuntu 24.04 aarch64, Docker 29.8.
 - `https://tradiqo.duckdns.org/api/health` is UP behind a Let's Encrypt certificate; http redirects to https; unauthenticated calls get 401. Firebase project `tradiqo` (Firestore `eur3`).
 - The first start failed: the app could not read the key, because `ubuntu` is uid 1001 on Oracle's image (1000 is `opc`), not 1000 as assumed. Fixed with `APP_USER` in compose and `.env`; the guide now says to set it.
-- The GitHub deploy job is not enabled yet (`DEPLOY_ENABLED` and the deploy secrets are still to be set).
+- Automatic deploys enabled on 2026-09-30 (deploy secrets + `DEPLOY_ENABLED`). The first manual run built, pushed and deployed; the app came back healthy. The end-to-end API check with a real login is postponed until the frontend exists.
 
 ## Known issues
 
