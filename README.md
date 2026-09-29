@@ -32,5 +32,6 @@ Angular (Firebase Hosting) ──HTTPS + Firebase ID token──▶ Caddy (TLS) 
 | [docs/PROGRESS-backend.md](docs/PROGRESS-backend.md) | Backend build status, decisions and known issues. Resume from here. |
 | [docs/PROMPT-backend.md](docs/PROMPT-backend.md) | Full backend specification |
 | [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) | What each free data provider really returns |
+| [docs/BACKEND-OPS-EXPLAINED.md](docs/BACKEND-OPS-EXPLAINED.md) | How the deployment works and how to operate it, explained for developers new to ops |
 | [docs/DEPLOYMENT-backend.md](docs/DEPLOYMENT-backend.md) | Step-by-step deployment guide (Firebase, Oracle VM, DuckDNS, CI/CD) |
 | [backend/README.md](backend/README.md) | Local development, tests, configuration |
