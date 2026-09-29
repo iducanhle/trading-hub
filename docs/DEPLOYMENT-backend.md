@@ -287,6 +287,7 @@ Fill in every line (the arrow keys move the cursor; paste with right-click or Ct
 | `DUCKDNS_SUBDOMAIN` | `YOURNAME` (without `.duckdns.org`) |
 | `DUCKDNS_TOKEN` | from section 5 |
 | `TZ` | `Europe/Prague` |
+| `APP_USER` | add this line: the output of `echo "$(id -u):$(id -g)"` on the VM, usually `1001:1001` on Oracle's Ubuntu image. The app runs as this user so it can read the key. |
 
 Save with **Ctrl+O**, **Enter**, then exit with **Ctrl+X**. Then lock the two secret files so only your user can read them:
 ```bash
@@ -294,7 +295,7 @@ VM$ chmod 600 .env firebase-sa.json
 VM$ rm .env.example
 VM$ ls -l
 ```
-**You should see:** `.env` and `firebase-sa.json` with `-rw-------` and owner `ubuntu`, next to `Caddyfile` and `docker-compose.yml`. The app container runs as the same user ID (1000), so it can still read the key.
+**You should see:** `.env` and `firebase-sa.json` with `-rw-------` and owner `ubuntu`, next to `Caddyfile` and `docker-compose.yml`. The app container runs as `APP_USER`, the same user, so it can still read the key.
 
 The stack is started in 7.4, once GitHub has built the image.
 
@@ -545,7 +546,7 @@ VM$ docker image prune -f    # delete unused images (the deploy job also does th
 4. `docker compose ps`: if `app` is `unhealthy` or restarting, see the next item.
 
 **The app does not become healthy**, so run `docker compose logs --tail 100 app`:
-- `Firebase is required but the key file /run/secrets/firebase-sa.json does not exist or is not readable`: `firebase-sa.json` is missing from `/opt/earnings-tracker`, or it is owned by root. Run `sudo chown ubuntu:ubuntu firebase-sa.json && chmod 600 firebase-sa.json`. If the file is missing entirely, `docker compose up` itself refuses to start and names the secret file.
+- `Firebase is required but the key file /run/secrets/firebase-sa.json does not exist or is not readable`: `firebase-sa.json` is missing from `/opt/earnings-tracker`, or `APP_USER` in `.env` doesn't match its owner. Run `sudo chown ubuntu:ubuntu firebase-sa.json && chmod 600 firebase-sa.json`, check that `APP_USER` equals `echo "$(id -u):$(id -g)"`, then `docker compose up -d`. If the file is missing entirely, `docker compose up` itself refuses to start and names the secret file.
 - `FIREBASE_PROJECT_ID '…' differs from the key's project '…'`, or 401 on every call: `FIREBASE_PROJECT_ID` in `.env` must be the project the key and the frontend belong to.
 - `ALLOWED_EMAILS is empty, so nobody can use the API`: fill it in `.env`, then run `docker compose up -d`.
 

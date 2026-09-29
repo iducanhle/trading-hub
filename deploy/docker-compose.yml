@@ -16,6 +16,9 @@ services:
     # Rollback: set APP_IMAGE in .env to an older tag, e.g. ghcr.io/iducanhle/earnings-tracker-backend:sha-1a2b3c4
     image: ${APP_IMAGE:-ghcr.io/iducanhle/earnings-tracker-backend:latest}
     restart: unless-stopped
+    # Run as the VM user that owns firebase-sa.json (chmod 600), so the key stays readable. Oracle's Ubuntu image
+    # gives "ubuntu" uid 1001; set APP_USER in .env to the output of: echo "$(id -u):$(id -g)"
+    user: ${APP_USER:-1000:1000}
     env_file: .env
     environment:
       # Always the in-container path of the secret below, whatever .env says.

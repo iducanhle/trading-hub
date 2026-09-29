@@ -136,6 +136,12 @@ Nothing left in the backend spec. For the owner:
 - Set `MAIL_APP_PASSWORD` locally if you want the test email from your own machine.
 - The frontend (prompt 2) builds against [CONTRACT.md](CONTRACT.md).
 
+**Live deployment (2026-09-29/30)**
+- Oracle VM in Frankfurt (A1.Flex, 1 OCPU / 6 GB, because 2 OCPU hit "out of host capacity"; it can be resized later), Ubuntu 24.04 aarch64, Docker 29.8.
+- `https://tradiqo.duckdns.org/api/health` is UP behind a Let's Encrypt certificate; http redirects to https; unauthenticated calls get 401. Firebase project `tradiqo` (Firestore `eur3`).
+- The first start failed: the app could not read the key, because `ubuntu` is uid 1001 on Oracle's image (1000 is `opc`), not 1000 as assumed. Fixed with `APP_USER` in compose and `.env`; the guide now says to set it.
+- The GitHub deploy job is not enabled yet (`DEPLOY_ENABLED` and the deploy secrets are still to be set).
+
 ## Known issues
 
 Data gaps (details in `docs/DATA-SOURCES.md`); the API returns `null` for these, never an invented value:
@@ -242,4 +248,5 @@ Engineering:
   - no automatic rollback: pin `APP_IMAGE` to a `sha-…` tag instead
 - **2026-09-27 — Action versions are the current majors** (checked with the GitHub API on 2026-09-27): checkout v7, setup-java v6, upload-artifact v7, download-artifact v8, setup-buildx v4, login v4, metadata v6, build-push v7. Provenance and SBOM attestations are off, so each tag is one plain linux/arm64 image.
 - **2026-09-27 — The verification checklist gets tokens from the Identity Toolkit REST API with Email/Password,** because the frontend doesn't exist yet. The Web API key goes in the `X-Goog-Api-Key` header, and the password is read from the terminal, never from arguments or history.
+- **2026-09-30 — The app container runs as `APP_USER`** (from `.env`, default `1000:1000`) instead of relying on the image's uid 1000 matching the VM user. The key stays `chmod 600` and owned by the VM user.
 - **2026-09-26 — File locations.** `backend/Dockerfile`; `deploy/docker-compose.yml` and `deploy/Caddyfile` (the VM's `/opt/earnings-tracker` mirrors `deploy/` plus `.env` and the key).

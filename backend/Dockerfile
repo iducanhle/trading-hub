@@ -40,7 +40,7 @@ COPY --from=layers /layers/extracted/application/ ./
 ENV SPRING_PROFILES_ACTIVE=prod \
     TZ=Europe/Prague
 EXPOSE 8080
-# uid 1000 is the "ubuntu" user of the Ubuntu base image and of the Oracle VM, so the mounted
-# service-account key (owned by the VM's ubuntu user, chmod 600) stays readable.
+# Default non-root user. docker-compose.yml overrides it with APP_USER (the VM user that owns the chmod-600
+# service-account key; "ubuntu" is uid 1001 on Oracle's Ubuntu image).
 USER 1000:1000
 ENTRYPOINT ["java", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
