@@ -35,12 +35,18 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
     AuthCard,
   ],
   template: `
-    <app-auth-card title="Create account" subtitle="We'll email you a link to verify your address.">
+    <app-auth-card
+      title="Create account"
+      i18n-title
+      subtitle="We'll email you a link to verify your address."
+      i18n-subtitle
+    >
       @if (busy()) {
         <mat-progress-bar
           mode="indeterminate"
           class="mb-4 rounded-full"
           aria-label="Creating account"
+          i18n-aria-label
         />
       }
       @if (error()) {
@@ -53,7 +59,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
       }
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
         <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
+          <mat-label i18n>Email</mat-label>
           <input
             matInput
             type="email"
@@ -61,27 +67,29 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
             autocomplete="email"
             inputmode="email"
           />
-          <mat-error>Enter a valid email address.</mat-error>
+          <mat-error i18n>Enter a valid email address.</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label i18n>Password</mat-label>
           <input matInput type="password" formControlName="password" autocomplete="new-password" />
-          <mat-hint>At least 8 characters</mat-hint>
-          <mat-error>Use at least 8 characters.</mat-error>
+          <mat-hint i18n>At least 8 characters</mat-hint>
+          <mat-error i18n>Use at least 8 characters.</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Confirm password</mat-label>
+          <mat-label i18n>Confirm password</mat-label>
           <input matInput type="password" formControlName="confirm" autocomplete="new-password" />
-          <mat-error>Confirm your password.</mat-error>
+          <mat-error i18n>Confirm your password.</mat-error>
         </mat-form-field>
         @if (form.hasError('mismatch') && form.controls.confirm.touched) {
-          <p role="alert" class="-mt-3 mb-3 px-4 text-xs text-error">The passwords don't match.</p>
+          <p role="alert" class="-mt-3 mb-3 px-4 text-xs text-error" i18n>
+            The passwords don't match.
+          </p>
         }
-        <button matButton="filled" type="submit" class="mt-2 h-12!" [disabled]="busy()">
+        <button matButton="filled" type="submit" class="mt-2 h-12!" [disabled]="busy()" i18n>
           Create account
         </button>
       </form>
-      <p class="mt-8 text-center text-sm text-on-surface-variant">
+      <p class="mt-8 text-center text-sm text-on-surface-variant" i18n>
         Already have an account?
         <a routerLink="/login" class="font-medium text-primary">Sign in</a>
       </p>

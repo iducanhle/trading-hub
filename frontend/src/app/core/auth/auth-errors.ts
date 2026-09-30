@@ -10,31 +10,31 @@ export function authErrorMessage(error: unknown): string | null {
     case 'auth/invalid-login-credentials':
     case 'auth/wrong-password':
     case 'auth/user-not-found':
-      return 'Wrong email or password.';
+      return $localize`Wrong email or password.`;
     case 'auth/invalid-email':
-      return 'That email address is not valid.';
+      return $localize`That email address is not valid.`;
     case 'auth/email-already-in-use':
-      return 'An account with this email already exists. Sign in instead.';
+      return $localize`An account with this email already exists. Sign in instead.`;
     case 'auth/weak-password':
-      return 'Choose a stronger password (at least 6 characters).';
+      return $localize`Choose a stronger password (at least 6 characters).`;
     case 'auth/too-many-requests':
-      return 'Too many attempts. Wait a few minutes and try again.';
+      return $localize`Too many attempts. Wait a few minutes and try again.`;
     case 'auth/network-request-failed':
-      return 'No connection. Check your network and try again.';
+      return $localize`No connection. Check your network and try again.`;
     case 'auth/popup-blocked':
-      return 'The sign-in popup was blocked. Allow popups for this site and try again.';
+      return $localize`The sign-in popup was blocked. Allow popups for this site and try again.`;
     case 'auth/account-exists-with-different-credential':
-      return 'This email already signs in another way. Use email and password, or the method you used before.';
+      return $localize`This email already signs in another way. Use email and password, or the method you used before.`;
     case 'auth/user-disabled':
-      return 'This account is disabled.';
+      return $localize`This account is disabled.`;
     case 'auth/unauthorized-domain':
-      return 'This domain is not authorized for sign-in (Firebase console → Authentication → Settings).';
+      return $localize`This domain is not authorized for sign-in (Firebase console → Authentication → Settings).`;
     case 'auth/operation-not-allowed':
-      return 'This sign-in method is not enabled in the Firebase console.';
+      return $localize`This sign-in method is not enabled in the Firebase console.`;
     case 'auth/invalid-api-key':
     case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
       return 'The Firebase config is missing or wrong (src/environments).';
     default:
-      return 'Sign-in failed. Please try again.';
+      return $localize`Sign-in failed. Please try again.`;
   }
 }

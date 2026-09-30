@@ -137,7 +137,8 @@ users/{uid}
     theme: "light" | "dark" | "system",          // default "system"
     notificationsEnabled: boolean,                // default true
     notifyDaysBefore: number,                     // 1–7, default 1
-    notificationEmail: string | null              // null = use auth email
+    notificationEmail: string | null,             // null = use auth email
+    language?: "en" | "cs" | null                 // optional; null/missing = not chosen (device language)
   }
 users/{uid}/follows/{symbol}   { symbol, name, exchange, region, logoUrl, followedAt: timestamp }
 users/{uid}/notes/{symbol}     { symbol, text, updatedAt: timestamp }

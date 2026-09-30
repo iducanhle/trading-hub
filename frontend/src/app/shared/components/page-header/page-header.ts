@@ -20,6 +20,7 @@ import { Icon } from '../../icon/icon';
             matIconButton
             type="button"
             aria-label="Back"
+            i18n-aria-label
             (click)="navigation.back(backFallback())"
           >
             <app-icon name="arrow_back" />

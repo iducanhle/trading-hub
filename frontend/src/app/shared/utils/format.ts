@@ -1,13 +1,27 @@
+import { LANGUAGE } from '../../core/i18n/language';
 import { EarningsResult, ReportTime } from '../../core/models/contract';
 
 /**
- * Numbers use en-US conventions whatever the device language: the UI is English, and en-US compact notation gives
- * the familiar `$8.4B` / `€312M` (en-GB would print `€312m` and `$8.4bn`).
+ * Numbers follow the UI language, not the device. English uses en-US, whose compact notation gives the familiar
+ * `$8.4B` / `€312M` (en-GB would print `€312m` and `$8.4bn`); Czech uses cs-CZ (`8,4 mld. US$`, `254,43 $`).
  */
-export const NUMBER_LOCALE = 'en-US';
+export const NUMBER_LOCALE = LANGUAGE === 'cs' ? 'cs-CZ' : 'en-US';
 
 /** What every missing value renders as. */
 export const DASH = '—';
+
+/** Czech puts a (non-breaking) space before the percent sign: `3,25 %`. */
+export const PERCENT_SIGN = LANGUAGE === 'cs' ? ' %' : '%';
+
+/** Short period labels: 1W, 1M, YTD, 1Y, 5Y (Czech: 1T, 1M, YTD, 1R, 5R). */
+export const PERIOD_LABELS = {
+  '1W': $localize`:One week:1W`,
+  '1M': $localize`:One month:1M`,
+  '6M': $localize`:Six months:6M`,
+  YTD: $localize`:Year to date:YTD`,
+  '1Y': $localize`:One year:1Y`,
+  '5Y': $localize`:Five years:5Y`,
+} as const;
 
 const formats = new Map<string, Intl.NumberFormat>();
 
@@ -96,7 +110,7 @@ export function formatPercent(
     maximumFractionDigits: digits,
     signDisplay: 'exceptZero',
   });
-  return withMinus(format.format(value)) + '%';
+  return withMinus(format.format(value)) + PERCENT_SIGN;
 }
 
 /** Unsigned percent, e.g. a beat rate: `75%`. */
@@ -110,7 +124,7 @@ export function formatPlainPercent(
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
-  return format.format(value) + '%';
+  return format.format(value) + PERCENT_SIGN;
 }
 
 /** Plain numbers such as P/E: `28.41`. */
@@ -148,10 +162,10 @@ export function toneClass(value: number | null | undefined): string {
 }
 
 const REPORT_TIME_LABELS: Record<ReportTime, string> = {
-  BMO: 'Before open',
-  AMC: 'After close',
-  DMH: 'During market',
-  UNKNOWN: 'Time TBD',
+  BMO: $localize`Before open`,
+  AMC: $localize`After close`,
+  DMH: $localize`During market`,
+  UNKNOWN: $localize`Time TBD`,
 };
 
 export function reportTimeLabel(time: ReportTime | null | undefined): string {
@@ -159,9 +173,9 @@ export function reportTimeLabel(time: ReportTime | null | undefined): string {
 }
 
 const RESULT_LABELS: Record<EarningsResult, string> = {
-  BEAT: 'Beat',
-  MISS: 'Miss',
-  INLINE: 'In line',
+  BEAT: $localize`:Earnings above the estimate:Beat`,
+  MISS: $localize`:Earnings below the estimate:Miss`,
+  INLINE: $localize`:Earnings matching the estimate:In line`,
 };
 
 export function resultLabel(result: EarningsResult | null | undefined): string {

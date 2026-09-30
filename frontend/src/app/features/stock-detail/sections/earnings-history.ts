@@ -37,7 +37,7 @@ import { StockContext } from '../stock-context';
     ReportTimePipe,
   ],
   template: `
-    <app-section title="Earnings history" [(expanded)]="expanded">
+    <app-section title="Earnings history" i18n-title [(expanded)]="expanded">
       @if (earnings.error() && !earnings.hasValue()) {
         <app-error-state compact [error]="earnings.error()" (retry)="earnings.reload()" />
       } @else if (!earnings.hasValue()) {
@@ -47,7 +47,7 @@ import { StockContext } from '../stock-context';
           }
         </div>
       } @else if (!quarters().length) {
-        <p class="text-sm text-on-surface-variant">No reported quarters yet.</p>
+        <p class="text-sm text-on-surface-variant" i18n>No reported quarters yet.</p>
       } @else {
         @if (earnings.value()!.stale) {
           <app-stale-chip class="mb-3 block" [asOf]="earnings.value()!.asOf" />
@@ -62,7 +62,7 @@ import { StockContext } from '../stock-context';
                   <p class="text-xs text-on-surface-variant">
                     {{ q.date | appDate: 'medium' }} · {{ q.time | reportTime }}
                     @if (q.timeAssumed) {
-                      <span class="italic">(assumed)</span>
+                      <span class="italic" i18n="The report time is a guess">(assumed)</span>
                     }
                   </p>
                 </div>
@@ -70,7 +70,7 @@ import { StockContext } from '../stock-context';
               </div>
               <dl class="mt-3 space-y-1.5 tabular-nums">
                 <div class="flex items-baseline justify-between gap-2">
-                  <dt class="text-on-surface-variant">EPS</dt>
+                  <dt class="text-on-surface-variant" i18n="Earnings per share">EPS</dt>
                   <dd class="text-right">
                     {{ q.eps.estimate | price: q.currency }} →
                     <span class="font-medium">{{ q.eps.actual | price: q.currency }}</span>
@@ -78,7 +78,7 @@ import { StockContext } from '../stock-context';
                   </dd>
                 </div>
                 <div class="flex items-baseline justify-between gap-2">
-                  <dt class="text-on-surface-variant">Revenue</dt>
+                  <dt class="text-on-surface-variant" i18n>Revenue</dt>
                   <dd class="text-right">
                     {{ q.revenue.estimate | compact: q.currency }} →
                     <span class="font-medium">{{ q.revenue.actual | compact: q.currency }}</span>
@@ -87,7 +87,9 @@ import { StockContext } from '../stock-context';
                 </div>
               </dl>
               <div class="mt-3 border-t border-outline-variant pt-3">
-                <p class="mb-1.5 text-xs font-medium text-on-surface-variant">Price reaction</p>
+                <p class="mb-1.5 text-xs font-medium text-on-surface-variant" i18n>
+                  Price reaction
+                </p>
                 <dl class="grid grid-cols-4 gap-1 text-center text-xs tabular-nums">
                   @for (cell of reaction(q); track cell.label) {
                     <div class="rounded-lg bg-surface-container px-1 py-1.5">
@@ -104,32 +106,40 @@ import { StockContext } from '../stock-context';
         <!-- Desktop: a table with the reaction as extra columns. -->
         <div class="hidden overflow-x-auto md:block">
           <table class="w-full text-sm tabular-nums">
-            <caption class="sr-only">
+            <caption class="sr-only" i18n>
               Earnings history and price reaction by quarter
             </caption>
             <thead class="text-left text-xs text-on-surface-variant">
               <tr class="border-b border-outline-variant">
-                <th scope="col" class="py-2 pr-3 font-medium">Quarter</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium">EPS est. → act.</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium">Surprise</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium">Revenue est. → act.</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium">Surprise</th>
-                <th scope="col" class="px-2 py-2 font-medium">Result</th>
+                <th scope="col" class="py-2 pr-3 font-medium" i18n>Quarter</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium" i18n>EPS est. → act.</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium" i18n>Surprise</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium" i18n>
+                  Revenue est. → act.
+                </th>
+                <th scope="col" class="px-2 py-2 text-right font-medium" i18n>Surprise</th>
+                <th scope="col" class="px-2 py-2 font-medium" i18n>Result</th>
                 <th
                   scope="col"
                   class="px-2 py-2 text-right font-medium"
                   title="5 sessions before the report"
+                  i18n-title
                 >
-                  Run-up
+                  {{ reactionLabels.runUp }}
                 </th>
-                <th scope="col" class="px-2 py-2 text-right font-medium">Gap</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium">Day</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium">
+                  {{ reactionLabels.gap }}
+                </th>
+                <th scope="col" class="px-2 py-2 text-right font-medium">
+                  {{ reactionLabels.day }}
+                </th>
                 <th
                   scope="col"
                   class="py-2 pl-2 text-right font-medium"
                   title="5 sessions after the reaction day"
+                  i18n-title
                 >
-                  Drift
+                  {{ reactionLabels.drift }}
                 </th>
               </tr>
             </thead>
@@ -141,7 +151,7 @@ import { StockContext } from '../stock-context';
                     <span class="text-xs text-on-surface-variant">
                       {{ q.date | appDate: 'medium' }} · {{ q.time | reportTime }}
                       @if (q.timeAssumed) {
-                        <span class="italic">(assumed)</span>
+                        <span class="italic" i18n="The report time is a guess">(assumed)</span>
                       }
                     </span>
                   </th>
@@ -187,21 +197,30 @@ export class EarningsHistory {
     this.earnings.hasValue() ? (this.earnings.value()?.quarters ?? []) : [],
   );
 
+  /** Price reaction around a report: the 5 sessions before, the opening gap, the reaction day, 5 sessions after. */
+  protected readonly reactionLabels = {
+    runUp: $localize`:Price change in the 5 sessions before the report:Run-up`,
+    gap: $localize`:Opening price gap on the reaction day:Gap`,
+    day: $localize`:Price change on the reaction day:Day`,
+    drift: $localize`:Price change in the 5 sessions after the reaction day:Drift`,
+  };
+
   protected label(q: EarningsQuarter): string {
     // Sources without a fiscal period: name the report by its month.
     // Sources without a fiscal period: name the report by its month.
     return (
-      fiscalLabel(q.fiscalQuarter, q.fiscalYear) ?? `${formatDate(q.date, 'monthYear')} report`
+      fiscalLabel(q.fiscalQuarter, q.fiscalYear) ??
+      $localize`${formatDate(q.date, 'monthYear')}:month: report`
     );
   }
 
   protected reaction(q: EarningsQuarter): { label: string; value: number | null }[] {
     const r = q.reaction;
     return [
-      { label: 'Run-up', value: r?.preRunUpPercent ?? null },
-      { label: 'Gap', value: r?.gapPercent ?? null },
-      { label: 'Day', value: r?.reactionDayPercent ?? null },
-      { label: 'Drift', value: r?.driftPercent ?? null },
+      { label: this.reactionLabels.runUp, value: r?.preRunUpPercent ?? null },
+      { label: this.reactionLabels.gap, value: r?.gapPercent ?? null },
+      { label: this.reactionLabels.day, value: r?.reactionDayPercent ?? null },
+      { label: this.reactionLabels.drift, value: r?.driftPercent ?? null },
     ];
   }
 }

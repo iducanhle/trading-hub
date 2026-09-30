@@ -27,7 +27,7 @@ interface Tab {
       class="sr-only rounded-full bg-primary px-4 py-2 text-sm font-medium text-on-primary focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
       (click)="main.focus()"
     >
-      Skip to content
+      <ng-container i18n>Skip to content</ng-container>
     </button>
     @if (!online()) {
       <div
@@ -35,7 +35,7 @@ interface Tab {
         class="sticky top-0 z-40 flex items-center justify-center gap-2 bg-inverse-surface px-4 pt-safe pb-1.5 text-center text-xs text-inverse-on-surface lg:ml-24"
       >
         <app-icon name="cloud_off" [size]="16" />
-        You're offline. Showing saved data.
+        <ng-container i18n>You're offline. Showing saved data.</ng-container>
       </div>
     }
 
@@ -49,6 +49,7 @@ interface Tab {
 
     <nav
       aria-label="Main"
+      i18n-aria-label="Main navigation"
       class="fixed inset-x-0 bottom-0 z-30 border-t border-outline-variant bg-surface-container pb-safe lg:inset-y-0 lg:right-auto lg:w-24 lg:border-t-0 lg:border-r lg:pt-safe lg:pb-0"
     >
       <ul
@@ -94,15 +95,20 @@ export class Shell {
 
   protected readonly online = inject(OnlineService).online;
   protected readonly tabs: Tab[] = [
-    { path: '/search', label: 'Search', icon: 'search', activeIcon: 'search' },
-    { path: '/followed', label: 'Followed', icon: 'star', activeIcon: 'star-fill' },
+    { path: '/search', label: $localize`Search`, icon: 'search', activeIcon: 'search' },
+    { path: '/followed', label: $localize`Followed`, icon: 'star', activeIcon: 'star-fill' },
     {
       path: '/calendar',
-      label: 'Calendar',
+      label: $localize`Calendar`,
       icon: 'calendar_month',
       activeIcon: 'calendar_month-fill',
     },
-    { path: '/settings', label: 'Settings', icon: 'settings', activeIcon: 'settings-fill' },
+    {
+      path: '/settings',
+      label: $localize`Settings`,
+      icon: 'settings',
+      activeIcon: 'settings-fill',
+    },
   ];
 
   /** The tab whose section is showing; none on a stock page. */

@@ -9,11 +9,36 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { StockContext } from '../stock-context';
 
 const SCALE = [
-  { key: 'strongBuy', label: 'Strong buy', color: 'var(--app-rec-strong-buy)', text: '#fff' },
-  { key: 'buy', label: 'Buy', color: 'var(--app-rec-buy)', text: '#10230f' },
-  { key: 'hold', label: 'Hold', color: 'var(--app-rec-hold)', text: '#2a2000' },
-  { key: 'sell', label: 'Sell', color: 'var(--app-rec-sell)', text: '#2b1100' },
-  { key: 'strongSell', label: 'Strong sell', color: 'var(--app-rec-strong-sell)', text: '#fff' },
+  {
+    key: 'strongBuy',
+    label: $localize`:Analyst rating:Strong buy`,
+    color: 'var(--app-rec-strong-buy)',
+    text: '#fff',
+  },
+  {
+    key: 'buy',
+    label: $localize`:Analyst rating:Buy`,
+    color: 'var(--app-rec-buy)',
+    text: '#10230f',
+  },
+  {
+    key: 'hold',
+    label: $localize`:Analyst rating:Hold`,
+    color: 'var(--app-rec-hold)',
+    text: '#2a2000',
+  },
+  {
+    key: 'sell',
+    label: $localize`:Analyst rating:Sell`,
+    color: 'var(--app-rec-sell)',
+    text: '#2b1100',
+  },
+  {
+    key: 'strongSell',
+    label: $localize`:Analyst rating:Strong sell`,
+    color: 'var(--app-rec-strong-sell)',
+    text: '#fff',
+  },
 ] as const;
 
 interface Bar {
@@ -51,7 +76,7 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
   imports: [Section, ErrorState, Skeleton],
   template: `
     @if (!recs.hasValue() || bars().length) {
-      <app-section title="Analyst recommendations" [(expanded)]="expanded">
+      <app-section title="Analyst recommendations" i18n-title [(expanded)]="expanded">
         @if (recs.error()) {
           <app-error-state compact [error]="recs.error()" (retry)="recs.reload()" />
         } @else if (!recs.hasValue()) {
@@ -92,6 +117,7 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
           <ul
             class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant"
             aria-label="Legend"
+            i18n-aria-label="Chart legend"
           >
             @for (s of scale; track s.key) {
               <li class="flex items-center gap-1.5">

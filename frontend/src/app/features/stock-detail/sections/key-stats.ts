@@ -9,11 +9,11 @@ import { formatPlainPercent } from '../../../shared/utils/format';
   selector: 'app-key-stats',
   imports: [Skeleton, CompactPipe, PricePipe, NumberPipe],
   template: `
-    <h2 class="sr-only">Key stats</h2>
+    <h2 class="sr-only" i18n>Key stats</h2>
     @if (overview(); as o) {
       <dl class="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3 text-sm sm:grid-cols-3">
         <div>
-          <dt class="text-xs text-on-surface-variant">Market cap</dt>
+          <dt class="text-xs text-on-surface-variant" i18n>Market cap</dt>
           <dd class="font-medium tabular-nums">
             {{ o.keyStats.marketCap | compact: o.currency }}
             @if (o.currency !== 'USD' && o.keyStats.marketCapUsd !== null) {
@@ -24,19 +24,21 @@ import { formatPlainPercent } from '../../../shared/utils/format';
           </dd>
         </div>
         <div>
-          <dt class="text-xs text-on-surface-variant">P/E</dt>
+          <dt class="text-xs text-on-surface-variant" i18n="Price to earnings ratio">P/E</dt>
           <dd class="font-medium tabular-nums">{{ o.keyStats.peRatio | num: 1 }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-on-surface-variant">EPS (TTM)</dt>
+          <dt class="text-xs text-on-surface-variant" i18n="Earnings per share, trailing 12 months">
+            EPS (TTM)
+          </dt>
           <dd class="font-medium tabular-nums">{{ o.keyStats.epsTtm | price: o.currency }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-on-surface-variant">Avg volume</dt>
+          <dt class="text-xs text-on-surface-variant" i18n>Avg volume</dt>
           <dd class="font-medium tabular-nums">{{ o.keyStats.avgVolume | compact }}</dd>
         </div>
         <div class="col-span-2">
-          <dt class="text-xs text-on-surface-variant">52-week range</dt>
+          <dt class="text-xs text-on-surface-variant" i18n>52-week range</dt>
           <dd class="mt-1">
             <div class="flex items-center gap-2 tabular-nums">
               <span class="text-xs">{{ o.keyStats.week52Low | price: o.currency }}</span>
@@ -88,7 +90,7 @@ export class KeyStats {
   protected readonly rangeLabel = computed(() => {
     const position = this.rangePosition();
     return position === null
-      ? '52-week range unavailable'
-      : `Current price at ${formatPlainPercent(position * 100)} of the 52-week range`;
+      ? $localize`52-week range unavailable`
+      : $localize`Current price at ${formatPlainPercent(position * 100)}:percent: of the 52-week range`;
   });
 }

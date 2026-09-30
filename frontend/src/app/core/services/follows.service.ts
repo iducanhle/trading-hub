@@ -85,7 +85,7 @@ export class FollowsService {
       await this.gateway.follow(this.uid, { ...doc, followedAt });
     } catch (error) {
       this.follows.set(previous);
-      void this.notifier.show(`Couldn't follow ${target.symbol}`);
+      void this.notifier.show($localize`Couldn't follow ${target.symbol}:symbol:`);
       throw error;
     }
   }
@@ -100,11 +100,11 @@ export class FollowsService {
       await this.gateway.unfollow(this.uid, symbol);
     } catch (error) {
       this.follows.set(previous);
-      void this.notifier.show(`Couldn't unfollow ${symbol}`);
+      void this.notifier.show($localize`Couldn't unfollow ${symbol}:symbol:`);
       throw error;
     }
     if (!removed) return;
-    const ref = await this.notifier.show(`Unfollowed ${symbol}`, 'Undo');
+    const ref = await this.notifier.show($localize`Unfollowed ${symbol}:symbol:`, $localize`Undo`);
     ref.onAction().subscribe(() => void this.follow(removed, removed.followedAt));
   }
 }

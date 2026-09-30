@@ -27,7 +27,7 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
     CompactPipe,
   ],
   template: `
-    <app-section title="Upcoming earnings" [(expanded)]="expanded">
+    <app-section title="Upcoming earnings" i18n-title [(expanded)]="expanded">
       @if (loading()) {
         <app-skeleton shape="card" class="h-28" />
       } @else if (event(); as e) {
@@ -51,17 +51,17 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
           </div>
           <dl class="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums">
             <div>
-              <dt class="text-xs opacity-80">EPS estimate</dt>
+              <dt class="text-xs opacity-80" i18n>EPS estimate</dt>
               <dd class="font-semibold">{{ e.epsEstimate | price: e.currency }}</dd>
             </div>
             <div>
-              <dt class="text-xs opacity-80">Revenue estimate</dt>
+              <dt class="text-xs opacity-80" i18n>Revenue estimate</dt>
               <dd class="font-semibold">{{ e.revenueEstimate | compact: e.currency }}</dd>
             </div>
           </dl>
         </div>
       } @else {
-        <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
+        <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant" i18n>
           No upcoming date announced.
         </p>
       }

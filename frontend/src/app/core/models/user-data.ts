@@ -1,3 +1,4 @@
+import { Language } from '../i18n/language';
 import { Region } from './contract';
 
 // Firestore documents owned by the user (docs/CONTRACT.md, "Firestore — user-owned documents").
@@ -12,6 +13,8 @@ export interface UserSettings {
   notifyDaysBefore: number;
   /** null = the account email. */
   notificationEmail: string | null;
+  /** UI language; null = not chosen yet (the device's language decides). */
+  language: Language | null;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -19,6 +22,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   notificationsEnabled: true,
   notifyDaysBefore: 1,
   notificationEmail: null,
+  language: null,
 };
 
 /** users/{uid} */

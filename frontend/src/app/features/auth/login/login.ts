@@ -34,13 +34,20 @@ import { GoogleLogo } from '../google-logo';
     <app-auth-card
       title="Earnings Tracker"
       subtitle="Sign in to see your stocks and earnings dates"
+      i18n-subtitle
     >
       @if (busy()) {
-        <mat-progress-bar mode="indeterminate" class="mb-4 rounded-full" aria-label="Signing in" />
+        <mat-progress-bar
+          mode="indeterminate"
+          class="mb-4 rounded-full"
+          aria-label="Signing in"
+          i18n-aria-label
+        />
       }
       @if (mockMode) {
         <p
           class="mb-4 rounded-xl bg-secondary-container px-3 py-2 text-sm text-on-secondary-container"
+          i18n
         >
           Mock mode: any button signs you in as mock&#64;example.com.
         </p>
@@ -62,18 +69,17 @@ import { GoogleLogo } from '../google-logo';
         (click)="google()"
       >
         <app-google-logo matButtonIcon />
-        Continue with Google
+        <ng-container i18n>Continue with Google</ng-container>
       </button>
 
       <div class="my-6 flex items-center gap-3 text-xs text-on-surface-variant" aria-hidden="true">
-        <span class="h-px flex-1 bg-outline-variant"></span>or<span
-          class="h-px flex-1 bg-outline-variant"
-        ></span>
+        <span class="h-px flex-1 bg-outline-variant"></span><span i18n>or</span
+        ><span class="h-px flex-1 bg-outline-variant"></span>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
         <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
+          <mat-label i18n>Email</mat-label>
           <input
             matInput
             type="email"
@@ -82,13 +88,13 @@ import { GoogleLogo } from '../google-logo';
             inputmode="email"
           />
           @if (form.controls.email.hasError('email')) {
-            <mat-error>Enter a valid email address.</mat-error>
+            <mat-error i18n>Enter a valid email address.</mat-error>
           } @else {
-            <mat-error>Email is required.</mat-error>
+            <mat-error i18n>Email is required.</mat-error>
           }
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label i18n>Password</mat-label>
           <input
             matInput
             [type]="showPassword() ? 'text' : 'password'"
@@ -99,23 +105,26 @@ import { GoogleLogo } from '../google-logo';
             matIconButton
             matSuffix
             type="button"
-            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-label]="showPassword() ? hidePasswordLabel : showPasswordLabel"
             (click)="showPassword.set(!showPassword())"
           >
             <app-icon [name]="showPassword() ? 'visibility_off' : 'visibility'" />
           </button>
-          <mat-error>Password is required.</mat-error>
+          <mat-error i18n>Password is required.</mat-error>
         </mat-form-field>
         <a
           routerLink="/reset-password"
           class="-mt-2 mb-4 self-end py-2 text-sm font-medium text-primary"
+          i18n
         >
           Forgot password?
         </a>
-        <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()">Sign in</button>
+        <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()" i18n>
+          Sign in
+        </button>
       </form>
 
-      <p class="mt-8 text-center text-sm text-on-surface-variant">
+      <p class="mt-8 text-center text-sm text-on-surface-variant" i18n>
         No account yet?
         <a routerLink="/register" class="font-medium text-primary">Create one</a>
       </p>
@@ -131,6 +140,8 @@ export class Login {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
+  protected readonly hidePasswordLabel = $localize`Hide password`;
+  protected readonly showPasswordLabel = $localize`Show password`;
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],

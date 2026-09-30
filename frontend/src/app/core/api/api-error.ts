@@ -51,7 +51,8 @@ function isErrorBody(body: unknown): body is ApiErrorBody {
 export function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
   if (error instanceof HttpErrorResponse) {
-    if (error.status === 0) return new ApiError(0, 'NETWORK', 'The server could not be reached.');
+    if (error.status === 0)
+      return new ApiError(0, 'NETWORK', $localize`The server could not be reached.`);
     if (isErrorBody(error.error))
       return new ApiError(error.status, error.error.code, error.error.message);
     const code = STATUS_CODES[error.status] ?? (error.status >= 500 ? 'INTERNAL_ERROR' : 'UNKNOWN');
@@ -69,18 +70,20 @@ export function errorMessage(error: unknown): string {
   const code = toApiError(error).code;
   switch (code) {
     case 'NETWORK':
-      return navigator.onLine ? "Can't reach the server right now." : "You're offline.";
+      return navigator.onLine
+        ? $localize`Can't reach the server right now.`
+        : $localize`You're offline.`;
     case 'RATE_LIMITED':
-      return 'Too many requests. Try again in a minute.';
+      return $localize`Too many requests. Try again in a minute.`;
     case 'UPSTREAM_UNAVAILABLE':
-      return 'The data provider is unavailable right now.';
+      return $localize`The data provider is unavailable right now.`;
     case 'SYMBOL_NOT_FOUND':
-      return 'This symbol was not found.';
+      return $localize`This symbol was not found.`;
     case 'NOT_ALLOWED':
-      return 'Access not granted.';
+      return $localize`Access not granted.`;
     case 'UNAUTHENTICATED':
-      return 'Your session expired. Sign in again.';
+      return $localize`Your session expired. Sign in again.`;
     default:
-      return 'Something went wrong.';
+      return $localize`Something went wrong.`;
   }
 }

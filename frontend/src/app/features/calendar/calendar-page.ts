@@ -55,16 +55,16 @@ import { WeekView } from './week-view';
   ],
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="refresh()">
-      <app-page-header title="Calendar" maxWidth="max-w-6xl">
+      <app-page-header title="Calendar" i18n-title maxWidth="max-w-6xl">
         <div actions class="flex items-center">
-          <button matButton type="button" (click)="goToday()" [disabled]="showsToday()">
+          <button matButton type="button" (click)="goToday()" [disabled]="showsToday()" i18n>
             Today
           </button>
           <button
             matIconButton
             type="button"
             class="lg:hidden!"
-            [attr.aria-label]="filtersActive() ? 'Filters (active)' : 'Filters'"
+            [attr.aria-label]="filtersActive() ? labels.filtersActive : labels.filters"
             (click)="openFilters()"
           >
             <span class="relative inline-flex">
@@ -77,7 +77,13 @@ import { WeekView } from './week-view';
               }
             </span>
           </button>
-          <button matIconButton type="button" aria-label="Refresh" (click)="refresh()">
+          <button
+            matIconButton
+            type="button"
+            aria-label="Refresh"
+            i18n-aria-label
+            (click)="refresh()"
+          >
             <app-icon name="refresh" [class.animate-spin]="data.isLoading()" />
           </button>
         </div>
@@ -85,7 +91,7 @@ import { WeekView } from './week-view';
           <button
             matIconButton
             type="button"
-            [attr.aria-label]="view() === 'week' ? 'Previous week' : 'Previous month'"
+            [attr.aria-label]="view() === 'week' ? labels.previousWeek : labels.previousMonth"
             (click)="step(-1)"
           >
             <app-icon name="chevron_left" />
@@ -100,7 +106,7 @@ import { WeekView } from './week-view';
           <button
             matIconButton
             type="button"
-            [attr.aria-label]="view() === 'week' ? 'Next week' : 'Next month'"
+            [attr.aria-label]="view() === 'week' ? labels.nextWeek : labels.nextMonth"
             (click)="step(1)"
           >
             <app-icon name="chevron_right" />
@@ -109,11 +115,12 @@ import { WeekView } from './week-view';
             class="ml-auto"
             hideSingleSelectionIndicator
             aria-label="Calendar view"
+            i18n-aria-label
             [value]="view()"
             (change)="view.set($event.value)"
           >
-            <mat-button-toggle value="week">Week</mat-button-toggle>
-            <mat-button-toggle value="month">Month</mat-button-toggle>
+            <mat-button-toggle value="week" i18n>Week</mat-button-toggle>
+            <mat-button-toggle value="month" i18n>Month</mat-button-toggle>
           </mat-button-toggle-group>
         </div>
         <div class="mx-auto hidden max-w-6xl px-4 pb-3 lg:block">
@@ -142,14 +149,16 @@ import { WeekView } from './week-view';
             <app-empty-state
               icon="event"
               title="No earnings in this period"
-              [text]="
-                filtersActive()
-                  ? 'Try a lower market cap, another region, or all stocks.'
-                  : 'Reports appear here as companies announce their dates.'
-              "
+              i18n-title
+              [text]="filtersActive() ? labels.emptyFiltered : labels.empty"
             >
               @if (filtersActive()) {
-                <button matButton="outlined" type="button" (click)="filters.set(defaultFilters)">
+                <button
+                  matButton="outlined"
+                  type="button"
+                  (click)="filters.set(defaultFilters)"
+                  i18n
+                >
                   Reset filters
                 </button>
               }
@@ -207,6 +216,17 @@ export class CalendarPage {
   protected readonly filtersActive = computed(() => !filtersAreDefault(this.filters()));
   protected readonly refreshing = computed(() => this.data.isLoading() && this.version() > 0);
 
+  protected readonly labels = {
+    filters: $localize`Filters`,
+    filtersActive: $localize`Filters (active)`,
+    previousWeek: $localize`Previous week`,
+    previousMonth: $localize`Previous month`,
+    nextWeek: $localize`Next week`,
+    nextMonth: $localize`Next month`,
+    emptyFiltered: $localize`Try a lower market cap, another region, or all stocks.`,
+    empty: $localize`Reports appear here as companies announce their dates.`,
+  };
+
   protected readonly title = computed(() => {
     const { from, to } = this.range();
     return this.view() === 'month'
@@ -255,11 +275,11 @@ export class CalendarPage {
   }
 
   protected openFilters(): void {
-    this.sheet.open(FilterSheet, { data: this.filters, ariaLabel: 'Filters' });
+    this.sheet.open(FilterSheet, { data: this.filters, ariaLabel: this.labels.filters });
   }
 
   protected openDay(day: CalendarDay): void {
     const data: DaySheetData = { day, followed: this.followed() };
-    this.sheet.open(DaySheet, { data, ariaLabel: 'Reports of the day' });
+    this.sheet.open(DaySheet, { data, ariaLabel: $localize`Reports of the day` });
   }
 }

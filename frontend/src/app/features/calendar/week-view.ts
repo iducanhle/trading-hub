@@ -4,8 +4,9 @@ import { CalendarDay } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
 import { AppDatePipe } from '../../shared/pipes/format.pipes';
+import { formatDate } from '../../shared/utils/dates';
 import { baseSymbol } from '../../shared/utils/symbols';
-import { visibleWeekDays } from './calendar-model';
+import { reportCount, visibleWeekDays } from './calendar-model';
 
 const MAX_TILES = 8;
 
@@ -26,9 +27,7 @@ const MAX_TILES = 8;
         <button
           type="button"
           class="flex min-h-11 w-full items-center gap-2 rounded-xl px-2 text-left hover:bg-surface-container-high"
-          [attr.aria-label]="
-            (day.date | appDate: 'long') + ', ' + day.events.length + ' reports. Show all'
-          "
+          [attr.aria-label]="dayLabel(day)"
           (click)="openDay.emit(day)"
         >
           <span class="font-semibold" [class.text-primary]="isToday">{{
@@ -38,6 +37,7 @@ const MAX_TILES = 8;
           @if (isToday) {
             <span
               class="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-on-primary"
+              i18n
               >Today</span
             >
           }
@@ -54,7 +54,7 @@ const MAX_TILES = 8;
                   [routerLink]="['/stock', e.symbol]"
                   class="flex min-h-18 flex-col items-center justify-center gap-1 rounded-xl p-1 hover:bg-surface-container-high"
                   [attr.aria-label]="
-                    e.symbol + ', ' + e.name + (followed().has(e.symbol) ? ', followed' : '')
+                    e.symbol + ', ' + e.name + (followed().has(e.symbol) ? followedSuffix : '')
                   "
                 >
                   <app-stock-logo
@@ -74,7 +74,8 @@ const MAX_TILES = 8;
                 <button
                   type="button"
                   class="flex min-h-18 w-full flex-col items-center justify-center rounded-xl p-1 hover:bg-surface-container-high"
-                  [attr.aria-label]="'Show all ' + day.events.length + ' reports'"
+                  aria-label="Show all {{ day.events.length }} reports"
+                  i18n-aria-label
                   (click)="openDay.emit(day)"
                 >
                   <span
@@ -86,7 +87,7 @@ const MAX_TILES = 8;
             }
           </ul>
         } @else {
-          <p class="px-2 pb-2 text-sm text-on-surface-variant">No reports</p>
+          <p class="px-2 pb-2 text-sm text-on-surface-variant" i18n>No reports</p>
         }
       </section>
     }
@@ -100,6 +101,13 @@ export class WeekView {
 
   protected readonly maxTiles = MAX_TILES;
   protected readonly days = computed(() => visibleWeekDays(this.calendarDays()));
+  protected readonly followedSuffix = $localize`, followed`;
+
+  protected dayLabel(day: CalendarDay): string {
+    const date = formatDate(day.date, 'long');
+    const count = reportCount(day.events.length);
+    return $localize`${date}:date:, ${count}:count:. Show all`;
+  }
 
   protected short(symbol: string): string {
     return baseSymbol(symbol);

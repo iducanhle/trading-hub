@@ -1,3 +1,4 @@
+import { LANGUAGE } from '../../core/i18n/language';
 import { APP_LOCALE } from './locale';
 
 // Contract dates are 'YYYY-MM-DD' trading dates. They are handled as calendar dates (never shifted by time
@@ -84,6 +85,17 @@ export function eachDay(from: string, to: string): string[] {
   return days;
 }
 
+/** Monday first. */
+export const WEEKDAYS_SHORT = [
+  $localize`:Monday, short:Mon`,
+  $localize`:Tuesday, short:Tue`,
+  $localize`:Wednesday, short:Wed`,
+  $localize`:Thursday, short:Thu`,
+  $localize`:Friday, short:Fri`,
+  $localize`:Saturday, short:Sat`,
+  $localize`:Sunday, short:Sun`,
+];
+
 const dateFormats = new Map<string, Intl.DateTimeFormat>();
 
 function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
@@ -143,7 +155,7 @@ export function formatMonthTitle(iso: string, locale = APP_LOCALE): string {
   return dateFormat(locale, { month: 'long', year: 'numeric' }).format(parseIsoDate(iso));
 }
 
-const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+const relative = new Intl.RelativeTimeFormat(LANGUAGE, { numeric: 'auto' });
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -162,12 +174,12 @@ export function timeAgo(timestamp: string, now: Date = new Date(), locale = APP_
   const then = new Date(timestamp);
   const minutes = Math.floor((now.getTime() - then.getTime()) / 60_000);
   if (Number.isNaN(minutes)) return '—';
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return $localize`Just now`;
+  if (minutes < 60) return $localize`${minutes}:minutes:m ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return $localize`${hours}:hours:h ago`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return $localize`${days}:days:d ago`;
   return formatDate(toIsoDate(then), 'dayMonth', locale);
 }
 

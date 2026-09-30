@@ -17,7 +17,7 @@ export class ResultBadge {
 
   protected readonly label = computed(() => {
     const result = this.result();
-    return result === 'UPCOMING' ? 'Upcoming' : resultLabel(result);
+    return result === 'UPCOMING' ? $localize`Upcoming` : resultLabel(result);
   });
   protected readonly tone = computed(() => {
     switch (this.result()) {

@@ -107,6 +107,7 @@ describe('users/{uid}', () => {
       { ...settings, notificationsEnabled: 'yes' },
       { ...settings, notificationEmail: 'not-an-email' },
       { ...settings, extra: true },
+      { ...settings, language: 'de' },
     ];
     for (const s of bad)
       await assertFails(setDoc(doc(alice(), 'users/alice'), { ...newUser(), settings: s }));
@@ -124,6 +125,9 @@ describe('users/{uid}', () => {
         'settings.theme': 'dark',
       }),
     );
+    await assertSucceeds(updateDoc(doc(alice(), 'users/alice'), { 'settings.language': 'cs' }));
+    await assertSucceeds(updateDoc(doc(alice(), 'users/alice'), { 'settings.language': null }));
+    await assertFails(updateDoc(doc(alice(), 'users/alice'), { 'settings.language': 'xx' }));
     await assertFails(updateDoc(doc(alice(), 'users/alice'), { 'settings.notifyDaysBefore': 9 }));
     await assertFails(updateDoc(doc(alice(), 'users/alice'), { email: 'other@example.com' }));
     await assertFails(updateDoc(doc(alice(), 'users/alice'), { createdAt: Timestamp.now() }));

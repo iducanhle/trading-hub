@@ -2,17 +2,19 @@ import { Component, computed, input } from '@angular/core';
 import { Performance } from '../../../core/models/contract';
 import { Change } from '../../../shared/components/change/change';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
+import { PERIOD_LABELS } from '../../../shared/utils/format';
 
 /** Section 3: 1W, 1M, YTD and 1Y performance chips. */
 @Component({
   selector: 'app-performance-summary',
   imports: [Change, Skeleton],
   template: `
-    <h2 class="sr-only">Performance</h2>
+    <h2 class="sr-only" i18n>Performance</h2>
     <ul
       class="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3"
       tabindex="0"
       aria-label="Performance"
+      i18n-aria-label
     >
       @for (item of items(); track item.label) {
         <li
@@ -35,10 +37,10 @@ export class PerformanceSummary {
   protected readonly items = computed(() => {
     const p = this.performance();
     return [
-      { label: '1W', value: p?.w1 },
-      { label: '1M', value: p?.m1 },
-      { label: 'YTD', value: p?.ytd },
-      { label: '1Y', value: p?.y1 },
+      { label: PERIOD_LABELS['1W'], value: p?.w1 },
+      { label: PERIOD_LABELS['1M'], value: p?.m1 },
+      { label: PERIOD_LABELS.YTD, value: p?.ytd },
+      { label: PERIOD_LABELS['1Y'], value: p?.y1 },
     ];
   });
 }

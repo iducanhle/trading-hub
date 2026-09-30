@@ -32,7 +32,7 @@ type Status = 'loading' | 'load-error' | 'idle' | 'editing' | 'saving' | 'saved'
     NumberPipe,
   ],
   template: `
-    <app-section title="My notes" [(expanded)]="expanded">
+    <app-section title="My notes" i18n-title [(expanded)]="expanded">
       <span
         sectionMeta
         class="text-xs font-normal text-on-surface-variant"
@@ -41,15 +41,15 @@ type Status = 'loading' | 'load-error' | 'idle' | 'editing' | 'saving' | 'saved'
       >
         @switch (status()) {
           @case ('saving') {
-            Saving…
+            <ng-container i18n>Saving…</ng-container>
           }
           @case ('saved') {
             <span class="inline-flex items-center gap-1 text-gain"
-              ><app-icon name="check" [size]="14" />Saved</span
+              ><app-icon name="check" [size]="14" /><ng-container i18n>Saved</ng-container></span
             >
           }
           @case ('save-error') {
-            <span class="text-error">Not saved</span>
+            <span class="text-error" i18n>Not saved</span>
           }
         }
       </span>
@@ -57,12 +57,14 @@ type Status = 'loading' | 'load-error' | 'idle' | 'editing' | 'saving' | 'saved'
         <app-skeleton shape="card" class="h-28" />
       } @else if (status() === 'load-error') {
         <div class="flex flex-col items-start gap-2 text-sm text-on-surface-variant">
-          Couldn't load your notes.
-          <button matButton="outlined" type="button" (click)="load(ctx.symbol())">Retry</button>
+          <ng-container i18n>Couldn't load your notes.</ng-container>
+          <button matButton="outlined" type="button" (click)="load(ctx.symbol())" i18n>
+            Retry
+          </button>
         </div>
       } @else {
         <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-          <mat-label>Notes on {{ ctx.symbol() }}</mat-label>
+          <mat-label i18n>Notes on {{ ctx.symbol() }}</mat-label>
           <textarea
             matInput
             cdkTextareaAutosize
@@ -72,12 +74,15 @@ type Status = 'loading' | 'load-error' | 'idle' | 'editing' | 'saving' | 'saved'
             [value]="text()"
             (input)="edit($any($event.target).value)"
             placeholder="Thesis, levels to watch, what to check at the next report…"
+            i18n-placeholder
           ></textarea>
-          <mat-hint>Only you can see these notes.</mat-hint>
+          <mat-hint i18n>Only you can see these notes.</mat-hint>
           <mat-hint align="end">{{ text().length | num: 0 }} / {{ maxLength | num: 0 }}</mat-hint>
         </mat-form-field>
         @if (status() === 'save-error') {
-          <button matButton type="button" class="mt-1" (click)="saveNow()">Try saving again</button>
+          <button matButton type="button" class="mt-1" (click)="saveNow()" i18n>
+            Try saving again
+          </button>
         }
       }
     </app-section>

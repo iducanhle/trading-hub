@@ -9,7 +9,7 @@ import {
   PricePipe,
   ReportTimePipe,
 } from '../../shared/pipes/format.pipes';
-import { groupByTime } from './calendar-model';
+import { groupByTime, reportCount } from './calendar-model';
 
 export interface DaySheetData {
   day: CalendarDay;
@@ -55,7 +55,7 @@ export interface DaySheetData {
                   <span class="block truncate text-sm text-on-surface-variant">{{ e.name }}</span>
                 </span>
                 <span class="shrink-0 text-right text-xs text-on-surface-variant tabular-nums">
-                  <span class="block">EPS est. {{ e.epsEstimate | price: e.currency }}</span>
+                  <span class="block" i18n>EPS est. {{ e.epsEstimate | price: e.currency }}</span>
                   <span class="block">{{ e.marketCapUsd | compact: 'USD' }}</span>
                 </span>
               </button>
@@ -63,7 +63,7 @@ export interface DaySheetData {
           }
         </ul>
       } @empty {
-        <p class="px-4 py-6 text-sm text-on-surface-variant">No reports on this day.</p>
+        <p class="px-4 py-6 text-sm text-on-surface-variant" i18n>No reports on this day.</p>
       }
     </div>
   `,
@@ -74,10 +74,7 @@ export class DaySheet {
   private readonly router = inject(Router);
 
   protected readonly groups = computed(() => groupByTime(this.data.day.events));
-  protected readonly count = computed(() => {
-    const n = this.data.day.events.length;
-    return `${n} ${n === 1 ? 'report' : 'reports'}`;
-  });
+  protected readonly count = computed(() => reportCount(this.data.day.events.length));
 
   protected open(symbol: string): void {
     this.ref.dismiss();

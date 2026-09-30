@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AppUser } from '../auth/auth.service';
+import { LANGUAGE, switchLanguage } from '../i18n/language';
 import { UserDataGateway } from '../data/user-data.gateway';
 import { DEFAULT_SETTINGS, ThemePreference, UserSettings } from '../models/user-data';
 import { ThemeService } from './theme.service';
@@ -50,6 +51,9 @@ export class SettingsService {
         this.loaded.set(true);
         if (doc.settings.theme !== this.theme.preference())
           this.theme.setPreference(doc.settings.theme);
+        // Chosen on another device: switch this one too (reloads).
+        const language = doc.settings.language;
+        if (language && language !== LANGUAGE) switchLanguage(language);
       },
       error: (error: unknown) => {
         console.error('Settings listener failed', error);

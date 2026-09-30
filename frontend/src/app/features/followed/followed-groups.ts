@@ -34,12 +34,12 @@ export function groupFollowed(
     ...[...followed.values()].filter((s) => !known.has(s.symbol)),
   ];
   const groups: FollowedGroup[] = [
-    { title: 'This week', events: upcoming.filter((e) => e.date <= thisWeekEnd) },
+    { title: $localize`This week`, events: upcoming.filter((e) => e.date <= thisWeekEnd) },
     {
-      title: 'Next week',
+      title: $localize`Next week`,
       events: upcoming.filter((e) => e.date > thisWeekEnd && e.date <= nextWeekEnd),
     },
-    { title: 'Later', events: upcoming.filter((e) => e.date > nextWeekEnd) },
+    { title: $localize`Later`, events: upcoming.filter((e) => e.date > nextWeekEnd) },
   ].filter((g) => g.events.length);
   return { groups, noDate, empty: !groups.length && !noDate.length };
 }

@@ -30,10 +30,12 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= maxLength);
     }
 
+    // `language` is optional (documents created before it existed have none); null = not chosen.
     function validSettings(s) {
       return s is map
         && s.keys().hasAll(['theme', 'notificationsEnabled', 'notifyDaysBefore', 'notificationEmail'])
-        && s.keys().hasOnly(['theme', 'notificationsEnabled', 'notifyDaysBefore', 'notificationEmail'])
+        && s.keys().hasOnly(['theme', 'notificationsEnabled', 'notifyDaysBefore', 'notificationEmail', 'language'])
+        && s.get('language', null) in [null, 'en', 'cs']
         && s.theme in ['light', 'dark', 'system']
         && s.notificationsEnabled is bool
         && s.notifyDaysBefore is int

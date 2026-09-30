@@ -41,7 +41,7 @@ const MAX_PULL = 110;
       </div>
     </div>
     @if (refreshing()) {
-      <span class="sr-only" role="status">Refreshing</span>
+      <span class="sr-only" role="status" i18n>Refreshing</span>
     }
     <ng-content />
   `,

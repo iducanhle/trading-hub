@@ -7,6 +7,7 @@ import type {
   Timestamp,
 } from 'firebase/firestore';
 import type { FirestoreSdk } from '../firebase/firebase.service';
+import { isLanguage } from '../i18n/language';
 import {
   DEFAULT_SETTINGS,
   FollowDoc,
@@ -42,6 +43,7 @@ export function normalizeSettings(raw: unknown): UserSettings {
     notifyDaysBefore: days >= 1 && days <= 7 ? days : DEFAULT_SETTINGS.notifyDaysBefore,
     notificationEmail:
       typeof s.notificationEmail === 'string' && s.notificationEmail ? s.notificationEmail : null,
+    language: isLanguage(s.language) ? s.language : null,
   };
 }
 

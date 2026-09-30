@@ -13,12 +13,12 @@ const RESEND_COOLDOWN_S = 60;
   selector: 'app-verify-email',
   imports: [MatButton, Icon, AuthCard],
   template: `
-    <app-auth-card title="Verify your email">
+    <app-auth-card title="Verify your email" i18n-title>
       <div
         class="mb-6 flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center"
       >
         <app-icon name="mail" class="text-primary" [size]="32" />
-        <p class="text-sm">
+        <p class="text-sm" i18n>
           We sent a verification link to <strong class="break-all">{{ email() }}</strong
           >. Open it, then come back here.
         </p>
@@ -38,6 +38,7 @@ const RESEND_COOLDOWN_S = 60;
           class="h-12!"
           [disabled]="busy()"
           (click)="verified()"
+          i18n
         >
           I've verified
         </button>
@@ -48,9 +49,13 @@ const RESEND_COOLDOWN_S = 60;
           [disabled]="busy() || cooldown() > 0"
           (click)="resend()"
         >
-          {{ cooldown() > 0 ? 'Resend in ' + cooldown() + ' s' : 'Resend email' }}
+          @if (cooldown() > 0) {
+            <ng-container i18n>Resend in {{ cooldown() }} s</ng-container>
+          } @else {
+            <ng-container i18n>Resend email</ng-container>
+          }
         </button>
-        <button matButton type="button" class="h-12!" (click)="signOut()">
+        <button matButton type="button" class="h-12!" (click)="signOut()" i18n>
           Use another account
         </button>
       </div>
@@ -82,7 +87,7 @@ export class VerifyEmail {
       if (user?.emailVerified) await this.router.navigateByUrl('/followed');
       else
         this.message.set(
-          'Not verified yet. Open the link in the email, then tap "I\'ve verified" again.',
+          $localize`Not verified yet. Open the link in the email, then tap "I've verified" again.`,
         );
     } catch (error) {
       this.message.set(authErrorMessage(error));
@@ -96,7 +101,7 @@ export class VerifyEmail {
     this.message.set(null);
     try {
       await this.auth.sendVerificationEmail();
-      this.message.set('Sent. Check your inbox and spam folder.');
+      this.message.set($localize`Sent. Check your inbox and spam folder.`);
       this.startCooldown();
     } catch (error) {
       this.message.set(authErrorMessage(error));

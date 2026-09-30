@@ -27,7 +27,9 @@ import { AuthCard } from '../auth-card';
   template: `
     <app-auth-card
       title="Reset password"
+      i18n-title
       subtitle="We'll email you a link to choose a new password."
+      i18n-subtitle
     >
       @if (sent()) {
         <div
@@ -35,14 +37,19 @@ import { AuthCard } from '../auth-card';
           class="flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center"
         >
           <app-icon name="mark_email_read" class="text-primary" [size]="32" />
-          <p class="text-sm">
+          <p class="text-sm" i18n>
             If an account exists for <strong>{{ form.controls.email.value }}</strong
             >, a reset link is on its way. Check your inbox and spam folder.
           </p>
         </div>
       } @else {
         @if (busy()) {
-          <mat-progress-bar mode="indeterminate" class="mb-4 rounded-full" aria-label="Sending" />
+          <mat-progress-bar
+            mode="indeterminate"
+            class="mb-4 rounded-full"
+            aria-label="Sending"
+            i18n-aria-label
+          />
         }
         @if (error()) {
           <p
@@ -54,7 +61,7 @@ import { AuthCard } from '../auth-card';
         }
         <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
           <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
+            <mat-label i18n>Email</mat-label>
             <input
               matInput
               type="email"
@@ -62,15 +69,15 @@ import { AuthCard } from '../auth-card';
               autocomplete="email"
               inputmode="email"
             />
-            <mat-error>Enter a valid email address.</mat-error>
+            <mat-error i18n>Enter a valid email address.</mat-error>
           </mat-form-field>
-          <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()">
+          <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()" i18n>
             Send reset link
           </button>
         </form>
       }
       <p class="mt-8 text-center text-sm">
-        <a routerLink="/login" class="font-medium text-primary">Back to sign in</a>
+        <a routerLink="/login" class="font-medium text-primary" i18n>Back to sign in</a>
       </p>
     </app-auth-card>
   `,

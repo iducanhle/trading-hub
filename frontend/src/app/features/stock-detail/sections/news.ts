@@ -14,7 +14,7 @@ import { StockContext } from '../stock-context';
   imports: [Section, ErrorState, Skeleton, Icon, TimeAgoPipe],
   template: `
     @if (!news.hasValue() || items().length) {
-      <app-section title="News" [(expanded)]="expanded">
+      <app-section title="News" i18n-title [(expanded)]="expanded">
         @if (news.error()) {
           <app-error-state compact [error]="news.error()" (retry)="news.reload()" />
         } @else if (!news.hasValue()) {
@@ -43,7 +43,7 @@ import { StockContext } from '../stock-context';
                       }
                       <span class="shrink-0">{{ item.publishedAt | timeAgo }}</span>
                       <app-icon name="open_in_new" [size]="14" class="ml-auto shrink-0" />
-                      <span class="sr-only">(opens in a new tab)</span>
+                      <span class="sr-only" i18n>(opens in a new tab)</span>
                     </span>
                   </span>
                   @if (item.imageUrl && !brokenImages().has(item.url)) {

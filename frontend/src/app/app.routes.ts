@@ -5,32 +5,32 @@ import { Shell } from './core/layout/shell';
 export const routes: Routes = [
   {
     path: 'login',
-    title: 'Sign in',
+    title: $localize`Sign in`,
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },
   {
     path: 'register',
-    title: 'Create account',
+    title: $localize`Create account`,
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
   },
   {
     path: 'reset-password',
-    title: 'Reset password',
+    title: $localize`Reset password`,
     loadComponent: () =>
       import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
   },
   {
     path: 'verify-email',
-    title: 'Verify your email',
+    title: $localize`Verify your email`,
     canActivate: [signedInGuard],
     loadComponent: () =>
       import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmail),
   },
   {
     path: 'no-access',
-    title: 'No access',
+    title: $localize`No access`,
     canActivate: [signedInGuard],
     loadComponent: () => import('./features/auth/no-access/no-access').then((m) => m.NoAccess),
   },
@@ -41,7 +41,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'search',
-        title: 'Search',
+        title: $localize`Search`,
         loadComponent: () => import('./features/search/search-page').then((m) => m.SearchPage),
       },
       {
@@ -53,19 +53,19 @@ export const routes: Routes = [
       },
       {
         path: 'followed',
-        title: 'Followed',
+        title: $localize`Followed`,
         loadComponent: () =>
           import('./features/followed/followed-page').then((m) => m.FollowedPage),
       },
       {
         path: 'calendar',
-        title: 'Calendar',
+        title: $localize`Calendar`,
         loadComponent: () =>
           import('./features/calendar/calendar-page').then((m) => m.CalendarPage),
       },
       {
         path: 'settings',
-        title: 'Settings',
+        title: $localize`Settings`,
         loadComponent: () =>
           import('./features/settings/settings-page').then((m) => m.SettingsPage),
       },

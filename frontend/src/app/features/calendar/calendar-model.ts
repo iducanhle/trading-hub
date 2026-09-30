@@ -17,12 +17,17 @@ export const DEFAULT_FILTERS: CalendarFilters = {
 };
 
 export const CAP_OPTIONS: { value: number; label: string }[] = [
-  { value: 0, label: 'All' },
-  { value: 3e8, label: '>$300M' },
-  { value: 2e9, label: '>$2B' },
-  { value: 1e10, label: '>$10B' },
-  { value: 2e11, label: '>$200B' },
+  { value: 0, label: $localize`:Market cap filter\: every company:All` },
+  { value: 3e8, label: $localize`:Market cap filter:>$300M` },
+  { value: 2e9, label: $localize`:Market cap filter:>$2B` },
+  { value: 1e10, label: $localize`:Market cap filter:>$10B` },
+  { value: 2e11, label: $localize`:Market cap filter:>$200B` },
 ];
+
+/** `1 report`, `5 reports`. */
+export function reportCount(n: number): string {
+  return n === 1 ? $localize`${n}:count: report` : $localize`${n}:count: reports`;
+}
 
 export interface DateRange {
   from: string;

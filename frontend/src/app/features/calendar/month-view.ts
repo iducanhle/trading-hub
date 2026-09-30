@@ -1,9 +1,9 @@
 import { Component, input, output } from '@angular/core';
 import { CalendarDay } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
-import { formatDate, isWeekend } from '../../shared/utils/dates';
+import { WEEKDAYS_SHORT, formatDate, isWeekend } from '../../shared/utils/dates';
+import { reportCount } from './calendar-model';
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MAX_LOGOS = 3;
 
 /** Month view: a Monday-first 6-week grid; each day shows up to 3 logos and "+N". Weekends are narrower and dimmed. */
@@ -78,12 +78,12 @@ export class MonthView {
   readonly today = input.required<string>();
   readonly openDay = output<CalendarDay>();
 
-  protected readonly weekdays = WEEKDAYS;
+  protected readonly weekdays = WEEKDAYS_SHORT;
   protected readonly maxLogos = MAX_LOGOS;
   protected readonly isWeekend = isWeekend;
 
   protected label(day: CalendarDay): string {
     const n = day.events.length;
-    return `${formatDate(day.date, 'long')}, ${n} ${n === 1 ? 'report' : 'reports'}`;
+    return `${formatDate(day.date, 'long')}, ${reportCount(n)}`;
   }
 }

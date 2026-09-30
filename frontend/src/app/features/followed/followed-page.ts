@@ -54,8 +54,15 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
   ],
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="refresh()">
-      <app-page-header title="Followed">
-        <button actions matIconButton type="button" aria-label="Refresh" (click)="refresh()">
+      <app-page-header title="Followed" i18n-title>
+        <button
+          actions
+          matIconButton
+          type="button"
+          aria-label="Refresh"
+          i18n-aria-label
+          (click)="refresh()"
+        >
           <app-icon name="refresh" [class.animate-spin]="data.isLoading()" />
         </button>
       </app-page-header>
@@ -65,6 +72,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
           <div class="px-2 pt-4">
             <app-error-state
               message="Couldn't load your followed stocks from the database."
+              i18n-message
               (retry)="follows.retry()"
             />
           </div>
@@ -89,11 +97,13 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
           <app-empty-state
             icon="star"
             title="You're not following any stocks yet"
+            i18n-title
             text="Follow stocks from their page to see their next earnings dates here."
+            i18n-text
           >
             <a matButton="filled" routerLink="/search">
               <app-icon matButtonIcon name="search" [size]="18" />
-              Find stocks
+              <ng-container i18n>Find stocks</ng-container>
             </a>
           </app-empty-state>
         } @else {
@@ -116,8 +126,10 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                           e.name
                         }}</span>
                         <span class="block truncate text-xs text-on-surface-variant">
-                          {{ e.time | reportTime }} · EPS est.
-                          {{ e.epsEstimate | price: e.currency }}
+                          {{ e.time | reportTime }} ·
+                          <ng-container i18n
+                            >EPS est. {{ e.epsEstimate | price: e.currency }}</ng-container
+                          >
                         </span>
                       </span>
                       <span class="shrink-0 text-right">
@@ -132,7 +144,8 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                       type="button"
                       [matMenuTriggerFor]="rowMenu"
                       [matMenuTriggerData]="{ symbol: e.symbol }"
-                      [attr.aria-label]="'More actions for ' + e.symbol"
+                      aria-label="More actions for {{ e.symbol }}"
+                      i18n-aria-label
                     >
                       <app-icon name="more_vert" />
                     </button>
@@ -142,9 +155,10 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             </section>
           }
           @if (view()!.noDate.length) {
-            <section aria-label="No date announced">
+            <section aria-label="No date announced" i18n-aria-label>
               <h2 class="px-3 pt-4 pb-1 text-sm font-semibold text-on-surface-variant">
-                No date announced <span class="font-normal">· {{ view()!.noDate.length }}</span>
+                <ng-container i18n>No date announced</ng-container>
+                <span class="font-normal"> · {{ view()!.noDate.length }}</span>
               </h2>
               <ul>
                 @for (s of view()!.noDate; track s.symbol) {
@@ -166,7 +180,8 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                       type="button"
                       [matMenuTriggerFor]="rowMenu"
                       [matMenuTriggerData]="{ symbol: s.symbol }"
-                      [attr.aria-label]="'More actions for ' + s.symbol"
+                      aria-label="More actions for {{ s.symbol }}"
+                      i18n-aria-label
                     >
                       <app-icon name="more_vert" />
                     </button>
@@ -183,11 +198,11 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
       <ng-template matMenuContent let-symbol="symbol">
         <a mat-menu-item [routerLink]="['/stock', symbol]">
           <app-icon name="open_in_new" class="mr-3" />
-          <span>Open {{ symbol }}</span>
+          <span i18n>Open {{ symbol }}</span>
         </a>
         <button mat-menu-item type="button" (click)="unfollow(symbol)">
           <app-icon name="star" class="mr-3" />
-          <span>Unfollow</span>
+          <span i18n>Unfollow</span>
         </button>
       </ng-template>
     </mat-menu>

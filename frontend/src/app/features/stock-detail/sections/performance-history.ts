@@ -18,10 +18,10 @@ import { HistoryCalendar } from './history-calendar';
 type HistoryView = HistoryPeriod | 'CALENDAR';
 
 const PERIODS: { value: HistoryView; label: string }[] = [
-  { value: 'DAILY', label: 'Daily' },
-  { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'CALENDAR', label: 'Calendar' },
+  { value: 'DAILY', label: $localize`Daily` },
+  { value: 'WEEKLY', label: $localize`Weekly` },
+  { value: 'MONTHLY', label: $localize`Monthly` },
+  { value: 'CALENDAR', label: $localize`:History shown as a month calendar:Calendar` },
 ];
 const PAGE_SIZE = 30;
 
@@ -56,11 +56,12 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
     PricePipe,
   ],
   template: `
-    <app-section title="Performance history" [(expanded)]="expanded">
+    <app-section title="Performance history" i18n-title [(expanded)]="expanded">
       <div
         class="mb-2 flex rounded-full bg-surface-container-high p-1"
         role="tablist"
         aria-label="Period"
+        i18n-aria-label
       >
         @for (p of periods; track p.value) {
           <button
@@ -98,10 +99,15 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
             }
           </ul>
         } @else if (!rows().length) {
-          <p class="py-6 text-center text-sm text-on-surface-variant">No price history yet.</p>
+          <p class="py-6 text-center text-sm text-on-surface-variant" i18n>No price history yet.</p>
         } @else {
           <!-- Its own scroll area (about 10 rows), so loading more never pushes the sections below out of reach. -->
-          <div class="max-h-[28rem] overflow-y-auto rounded-xl" tabindex="0" aria-label="Rows">
+          <div
+            class="max-h-[28rem] overflow-y-auto rounded-xl"
+            tabindex="0"
+            aria-label="Rows"
+            i18n-aria-label="Table rows"
+          >
             <ul class="divide-y divide-outline-variant/60 tabular-nums">
               @for (row of rows(); track row.periodStart) {
                 <li class="flex min-h-11 items-center gap-2 py-1.5 text-sm">
@@ -110,12 +116,18 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
                     <span
                       class="flex size-5 items-center justify-center rounded-full bg-primary-container text-[10px] font-bold text-on-primary-container"
                       title="Earnings report in this period"
+                      i18n-title
                       aria-label="Earnings report"
+                      i18n-aria-label
                       >E</span
                     >
                   }
                   @if (row.partial) {
-                    <span class="text-xs text-on-surface-variant italic">partial</span>
+                    <span
+                      class="text-xs text-on-surface-variant italic"
+                      i18n="The period is still running"
+                      >partial</span
+                    >
                   }
                   <span class="w-24 text-right">{{ row.close | price: currency() }}</span>
                   <app-change class="w-20 text-right" [value]="row.changePercent" />
@@ -128,7 +140,11 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
                   <app-error-state compact [error]="error()" (retry)="loadMore()" />
                 } @else {
                   <button matButton type="button" [disabled]="loading()" (click)="loadMore()">
-                    {{ loading() ? 'Loading…' : 'Load more' }}
+                    @if (loading()) {
+                      <ng-container i18n>Loading…</ng-container>
+                    } @else {
+                      <ng-container i18n>Load more</ng-container>
+                    }
                   </button>
                 }
               </div>

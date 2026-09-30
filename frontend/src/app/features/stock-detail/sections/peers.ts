@@ -14,7 +14,7 @@ import { StockContext } from '../stock-context';
   imports: [RouterLink, Section, ErrorState, Skeleton, StockLogo],
   template: `
     @if (!peers.hasValue() || items().length) {
-      <app-section title="Peers" [(expanded)]="expanded">
+      <app-section title="Peers" i18n-title="Comparable companies" [(expanded)]="expanded">
         @if (peers.error()) {
           <app-error-state compact [error]="peers.error()" (retry)="peers.reload()" />
         } @else {

@@ -14,11 +14,11 @@ import { FilterControls } from './filter-controls';
         class="mx-auto mt-1 mb-3 h-1 w-8 rounded-full bg-outline-variant"
         aria-hidden="true"
       ></div>
-      <h2 class="mb-4 text-lg font-semibold">Filters</h2>
+      <h2 class="mb-4 text-lg font-semibold" i18n>Filters</h2>
       <app-filter-controls [filters]="filters" />
       <div class="mt-6 mb-4 flex justify-between gap-3">
-        <button matButton type="button" (click)="reset()">Reset</button>
-        <button matButton="filled" type="button" (click)="ref.dismiss()">Done</button>
+        <button matButton type="button" (click)="reset()" i18n>Reset</button>
+        <button matButton="filled" type="button" (click)="ref.dismiss()" i18n>Done</button>
       </div>
     </div>
   `,

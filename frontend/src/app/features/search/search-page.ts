@@ -29,7 +29,7 @@ import { StockRow } from './stock-row';
       class="sticky top-0 z-20 bg-surface/95 px-4 pt-safe pb-3 backdrop-blur supports-[backdrop-filter]:bg-surface/85"
     >
       <div class="mx-auto max-w-2xl pt-3">
-        <h1 class="sr-only">Search</h1>
+        <h1 class="sr-only" i18n>Search</h1>
         <div class="relative">
           <app-icon
             name="search"
@@ -43,7 +43,9 @@ import { StockRow } from './stock-row';
             autocapitalize="characters"
             spellcheck="false"
             aria-label="Search stocks by symbol or name"
+            i18n-aria-label
             placeholder="Symbol or company, e.g. AAPL, SAP.DE"
+            i18n-placeholder
             class="h-14 w-full rounded-full bg-surface-container-high pr-14 pl-13 text-base text-on-surface outline-none placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary [&::-webkit-search-cancel-button]:hidden"
             [value]="query()"
             (input)="onInput(input.value)"
@@ -54,6 +56,7 @@ import { StockRow } from './stock-row';
               matIconButton
               type="button"
               aria-label="Clear search"
+              i18n-aria-label
               class="absolute! top-1/2 right-1 -translate-y-1/2"
               (click)="clear()"
             >
@@ -68,8 +71,10 @@ import { StockRow } from './stock-row';
       @if (!term()) {
         @if (recent.items().length) {
           <div class="flex items-center justify-between px-3 pt-2 pb-1">
-            <h2 class="text-sm font-semibold text-on-surface-variant">Recent</h2>
-            <button matButton type="button" (click)="recent.clear()">Clear</button>
+            <h2 class="text-sm font-semibold text-on-surface-variant" i18n="Recent searches">
+              Recent
+            </h2>
+            <button matButton type="button" (click)="recent.clear()" i18n>Clear</button>
           </div>
           <ul>
             @for (stock of recent.items(); track stock.symbol) {
@@ -80,7 +85,9 @@ import { StockRow } from './stock-row';
           <app-empty-state
             icon="search"
             title="Search US and European stocks"
+            i18n-title
             text="Type a ticker or a company name, for example AAPL, SAP.DE or Nestlé."
+            i18n-text
           />
         }
       } @else if (results.error()) {
@@ -89,7 +96,7 @@ import { StockRow } from './stock-row';
         </div>
       } @else if (shown(); as list) {
         @if (list.length || results.isLoading()) {
-          <h2 class="sr-only">Results</h2>
+          <h2 class="sr-only" i18n>Results</h2>
           <ul
             aria-live="polite"
             [attr.aria-busy]="results.isLoading()"
@@ -103,13 +110,12 @@ import { StockRow } from './stock-row';
           <app-empty-state
             icon="search_off"
             title="No matches"
-            [text]="
-              'Nothing found for “' + term() + '”. Check the symbol, or try the company name.'
-            "
+            i18n-title
+            [text]="noMatchesText()"
           />
         }
       } @else {
-        <ul aria-busy="true" aria-label="Searching">
+        <ul aria-busy="true" aria-label="Searching" i18n-aria-label>
           @for (i of [1, 2, 3, 4, 5]; track i) {
             <li class="flex min-h-16 items-center gap-3 px-3 py-2">
               <app-skeleton shape="circle" class="size-10" />
@@ -142,6 +148,10 @@ export class SearchPage {
       switchMap((q, index) => (index === 0 ? of(q) : timer(300).pipe(map(() => q)))),
     ),
     { initialValue: '' },
+  );
+  protected readonly noMatchesText = computed(
+    () =>
+      $localize`Nothing found for “${this.term()}:query:”. Check the symbol, or try the company name.`,
   );
 
   protected readonly results = rxResource({

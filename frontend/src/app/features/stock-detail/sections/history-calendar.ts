@@ -9,6 +9,7 @@ import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { Icon } from '../../../shared/icon/icon';
 import { PricePipe } from '../../../shared/pipes/format.pipes';
 import {
+  WEEKDAYS_SHORT,
   addDays,
   addMonths,
   endOfMonth,
@@ -24,7 +25,7 @@ import { StockContext } from '../stock-context';
 
 /** More than the weekdays of any month, so one request covers a whole month. */
 const MONTH_LIMIT = 23;
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const WEEKDAYS = WEEKDAYS_SHORT.slice(0, 5);
 
 export interface CalendarCell {
   date: string;
@@ -71,6 +72,7 @@ const MIX = [0, 14, 26, 42, 80];
         matIconButton
         type="button"
         aria-label="Previous month"
+        i18n-aria-label
         [disabled]="!canGoBack()"
         (click)="shiftMonth(-1)"
       >
@@ -81,6 +83,7 @@ const MIX = [0, 14, 26, 42, 80];
         matIconButton
         type="button"
         aria-label="Next month"
+        i18n-aria-label
         [disabled]="!canGoForward()"
         (click)="shiftMonth(1)"
       >
@@ -137,13 +140,15 @@ const MIX = [0, 14, 26, 42, 80];
         <span class="font-medium">{{ row.close | price: currency() }}</span>
         <app-change [value]="row.changePercent" />
         @if (row.hasEarnings) {
-          <span class="text-xs text-on-surface-variant">· Earnings</span>
+          <span class="text-xs text-on-surface-variant" i18n>· Earnings</span>
         }
         @if (row.partial) {
-          <span class="text-xs text-on-surface-variant italic">partial</span>
+          <span class="text-xs text-on-surface-variant italic" i18n="The period is still running"
+            >partial</span
+          >
         }
       } @else if (page.hasValue()) {
-        <span class="text-xs text-on-surface-variant">Tap a day to see its close.</span>
+        <span class="text-xs text-on-surface-variant" i18n>Tap a day to see its close.</span>
       }
     </p>
   `,
@@ -224,8 +229,11 @@ export class HistoryCalendar {
 
   protected ariaLabel(cell: CalendarCell): string {
     const day = formatDate(cell.date, 'day');
-    if (!cell.row) return `${day}, no trading`;
-    return `${day}, ${formatPercent(cell.row.changePercent)}${cell.row.hasEarnings ? ', earnings' : ''}`;
+    if (!cell.row) return $localize`${day}:day:, no trading`;
+    const change = formatPercent(cell.row.changePercent);
+    return cell.row.hasEarnings
+      ? $localize`${day}:day:, ${change}:change:, earnings`
+      : `${day}, ${change}`;
   }
 
   protected dayLabel(date: string): string {

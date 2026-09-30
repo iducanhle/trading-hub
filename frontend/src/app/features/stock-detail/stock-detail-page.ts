@@ -81,6 +81,7 @@ import { StockContext } from './stock-context';
             matIconButton
             type="button"
             aria-label="Back"
+            i18n-aria-label
             (click)="navigation.back('/search')"
           >
             <app-icon name="arrow_back" />
@@ -117,6 +118,7 @@ import { StockContext } from './stock-context';
             type="button"
             class="hidden! lg:inline-flex!"
             aria-label="Refresh"
+            i18n-aria-label
             (click)="ctx.refresh()"
           >
             <app-icon name="refresh" />
@@ -129,13 +131,13 @@ import { StockContext } from './stock-context';
           <app-empty-state
             icon="search_off"
             title="Symbol not found"
-            [text]="
-              'We couldn’t find ' +
-              ctx.symbol() +
-              '. Check the ticker, e.g. SAP.DE for SAP in Frankfurt.'
-            "
+            i18n-title
+            text="We couldn’t find {{
+              ctx.symbol()
+            }}. Check the ticker, e.g. SAP.DE for SAP in Frankfurt."
+            i18n-text
           >
-            <a matButton="filled" routerLink="/search">Search stocks</a>
+            <a matButton="filled" routerLink="/search" i18n>Search stocks</a>
           </app-empty-state>
         } @else if (overview.error() && !stock()) {
           <div class="p-4">

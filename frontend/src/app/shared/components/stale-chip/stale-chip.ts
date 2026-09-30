@@ -12,7 +12,7 @@ import { DateTimePipe } from '../../pipes/format.pipes';
       role="status"
     >
       <app-icon name="history" [size]="14" />
-      Data may be outdated · {{ asOf() | dateTime }}
+      <ng-container i18n>Data may be outdated · {{ asOf() | dateTime }}</ng-container>
     </span>
   `,
 })

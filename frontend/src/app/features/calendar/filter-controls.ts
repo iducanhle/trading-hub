@@ -23,6 +23,7 @@ let nextId = 0;
         <p
           [class]="inline() ? 'mb-2 text-sm font-medium lg:sr-only' : 'mb-2 text-sm font-medium'"
           [id]="id + '-cap'"
+          i18n
         >
           Market cap
         </p>
@@ -40,6 +41,7 @@ let nextId = 0;
         <p
           [class]="inline() ? 'mb-2 text-sm font-medium lg:sr-only' : 'mb-2 text-sm font-medium'"
           [id]="id + '-region'"
+          i18n
         >
           Region
         </p>
@@ -49,13 +51,13 @@ let nextId = 0;
           [value]="value().region"
           (change)="setRegion($event.value)"
         >
-          <mat-button-toggle value="ALL">All</mat-button-toggle>
+          <mat-button-toggle value="ALL" i18n="Region filter: US and EU">All</mat-button-toggle>
           <mat-button-toggle value="US">US</mat-button-toggle>
           <mat-button-toggle value="EU">EU</mat-button-toggle>
         </mat-button-toggle-group>
       </div>
       <mat-slide-toggle [checked]="value().followedOnly" (change)="setFollowedOnly($event.checked)">
-        Followed only
+        <ng-container i18n>Followed only</ng-container>
       </mat-slide-toggle>
     </div>
   `,

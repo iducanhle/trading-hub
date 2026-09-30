@@ -24,11 +24,15 @@ export class App {
         takeUntilDestroyed(),
       )
       .subscribe(async () => {
-        const ref = await notifier.show('A new version is available.', 'Reload', { duration: 0 });
+        const ref = await notifier.show($localize`A new version is available.`, $localize`Reload`, {
+          duration: 0,
+        });
         ref.onAction().subscribe(() => doc.location.reload());
       });
     updates.unrecoverable.pipe(takeUntilDestroyed()).subscribe(async () => {
-      const ref = await notifier.show('The app needs to reload.', 'Reload', { duration: 0 });
+      const ref = await notifier.show($localize`The app needs to reload.`, $localize`Reload`, {
+        duration: 0,
+      });
       ref.onAction().subscribe(() => doc.location.reload());
     });
 

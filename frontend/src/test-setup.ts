@@ -1,3 +1,5 @@
+import '@angular/localize/init';
+
 // Browser APIs that jsdom lacks.
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string): MediaQueryList =>

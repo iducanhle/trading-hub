@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { LocalUserDataGateway } from '../data/local-user-data.gateway';
 import { UserDataGateway } from '../data/user-data.gateway';
 import { normalizeSettings } from '../data/firestore-converters';
+import { storedLanguage } from '../i18n/language';
 import { DEFAULT_SETTINGS } from '../models/user-data';
 import { FollowsService } from './follows.service';
 import { NotifierService } from './notifier.service';
@@ -129,6 +130,24 @@ describe('SettingsService', () => {
       notificationsEnabled: false,
       notifyDaysBefore: 7,
     });
+    expect(normalizeSettings({ language: 'cs' }).language).toBe('cs');
+    expect(normalizeSettings({ language: 'de' }).language).toBeNull();
+  });
+});
+
+describe('language', () => {
+  afterEach(() => localStorage.removeItem('et.language'));
+
+  it('prefers the saved choice, then a Czech device, then English', () => {
+    localStorage.setItem('et.language', JSON.stringify('cs'));
+    expect(storedLanguage()).toBe('cs');
+    localStorage.setItem('et.language', JSON.stringify('xx'));
+    const languages = vi.spyOn(navigator, 'languages', 'get');
+    languages.mockReturnValue(['cs-CZ', 'en']);
+    expect(storedLanguage()).toBe('cs');
+    languages.mockReturnValue(['de-DE']);
+    expect(storedLanguage()).toBe('en');
+    languages.mockRestore();
   });
 });
 

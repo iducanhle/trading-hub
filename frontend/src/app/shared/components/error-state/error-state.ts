@@ -18,7 +18,7 @@ import { Icon } from '../../icon/icon';
       <p class="text-sm text-on-surface-variant">{{ text() }}</p>
       <button matButton="outlined" type="button" (click)="retry.emit()">
         <app-icon matButtonIcon name="refresh" [size]="18" />
-        Retry
+        <ng-container i18n>Retry</ng-container>
       </button>
     </div>
   `,

@@ -17,9 +17,7 @@ import { Icon } from '../../icon/icon';
         type="button"
         [disabled]="!target()"
         [attr.aria-pressed]="followed()"
-        [attr.aria-label]="
-          followed() ? 'Following ' + symbol() + '. Unfollow' : 'Follow ' + symbol()
-        "
+        [attr.aria-label]="followed() ? unfollowLabel() : followLabel()"
         (click)="toggle()"
       >
         <app-icon [name]="followed() ? 'star-fill' : 'star'" [class.text-primary]="followed()" />
@@ -33,7 +31,11 @@ import { Icon } from '../../icon/icon';
         (click)="toggle()"
       >
         <app-icon matButtonIcon [name]="followed() ? 'star-fill' : 'star'" [size]="18" />
-        {{ followed() ? 'Following' : 'Follow' }}
+        @if (followed()) {
+          <ng-container i18n="The user follows this stock">Following</ng-container>
+        } @else {
+          <ng-container i18n="Button: start following a stock">Follow</ng-container>
+        }
       </button>
     }
   `,
@@ -45,6 +47,10 @@ export class FollowButton {
 
   protected readonly symbol = computed(() => this.target()?.symbol ?? '');
   protected readonly followed = computed(() => this.follows.symbols().has(this.symbol()));
+  protected readonly followLabel = computed(() => $localize`Follow ${this.symbol()}:symbol:`);
+  protected readonly unfollowLabel = computed(
+    () => $localize`Following ${this.symbol()}:symbol:. Unfollow`,
+  );
 
   protected toggle(): void {
     const target = this.target();

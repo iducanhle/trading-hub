@@ -48,7 +48,7 @@ import {
   ReportTimePipe,
   SignedNumberPipe,
 } from '../../../../shared/pipes/format.pipes';
-import { NUMBER_LOCALE } from '../../../../shared/utils/format';
+import { NUMBER_LOCALE, PERIOD_LABELS } from '../../../../shared/utils/format';
 import { persistedSignal } from '../../../../shared/utils/persisted-signal';
 import { StockContext } from '../../stock-context';
 import { readChartColors, withAlpha } from './chart-colors';
@@ -100,12 +100,13 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
   ],
   template: `
     <section class="border-t border-outline-variant pt-3 pb-2" aria-labelledby="price-chart-title">
-      <h2 id="price-chart-title" class="sr-only">Price chart</h2>
+      <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
       <div class="flex flex-wrap items-center justify-between gap-2 px-4">
         <div
           class="flex rounded-full bg-surface-container-high p-1"
           role="group"
           aria-label="Chart range"
+          i18n-aria-label
         >
           @for (r of ranges; track r) {
             <button
@@ -118,20 +119,33 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
               [attr.aria-pressed]="range() === r"
               (click)="setRange(r)"
             >
-              {{ r }}
+              {{ rangeLabels[r] }}
             </button>
           }
         </div>
         <mat-button-toggle-group
           hideSingleSelectionIndicator
           aria-label="Chart type"
+          i18n-aria-label
           [value]="type()"
           (change)="setType($event.value)"
         >
-          <mat-button-toggle value="line" aria-label="Line" title="Line">
+          <mat-button-toggle
+            value="line"
+            aria-label="Line"
+            i18n-aria-label="Line chart"
+            title="Line"
+            i18n-title="Line chart"
+          >
             <app-icon name="show_chart" [size]="20" class="align-middle" />
           </mat-button-toggle>
-          <mat-button-toggle value="candles" aria-label="Candles" title="Candles">
+          <mat-button-toggle
+            value="candles"
+            aria-label="Candles"
+            i18n-aria-label="Candlestick chart"
+            title="Candles"
+            i18n-title="Candlestick chart"
+          >
             <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
           </mat-button-toggle>
         </mat-button-toggle-group>
@@ -150,16 +164,17 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
               <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
                 m.amount | signed
               }}</span>
-              <span class="text-on-surface-variant"
-                >{{ m.days }} {{ m.days === 1 ? 'day' : 'days' }}</span
-              >
+              <span class="text-on-surface-variant" i18n>{m.days, plural,
+                =1 {1 day}
+                other {{{ m.days }} days}
+              }</span>
+            } @else if (points().length) {
+              <span class="text-on-surface-variant" i18n>Now tap the end point</span>
             } @else {
-              <span class="text-on-surface-variant">{{
-                points().length ? 'Now tap the end point' : 'Tap the start point'
-              }}</span>
+              <span class="text-on-surface-variant" i18n>Tap the start point</span>
             }
           } @else if (rangeGain(); as g) {
-            <span class="font-medium text-on-surface-variant">{{ range() }}</span>
+            <span class="font-medium text-on-surface-variant">{{ rangeLabels[range()] }}</span>
             <app-change pill [value]="g.percent" />
             <span [class]="g.amount >= 0 ? 'text-gain' : 'text-loss'">{{ g.amount | signed }}</span>
           }
@@ -172,10 +187,15 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
           [class.border-transparent]="measuring()"
           [attr.aria-pressed]="measuring()"
           title="Tap two points on the chart to see the change between them"
+          i18n-title
           (click)="toggleMeasuring()"
         >
           <app-icon [name]="measuring() ? 'close' : 'straighten'" [size]="18" />
-          {{ measuring() ? 'Done' : 'Measure' }}
+          @if (measuring()) {
+            <ng-container i18n>Done</ng-container>
+          } @else {
+            <ng-container i18n="Measure the change between two points">Measure</ng-container>
+          }
         </button>
       </div>
 
@@ -195,7 +215,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
             }}</span>
           }
           <app-change [value]="bar.change" />
-          <span>Vol {{ bar.volume | compact }}</span>
+          <span i18n="Trading volume">Vol {{ bar.volume | compact }}</span>
         }
       </div>
 
@@ -211,6 +231,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         } @else if (!data()!.bars.length) {
           <p
             class="absolute inset-0 flex items-center justify-center text-sm text-on-surface-variant"
+            i18n
           >
             No prices for this period.
           </p>
@@ -227,17 +248,22 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
             class="absolute top-2 right-2 left-2 z-10 rounded-2xl bg-surface-container-highest p-3 text-sm shadow-lg sm:left-auto sm:w-72"
             role="dialog"
             aria-label="Earnings details"
+            i18n-aria-label
           >
             <div class="flex items-start gap-2">
               <div class="min-w-0 flex-1">
                 <p class="font-semibold">
-                  {{ marker.result === 'UPCOMING' ? 'Upcoming earnings' : 'Earnings' }} ·
-                  {{ marker.reportDate | appDate: 'medium' }}
+                  @if (marker.result === 'UPCOMING') {
+                    <ng-container i18n>Upcoming earnings</ng-container>
+                  } @else {
+                    <ng-container i18n>Earnings</ng-container>
+                  }
+                  · {{ marker.reportDate | appDate: 'medium' }}
                 </p>
                 <p class="text-xs text-on-surface-variant">
                   {{ marker.time | reportTime }}
                   @if (selectedQuarter()?.timeAssumed) {
-                    <span>(assumed)</span>
+                    <span i18n="The report time is a guess">(assumed)</span>
                   }
                   @if (marker.result === 'UPCOMING') {
                     · {{ marker.reportDate | relativeDay }}
@@ -250,6 +276,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
                 type="button"
                 class="-mt-2 -mr-2"
                 aria-label="Close"
+                i18n-aria-label
                 (click)="selected.set(null)"
               >
                 <app-icon name="close" [size]="20" />
@@ -257,15 +284,15 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
             </div>
             <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 tabular-nums">
               @if (marker.result === 'UPCOMING') {
-                <dt class="text-on-surface-variant">EPS estimate</dt>
+                <dt class="text-on-surface-variant" i18n>EPS estimate</dt>
                 <dd>{{ upcomingEstimate() | price: currency() }}</dd>
               } @else {
-                <dt class="text-on-surface-variant">EPS est. → actual</dt>
+                <dt class="text-on-surface-variant" i18n>EPS est. → actual</dt>
                 <dd>
                   {{ selectedQuarter()?.eps?.estimate | price: currency() }} →
                   {{ selectedQuarter()?.eps?.actual | price: currency() }}
                 </dd>
-                <dt class="text-on-surface-variant">Surprise</dt>
+                <dt class="text-on-surface-variant" i18n>Surprise</dt>
                 <dd><app-change [value]="marker.epsSurprisePercent" /></dd>
               }
             </dl>
@@ -286,6 +313,7 @@ export class PriceChart {
   private readonly container = viewChild.required<ElementRef<HTMLDivElement>>('container');
 
   protected readonly ranges = RANGES;
+  protected readonly rangeLabels = PERIOD_LABELS;
   protected readonly range = signal<PriceRange>('6M');
   protected readonly type = persistedSignal<ChartType>('et.chartType', 'line');
 
