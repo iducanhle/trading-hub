@@ -1,0 +1,107 @@
+rules_version = '2';
+
+// Firestore security rules for Earnings Tracker.
+// The backend uses the Admin SDK, which bypasses these rules; they only govern the web app.
+//
+// BEFORE DEPLOYING: replace USER1_EMAIL and USER2_EMAIL below with the two allowed accounts (lower case), the same
+// addresses as ALLOWED_EMAILS on the backend. Then: firebase deploy --only firestore:rules
+// Tests: npm run test:rules (they swap in their own addresses, so they pass with the placeholders or real ones).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function allowlist() {
+      return ['USER1_EMAIL', 'USER2_EMAIL'];
+    }
+
+    // Signed in, email verified, and on the allowlist.
+    function allowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() in allowlist();
+    }
+
+    function isOwner(uid) {
+      return allowed() && request.auth.uid == uid;
+    }
+
+    function isNullableString(value, maxLength) {
+      return value == null || (value is string && value.size() <= maxLength);
+    }
+
+    function validSettings(s) {
+      return s is map
+        && s.keys().hasAll(['theme', 'notificationsEnabled', 'notifyDaysBefore', 'notificationEmail'])
+        && s.keys().hasOnly(['theme', 'notificationsEnabled', 'notifyDaysBefore', 'notificationEmail'])
+        && s.theme in ['light', 'dark', 'system']
+        && s.notificationsEnabled is bool
+        && s.notifyDaysBefore is int
+        && s.notifyDaysBefore >= 1
+        && s.notifyDaysBefore <= 7
+        && (s.notificationEmail == null
+          || (s.notificationEmail is string
+            && s.notificationEmail.size() <= 254
+            && s.notificationEmail.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')));
+    }
+
+    function validUser(d) {
+      return d.keys().hasAll(['email', 'displayName', 'createdAt', 'settings'])
+        && d.keys().hasOnly(['email', 'displayName', 'createdAt', 'settings'])
+        && d.email is string
+        && d.email.size() <= 254
+        && isNullableString(d.displayName, 200)
+        && d.createdAt is timestamp
+        && validSettings(d.settings);
+    }
+
+    function validFollow(d, symbol) {
+      return d.keys().hasAll(['symbol', 'name', 'exchange', 'region', 'logoUrl', 'followedAt'])
+        && d.keys().hasOnly(['symbol', 'name', 'exchange', 'region', 'logoUrl', 'followedAt'])
+        && d.symbol == symbol
+        && symbol.size() <= 20
+        && d.name is string && d.name.size() <= 200
+        && d.exchange is string && d.exchange.size() <= 100
+        && d.region in ['US', 'EU']
+        && isNullableString(d.logoUrl, 2048)
+        && d.followedAt is timestamp;
+    }
+
+    function validNote(d, symbol) {
+      return d.keys().hasAll(['symbol', 'text', 'updatedAt'])
+        && d.keys().hasOnly(['symbol', 'text', 'updatedAt'])
+        && d.symbol == symbol
+        && symbol.size() <= 20
+        && d.text is string
+        && d.text.size() <= 10000
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && validUser(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      // Only the settings and the display name change after creation.
+      allow update: if isOwner(uid)
+        && validUser(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['settings', 'displayName']);
+
+      match /follows/{symbol} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validFollow(request.resource.data, symbol);
+      }
+
+      match /notes/{symbol} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validNote(request.resource.data, symbol);
+      }
+    }
+
+    // Everything else, including the backend-only collections (symbols, prices, earnings, earningsCalendar, fx,
+    // jobRuns, notificationLog, viewed), is closed to clients.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -61,7 +61,14 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
       </app-page-header>
 
       <div class="mx-auto max-w-2xl px-2 pb-8">
-        @if (data.error() && !view()) {
+        @if (follows.error()) {
+          <div class="px-2 pt-4">
+            <app-error-state
+              message="Couldn't load your followed stocks from the database."
+              (retry)="follows.retry()"
+            />
+          </div>
+        } @else if (data.error() && !view()) {
           <div class="px-2 pt-4">
             <app-error-state [error]="data.error()" (retry)="refresh()" />
           </div>
@@ -188,7 +195,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
 })
 export class FollowedPage {
   private readonly api = inject(ApiService);
-  private readonly follows = inject(FollowsService);
+  protected readonly follows = inject(FollowsService);
 
   /** Bumped by pull-to-refresh, Retry and follows the last response does not know yet. */
   private readonly fetches = signal(0);

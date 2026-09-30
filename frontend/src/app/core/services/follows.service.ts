@@ -25,8 +25,10 @@ export class FollowsService {
   /** Newest first. */
   readonly follows = signal<FollowDoc[]>([]);
   readonly symbols = computed(() => new Set(this.follows().map((f) => f.symbol)));
-  /** False until the first snapshot. */
+  /** False until the first snapshot (or a failure). */
   readonly loaded = signal(false);
+  /** Set when the listener failed, e.g. the Firestore rules refused this account. */
+  readonly error = signal<unknown>(null);
 
   start(uid: string): void {
     if (this.uid === uid) return;
@@ -35,10 +37,23 @@ export class FollowsService {
     this.subscription = this.gateway.watchFollows(uid).subscribe({
       next: (follows) => {
         this.follows.set(sortNewestFirst(follows));
+        this.error.set(null);
         this.loaded.set(true);
       },
-      error: (error: unknown) => console.error('Follows listener failed', error),
+      error: (error: unknown) => {
+        console.error('Follows listener failed', error);
+        this.error.set(error);
+        this.loaded.set(true);
+      },
     });
+  }
+
+  /** Starts the listener again after a failure. */
+  retry(): void {
+    const uid = this.uid;
+    if (!uid) return;
+    this.stop();
+    this.start(uid);
   }
 
   stop(): void {
@@ -46,6 +61,7 @@ export class FollowsService {
     this.subscription = undefined;
     this.uid = null;
     this.follows.set([]);
+    this.error.set(null);
     this.loaded.set(false);
   }
 

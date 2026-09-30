@@ -10,7 +10,7 @@
 | 1 – Foundation | Done |
 | 2 – Search + Stock detail | Done |
 | 3 – Followed + Calendar + Settings | Done |
-| 4 – Polish + deployment | Not started |
+| 4 – Polish + deployment | Done |
 
 ## Done
 
@@ -74,13 +74,30 @@
 - Checks: build, lint and 57 unit tests pass (new: followed grouping, calendar ranges/paging/weekend days/grouping/filters). Mock mode checked at 375 px and 1280 px in both themes.
 - **End-to-end run against the local backend (2026-09-30):** Firebase Auth + Firestore emulators, the backend in emulator mode with the real providers (`JOBS_ENABLED=false`, mail pointed at a closed port so nothing is sent), the frontend with `npm run start:emulators`. Verified: email sign-in with a verified emulator user → `/api/me` allowed → `users/{uid}` created with the contract defaults; search (`sap` → SAP, SAP.DE, …); SAP.DE page with every section filled from real data (EU gaps shown as "—", "(assumed)" times, news, peers, recommendations); follow and note written to Firestore in the contract shape; Followed page from the backend; a follow written directly to Firestore (as another device would) showed up at once; calendar request/empty state (the calendar job did not run in the fresh emulator database); test email → 503 message.
 
+**Phase 4 – Polish + deployment**
+- Polish: every page and section has skeletons, inline errors with Retry and friendly empty states (Phases 1–3); added error states when the Firestore listeners fail (Followed, Settings; e.g. rules that refuse the account) instead of endless skeletons; "A new version is available → Reload" from the service worker (and an update check whenever the installed app returns to the foreground); a "Skip to content" button; `prefers-reduced-motion` support.
+- Accessibility pass with axe-core 4.11 on every page (mock mode, light and dark): fixed the month grid's faded out-of-month cells (contrast 2.2 → shaded background instead of opacity), the keyboard-inaccessible scrolling chip row, and the missing `<main>` landmark on the sign-in pages; now zero violations. Icon buttons have labels, inputs have Material labels, focus rings are visible, colour is never the only cue (signs, words on badges).
+- `frontend/firestore.rules`: `allowed()` (signed in, `email_verified`, email in `allowlist()` case-insensitively, placeholders `USER1_EMAIL`/`USER2_EMAIL`); owner-only access to `users/{uid}` and its subcollections; shape checks (settings enums, `notifyDaysBefore` 1–7 integer, email format, exact key sets, follow `region`, note ≤ 10,000 characters, server timestamps for `createdAt`/`updatedAt`, `email`/`createdAt` immutable); everything else denied.
+- Rules tests: `tests/rules/firestore-rules.test.ts` (Vitest + `@firebase/rules-unit-testing` 5 on the Firestore emulator, `npm run test:rules`), 11 tests, all pass; they swap in test addresses, so they pass with the placeholders or real ones.
+- `npm run deploy:rules -- a@x.com,b@y.com` fills in the allowlist only for the deploy and restores the placeholders, so the owners' addresses never reach the public repository.
+- `frontend/firebase.json` (Hosting from `dist/earnings-tracker/browser`, SPA rewrite, `immutable` 1-year caching for hashed bundles, `no-cache` for `index.html`, `ngsw.json`, the service worker files, the manifest and app routes, `nosniff`/referrer/permissions headers; Firestore rules and indexes; emulator ports), `.firebaserc` (`tradiqo`), `firestore.indexes.json` (none needed).
+- `.github/workflows/frontend.yml`: on pushes to `main` touching `frontend/**` and on pull requests: lint, unit tests, rules tests (Java 21 for the emulator), production build; then `FirebaseExtended/action-hosting-deploy@v0` to the live channel (secret `FIREBASE_SERVICE_ACCOUNT`, switch `FIREBASE_DEPLOY_ENABLED`, refuses to deploy `PLACEHOLDER` config); preview channels for same-repository pull requests. actionlint 1.7.12 (with shellcheck): no findings.
+- `docs/DEPLOYMENT-frontend.md`: prerequisites, registering the web app, `authDomain` and the Google redirect URI, Auth settings, rules, backend link, manual build + deploy, CI/CD secret and switch, installing on iPhone/Android, verification checklist, $0 check, troubleshooting. Root `README.md` rewritten (overview, layout, architecture, links to both guides); `frontend/README.md` lists the new scripts.
+- Production build checked as a PWA with a static server: the service worker installs (app shell + API data caches), and with the server stopped the app still loads.
+- Checked on the live backend (read-only): `CORS_ALLOWED_ORIGINS` and `APP_BASE_URL` on the VM already contain `https://tradiqo.web.app`, and a CORS preflight from that origin is accepted.
+- Final checks: `ng build` (initial 519 kB raw / 138 kB transferred), `ng lint`, 57 unit tests, 11 rules tests: all pass.
+
 ## In progress
 
-Nothing.
+Nothing: all phases are done.
 
 ## Next
 
-Phase 4 – Polish + deployment (see §12 of the prompt).
+For the owner (details in [DEPLOYMENT-frontend.md](DEPLOYMENT-frontend.md)):
+1. Register the web app in the Firebase console and put `apiKey`, `appId`, `messagingSenderId` into both environment files (step 2); add the redirect URI `https://tradiqo.web.app/__/auth/handler` to the Google OAuth client.
+2. `firebase login`, then `npm run deploy:rules -- <two addresses>` (step 4) and the first `firebase deploy --only hosting` (step 6).
+3. Create the `FIREBASE_SERVICE_ACCOUNT` secret and the `FIREBASE_DEPLOY_ENABLED` variable (step 7), commit the config, push.
+4. Run the verification checklist (step 9) on both phones.
 
 ## Known issues
 
@@ -94,6 +111,12 @@ From the backend (details in [PROGRESS-backend.md](PROGRESS-backend.md) and [DAT
 Frontend:
 - **The Firebase web-app keys are placeholders** (`apiKey`, `appId`, `messagingSenderId` in both environment files) until the web app is registered in the Firebase console. Until then `npm start` cannot sign in; mock mode and the emulator configuration work.
 - The Material theme uses CSS `light-dark()` (Material's `color-scheme` theme type): Safari/iOS 17.5+, Chrome 123+, Firefox 120+. Older browsers would show broken colours.
+- **Not yet verified against the real Firebase project** (the web app is not registered yet): Google sign-in (popup and redirect), the verification email and the password-reset email, deployed rules and Hosting. The same code paths ran against the Auth/Firestore emulators with email/password, and the checklist in DEPLOYMENT-frontend.md step 9 covers the rest.
+- The calendar was checked with real data only as an empty week (the backend's calendar job did not run in the fresh emulator database); its rendering was verified with the mock data, which has the same contract shape.
+- The backend caches each user's follows for a minute: a stock followed on another device appears on Followed at once (from Firestore) but gets its date from the backend within about a minute (the page refetches after 1.5 s and 65 s).
+- The service worker caches API responses by URL, not by user; with two users on separate devices this never mixes data, but after signing out and in as someone else on the same device, offline mode could show the previous user's cached Followed list.
+- Pull-request preview channels can't sign in with Google or reach the API (their addresses are not in the redirect URIs or the backend's CORS list); they are for looking at layout changes.
+- Logos come from third-party hosts (Finnhub, Google's favicon service) and are not cached by the service worker (opaque responses); offline, they fall back to initials only if the browser cache has none.
 
 ## Decisions
 
@@ -127,3 +150,8 @@ Frontend:
 - **2026-09-30 — Followed rows use a menu** (Open, Unfollow) rather than swipe-to-unfollow: easier to discover and to reach with a keyboard.
 - **2026-09-30 — Performance history scrolls inside its section** (about 10 rows high) with infinite loading there, plus a Load more button.
 - **2026-09-30 — Notes are read once per page (no listener)** and written 1 s after the last keystroke; a pending edit is saved when leaving the page or switching to another stock.
+- **2026-09-30 — The rules' allowlist is filled in at deploy time** (`npm run deploy:rules`) rather than committed: the repository is public and the two addresses are personal data. The placeholders stay in git; the tests swap in their own addresses.
+- **2026-09-30 — Hosting cache headers use non-overlapping globs** (hashed bundles: immutable; `index.html`, service-worker files, manifest and app routes: `no-cache`), because Firebase does not document which of two matching rules for the same header wins.
+- **2026-09-30 — The rules are deployed by hand, Hosting by CI:** the CI service account only needs Firebase Hosting Admin (plus API Keys Viewer for the action), and the allowlist is not in git.
+- **2026-09-30 — CI deploys are behind `FIREBASE_DEPLOY_ENABLED`** (like the backend's `DEPLOY_ENABLED`), so pushes before the secret exists stay green, and the deploy refuses a `PLACEHOLDER` Firebase config.
+- **2026-09-30 — New versions are offered, not forced:** the service worker downloads updates in the background and the app shows "A new version is available → Reload", so a half-typed note is never lost to an automatic reload.

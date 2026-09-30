@@ -4,7 +4,7 @@ import { Component, input } from '@angular/core';
 @Component({
   selector: 'app-auth-card',
   template: `
-    <div class="flex min-h-dvh flex-col items-center justify-center px-4 pt-safe pb-safe">
+    <main class="flex min-h-dvh flex-col items-center justify-center px-4 pt-safe pb-safe">
       <section class="w-full max-w-sm py-8">
         <div class="mb-8 flex flex-col items-center text-center">
           <img
@@ -21,7 +21,7 @@ import { Component, input } from '@angular/core';
         </div>
         <ng-content />
       </section>
-    </div>
+    </main>
   `,
 })
 export class AuthCard {

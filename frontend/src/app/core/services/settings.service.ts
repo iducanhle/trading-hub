@@ -16,11 +16,15 @@ export class SettingsService {
   readonly settings = signal<UserSettings>(DEFAULT_SETTINGS);
   /** False until the document has been read (or created). */
   readonly loaded = signal(false);
+  /** Set when the document cannot be read or created, e.g. the Firestore rules refused this account. */
+  readonly error = signal<unknown>(null);
+  private user: AppUser | null = null;
 
   start(user: AppUser): void {
     if (this.uid === user.uid) return;
     this.stop();
     this.uid = user.uid;
+    this.user = user;
     let creating = false;
     this.subscription = this.gateway.watchUser(user.uid).subscribe({
       next: ({ doc, fromCache }) => {
@@ -34,25 +38,39 @@ export class SettingsService {
                 displayName: user.displayName,
                 settings: DEFAULT_SETTINGS,
               })
-              .catch((error: unknown) =>
-                console.error('Could not create the user document', error),
-              );
+              .catch((error: unknown) => {
+                console.error('Could not create the user document', error);
+                this.error.set(error);
+              });
           }
           return;
         }
         this.settings.set(doc.settings);
+        this.error.set(null);
         this.loaded.set(true);
         if (doc.settings.theme !== this.theme.preference())
           this.theme.setPreference(doc.settings.theme);
       },
-      error: (error: unknown) => console.error('Settings listener failed', error),
+      error: (error: unknown) => {
+        console.error('Settings listener failed', error);
+        this.error.set(error);
+      },
     });
+  }
+
+  /** Starts again after a failure. */
+  retry(): void {
+    const user = this.user;
+    if (!user) return;
+    this.stop();
+    this.start(user);
   }
 
   stop(): void {
     this.subscription?.unsubscribe();
     this.subscription = undefined;
     this.uid = null;
+    this.error.set(null);
     this.loaded.set(false);
     this.settings.set(DEFAULT_SETTINGS);
   }

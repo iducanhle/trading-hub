@@ -30,9 +30,9 @@ const MAX_LOGOS = 3;
           <button
             type="button"
             class="flex min-h-18 flex-col items-center gap-1 p-1 text-left hover:bg-surface-container-high sm:min-h-24 sm:items-start sm:p-1.5"
-            [class.bg-surface]="!weekend"
-            [class.bg-surface-container-low]="weekend"
-            [class.opacity-45]="outside"
+            [class.bg-surface]="!weekend && !outside"
+            [class.bg-surface-container-low]="weekend && !outside"
+            [class.bg-surface-container-high]="outside"
             [attr.aria-label]="label(day)"
             (click)="openDay.emit(day)"
           >
@@ -72,7 +72,7 @@ const MAX_LOGOS = 3;
 })
 export class MonthView {
   readonly calendarDays = input.required<CalendarDay[]>();
-  /** 'YYYY-MM' of the month shown; other days of the grid are dimmed. */
+  /** 'YYYY-MM' of the month shown; other days of the grid are shaded. */
   readonly month = input.required<string>();
   readonly followed = input.required<ReadonlySet<string>>();
   readonly today = input.required<string>();

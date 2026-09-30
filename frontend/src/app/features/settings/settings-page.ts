@@ -16,6 +16,7 @@ import { SessionService } from '../../core/services/session.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { APP_VERSION } from '../../core/version';
+import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
@@ -37,6 +38,7 @@ import { Icon } from '../../shared/icon/icon';
     MatSelect,
     MatOption,
     PageHeader,
+    ErrorState,
     Skeleton,
     Icon,
   ],
@@ -120,7 +122,13 @@ import { Icon } from '../../shared/icon/icon';
         <h2 id="notifications-title" class="mb-3 text-sm font-semibold text-on-surface-variant">
           Notifications
         </h2>
-        @if (!settingsService.loaded()) {
+        @if (settingsService.error()) {
+          <app-error-state
+            compact
+            message="Couldn't load your settings from the database."
+            (retry)="settingsService.retry()"
+          />
+        } @else if (!settingsService.loaded()) {
           <div class="space-y-3" aria-hidden="true">
             <app-skeleton class="h-6 w-48" />
             <app-skeleton class="h-14 w-full" />

@@ -22,6 +22,13 @@ interface Tab {
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, Icon],
   template: `
+    <button
+      type="button"
+      class="sr-only rounded-full bg-primary px-4 py-2 text-sm font-medium text-on-primary focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
+      (click)="main.focus()"
+    >
+      Skip to content
+    </button>
     @if (!online()) {
       <div
         role="status"
@@ -33,7 +40,9 @@ interface Tab {
     }
 
     <main
-      class="min-h-dvh pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-24"
+      #main
+      tabindex="-1"
+      class="min-h-dvh outline-none pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-24"
     >
       <router-outlet />
     </main>

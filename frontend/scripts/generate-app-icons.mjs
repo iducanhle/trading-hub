@@ -106,7 +106,8 @@ function png(size, pixels) {
   header[8] = 8; // bit depth
   header[9] = 6; // RGBA
   const rows = Buffer.alloc(size * (size * 4 + 1));
-  for (let y = 0; y < size; y++) pixels.copy(rows, y * (size * 4 + 1) + 1, y * size * 4, (y + 1) * size * 4);
+  for (let y = 0; y < size; y++)
+    pixels.copy(rows, y * (size * 4 + 1) + 1, y * size * 4, (y + 1) * size * 4);
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', header),
@@ -116,10 +117,16 @@ function png(size, pixels) {
 }
 
 for (const size of [72, 96, 128, 144, 152, 192, 384, 512]) {
-  writeFileSync(new URL(`icons/icon-${size}x${size}.png`, out), png(size, render(size, { rounded: true })));
+  writeFileSync(
+    new URL(`icons/icon-${size}x${size}.png`, out),
+    png(size, render(size, { rounded: true })),
+  );
 }
 for (const size of [192, 512]) {
-  writeFileSync(new URL(`icons/maskable-${size}x${size}.png`, out), png(size, render(size, { maskable: true })));
+  writeFileSync(
+    new URL(`icons/maskable-${size}x${size}.png`, out),
+    png(size, render(size, { maskable: true })),
+  );
 }
 // iOS rounds the corners itself and shows transparency as black: full-bleed square.
 writeFileSync(new URL('icons/apple-touch-icon.png', out), png(180, render(180, {})));

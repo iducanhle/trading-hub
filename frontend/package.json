@@ -1,6 +1,6 @@
 {
   "name": "earnings-tracker",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -12,7 +12,10 @@
     "test:ci": "ng test --watch=false",
     "lint": "ng lint",
     "generate:icons": "node scripts/generate-icons.mjs",
-    "generate:app-icons": "node scripts/generate-app-icons.mjs"
+    "generate:app-icons": "node scripts/generate-app-icons.mjs",
+    "test:rules": "npx -y firebase-tools@15 emulators:exec --only firestore --project demo-rules \"vitest run --config tests/rules/vitest.config.mts\"",
+    "deploy:rules": "node scripts/deploy-rules.mjs",
+    "deploy:hosting": "npm run build && npx -y firebase-tools@15 deploy --only hosting"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -36,6 +39,7 @@
     "@angular/cli": "^22.2.0",
     "@angular/compiler-cli": "^22.2.0",
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/postcss": "^4.1.12",
     "angular-eslint": "22.5.0",
     "eslint": "^10.9.1",

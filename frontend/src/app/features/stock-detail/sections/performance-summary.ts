@@ -9,7 +9,11 @@ import { Skeleton } from '../../../shared/components/skeleton/skeleton';
   imports: [Change, Skeleton],
   template: `
     <h2 class="sr-only">Performance</h2>
-    <ul class="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3">
+    <ul
+      class="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3"
+      tabindex="0"
+      aria-label="Performance"
+    >
       @for (item of items(); track item.label) {
         <li
           class="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-outline-variant px-3 text-sm"

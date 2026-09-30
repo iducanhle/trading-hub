@@ -1,0 +1,130 @@
+# Frontend CI/CD: lint, unit tests, Firestore rules tests (emulator), production build, then deploy to Firebase
+# Hosting. Setup (service-account secret, switch, first run): docs/DEPLOYMENT-frontend.md, section 7.
+#
+# Repository secret (Settings → Secrets and variables → Actions → Secrets):
+#   FIREBASE_SERVICE_ACCOUNT   JSON key of a service account allowed to deploy Hosting (created by
+#                              `firebase init hosting:github`, or by hand as the guide describes)
+# Repository variable (same page → Variables):
+#   FIREBASE_DEPLOY_ENABLED    "true" once the secret exists and the Firebase web config is in environment.prod.ts;
+#                              until then the deploy jobs are skipped and only the checks run
+name: Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - frontend/**
+      - .github/workflows/frontend.yml
+  pull_request:
+    paths:
+      - frontend/**
+      - .github/workflows/frontend.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  # Pull requests: only the newest commit matters. main: never cancel a deploy halfway.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Lint, test and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # The Firestore emulator (rules tests) runs on Java.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:ci
+
+      - name: Firestore rules tests
+        run: npm run test:rules
+
+      - name: Build
+        run: npm run build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist/earnings-tracker/browser/
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Firebase Hosting
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.FIREBASE_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Refuse to deploy without the Firebase web config
+        run: |
+          if grep -q PLACEHOLDER frontend/src/environments/environment.prod.ts; then
+            echo "::error::frontend/src/environments/environment.prod.ts still contains PLACEHOLDER values (guide, step 2)."
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: frontend/dist/earnings-tracker/browser
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: tradiqo
+          entryPoint: frontend
+          channelId: live
+
+  preview:
+    name: Preview channel
+    needs: build
+    # Pull requests from this repository only (forks get no secrets).
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.FIREBASE_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: frontend/dist/earnings-tracker/browser
+
+      # Posts the preview URL on the pull request; the channel expires after 7 days.
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: tradiqo
+          entryPoint: frontend
+          expires: 7d
