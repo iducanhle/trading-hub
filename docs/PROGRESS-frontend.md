@@ -95,9 +95,14 @@ Nothing: all phases are done.
 
 For the owner (details in [DEPLOYMENT-frontend.md](DEPLOYMENT-frontend.md)):
 1. ~~Register the web app, fill in the config, add the Google redirect URI~~ (done 2026-09-30).
-2. `firebase login`, then `npm run deploy:rules -- <two addresses>` (step 4) and the first `firebase deploy --only hosting` (step 6).
+2. ~~Rules and first Hosting deploy~~ (done 2026-09-30, see below).
 3. Create the `FIREBASE_SERVICE_ACCOUNT` secret and the `FIREBASE_DEPLOY_ENABLED` variable (step 7), commit the config, push.
 4. Run the verification checklist (step 9) on both phones.
+
+**Live deployment (2026-09-30)**
+- Backend allowlist on the VM extended to two accounts (`ALLOWED_EMAILS`, 2 entries after the restart; a backup of the old `.env` is next to it).
+- Firestore rules deployed with the same two addresses (`npm run deploy:rules`); the committed file keeps the placeholders.
+- App deployed to https://tradiqo.web.app (`firebase deploy --only hosting`). Checked: `/`, `/followed` and `/stock/SAP.DE` answer 200 with `no-cache`, hashed bundles `immutable`, `/__/auth/handler` is served, the deep link `/stock/AAPL` leads to sign-in with the return URL, no console errors, and the web API key reports `localhost`, `tradiqo.firebaseapp.com` and `tradiqo.web.app` as authorized domains. Signing in and the phone checklist are for the owners.
 
 ## Known issues
 
