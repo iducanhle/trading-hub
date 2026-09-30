@@ -18,10 +18,10 @@ import { HistoryCalendar } from './history-calendar';
 type HistoryView = HistoryPeriod | 'CALENDAR';
 
 const PERIODS: { value: HistoryView; label: string }[] = [
+  { value: 'CALENDAR', label: $localize`:History shown as a month calendar:Calendar` },
   { value: 'DAILY', label: $localize`Daily` },
   { value: 'WEEKLY', label: $localize`Weekly` },
   { value: 'MONTHLY', label: $localize`Monthly` },
-  { value: 'CALENDAR', label: $localize`:History shown as a month calendar:Calendar` },
 ];
 const PAGE_SIZE = 30;
 
@@ -38,9 +38,9 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
 }
 
 /**
- * Section 5: closes and changes per day, week or month, newest first, with an "E" badge for periods with an earnings
- * report and a "partial" hint for the running period (more rows load on scroll); or a month calendar of daily
- * changes. Swipe between the tabs.
+ * Section 5: first a month calendar of daily changes, then closes and changes per day, week or month, newest first,
+ * with an "E" badge for periods with an earnings report and a "partial" hint for the running period (more rows load
+ * on scroll). Swipe between the tabs.
  */
 @Component({
   selector: 'app-performance-history',
@@ -161,7 +161,7 @@ export class PerformanceHistory {
 
   protected readonly periods = PERIODS;
   protected readonly expanded = persistedSignal('et.section.history', true);
-  protected readonly view = persistedSignal<HistoryView>('et.history.view', 'DAILY');
+  protected readonly view = persistedSignal<HistoryView>('et.history.view', 'CALENDAR');
   /** The list's period; null on the calendar, which loads its own months. */
   protected readonly period = computed(() =>
     this.view() === 'CALENDAR' ? null : (this.view() as HistoryPeriod),
