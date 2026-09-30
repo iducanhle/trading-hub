@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { Subscription } from 'rxjs';
 import { ApiService } from '../../../core/api/api.service';
@@ -13,11 +13,15 @@ import { PricePipe } from '../../../shared/pipes/format.pipes';
 import { formatDate, formatDateRange } from '../../../shared/utils/dates';
 import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { StockContext } from '../stock-context';
+import { HistoryCalendar } from './history-calendar';
 
-const PERIODS: { value: HistoryPeriod; label: string }[] = [
+type HistoryView = HistoryPeriod | 'CALENDAR';
+
+const PERIODS: { value: HistoryView; label: string }[] = [
   { value: 'DAILY', label: 'Daily' },
   { value: 'WEEKLY', label: 'Weekly' },
   { value: 'MONTHLY', label: 'Monthly' },
+  { value: 'CALENDAR', label: 'Calendar' },
 ];
 const PAGE_SIZE = 30;
 
@@ -34,12 +38,23 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
 }
 
 /**
- * Section 5: closes and changes per day, week or month (swipe between the tabs), newest first, with an "E" badge
- * for periods with an earnings report and a "partial" hint for the running period. More rows load on scroll.
+ * Section 5: closes and changes per day, week or month, newest first, with an "E" badge for periods with an earnings
+ * report and a "partial" hint for the running period (more rows load on scroll); or a month calendar of daily
+ * changes. Swipe between the tabs.
  */
 @Component({
   selector: 'app-performance-history',
-  imports: [MatButton, Section, Change, ErrorState, Skeleton, InView, Swipe, PricePipe],
+  imports: [
+    MatButton,
+    Section,
+    HistoryCalendar,
+    Change,
+    ErrorState,
+    Skeleton,
+    InView,
+    Swipe,
+    PricePipe,
+  ],
   template: `
     <app-section title="Performance history" [(expanded)]="expanded">
       <div
@@ -52,11 +67,11 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
             type="button"
             role="tab"
             class="h-9 flex-1 rounded-full text-sm font-medium transition-colors"
-            [class.bg-surface]="period() === p.value"
-            [class.shadow-sm]="period() === p.value"
-            [class.text-on-surface-variant]="period() !== p.value"
-            [attr.aria-selected]="period() === p.value"
-            (click)="period.set(p.value)"
+            [class.bg-surface]="view() === p.value"
+            [class.shadow-sm]="view() === p.value"
+            [class.text-on-surface-variant]="view() !== p.value"
+            [attr.aria-selected]="view() === p.value"
+            (click)="view.set(p.value)"
           >
             {{ p.label }}
           </button>
@@ -70,7 +85,9 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
         role="tabpanel"
         class="min-h-40"
       >
-        @if (error() && !rows().length) {
+        @if (view() === 'CALENDAR') {
+          <app-history-calendar [currency]="currency()" />
+        } @else if (error() && !rows().length) {
           <app-error-state compact [error]="error()" (retry)="loadMore()" />
         } @else if (!rows().length && loading()) {
           <ul aria-hidden="true">
@@ -128,7 +145,11 @@ export class PerformanceHistory {
 
   protected readonly periods = PERIODS;
   protected readonly expanded = persistedSignal('et.section.history', true);
-  protected readonly period = signal<HistoryPeriod>('DAILY');
+  protected readonly view = persistedSignal<HistoryView>('et.history.view', 'DAILY');
+  /** The list's period; null on the calendar, which loads its own months. */
+  protected readonly period = computed(() =>
+    this.view() === 'CALENDAR' ? null : (this.view() as HistoryPeriod),
+  );
   protected readonly rows = signal<HistoryRow[]>([]);
   protected readonly nextBefore = signal<string | null>(null);
   protected readonly loading = signal(false);
@@ -142,7 +163,7 @@ export class PerformanceHistory {
     // A new symbol, period or refresh starts over from the newest rows.
     effect(() => {
       const symbol = this.ctx.symbol();
-      this.period();
+      const period = this.period();
       const version = this.ctx.version();
       const expanded = this.expanded();
       untracked(() => {
@@ -151,7 +172,7 @@ export class PerformanceHistory {
         this.nextBefore.set(null);
         this.error.set(null);
         this.force = version > 0;
-        if (symbol && expanded) this.load(null);
+        if (symbol && expanded && period) this.load(null);
       });
     });
     // The overview is cached, so this reads the currency without another request.
@@ -167,13 +188,13 @@ export class PerformanceHistory {
   }
 
   protected label(row: HistoryRow): string {
-    return periodLabel(row, this.period());
+    return periodLabel(row, this.period() ?? 'DAILY');
   }
 
   protected shift(step: number): void {
-    const index = PERIODS.findIndex((p) => p.value === this.period());
+    const index = PERIODS.findIndex((p) => p.value === this.view());
     const next = PERIODS[index + step];
-    if (next) this.period.set(next.value);
+    if (next) this.view.set(next.value);
   }
 
   protected loadMore(): void {
@@ -186,7 +207,9 @@ export class PerformanceHistory {
     this.loading.set(true);
     this.error.set(null);
     this.request = this.api
-      .history(this.ctx.symbol(), this.period(), before, PAGE_SIZE, { force: this.force })
+      .history(this.ctx.symbol(), this.period() ?? 'DAILY', before, PAGE_SIZE, {
+        force: this.force,
+      })
       .subscribe({
         next: (page) => {
           this.rows.update((rows) => [...rows, ...page.rows]);

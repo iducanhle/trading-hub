@@ -1,8 +1,10 @@
 import { EarningsMarker, PriceBar } from '../../core/models/contract';
 import { beatRateText } from './sections/earnings-stats';
+import { calendarCells, intensity } from './sections/history-calendar';
 import { periodLabel } from './sections/performance-history';
 import { ChartColors, withAlpha } from './sections/price-chart/chart-colors';
 import { futureSessions, placeMarkers, weekdaysAfter } from './sections/price-chart/chart-data';
+import { measure, rangeChange } from './sections/price-chart/measure';
 import { recommendationBars } from './sections/recommendations';
 
 const bar = (date: string, close: number): PriceBar => ({
@@ -125,5 +127,34 @@ describe('stock sections', () => {
     expect(bar.total).toBe(4);
     expect(bar.segments.map((s) => s.percent)).toEqual([50, 25, 25, 0, 0]);
     expect(bar.description).toContain('2 strong buy, 1 buy, 1 hold, 0 sell, 0 strong sell');
+  });
+
+  it('measures the change between two points in date order', () => {
+    const m = measure({ date: '2026-09-25', price: 110 }, { date: '2026-09-15', price: 100 });
+    expect(m.from.date).toBe('2026-09-15');
+    expect(m.percent).toBeCloseTo(10);
+    expect(m.amount).toBeCloseTo(10);
+    expect(m.days).toBe(10);
+    expect(rangeChange([bar('2026-09-01', 50), bar('2026-09-02', 40)])?.percent).toBeCloseTo(-20);
+    expect(rangeChange([bar('2026-09-01', 50)])).toBeNull();
+  });
+
+  it('lays out a month calendar in weekday columns', () => {
+    const row = {
+      periodStart: '2026-09-01',
+      periodEnd: '2026-09-01',
+      close: 1,
+      changePercent: 1.5,
+      volume: 1,
+      hasEarnings: false,
+      partial: false,
+    };
+    // September 2026 starts on a Tuesday: one blank, then 22 weekdays.
+    const cells = calendarCells('2026-09-01', [row]);
+    expect(cells[0]).toBeNull();
+    expect(cells[1]).toEqual({ date: '2026-09-01', day: 1, row });
+    expect(cells.filter(Boolean).length).toBe(22);
+    expect(cells[2]?.row).toBeNull();
+    expect([null, 0, 0.4, -2, 3, -7].map(intensity)).toEqual([0, 0, 1, 2, 3, 4]);
   });
 });

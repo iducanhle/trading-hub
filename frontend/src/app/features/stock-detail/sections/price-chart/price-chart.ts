@@ -46,6 +46,7 @@ import {
   PricePipe,
   RelativeDayPipe,
   ReportTimePipe,
+  SignedNumberPipe,
 } from '../../../../shared/pipes/format.pipes';
 import { NUMBER_LOCALE } from '../../../../shared/utils/format';
 import { persistedSignal } from '../../../../shared/utils/persisted-signal';
@@ -53,6 +54,7 @@ import { StockContext } from '../../stock-context';
 import { readChartColors, withAlpha } from './chart-colors';
 import { ChartType, futureSessions, placeMarkers } from './chart-data';
 import { EarningsMarkersPrimitive } from './earnings-markers';
+import { MeasurePoint, MeasurePrimitive, measure, rangeChange } from './measure';
 
 const RANGES: PriceRange[] = ['1W', '1M', '6M', '1Y', '5Y'];
 
@@ -94,6 +96,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
     PricePipe,
     RelativeDayPipe,
     ReportTimePipe,
+    SignedNumberPipe,
   ],
   template: `
     <section class="border-t border-outline-variant pt-3 pb-2" aria-labelledby="price-chart-title">
@@ -134,8 +137,50 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         </mat-button-toggle-group>
       </div>
 
+      <!-- The range's change, or in measure mode the change from A to B. -->
+      <div class="flex min-h-14 items-center gap-2 px-4 pt-2 text-sm tabular-nums">
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2" aria-live="polite">
+          @if (measuring()) {
+            @if (measurement(); as m) {
+              <span class="text-on-surface-variant"
+                >{{ m.from.date | appDate: 'dayMonth' }} →
+                {{ m.to.date | appDate: 'dayMonth' }}</span
+              >
+              <app-change pill [value]="m.percent" />
+              <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
+                m.amount | signed
+              }}</span>
+              <span class="text-on-surface-variant"
+                >{{ m.days }} {{ m.days === 1 ? 'day' : 'days' }}</span
+              >
+            } @else {
+              <span class="text-on-surface-variant">{{
+                points().length ? 'Now tap the end point' : 'Tap the start point'
+              }}</span>
+            }
+          } @else if (rangeGain(); as g) {
+            <span class="font-medium text-on-surface-variant">{{ range() }}</span>
+            <app-change pill [value]="g.percent" />
+            <span [class]="g.amount >= 0 ? 'text-gain' : 'text-loss'">{{ g.amount | signed }}</span>
+          }
+        </div>
+        <button
+          type="button"
+          class="flex h-9 shrink-0 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium"
+          [class.bg-secondary-container]="measuring()"
+          [class.text-on-secondary-container]="measuring()"
+          [class.border-transparent]="measuring()"
+          [attr.aria-pressed]="measuring()"
+          title="Tap two points on the chart to see the change between them"
+          (click)="toggleMeasuring()"
+        >
+          <app-icon [name]="measuring() ? 'close' : 'straighten'" [size]="18" />
+          {{ measuring() ? 'Done' : 'Measure' }}
+        </button>
+      </div>
+
       <div
-        class="flex min-h-9 flex-wrap items-center gap-x-3 px-4 pt-2 text-xs tabular-nums text-on-surface-variant"
+        class="flex min-h-7 flex-wrap items-center gap-x-3 px-4 pt-1 text-xs tabular-nums text-on-surface-variant"
       >
         @if (legend(); as bar) {
           <span class="font-medium text-on-surface">{{ bar.date | appDate: 'medium' }}</span>
@@ -263,6 +308,14 @@ export class PriceChart {
   protected readonly currency = computed(() => this.data()?.currency ?? null);
   protected readonly hovered = signal<LegendBar | null>(null);
   protected readonly selected = signal<EarningsMarker | null>(null);
+  /** Measure mode: taps pick point A, then B; another tap starts over from a new A. */
+  protected readonly measuring = signal(false);
+  protected readonly points = signal<MeasurePoint[]>([]);
+  protected readonly measurement = computed(() => {
+    const [a, b] = this.points();
+    return a && b ? measure(a, b) : null;
+  });
+  protected readonly rangeGain = computed(() => rangeChange(this.data()?.bars ?? []));
 
   private readonly legendBars = computed(() => {
     const bars = this.data()?.bars ?? [];
@@ -299,6 +352,7 @@ export class PriceChart {
   private mainType?: ChartType;
   private volume?: ISeriesApi<'Histogram'>;
   private readonly markers = new EarningsMarkersPrimitive();
+  private readonly measureOverlay = new MeasurePrimitive();
   private readonly ready = signal(false);
 
   constructor() {
@@ -312,11 +366,24 @@ export class PriceChart {
       this.theme.dark(); // re-read the colours when the theme changes
       if (this.ready()) untracked(() => this.render(data, type));
     });
+    effect(() => {
+      const points = this.points();
+      this.type(); // the overlay moves to the new series
+      this.theme.dark();
+      if (this.ready()) untracked(() => this.drawMeasure(points));
+    });
     inject(DestroyRef).onDestroy(() => this.chart?.remove());
   }
 
   protected setRange(range: PriceRange): void {
     this.range.set(range);
+    this.selected.set(null);
+    this.points.set([]);
+  }
+
+  protected toggleMeasuring(): void {
+    this.measuring.update((on) => !on);
+    this.points.set([]);
     this.selected.set(null);
   }
 
@@ -357,6 +424,10 @@ export class PriceChart {
       );
     });
     chart.subscribeClick((param: MouseEventParams<Time>) => {
+      if (this.measuring()) {
+        this.pick(param);
+        return;
+      }
       const marker = param.point ? this.markers.markerAt(param.point.x, param.point.y) : null;
       this.selected.set(marker?.data ?? null);
     });
@@ -388,6 +459,7 @@ export class PriceChart {
     if (this.mainType !== type || !this.main) {
       if (this.main) {
         this.main.detachPrimitive(this.markers);
+        this.main.detachPrimitive(this.measureOverlay);
         chart.removeSeries(this.main);
       }
       this.main =
@@ -399,6 +471,7 @@ export class PriceChart {
               crosshairMarkerRadius: 4,
             });
       this.main.attachPrimitive(this.markers);
+      this.main.attachPrimitive(this.measureOverlay);
       this.mainType = type;
     }
 
@@ -446,5 +519,25 @@ export class PriceChart {
     );
     this.markers.setMarkers(placeMarkers(bars, markers, type, colors, future), colors.surface);
     chart.timeScale().fitContent();
+  }
+
+  /** Adds the tapped bar as A or B (a tap after B starts over); taps off the bars are ignored. */
+  private pick(param: MouseEventParams<Time>): void {
+    const bar = param.time && param.point ? this.legendBars().get(timeKey(param.time)) : undefined;
+    if (!bar) return;
+    const point: MeasurePoint = { date: bar.date, price: bar.close };
+    this.points.update((points) =>
+      points.length === 1 && points[0].date !== point.date ? [points[0], point] : [point],
+    );
+  }
+
+  private drawMeasure(points: MeasurePoint[]): void {
+    const colors = readChartColors(this.host);
+    this.measureOverlay.setPoints(points, {
+      gain: colors.gain,
+      loss: colors.loss,
+      line: colors.crosshair,
+      surface: colors.surface,
+    });
   }
 }

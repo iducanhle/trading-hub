@@ -47,6 +47,7 @@ const ICONS = [
   'send',
   'settings',
   'show_chart',
+  'straighten',
   'settings-fill',
   'star',
   'star-fill',
