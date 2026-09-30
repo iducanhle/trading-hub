@@ -53,7 +53,8 @@ public final class Dtos {
             Double epsSurprisePercent) {
     }
 
-    public record Prices(String symbol, String currency, String range, List<PriceBar> bars,
+    /** {@code baseClose}: the last close before the range, what the range's change is measured from (null if none). */
+    public record Prices(String symbol, String currency, String range, List<PriceBar> bars, Double baseClose,
             List<EarningsMarker> earningsMarkers, Instant asOf, boolean stale) {
     }
 

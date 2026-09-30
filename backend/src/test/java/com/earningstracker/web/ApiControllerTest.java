@@ -123,7 +123,7 @@ class ApiControllerTest {
         given(stocks.history(eq("AAPL"), eq(HistoryCalculator.Period.WEEKLY), eq(LocalDate.of(2026, 9, 1)), eq(5)))
                 .willReturn(new Dtos.History("WEEKLY", List.of(), null));
         given(stocks.prices(eq("AAPL"), eq(PriceRange.W1))).willReturn(
-                new Dtos.Prices("AAPL", "USD", "1W", List.of(), List.of(), null, false));
+                new Dtos.Prices("AAPL", "USD", "1W", List.of(), null, List.of(), null, false));
 
         assertThat(get("/api/stocks/AAPL/history?period=WEEKLY&before=2026-09-01&limit=5")).hasStatusOk()
                 .bodyJson().isLenientlyEqualTo("{\"period\":\"WEEKLY\",\"rows\":[],\"nextBefore\":null}");

@@ -172,6 +172,8 @@ export interface PricesResponse {
   range: PriceRange;
   /** Oldest first. */
   bars: PriceBar[];
+  /** The last close before the range: the range's change is measured from it. Null without older data. */
+  baseClose: number | null;
   earningsMarkers: EarningsMarker[];
   asOf: string;
   stale: boolean;

@@ -116,11 +116,14 @@ public class StockService {
                     next.date(), next.time(), "UPCOMING", null));
         }
         markers.sort(Comparator.comparing(Dtos.EarningsMarker::date));
+        // Same base as the performance summary: the last close on or before the range's start date.
+        Double baseClose = all.stream().filter(bar -> !bar.date().isAfter(from)).reduce((a, b) -> b)
+                .map(PriceBar::close).orElse(null);
         return new Dtos.Prices(symbol, profile.currency(), range.label(),
                 all.stream().filter(bar -> bar.date().isAfter(from))
                         .map(b -> new Dtos.PriceBar(b.date(), b.open(), b.high(), b.low(), b.close(), b.volume()))
                         .toList(),
-                markers, asOf(bars, reports), stale(bars, reports));
+                baseClose, markers, asOf(bars, reports), stale(bars, reports));
     }
 
     public Dtos.History history(String symbol, HistoryCalculator.Period period, LocalDate before, int limit) {

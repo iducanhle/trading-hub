@@ -343,7 +343,9 @@ export class PriceChart {
     const [a, b] = this.points();
     return a && b ? measure(a, b) : null;
   });
-  protected readonly rangeGain = computed(() => rangeChange(this.data()?.bars ?? []));
+  protected readonly rangeGain = computed(() =>
+    rangeChange(this.data()?.bars ?? [], this.data()?.baseClose ?? null),
+  );
 
   private readonly legendBars = computed(() => {
     const bars = this.data()?.bars ?? [];

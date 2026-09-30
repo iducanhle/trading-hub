@@ -300,6 +300,7 @@ export class MockBackend {
       '5Y': addDays(end, -5 * 365),
     }[range];
     const bars = all.filter((b) => b.date > from);
+    const before = all.filter((b) => b.date <= from);
     const markers: EarningsMarker[] = earnings.quarters
       .map((q) => ({
         date: reactionDay(q.date, q.time),
@@ -323,6 +324,7 @@ export class MockBackend {
       currency: overview.currency,
       range,
       bars,
+      baseClose: before.length ? before[before.length - 1].close : null,
       earningsMarkers: markers,
       asOf: new Date().toISOString(),
       stale: false,

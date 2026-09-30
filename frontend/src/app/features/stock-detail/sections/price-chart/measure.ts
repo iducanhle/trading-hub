@@ -42,12 +42,20 @@ export function measure(a: MeasurePoint, b: MeasurePoint): Measurement {
   };
 }
 
-/** Change over a whole range: the first bar's close to the last one's; null with fewer than two bars. */
-export function rangeChange(bars: readonly PriceBar[]): Measurement | null {
-  if (bars.length < 2) return null;
+/**
+ * Change over a whole range, to the last bar's close: from `baseClose` (the last close before the range, the same
+ * base as the performance chips) when there is one, else from the first bar's close; null without enough data.
+ */
+export function rangeChange(
+  bars: readonly PriceBar[],
+  baseClose: number | null = null,
+): Measurement | null {
+  if (!bars.length) return null;
   const first = bars[0];
   const last = bars[bars.length - 1];
-  return measure({ date: first.date, price: first.close }, { date: last.date, price: last.close });
+  if (baseClose == null && bars.length < 2) return null;
+  const from = baseClose ?? first.close;
+  return measure({ date: first.date, price: from }, { date: last.date, price: last.close });
 }
 
 type DrawTarget = Parameters<IPrimitivePaneRenderer['draw']>[0];

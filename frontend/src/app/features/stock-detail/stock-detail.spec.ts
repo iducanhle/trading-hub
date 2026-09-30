@@ -137,6 +137,9 @@ describe('stock sections', () => {
     expect(m.days).toBe(10);
     expect(rangeChange([bar('2026-09-01', 50), bar('2026-09-02', 40)])?.percent).toBeCloseTo(-20);
     expect(rangeChange([bar('2026-09-01', 50)])).toBeNull();
+    expect(rangeChange([bar('2026-09-01', 50), bar('2026-09-02', 60)], 40)?.percent).toBeCloseTo(
+      50,
+    );
   });
 
   it('lays out a month calendar in weekday columns', () => {

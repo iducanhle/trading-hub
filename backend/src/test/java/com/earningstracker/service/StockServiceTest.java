@@ -99,6 +99,10 @@ class StockServiceTest {
         Dtos.Prices month = f.stocks.prices(SAP, PriceRange.M1);
         assertThat(month.bars().getFirst().date()).isEqualTo(LocalDate.of(2026, 8, 26));
         assertThat(month.bars().getLast().date()).isEqualTo(LocalDate.of(2026, 9, 25));
+        // The range's change is measured from the close before it, like the 1M performance chip.
+        double aug25 = f.provider.bars.get(SAP).stream().filter(b -> b.date().equals(LocalDate.of(2026, 8, 25)))
+                .findFirst().orElseThrow().close();
+        assertThat(month.baseClose()).isEqualTo(aug25);
         assertThat(month.earningsMarkers()).extracting(Dtos.EarningsMarker::result).containsExactly("UPCOMING");
 
         Dtos.Prices year = f.stocks.prices(SAP, PriceRange.Y1);
