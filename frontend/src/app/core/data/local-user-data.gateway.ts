@@ -50,7 +50,11 @@ export class LocalUserDataGateway extends UserDataGateway {
     const now = Date.now();
     return {
       user: null,
-      follows: SEED_FOLLOWS.map((f, i) => ({ ...f, logoUrl: null, followedAt: new Date(now - (i + 1) * 86_400_000) })),
+      follows: SEED_FOLLOWS.map((f, i) => ({
+        ...f,
+        logoUrl: null,
+        followedAt: new Date(now - (i + 1) * 86_400_000),
+      })),
       notes: {},
     };
   }
@@ -77,7 +81,12 @@ export class LocalUserDataGateway extends UserDataGateway {
     this.update((s) => ({
       ...s,
       user: {
-        ...(s.user ?? { email: '', displayName: null, createdAt: new Date(), settings: DEFAULT_SETTINGS }),
+        ...(s.user ?? {
+          email: '',
+          displayName: null,
+          createdAt: new Date(),
+          settings: DEFAULT_SETTINGS,
+        }),
         settings: { ...(s.user?.settings ?? DEFAULT_SETTINGS), ...patch },
       },
     }));
@@ -89,7 +98,10 @@ export class LocalUserDataGateway extends UserDataGateway {
 
   async follow(_uid: string, follow: NewFollow): Promise<void> {
     const doc: FollowDoc = { ...follow, followedAt: follow.followedAt ?? new Date() };
-    this.update((s) => ({ ...s, follows: [...s.follows.filter((f) => f.symbol !== doc.symbol), doc] }));
+    this.update((s) => ({
+      ...s,
+      follows: [...s.follows.filter((f) => f.symbol !== doc.symbol), doc],
+    }));
   }
 
   async unfollow(_uid: string, symbol: string): Promise<void> {
@@ -101,7 +113,10 @@ export class LocalUserDataGateway extends UserDataGateway {
   }
 
   async saveNote(_uid: string, symbol: string, text: string): Promise<void> {
-    this.update((s) => ({ ...s, notes: { ...s.notes, [symbol]: { symbol, text, updatedAt: new Date() } } }));
+    this.update((s) => ({
+      ...s,
+      notes: { ...s.notes, [symbol]: { symbol, text, updatedAt: new Date() } },
+    }));
   }
 
   /** Current follows, for the mock API (calendar "followed only", followed earnings). */

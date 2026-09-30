@@ -14,26 +14,45 @@ const RESEND_COOLDOWN_S = 60;
   imports: [MatButton, Icon, AuthCard],
   template: `
     <app-auth-card title="Verify your email">
-      <div class="mb-6 flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center">
+      <div
+        class="mb-6 flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center"
+      >
         <app-icon name="mail" class="text-primary" [size]="32" />
         <p class="text-sm">
-          We sent a verification link to <strong class="break-all">{{ email() }}</strong>. Open it, then come back
-          here.
+          We sent a verification link to <strong class="break-all">{{ email() }}</strong
+          >. Open it, then come back here.
         </p>
       </div>
       @if (message()) {
-        <p role="status" class="mb-4 rounded-xl bg-secondary-container px-3 py-2 text-sm text-on-secondary-container">
+        <p
+          role="status"
+          class="mb-4 rounded-xl bg-secondary-container px-3 py-2 text-sm text-on-secondary-container"
+        >
           {{ message() }}
         </p>
       }
       <div class="flex flex-col gap-3">
-        <button matButton="filled" type="button" class="h-12!" [disabled]="busy()" (click)="verified()">
+        <button
+          matButton="filled"
+          type="button"
+          class="h-12!"
+          [disabled]="busy()"
+          (click)="verified()"
+        >
           I've verified
         </button>
-        <button matButton="outlined" type="button" class="h-12!" [disabled]="busy() || cooldown() > 0" (click)="resend()">
+        <button
+          matButton="outlined"
+          type="button"
+          class="h-12!"
+          [disabled]="busy() || cooldown() > 0"
+          (click)="resend()"
+        >
           {{ cooldown() > 0 ? 'Resend in ' + cooldown() + ' s' : 'Resend email' }}
         </button>
-        <button matButton type="button" class="h-12!" (click)="signOut()">Use another account</button>
+        <button matButton type="button" class="h-12!" (click)="signOut()">
+          Use another account
+        </button>
       </div>
     </app-auth-card>
   `,
@@ -61,7 +80,10 @@ export class VerifyEmail {
     try {
       const user = await this.auth.reload();
       if (user?.emailVerified) await this.router.navigateByUrl('/followed');
-      else this.message.set("Not verified yet. Open the link in the email, then tap \"I've verified\" again.");
+      else
+        this.message.set(
+          'Not verified yet. Open the link in the email, then tap "I\'ve verified" again.',
+        );
     } catch (error) {
       this.message.set(authErrorMessage(error));
     } finally {

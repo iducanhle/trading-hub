@@ -1,232 +1,232 @@
 {
- "upcoming": {
-  "symbol": "SAP.DE",
-  "name": "SAP SE",
-  "exchange": "XETRA",
-  "region": "EU",
-  "logoUrl": null,
-  "date": "2026-10-21",
-  "time": "AMC",
-  "fiscalQuarter": 3,
-  "fiscalYear": 2026,
-  "currency": "EUR",
-  "epsEstimate": 1.72,
-  "epsActual": null,
-  "revenueEstimate": 9300000000,
-  "revenueActual": null,
-  "marketCapUsd": 289000000000
- },
- "quarters": [
-  {
-   "date": "2026-07-22",
-   "time": "AMC",
-   "timeAssumed": false,
-   "fiscalQuarter": 2,
-   "fiscalYear": 2026,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.55,
-    "actual": 1.6,
-    "surprisePercent": 3.23
-   },
-   "revenue": {
-    "estimate": 9100000000,
-    "actual": 9030000000,
-    "surprisePercent": -0.77
-   },
-   "result": "BEAT",
-   "reaction": {
-    "preRunUpPercent": 1.5,
-    "gapPercent": 3.9,
-    "reactionDayPercent": 4.1,
-    "driftPercent": -1.2
-   }
+  "upcoming": {
+    "symbol": "SAP.DE",
+    "name": "SAP SE",
+    "exchange": "XETRA",
+    "region": "EU",
+    "logoUrl": null,
+    "date": "2026-10-21",
+    "time": "AMC",
+    "fiscalQuarter": 3,
+    "fiscalYear": 2026,
+    "currency": "EUR",
+    "epsEstimate": 1.72,
+    "epsActual": null,
+    "revenueEstimate": 9300000000,
+    "revenueActual": null,
+    "marketCapUsd": 289000000000
   },
-  {
-   "date": "2026-04-22",
-   "time": "AMC",
-   "timeAssumed": false,
-   "fiscalQuarter": 1,
-   "fiscalYear": 2026,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.44,
-    "actual": 1.51,
-    "surprisePercent": 4.86
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": 9010000000,
-    "surprisePercent": null
-   },
-   "result": "BEAT",
-   "reaction": {
-    "preRunUpPercent": -2.2,
-    "gapPercent": 5,
-    "reactionDayPercent": 6.3,
-    "driftPercent": 1.1
-   }
+  "quarters": [
+    {
+      "date": "2026-07-22",
+      "time": "AMC",
+      "timeAssumed": false,
+      "fiscalQuarter": 2,
+      "fiscalYear": 2026,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.55,
+        "actual": 1.6,
+        "surprisePercent": 3.23
+      },
+      "revenue": {
+        "estimate": 9100000000,
+        "actual": 9030000000,
+        "surprisePercent": -0.77
+      },
+      "result": "BEAT",
+      "reaction": {
+        "preRunUpPercent": 1.5,
+        "gapPercent": 3.9,
+        "reactionDayPercent": 4.1,
+        "driftPercent": -1.2
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "time": "AMC",
+      "timeAssumed": false,
+      "fiscalQuarter": 1,
+      "fiscalYear": 2026,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.44,
+        "actual": 1.51,
+        "surprisePercent": 4.86
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": 9010000000,
+        "surprisePercent": null
+      },
+      "result": "BEAT",
+      "reaction": {
+        "preRunUpPercent": -2.2,
+        "gapPercent": 5,
+        "reactionDayPercent": 6.3,
+        "driftPercent": 1.1
+      }
+    },
+    {
+      "date": "2026-01-28",
+      "time": "UNKNOWN",
+      "timeAssumed": true,
+      "fiscalQuarter": 4,
+      "fiscalYear": 2025,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.72,
+        "actual": 1.62,
+        "surprisePercent": -5.81
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": 9680000000,
+        "surprisePercent": null
+      },
+      "result": "MISS",
+      "reaction": {
+        "preRunUpPercent": 0.8,
+        "gapPercent": -4.8,
+        "reactionDayPercent": -5.2,
+        "driftPercent": -2.5
+      }
+    },
+    {
+      "date": "2025-10-22",
+      "time": "AMC",
+      "timeAssumed": false,
+      "fiscalQuarter": 3,
+      "fiscalYear": 2025,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.58,
+        "actual": 1.59,
+        "surprisePercent": 0.63
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": 9080000000,
+        "surprisePercent": null
+      },
+      "result": "INLINE",
+      "reaction": {
+        "preRunUpPercent": 2.4,
+        "gapPercent": 1.9,
+        "reactionDayPercent": 2.2,
+        "driftPercent": 0.6
+      }
+    },
+    {
+      "date": "2025-07-22",
+      "time": "UNKNOWN",
+      "timeAssumed": true,
+      "fiscalQuarter": null,
+      "fiscalYear": null,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.52,
+        "actual": 1.5,
+        "surprisePercent": -1.32
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": null,
+        "surprisePercent": null
+      },
+      "result": "MISS",
+      "reaction": {
+        "preRunUpPercent": -0.6,
+        "gapPercent": 1.1,
+        "reactionDayPercent": -3.1,
+        "driftPercent": -1.9
+      }
+    },
+    {
+      "date": "2025-04-24",
+      "time": "AMC",
+      "timeAssumed": false,
+      "fiscalQuarter": null,
+      "fiscalYear": null,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.28,
+        "actual": 1.44,
+        "surprisePercent": 12.5
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": null,
+        "surprisePercent": null
+      },
+      "result": "BEAT",
+      "reaction": {
+        "preRunUpPercent": 1.1,
+        "gapPercent": 8.9,
+        "reactionDayPercent": 10.2,
+        "driftPercent": 2.4
+      }
+    },
+    {
+      "date": "2025-01-27",
+      "time": "UNKNOWN",
+      "timeAssumed": true,
+      "fiscalQuarter": null,
+      "fiscalYear": null,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.35,
+        "actual": 1.4,
+        "surprisePercent": 3.7
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": null,
+        "surprisePercent": null
+      },
+      "result": "BEAT",
+      "reaction": {
+        "preRunUpPercent": 3.3,
+        "gapPercent": 1.2,
+        "reactionDayPercent": 2.1,
+        "driftPercent": 1.4
+      }
+    },
+    {
+      "date": "2024-10-21",
+      "time": "AMC",
+      "timeAssumed": false,
+      "fiscalQuarter": null,
+      "fiscalYear": null,
+      "currency": "EUR",
+      "eps": {
+        "estimate": 1.12,
+        "actual": 1.14,
+        "surprisePercent": 1.79
+      },
+      "revenue": {
+        "estimate": null,
+        "actual": null,
+        "surprisePercent": null
+      },
+      "result": "BEAT",
+      "reaction": {
+        "preRunUpPercent": 0.4,
+        "gapPercent": 4.6,
+        "reactionDayPercent": 1.9,
+        "driftPercent": null
+      }
+    }
+  ],
+  "stats": {
+    "quartersAnalyzed": 8,
+    "beatRate": 62.5,
+    "streak": {
+      "result": "BEAT",
+      "count": 2
+    },
+    "avgAbsReactionPercent": 4.4
   },
-  {
-   "date": "2026-01-28",
-   "time": "UNKNOWN",
-   "timeAssumed": true,
-   "fiscalQuarter": 4,
-   "fiscalYear": 2025,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.72,
-    "actual": 1.62,
-    "surprisePercent": -5.81
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": 9680000000,
-    "surprisePercent": null
-   },
-   "result": "MISS",
-   "reaction": {
-    "preRunUpPercent": 0.8,
-    "gapPercent": -4.8,
-    "reactionDayPercent": -5.2,
-    "driftPercent": -2.5
-   }
-  },
-  {
-   "date": "2025-10-22",
-   "time": "AMC",
-   "timeAssumed": false,
-   "fiscalQuarter": 3,
-   "fiscalYear": 2025,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.58,
-    "actual": 1.59,
-    "surprisePercent": 0.63
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": 9080000000,
-    "surprisePercent": null
-   },
-   "result": "INLINE",
-   "reaction": {
-    "preRunUpPercent": 2.4,
-    "gapPercent": 1.9,
-    "reactionDayPercent": 2.2,
-    "driftPercent": 0.6
-   }
-  },
-  {
-   "date": "2025-07-22",
-   "time": "UNKNOWN",
-   "timeAssumed": true,
-   "fiscalQuarter": null,
-   "fiscalYear": null,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.52,
-    "actual": 1.5,
-    "surprisePercent": -1.32
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": null,
-    "surprisePercent": null
-   },
-   "result": "MISS",
-   "reaction": {
-    "preRunUpPercent": -0.6,
-    "gapPercent": 1.1,
-    "reactionDayPercent": -3.1,
-    "driftPercent": -1.9
-   }
-  },
-  {
-   "date": "2025-04-24",
-   "time": "AMC",
-   "timeAssumed": false,
-   "fiscalQuarter": null,
-   "fiscalYear": null,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.28,
-    "actual": 1.44,
-    "surprisePercent": 12.5
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": null,
-    "surprisePercent": null
-   },
-   "result": "BEAT",
-   "reaction": {
-    "preRunUpPercent": 1.1,
-    "gapPercent": 8.9,
-    "reactionDayPercent": 10.2,
-    "driftPercent": 2.4
-   }
-  },
-  {
-   "date": "2025-01-27",
-   "time": "UNKNOWN",
-   "timeAssumed": true,
-   "fiscalQuarter": null,
-   "fiscalYear": null,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.35,
-    "actual": 1.4,
-    "surprisePercent": 3.7
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": null,
-    "surprisePercent": null
-   },
-   "result": "BEAT",
-   "reaction": {
-    "preRunUpPercent": 3.3,
-    "gapPercent": 1.2,
-    "reactionDayPercent": 2.1,
-    "driftPercent": 1.4
-   }
-  },
-  {
-   "date": "2024-10-21",
-   "time": "AMC",
-   "timeAssumed": false,
-   "fiscalQuarter": null,
-   "fiscalYear": null,
-   "currency": "EUR",
-   "eps": {
-    "estimate": 1.12,
-    "actual": 1.14,
-    "surprisePercent": 1.79
-   },
-   "revenue": {
-    "estimate": null,
-    "actual": null,
-    "surprisePercent": null
-   },
-   "result": "BEAT",
-   "reaction": {
-    "preRunUpPercent": 0.4,
-    "gapPercent": 4.6,
-    "reactionDayPercent": 1.9,
-    "driftPercent": null
-   }
-  }
- ],
- "stats": {
-  "quartersAnalyzed": 8,
-  "beatRate": 62.5,
-  "streak": {
-   "result": "BEAT",
-   "count": 2
-  },
-  "avgAbsReactionPercent": 4.4
- },
- "asOf": "2026-09-29T15:40:00Z",
- "stale": true
+  "asOf": "2026-09-29T15:40:00Z",
+  "stale": true
 }

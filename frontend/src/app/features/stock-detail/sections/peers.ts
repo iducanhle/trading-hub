@@ -47,6 +47,11 @@ export class Peers {
   private readonly api = inject(ApiService);
 
   protected readonly expanded = persistedSignal('et.section.peers', true);
-  protected readonly peers = this.ctx.resource((symbol, options) => this.api.peers(symbol, options), () => this.expanded());
-  protected readonly items = computed(() => (this.peers.hasValue() ? (this.peers.value() ?? []) : []));
+  protected readonly peers = this.ctx.resource(
+    (symbol, options) => this.api.peers(symbol, options),
+    () => this.expanded(),
+  );
+  protected readonly items = computed(() =>
+    this.peers.hasValue() ? (this.peers.value() ?? []) : [],
+  );
 }

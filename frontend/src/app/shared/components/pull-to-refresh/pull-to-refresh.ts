@@ -1,4 +1,13 @@
-import { Component, DOCUMENT, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  DOCUMENT,
+  DestroyRef,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { Icon } from '../../icon/icon';
 
 const THRESHOLD = 72;
@@ -13,7 +22,10 @@ const MAX_PULL = 110;
   selector: 'app-pull-to-refresh',
   imports: [Icon],
   template: `
-    <div class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe" aria-hidden="true">
+    <div
+      class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe"
+      aria-hidden="true"
+    >
       <div
         class="mt-2 flex size-10 items-center justify-center rounded-full bg-surface-container-highest text-primary shadow-md"
         [class.transition-all]="!dragging()"
@@ -42,7 +54,9 @@ export class PullToRefresh {
   protected readonly pull = signal(0);
   protected readonly dragging = signal(false);
   protected readonly visible = computed(() => this.refreshing() || this.pull() > 8);
-  protected readonly offset = computed(() => (this.refreshing() ? 24 : Math.min(this.pull(), MAX_PULL) - 40));
+  protected readonly offset = computed(() =>
+    this.refreshing() ? 24 : Math.min(this.pull(), MAX_PULL) - 40,
+  );
 
   private start: { x: number; y: number } | null = null;
 

@@ -7,7 +7,12 @@ import { ICON_PATHS, IconName } from './icon-paths';
  */
 @Component({
   selector: 'app-icon',
-  template: `<svg viewBox="0 -960 960 960" [attr.width]="size()" [attr.height]="size()" focusable="false">
+  template: `<svg
+    viewBox="0 -960 960 960"
+    [attr.width]="size()"
+    [attr.height]="size()"
+    focusable="false"
+  >
     <path [attr.d]="path()" />
   </svg>`,
   styles: `

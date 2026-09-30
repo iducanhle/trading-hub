@@ -23,7 +23,10 @@ export interface FirestoreHandle {
  * partition third-party storage (Safari, Firefox, Chrome) — option 1 of Firebase's redirect best practices.
  * Elsewhere (localhost) the configured domain is used.
  */
-export function resolveAuthDomain(configured: string, location: { hostname: string; host: string }): string {
+export function resolveAuthDomain(
+  configured: string,
+  location: { hostname: string; host: string },
+): string {
   return /\.(web\.app|firebaseapp\.com)$/i.test(location.hostname) ? location.host : configured;
 }
 
@@ -62,7 +65,8 @@ export class FirebaseService {
           ? sdk.memoryLocalCache()
           : sdk.persistentLocalCache({ tabManager: sdk.persistentMultipleTabManager() }),
       });
-      if (emulators) sdk.connectFirestoreEmulator(db, emulators.firestoreHost, emulators.firestorePort);
+      if (emulators)
+        sdk.connectFirestoreEmulator(db, emulators.firestoreHost, emulators.firestorePort);
       return { sdk, db };
     });
     return this.firestorePromise;

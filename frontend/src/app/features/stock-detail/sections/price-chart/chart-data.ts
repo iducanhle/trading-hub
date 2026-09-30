@@ -45,8 +45,19 @@ export function placeMarkers(
       continue;
     }
     if (!bar) continue;
-    const color = marker.result === 'BEAT' ? colors.gain : marker.result === 'MISS' ? colors.loss : colors.neutral;
-    placed.push({ time: marker.date, price: type === 'candles' ? bar.low : bar.close, color, hollow: false, data: marker });
+    const color =
+      marker.result === 'BEAT'
+        ? colors.gain
+        : marker.result === 'MISS'
+          ? colors.loss
+          : colors.neutral;
+    placed.push({
+      time: marker.date,
+      price: type === 'candles' ? bar.low : bar.close,
+      color,
+      hollow: false,
+      data: marker,
+    });
   }
   return placed;
 }

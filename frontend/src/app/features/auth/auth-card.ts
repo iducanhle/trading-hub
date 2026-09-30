@@ -7,7 +7,13 @@ import { Component, input } from '@angular/core';
     <div class="flex min-h-dvh flex-col items-center justify-center px-4 pt-safe pb-safe">
       <section class="w-full max-w-sm py-8">
         <div class="mb-8 flex flex-col items-center text-center">
-          <img src="icons/icon.svg" alt="" width="56" height="56" class="mb-4 rounded-2xl shadow-sm" />
+          <img
+            src="icons/icon.svg"
+            alt=""
+            width="56"
+            height="56"
+            class="mb-4 rounded-2xl shadow-sm"
+          />
           <h1 class="text-2xl font-semibold tracking-tight">{{ title() }}</h1>
           @if (subtitle()) {
             <p class="mt-1 text-sm text-on-surface-variant">{{ subtitle() }}</p>

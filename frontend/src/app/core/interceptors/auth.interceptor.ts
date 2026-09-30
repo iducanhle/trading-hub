@@ -23,7 +23,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return from(auth.idToken()).pipe(
     switchMap((token) => next(withToken(req, token))),
     catchError((error: unknown) => {
-      if (!(error instanceof HttpErrorResponse) || error.status !== 401) return throwError(() => error);
+      if (!(error instanceof HttpErrorResponse) || error.status !== 401)
+        return throwError(() => error);
       return from(auth.idToken(true)).pipe(
         switchMap((token) => next(withToken(req, token))),
         catchError((retryError: unknown) => {

@@ -59,7 +59,9 @@ describe('dates', () => {
     // ICU puts thin spaces around the range dash.
     const spaces = (text: string) => text.replace(/\s/g, ' ');
     expect(spaces(formatDateRange('2026-09-22', '2026-09-26', false, 'en-US'))).toBe('Sep 22 – 26');
-    expect(spaces(formatDateRange('2026-09-28', '2026-10-04', true, 'en-US'))).toBe('Sep 28 – Oct 4, 2026');
+    expect(spaces(formatDateRange('2026-09-28', '2026-10-04', true, 'en-US'))).toBe(
+      'Sep 28 – Oct 4, 2026',
+    );
   });
 
   it('describes the age of a timestamp', () => {

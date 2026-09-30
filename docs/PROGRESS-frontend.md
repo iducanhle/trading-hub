@@ -8,8 +8,8 @@
 |---|---|
 | 0 – Setup | Done |
 | 1 – Foundation | Done |
-| 2 – Search + Stock detail | Done (local-backend run pending, see Next) |
-| 3 – Followed + Calendar + Settings | Not started |
+| 2 – Search + Stock detail | Done |
+| 3 – Followed + Calendar + Settings | Done |
 | 4 – Polish + deployment | Not started |
 
 ## Done
@@ -60,14 +60,27 @@
 - Production builds replace `core/providers/data-layer.ts` with a Firebase-only version, so no mock code ships (initial bundle 514 kB raw / 137 kB transferred; the budget warning is raised to 600 kB).
 - Checks: build, lint and 50 unit tests pass (new: chart data and marker placement, recommendation bars, beat-rate text, period labels). In the browser (mock mode, 375 px): every section renders with the fixtures; notes autosave, follow → unfollow → Undo, the not-found page, a provider error with Retry, search and recent searches verified.
 
+**Phase 3 – Followed + Calendar + Settings**
+- Followed (`/followed`, the start page): `GET /api/followed/earnings` merged with the live follows listener. Groups This week · Next week · Later (weeks start Monday), then "No date announced". Rows: logo, symbol, name, report time, EPS estimate, date + countdown; a row menu (Open, Unfollow with Undo). Unfollowed stocks disappear at once; stocks followed on this or another device appear at once under "No date announced" and the list is fetched again after 1.5 s and after 65 s (the backend caches a user's follows for a minute). Empty state with a "Find stocks" button; pull-to-refresh and a refresh button.
+- Calendar (`/calendar`): Week view (default on phones) and Month view (default from `lg`); previous / next, swipe, Today; range title ("Sep 28 – Oct 4, 2026", the year dropped on phones for the current year; "September 2026"). Filters: market cap chips All · >$300M · >$2B (default) · >$10B · >$200B, region All / US / EU, followed only; a bottom sheet on phones (with a dot on the button when not default), an inline bar from `lg`; remembered in localStorage.
+  - Week: Monday–Friday plus weekend days with reports; per day a header (name, date, count, "Today") and up to 8 logo tiles (ticker below, biggest caps first) then "+N"; followed stocks get a star (a ring on small logos).
+  - Month: 6-week grid, narrower dimmed weekends, other months dimmed, today circled, up to 3 logos and "+N".
+  - The day header, "+N" and month cells open a bottom sheet with the day's reports grouped by report time (logo, symbol, name, EPS estimate, market cap).
+  - `CalendarCache` keeps every fetched range for the session and prefetches the previous and next range; pull-to-refresh clears it.
+  - Empty periods show one empty state (with "Reset filters" when filters are active).
+- Settings (`/settings`): account (avatar or initials, email, provider, Sign out); Light / Dark / System; email digest toggle, "Notify me N days before" (1–7), optional notification email (validated, saved on blur/Enter), the 12:00 Prague note, Send test email (snackbar with the address; 429 → "one test email per minute"; 503 → "couldn't send email right now"); About (version, data sources, TradingView Lightweight Charts attribution, Material Symbols, "Data may be delayed; not investment advice").
+- Fixes found while testing: `AuthService.ready()` returned the first auth state forever, so after signing in the guards still saw a signed-out user and bounced back to /login (found in the emulator run; mock mode hides it). The performance history got its own scroll area, because infinite scroll in the middle of the page pushed the sections below out of reach. Quarters without a fiscal period are labelled by report month ("Jul 2026 report").
+- The code base is formatted with Prettier (the scaffold's `.prettierrc`).
+- Checks: build, lint and 57 unit tests pass (new: followed grouping, calendar ranges/paging/weekend days/grouping/filters). Mock mode checked at 375 px and 1280 px in both themes.
+- **End-to-end run against the local backend (2026-09-30):** Firebase Auth + Firestore emulators, the backend in emulator mode with the real providers (`JOBS_ENABLED=false`, mail pointed at a closed port so nothing is sent), the frontend with `npm run start:emulators`. Verified: email sign-in with a verified emulator user → `/api/me` allowed → `users/{uid}` created with the contract defaults; search (`sap` → SAP, SAP.DE, …); SAP.DE page with every section filled from real data (EU gaps shown as "—", "(assumed)" times, news, peers, recommendations); follow and note written to Firestore in the contract shape; Followed page from the backend; a follow written directly to Firestore (as another device would) showed up at once; calendar request/empty state (the calendar job did not run in the fresh emulator database); test email → 503 message.
+
 ## In progress
 
 Nothing.
 
 ## Next
 
-- Phase 3 – Followed + Calendar + Settings (see §12 of the prompt).
-- Then one end-to-end run against the local backend (emulator mode, real providers) covering Phases 2 and 3.
+Phase 4 – Polish + deployment (see §12 of the prompt).
 
 ## Known issues
 
@@ -109,4 +122,8 @@ Frontend:
 - **2026-09-30 — Follow toggle:** a star icon button in the sticky header on phones (the header has no room for a text button next to the price), a Follow / Following button from `sm`.
 - **2026-09-30 — Chart type toggle uses icons** (with labels for screen readers) so the range tabs and the toggle fit on one row at 375 px.
 - **2026-09-30 — The search query lives in the URL** (`/search?q=…`, replaced in place), so going back from a stock page restores the results.
+- **2026-09-30 — Calendar cache:** fetched ranges are kept for the whole session (no TTL) as the prompt asks; pull-to-refresh clears all of them. The calendar bypasses ApiService's 5-minute cache.
+- **2026-09-30 — Calendar view is not remembered:** week on phones, month from `lg`, chosen per visit; the filters are remembered.
+- **2026-09-30 — Followed rows use a menu** (Open, Unfollow) rather than swipe-to-unfollow: easier to discover and to reach with a keyboard.
+- **2026-09-30 — Performance history scrolls inside its section** (about 10 rows high) with infinite loading there, plus a Load more button.
 - **2026-09-30 — Notes are read once per page (no listener)** and written 1 s after the last keystroke; a pending edit is saved when leaving the page or switching to another stock.

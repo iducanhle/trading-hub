@@ -34,7 +34,8 @@ export class StockContext {
     enabled: () => boolean = () => true,
   ): ResourceRef<T | undefined> {
     return rxResource({
-      params: () => (enabled() && this.symbol() ? { symbol: this.symbol(), version: this.version() } : undefined),
+      params: () =>
+        enabled() && this.symbol() ? { symbol: this.symbol(), version: this.version() } : undefined,
       stream: ({ params }) => load(params.symbol, { force: params.version > 0 }),
     });
   }

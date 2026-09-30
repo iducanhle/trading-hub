@@ -11,10 +11,17 @@ import { Icon } from '../../icon/icon';
   selector: 'app-page-header',
   imports: [MatIconButton, Icon],
   template: `
-    <header class="sticky top-0 z-20 bg-surface/95 pt-safe backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+    <header
+      class="sticky top-0 z-20 bg-surface/95 pt-safe backdrop-blur supports-[backdrop-filter]:bg-surface/85"
+    >
       <div class="mx-auto flex h-14 items-center gap-1 px-2" [class]="maxWidth()">
         @if (back()) {
-          <button matIconButton type="button" aria-label="Back" (click)="navigation.back(backFallback())">
+          <button
+            matIconButton
+            type="button"
+            aria-label="Back"
+            (click)="navigation.back(backFallback())"
+          >
             <app-icon name="arrow_back" />
           </button>
         }

@@ -1,12 +1,316 @@
-import { Component } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatOption, MatSelect } from '@angular/material/select';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { firstValueFrom } from 'rxjs';
+import { errorMessage, toApiError } from '../../core/api/api-error';
+import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { ThemePreference, UserSettings } from '../../core/models/user-data';
+import { NotifierService } from '../../core/services/notifier.service';
+import { SessionService } from '../../core/services/session.service';
+import { SettingsService } from '../../core/services/settings.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { APP_VERSION } from '../../core/version';
 import { PageHeader } from '../../shared/components/page-header/page-header';
+import { Skeleton } from '../../shared/components/skeleton/skeleton';
+import { Icon } from '../../shared/icon/icon';
 
+/** `/settings`: account, theme, the email digest (stored in `users/{uid}.settings`), a test email, and About. */
 @Component({
   selector: 'app-settings-page',
-  imports: [PageHeader],
+  imports: [
+    ReactiveFormsModule,
+    MatButton,
+    MatButtonToggleGroup,
+    MatButtonToggle,
+    MatSlideToggle,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatHint,
+    MatError,
+    MatSelect,
+    MatOption,
+    PageHeader,
+    Skeleton,
+    Icon,
+  ],
   template: `
     <app-page-header title="Settings" />
-    <p class="mx-auto max-w-2xl px-4 py-8 text-on-surface-variant">Coming in the next phase.</p>
+    <div class="mx-auto max-w-2xl space-y-4 px-4 pt-2 pb-10">
+      <section aria-labelledby="account-title" class="rounded-3xl bg-surface-container-low p-4">
+        <h2 id="account-title" class="mb-3 text-sm font-semibold text-on-surface-variant">
+          Account
+        </h2>
+        <div class="flex items-center gap-3">
+          @if (user()?.photoUrl && !avatarFailed()) {
+            <img
+              [src]="user()!.photoUrl"
+              alt=""
+              width="48"
+              height="48"
+              referrerpolicy="no-referrer"
+              class="size-12 rounded-full"
+              (error)="avatarFailed.set(true)"
+            />
+          } @else {
+            <span
+              class="flex size-12 items-center justify-center rounded-full bg-primary-container text-lg font-semibold text-on-primary-container"
+              aria-hidden="true"
+              >{{ initials() }}</span
+            >
+          }
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-medium">{{ user()?.displayName || user()?.email }}</p>
+            <p class="truncate text-sm text-on-surface-variant">
+              {{ user()?.email }} · {{ provider() }}
+            </p>
+          </div>
+        </div>
+        <button matButton="outlined" type="button" class="mt-4" (click)="signOut()">
+          <app-icon matButtonIcon name="logout" [size]="18" />
+          Sign out
+        </button>
+      </section>
+
+      <section aria-labelledby="appearance-title" class="rounded-3xl bg-surface-container-low p-4">
+        <h2 id="appearance-title" class="mb-3 text-sm font-semibold text-on-surface-variant">
+          Appearance
+        </h2>
+        <mat-button-toggle-group
+          hideSingleSelectionIndicator
+          aria-labelledby="appearance-title"
+          class="w-full sm:w-auto"
+          [value]="theme.preference()"
+          (change)="setTheme($event.value)"
+        >
+          <mat-button-toggle value="light" class="flex-1"
+            ><app-icon
+              name="light_mode"
+              [size]="18"
+              class="mr-1.5 align-middle"
+            />Light</mat-button-toggle
+          >
+          <mat-button-toggle value="dark" class="flex-1"
+            ><app-icon
+              name="dark_mode"
+              [size]="18"
+              class="mr-1.5 align-middle"
+            />Dark</mat-button-toggle
+          >
+          <mat-button-toggle value="system" class="flex-1"
+            ><app-icon
+              name="contrast"
+              [size]="18"
+              class="mr-1.5 align-middle"
+            />System</mat-button-toggle
+          >
+        </mat-button-toggle-group>
+      </section>
+
+      <section
+        aria-labelledby="notifications-title"
+        class="rounded-3xl bg-surface-container-low p-4"
+      >
+        <h2 id="notifications-title" class="mb-3 text-sm font-semibold text-on-surface-variant">
+          Notifications
+        </h2>
+        @if (!settingsService.loaded()) {
+          <div class="space-y-3" aria-hidden="true">
+            <app-skeleton class="h-6 w-48" />
+            <app-skeleton class="h-14 w-full" />
+            <app-skeleton class="h-14 w-full" />
+          </div>
+        } @else {
+          <mat-slide-toggle
+            class="mb-4"
+            [checked]="settings().notificationsEnabled"
+            (change)="save({ notificationsEnabled: $event.checked })"
+          >
+            Email digest
+          </mat-slide-toggle>
+          <div class="flex flex-col gap-1">
+            <mat-form-field appearance="outline">
+              <mat-label>Notify me</mat-label>
+              <mat-select
+                [value]="settings().notifyDaysBefore"
+                [disabled]="!settings().notificationsEnabled"
+                (selectionChange)="save({ notifyDaysBefore: $event.value })"
+              >
+                @for (n of dayOptions; track n) {
+                  <mat-option [value]="n">{{ n }} {{ n === 1 ? 'day' : 'days' }} before</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Notification email (optional)</mat-label>
+              <input
+                matInput
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                [formControl]="email"
+                [placeholder]="user()?.email ?? ''"
+                (blur)="saveEmail()"
+                (keydown.enter)="saveEmail()"
+              />
+              <mat-hint>Empty = your account email</mat-hint>
+              <mat-error>Enter a valid email address.</mat-error>
+            </mat-form-field>
+          </div>
+          <p class="mt-2 text-sm text-on-surface-variant">
+            Sent daily at 12:00 (Prague time) when a followed stock reports within this window.
+          </p>
+          <button
+            matButton="tonal"
+            type="button"
+            class="mt-4"
+            [disabled]="sending()"
+            (click)="sendTest()"
+          >
+            <app-icon matButtonIcon name="send" [size]="18" />
+            {{ sending() ? 'Sending…' : 'Send test email' }}
+          </button>
+        }
+      </section>
+
+      <section
+        aria-labelledby="about-title"
+        class="rounded-3xl bg-surface-container-low p-4 text-sm"
+      >
+        <h2 id="about-title" class="mb-3 text-sm font-semibold text-on-surface-variant">About</h2>
+        <dl class="space-y-3">
+          <div>
+            <dt class="text-xs text-on-surface-variant">Version</dt>
+            <dd>Earnings Tracker {{ version }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-on-surface-variant">Data sources</dt>
+            <dd>Finnhub, Twelve Data, Yahoo Finance and Financial Modeling Prep.</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-on-surface-variant">Charts</dt>
+            <dd>
+              <a
+                href="https://www.tradingview.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary underline"
+                >TradingView Lightweight Charts™</a
+              >
+              (Apache 2.0), © TradingView, Inc.
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-on-surface-variant">Icons</dt>
+            <dd>Material Symbols by Google (Apache 2.0).</dd>
+          </div>
+        </dl>
+        <p class="mt-4 rounded-2xl bg-surface-container-high p-3 text-xs text-on-surface-variant">
+          Data may be delayed; not investment advice.
+        </p>
+      </section>
+    </div>
   `,
 })
-export class SettingsPage {}
+export class SettingsPage {
+  private readonly auth = inject(AuthService);
+  private readonly api = inject(ApiService);
+  private readonly session = inject(SessionService);
+  private readonly notifier = inject(NotifierService);
+  protected readonly settingsService = inject(SettingsService);
+  protected readonly theme = inject(ThemeService);
+
+  protected readonly version = APP_VERSION;
+  protected readonly dayOptions = [1, 2, 3, 4, 5, 6, 7];
+  protected readonly user = this.auth.user;
+  protected readonly settings = this.settingsService.settings;
+  protected readonly avatarFailed = signal(false);
+  protected readonly sending = signal(false);
+  protected readonly email = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.email],
+  });
+
+  protected readonly initials = computed(() => {
+    const u = this.user();
+    const source = u?.displayName || u?.email || '?';
+    return source
+      .split(/[\s@.]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]!.toUpperCase())
+      .join('');
+  });
+  protected readonly provider = computed(() => {
+    const providers = this.user()?.providers ?? [];
+    if (providers.includes('google.com')) return 'Google';
+    if (providers.includes('password')) return 'Email and password';
+    return 'Signed in';
+  });
+
+  constructor() {
+    // Show the stored address (also when it changes on another device), unless the user is editing it.
+    effect(() => {
+      const stored = this.settings().notificationEmail ?? '';
+      untracked(() => {
+        if (!this.email.dirty) this.email.setValue(stored);
+      });
+    });
+  }
+
+  protected setTheme(theme: ThemePreference): void {
+    this.settingsService
+      .setTheme(theme)
+      .catch(() => void this.notifier.show("Couldn't save the theme"));
+  }
+
+  protected save(patch: Partial<UserSettings>): void {
+    this.settingsService
+      .update(patch)
+      .catch(() => void this.notifier.show("Couldn't save the setting"));
+  }
+
+  protected saveEmail(): void {
+    if (this.email.invalid) return;
+    const value = this.email.value.trim() || null;
+    this.email.markAsPristine();
+    if (value === this.settings().notificationEmail) return;
+    this.settingsService
+      .update({ notificationEmail: value })
+      .then(() =>
+        this.notifier.show(
+          value ? `Digest will go to ${value}` : 'Digest will go to your account email',
+        ),
+      )
+      .catch(() => this.notifier.show("Couldn't save the email address"));
+  }
+
+  protected async sendTest(): Promise<void> {
+    this.sending.set(true);
+    try {
+      const { sentTo } = await firstValueFrom(this.api.sendTestEmail());
+      await this.notifier.show(`Test email sent to ${sentTo}`);
+    } catch (error) {
+      const code = toApiError(error).code;
+      const message =
+        code === 'RATE_LIMITED'
+          ? 'You can send one test email per minute.'
+          : code === 'UPSTREAM_UNAVAILABLE'
+            ? "The server couldn't send email right now."
+            : errorMessage(error);
+      await this.notifier.show(message);
+    } finally {
+      this.sending.set(false);
+    }
+  }
+
+  protected signOut(): void {
+    void this.session.signOut();
+  }
+}

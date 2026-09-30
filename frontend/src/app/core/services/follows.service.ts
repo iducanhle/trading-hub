@@ -94,5 +94,7 @@ export class FollowsService {
 }
 
 function sortNewestFirst(follows: FollowDoc[]): FollowDoc[] {
-  return [...follows].sort((a, b) => (b.followedAt?.getTime() ?? Infinity) - (a.followedAt?.getTime() ?? Infinity));
+  return [...follows].sort(
+    (a, b) => (b.followedAt?.getTime() ?? Infinity) - (a.followedAt?.getTime() ?? Infinity),
+  );
 }

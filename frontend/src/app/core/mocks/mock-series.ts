@@ -1,4 +1,11 @@
-import { EarningsQuarter, EarningsResult, HistoryPeriod, HistoryRow, PriceBar, ReportTime } from '../models/contract';
+import {
+  EarningsQuarter,
+  EarningsResult,
+  HistoryPeriod,
+  HistoryRow,
+  PriceBar,
+  ReportTime,
+} from '../models/contract';
 import { addDays, eachDay, isWeekend, startOfMonth, startOfWeek } from '../../shared/utils/dates';
 
 // Deterministic synthetic prices for mock mode: every symbol gets the same five years of daily bars on every run,
@@ -60,7 +67,10 @@ export function generateBars(input: SeriesInput): PriceBar[] {
   const dates = eachDay(addDays(end, -(5 * 365 + 7)), end).filter((d) => !isWeekend(d));
   const reactions = new Map<string, { result: EarningsResult | null; percent: number | null }>();
   for (const q of input.quarters) {
-    reactions.set(reactionDay(q.date, q.time), { result: q.result, percent: q.reaction?.reactionDayPercent ?? null });
+    reactions.set(reactionDay(q.date, q.time), {
+      result: q.result,
+      percent: q.reaction?.reactionDayPercent ?? null,
+    });
   }
 
   const returns = dates.map((date) => {
@@ -83,8 +93,17 @@ export function generateBars(input: SeriesInput): PriceBar[] {
     const open = previous * (1 + gap);
     const high = Math.max(open, close) * (1 + Math.abs(gaussian(next)) * 0.006);
     const low = Math.min(open, close) * (1 - Math.abs(gaussian(next)) * 0.006);
-    const volume = Math.round(input.avgVolume * (0.6 + next() * 0.8) * (1 + Math.abs(returns[i]) * 25));
-    return { date, open: round2(open), high: round2(high), low: round2(low), close: round2(close), volume };
+    const volume = Math.round(
+      input.avgVolume * (0.6 + next() * 0.8) * (1 + Math.abs(returns[i]) * 25),
+    );
+    return {
+      date,
+      open: round2(open),
+      high: round2(high),
+      low: round2(low),
+      close: round2(close),
+      volume,
+    };
   });
 }
 
@@ -116,7 +135,8 @@ export function aggregateHistory(
       periodStart: first.date,
       periodEnd: last.date,
       close: last.close,
-      changePercent: previousClose == null ? null : round2(((last.close - previousClose) / previousClose) * 100),
+      changePercent:
+        previousClose == null ? null : round2(((last.close - previousClose) / previousClose) * 100),
       volume: group.reduce((sum, bar) => sum + bar.volume, 0),
       hasEarnings: reportKeys.has(keyOf(first.date)),
       partial: partialBar != null && group.includes(partialBar),

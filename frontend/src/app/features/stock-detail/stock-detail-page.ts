@@ -69,10 +69,20 @@ import { StockContext } from './stock-context';
     Notes,
   ],
   template: `
-    <app-pull-to-refresh [refreshing]="overview.isLoading() && ctx.version() > 0" (refresh)="ctx.refresh()">
-      <header class="sticky top-0 z-20 border-b border-outline-variant bg-surface/95 pt-safe backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+    <app-pull-to-refresh
+      [refreshing]="overview.isLoading() && ctx.version() > 0"
+      (refresh)="ctx.refresh()"
+    >
+      <header
+        class="sticky top-0 z-20 border-b border-outline-variant bg-surface/95 pt-safe backdrop-blur supports-[backdrop-filter]:bg-surface/85"
+      >
         <div class="mx-auto flex min-h-16 max-w-4xl items-center gap-2 py-2 pr-2 pl-1">
-          <button matIconButton type="button" aria-label="Back" (click)="navigation.back('/search')">
+          <button
+            matIconButton
+            type="button"
+            aria-label="Back"
+            (click)="navigation.back('/search')"
+          >
             <app-icon name="arrow_back" />
           </button>
           <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="36" />
@@ -86,19 +96,29 @@ import { StockContext } from './stock-context';
           </div>
           @if (stock(); as s) {
             <div class="text-right tabular-nums">
-              <p class="text-lg leading-tight font-semibold">{{ s.quote.price | price: s.currency }}</p>
+              <p class="text-lg leading-tight font-semibold">
+                {{ s.quote.price | price: s.currency }}
+              </p>
               <p class="text-xs whitespace-nowrap" [class]="changeClass()">
                 {{ s.quote.change | signed }} ({{ s.quote.changePercent | pct }})
               </p>
             </div>
           } @else if (!notFound()) {
-            <div class="flex flex-col items-end gap-1"><app-skeleton class="h-5 w-20" /><app-skeleton class="h-3 w-24" /></div>
+            <div class="flex flex-col items-end gap-1">
+              <app-skeleton class="h-5 w-20" /><app-skeleton class="h-3 w-24" />
+            </div>
           }
           @if (!notFound()) {
             <app-follow-button class="sm:hidden" compact [target]="followTarget()" />
             <app-follow-button class="hidden sm:block" [target]="followTarget()" />
           }
-          <button matIconButton type="button" class="hidden! lg:inline-flex!" aria-label="Refresh" (click)="ctx.refresh()">
+          <button
+            matIconButton
+            type="button"
+            class="hidden! lg:inline-flex!"
+            aria-label="Refresh"
+            (click)="ctx.refresh()"
+          >
             <app-icon name="refresh" />
           </button>
         </div>
@@ -109,14 +129,22 @@ import { StockContext } from './stock-context';
           <app-empty-state
             icon="search_off"
             title="Symbol not found"
-            [text]="'We couldn’t find ' + ctx.symbol() + '. Check the ticker, e.g. SAP.DE for SAP in Frankfurt.'"
+            [text]="
+              'We couldn’t find ' +
+              ctx.symbol() +
+              '. Check the ticker, e.g. SAP.DE for SAP in Frankfurt.'
+            "
           >
             <a matButton="filled" routerLink="/search">Search stocks</a>
           </app-empty-state>
         } @else if (overview.error() && !stock()) {
-          <div class="p-4"><app-error-state [error]="overview.error()" (retry)="overview.reload()" /></div>
+          <div class="p-4">
+            <app-error-state [error]="overview.error()" (retry)="overview.reload()" />
+          </div>
         } @else {
-          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-3 pb-1 text-xs text-on-surface-variant">
+          <div
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-3 pb-1 text-xs text-on-surface-variant"
+          >
             @if (stock(); as s) {
               <app-region-badge [region]="s.region" />
               <span>{{ s.exchange }}</span>
@@ -189,15 +217,27 @@ export class StockDetailPage {
   /** Route parameter (`/stock/:symbol`). */
   readonly symbol = input.required<string>();
 
-  protected readonly overview = this.ctx.resource((symbol, options) => this.api.overview(symbol, options));
-  protected readonly stock = computed(() => (this.overview.hasValue() ? this.overview.value() : undefined));
+  protected readonly overview = this.ctx.resource((symbol, options) =>
+    this.api.overview(symbol, options),
+  );
+  protected readonly stock = computed(() =>
+    this.overview.hasValue() ? this.overview.value() : undefined,
+  );
   protected readonly notFound = computed(() => {
     const error = this.overview.error();
     return isApiError(error, 'SYMBOL_NOT_FOUND') || isApiError(error, 'BAD_REQUEST');
   });
   protected readonly followTarget = computed<FollowTarget | null>(() => {
     const s = this.stock();
-    return s ? { symbol: s.symbol, name: s.name, exchange: s.exchange, region: s.region, logoUrl: s.logoUrl } : null;
+    return s
+      ? {
+          symbol: s.symbol,
+          name: s.name,
+          exchange: s.exchange,
+          region: s.region,
+          logoUrl: s.logoUrl,
+        }
+      : null;
   });
   protected readonly changeClass = computed(() => toneClass(this.stock()?.quote.change));
 

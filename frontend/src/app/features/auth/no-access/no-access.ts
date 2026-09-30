@@ -10,11 +10,13 @@ import { AuthCard } from '../auth-card';
   imports: [MatButton, Icon, AuthCard],
   template: `
     <app-auth-card title="This app is private">
-      <div class="mb-6 flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center">
+      <div
+        class="mb-6 flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center"
+      >
         <app-icon name="lock" class="text-on-surface-variant" [size]="32" />
         <p class="text-sm">
-          Access not granted for <strong class="break-all">{{ email() }}</strong>. Only invited accounts can use
-          Earnings Tracker.
+          Access not granted for <strong class="break-all">{{ email() }}</strong
+          >. Only invited accounts can use Earnings Tracker.
         </p>
       </div>
       <button matButton="filled" type="button" class="h-12! w-full" (click)="signOut()">

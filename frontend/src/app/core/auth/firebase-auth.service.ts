@@ -70,8 +70,9 @@ export class FirebaseAuthService extends AuthService {
     });
   }
 
+  /** Waits for the first auth state, then returns the current user (not the first one: that stays null after sign-in). */
   ready(): Promise<AppUser | null> {
-    return this.firstState;
+    return this.firstState.then(() => this.state() ?? null);
   }
 
   async idToken(forceRefresh = false): Promise<string | null> {

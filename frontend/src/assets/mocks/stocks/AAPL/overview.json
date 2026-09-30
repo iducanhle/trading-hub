@@ -1,61 +1,61 @@
 {
- "symbol": "AAPL",
- "name": "Apple Inc.",
- "exchange": "NASDAQ",
- "region": "US",
- "currency": "USD",
- "logoUrl": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/AAPL.png",
- "sector": "Technology",
- "industry": "Consumer Electronics",
- "website": "https://www.apple.com",
- "quote": {
-  "price": 254.43,
-  "change": 3.12,
-  "changePercent": 1.24,
-  "previousClose": 251.31,
-  "asOf": "2026-09-29T20:00:00Z"
- },
- "keyStats": {
-  "marketCap": 3780000000000,
-  "marketCapUsd": 3780000000000,
-  "week52High": 260.1,
-  "week52Low": 169.21,
-  "peRatio": 38.6,
-  "epsTtm": 6.59,
-  "avgVolume": 54300000
- },
- "performance": {
-  "w1": 2.35,
-  "m1": 6.81,
-  "ytd": 1.62,
-  "y1": 11.4
- },
- "nextEarnings": {
   "symbol": "AAPL",
   "name": "Apple Inc.",
   "exchange": "NASDAQ",
   "region": "US",
-  "logoUrl": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/AAPL.png",
-  "date": "2026-10-29",
-  "time": "AMC",
-  "fiscalQuarter": 4,
-  "fiscalYear": 2026,
   "currency": "USD",
-  "epsEstimate": 1.77,
-  "epsActual": null,
-  "revenueEstimate": 102300000000,
-  "revenueActual": null,
-  "marketCapUsd": 3780000000000
- },
- "earningsStats": {
-  "quartersAnalyzed": 8,
-  "beatRate": 75,
-  "streak": {
-   "result": "BEAT",
-   "count": 5
+  "logoUrl": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/AAPL.png",
+  "sector": "Technology",
+  "industry": "Consumer Electronics",
+  "website": "https://www.apple.com",
+  "quote": {
+    "price": 254.43,
+    "change": 3.12,
+    "changePercent": 1.24,
+    "previousClose": 251.31,
+    "asOf": "2026-09-29T20:00:00Z"
   },
-  "avgAbsReactionPercent": 1.56
- },
- "asOf": "2026-09-29T20:05:00Z",
- "stale": false
+  "keyStats": {
+    "marketCap": 3780000000000,
+    "marketCapUsd": 3780000000000,
+    "week52High": 260.1,
+    "week52Low": 169.21,
+    "peRatio": 38.6,
+    "epsTtm": 6.59,
+    "avgVolume": 54300000
+  },
+  "performance": {
+    "w1": 2.35,
+    "m1": 6.81,
+    "ytd": 1.62,
+    "y1": 11.4
+  },
+  "nextEarnings": {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "exchange": "NASDAQ",
+    "region": "US",
+    "logoUrl": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/AAPL.png",
+    "date": "2026-10-29",
+    "time": "AMC",
+    "fiscalQuarter": 4,
+    "fiscalYear": 2026,
+    "currency": "USD",
+    "epsEstimate": 1.77,
+    "epsActual": null,
+    "revenueEstimate": 102300000000,
+    "revenueActual": null,
+    "marketCapUsd": 3780000000000
+  },
+  "earningsStats": {
+    "quartersAnalyzed": 8,
+    "beatRate": 75,
+    "streak": {
+      "result": "BEAT",
+      "count": 5
+    },
+    "avgAbsReactionPercent": 1.56
+  },
+  "asOf": "2026-09-29T20:05:00Z",
+  "stale": false
 }

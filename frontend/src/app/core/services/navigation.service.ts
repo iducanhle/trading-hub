@@ -11,7 +11,9 @@ export class NavigationService {
   private navigations = 0;
 
   constructor() {
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => this.navigations++);
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => this.navigations++);
   }
 
   back(fallback = '/followed'): void {

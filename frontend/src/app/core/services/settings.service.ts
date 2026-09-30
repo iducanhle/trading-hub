@@ -29,14 +29,21 @@ export class SettingsService {
           if (!fromCache && !creating) {
             creating = true;
             this.gateway
-              .createUser(user.uid, { email: user.email ?? '', displayName: user.displayName, settings: DEFAULT_SETTINGS })
-              .catch((error: unknown) => console.error('Could not create the user document', error));
+              .createUser(user.uid, {
+                email: user.email ?? '',
+                displayName: user.displayName,
+                settings: DEFAULT_SETTINGS,
+              })
+              .catch((error: unknown) =>
+                console.error('Could not create the user document', error),
+              );
           }
           return;
         }
         this.settings.set(doc.settings);
         this.loaded.set(true);
-        if (doc.settings.theme !== this.theme.preference()) this.theme.setPreference(doc.settings.theme);
+        if (doc.settings.theme !== this.theme.preference())
+          this.theme.setPreference(doc.settings.theme);
       },
       error: (error: unknown) => console.error('Settings listener failed', error),
     });

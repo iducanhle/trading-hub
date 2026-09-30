@@ -31,11 +31,16 @@ import { symbolColor, symbolInitials } from '../../utils/symbols';
       >
     }
     @if (followed()) {
-      <span
-        class="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-primary text-on-primary ring-2 ring-surface"
-      >
-        <app-icon name="star-fill" [size]="11" />
-      </span>
+      @if (size() >= 32) {
+        <span
+          class="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-primary text-on-primary ring-2 ring-surface"
+        >
+          <app-icon name="star-fill" [size]="11" />
+        </span>
+      } @else {
+        <!-- Too small for a star: a ring in the accent colour. -->
+        <span class="absolute -inset-0.5 rounded-full ring-2 ring-primary"></span>
+      }
     }
   `,
   host: {
@@ -55,6 +60,10 @@ export class StockLogo {
   /** Resets whenever the URL changes. */
   protected readonly failed = linkedSignal({ source: this.logoUrl, computation: () => false });
   protected readonly color = computed(() => symbolColor(this.symbol()));
-  protected readonly initials = computed(() => symbolInitials(this.symbol(), this.size() < 32 ? 1 : 2));
-  protected readonly fontSize = computed(() => Math.round(this.size() * (this.size() < 32 ? 0.45 : 0.36)));
+  protected readonly initials = computed(() =>
+    symbolInitials(this.symbol(), this.size() < 32 ? 1 : 2),
+  );
+  protected readonly fontSize = computed(() =>
+    Math.round(this.size() * (this.size() < 32 ? 0.45 : 0.36)),
+  );
 }

@@ -1,4 +1,13 @@
-import { Component, ElementRef, afterNextRender, computed, inject, input, linkedSignal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  viewChild,
+} from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { Router } from '@angular/router';
@@ -16,11 +25,16 @@ import { StockRow } from './stock-row';
   selector: 'app-search-page',
   imports: [MatButton, MatIconButton, Icon, StockRow, Skeleton, EmptyState, ErrorState],
   template: `
-    <header class="sticky top-0 z-20 bg-surface/95 px-4 pt-safe pb-3 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+    <header
+      class="sticky top-0 z-20 bg-surface/95 px-4 pt-safe pb-3 backdrop-blur supports-[backdrop-filter]:bg-surface/85"
+    >
       <div class="mx-auto max-w-2xl pt-3">
         <h1 class="sr-only">Search</h1>
         <div class="relative">
-          <app-icon name="search" class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-on-surface-variant" />
+          <app-icon
+            name="search"
+            class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-on-surface-variant"
+          />
           <input
             #input
             type="search"
@@ -70,17 +84,29 @@ import { StockRow } from './stock-row';
           />
         }
       } @else if (results.error()) {
-        <div class="px-2 pt-4"><app-error-state [error]="results.error()" (retry)="results.reload()" /></div>
+        <div class="px-2 pt-4">
+          <app-error-state [error]="results.error()" (retry)="results.reload()" />
+        </div>
       } @else if (shown(); as list) {
         @if (list.length || results.isLoading()) {
           <h2 class="sr-only">Results</h2>
-          <ul aria-live="polite" [attr.aria-busy]="results.isLoading()" [class.opacity-60]="results.isLoading()">
+          <ul
+            aria-live="polite"
+            [attr.aria-busy]="results.isLoading()"
+            [class.opacity-60]="results.isLoading()"
+          >
             @for (stock of list; track stock.symbol) {
               <li><app-stock-row [stock]="stock" /></li>
             }
           </ul>
         } @else {
-          <app-empty-state icon="search_off" title="No matches" [text]="'Nothing found for “' + term() + '”. Check the symbol, or try the company name.'" />
+          <app-empty-state
+            icon="search_off"
+            title="No matches"
+            [text]="
+              'Nothing found for “' + term() + '”. Check the symbol, or try the company name.'
+            "
+          />
         }
       } @else {
         <ul aria-busy="true" aria-label="Searching">

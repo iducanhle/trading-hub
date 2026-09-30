@@ -9,7 +9,10 @@ import { ResponseCache } from './response-cache';
 describe('toApiError', () => {
   it('keeps the contract code and message', () => {
     const error = toApiError(
-      new HttpErrorResponse({ status: 404, error: { code: 'SYMBOL_NOT_FOUND', message: 'Unknown symbol ZZZ' } }),
+      new HttpErrorResponse({
+        status: 404,
+        error: { code: 'SYMBOL_NOT_FOUND', message: 'Unknown symbol ZZZ' },
+      }),
     );
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(404);
@@ -19,7 +22,9 @@ describe('toApiError', () => {
 
   it('maps a missing response to NETWORK and unknown bodies by status', () => {
     expect(toApiError(new HttpErrorResponse({ status: 0 })).code).toBe('NETWORK');
-    expect(toApiError(new HttpErrorResponse({ status: 503, error: '<html>' })).code).toBe('UPSTREAM_UNAVAILABLE');
+    expect(toApiError(new HttpErrorResponse({ status: 503, error: '<html>' })).code).toBe(
+      'UPSTREAM_UNAVAILABLE',
+    );
     expect(toApiError(new HttpErrorResponse({ status: 502 })).code).toBe('INTERNAL_ERROR');
     expect(toApiError(new Error('boom')).code).toBe('UNKNOWN');
   });
@@ -48,7 +53,9 @@ describe('ResponseCache', () => {
 
   it('never keeps failures', async () => {
     const cache = new ResponseCache();
-    await expect(firstValueFrom(cache.get('k', 60_000, () => throwError(() => new Error('x'))))).rejects.toThrow('x');
+    await expect(
+      firstValueFrom(cache.get('k', 60_000, () => throwError(() => new Error('x')))),
+    ).rejects.toThrow('x');
     expect(await firstValueFrom(cache.get('k', 60_000, () => of(7)))).toBe(7);
   });
 
@@ -77,7 +84,9 @@ describe('ApiService', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     api = TestBed.inject(ApiService);
     http = TestBed.inject(HttpTestingController);
   });
@@ -93,10 +102,18 @@ describe('ApiService', () => {
 
   it('sends the contract query parameters', () => {
     api.history('AAPL', 'WEEKLY', '2026-09-01', 30).subscribe();
-    http.expectOne(`${api.baseUrl}/stocks/AAPL/history?period=WEEKLY&limit=30&before=2026-09-01`).flush({ rows: [] });
+    http
+      .expectOne(`${api.baseUrl}/stocks/AAPL/history?period=WEEKLY&limit=30&before=2026-09-01`)
+      .flush({ rows: [] });
 
     api
-      .calendar({ from: '2026-09-28', to: '2026-10-04', minMarketCapUsd: 2e9, region: 'ALL', followedOnly: false })
+      .calendar({
+        from: '2026-09-28',
+        to: '2026-10-04',
+        minMarketCapUsd: 2e9,
+        region: 'ALL',
+        followedOnly: false,
+      })
       .subscribe();
     http
       .expectOne(

@@ -6,4 +6,6 @@ export function resolveLocale(languages: readonly string[]): string {
   return languages.find((l) => /^en(-|$)/i.test(l)) ?? 'en-GB';
 }
 
-export const APP_LOCALE = resolveLocale(typeof navigator === 'undefined' ? [] : navigator.languages);
+export const APP_LOCALE = resolveLocale(
+  typeof navigator === 'undefined' ? [] : navigator.languages,
+);

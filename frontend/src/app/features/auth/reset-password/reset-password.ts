@@ -12,15 +12,32 @@ import { AuthCard } from '../auth-card';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [ReactiveFormsModule, RouterLink, MatButton, MatFormField, MatLabel, MatInput, MatError, MatProgressBar, Icon, AuthCard],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatProgressBar,
+    Icon,
+    AuthCard,
+  ],
   template: `
-    <app-auth-card title="Reset password" subtitle="We'll email you a link to choose a new password.">
+    <app-auth-card
+      title="Reset password"
+      subtitle="We'll email you a link to choose a new password."
+    >
       @if (sent()) {
-        <div role="status" class="flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center">
+        <div
+          role="status"
+          class="flex flex-col items-center gap-3 rounded-2xl bg-surface-container-low p-6 text-center"
+        >
           <app-icon name="mark_email_read" class="text-primary" [size]="32" />
           <p class="text-sm">
-            If an account exists for <strong>{{ form.controls.email.value }}</strong>, a reset link is on its way.
-            Check your inbox and spam folder.
+            If an account exists for <strong>{{ form.controls.email.value }}</strong
+            >, a reset link is on its way. Check your inbox and spam folder.
           </p>
         </div>
       } @else {
@@ -28,17 +45,28 @@ import { AuthCard } from '../auth-card';
           <mat-progress-bar mode="indeterminate" class="mb-4 rounded-full" aria-label="Sending" />
         }
         @if (error()) {
-          <p role="alert" class="mb-4 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container">
+          <p
+            role="alert"
+            class="mb-4 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container"
+          >
             {{ error() }}
           </p>
         }
         <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
           <mat-form-field appearance="outline">
             <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" autocomplete="email" inputmode="email" />
+            <input
+              matInput
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              inputmode="email"
+            />
             <mat-error>Enter a valid email address.</mat-error>
           </mat-form-field>
-          <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()">Send reset link</button>
+          <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()">
+            Send reset link
+          </button>
         </form>
       }
       <p class="mt-8 text-center text-sm">

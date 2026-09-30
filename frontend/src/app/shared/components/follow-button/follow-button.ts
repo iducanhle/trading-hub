@@ -17,7 +17,9 @@ import { Icon } from '../../icon/icon';
         type="button"
         [disabled]="!target()"
         [attr.aria-pressed]="followed()"
-        [attr.aria-label]="followed() ? 'Following ' + symbol() + '. Unfollow' : 'Follow ' + symbol()"
+        [attr.aria-label]="
+          followed() ? 'Following ' + symbol() + '. Unfollow' : 'Follow ' + symbol()
+        "
         (click)="toggle()"
       >
         <app-icon [name]="followed() ? 'star-fill' : 'star'" [class.text-primary]="followed()" />
@@ -47,7 +49,9 @@ export class FollowButton {
   protected toggle(): void {
     const target = this.target();
     if (!target) return;
-    const action = this.followed() ? this.follows.unfollow(target.symbol) : this.follows.follow(target);
+    const action = this.followed()
+      ? this.follows.unfollow(target.symbol)
+      : this.follows.follow(target);
     action.catch(() => undefined); // FollowsService already told the user.
   }
 }

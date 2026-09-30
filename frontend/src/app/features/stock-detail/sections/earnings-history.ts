@@ -7,7 +7,13 @@ import { ResultBadge } from '../../../shared/components/result-badge/result-badg
 import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../../shared/components/stale-chip/stale-chip';
-import { AppDatePipe, CompactPipe, PricePipe, ReportTimePipe } from '../../../shared/pipes/format.pipes';
+import {
+  AppDatePipe,
+  CompactPipe,
+  PricePipe,
+  ReportTimePipe,
+} from '../../../shared/pipes/format.pipes';
+import { formatDate } from '../../../shared/utils/dates';
 import { fiscalLabel } from '../../../shared/utils/format';
 import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { StockContext } from '../stock-context';
@@ -18,7 +24,18 @@ import { StockContext } from '../stock-context';
  */
 @Component({
   selector: 'app-earnings-history',
-  imports: [Section, Change, ErrorState, ResultBadge, Skeleton, StaleChip, AppDatePipe, CompactPipe, PricePipe, ReportTimePipe],
+  imports: [
+    Section,
+    Change,
+    ErrorState,
+    ResultBadge,
+    Skeleton,
+    StaleChip,
+    AppDatePipe,
+    CompactPipe,
+    PricePipe,
+    ReportTimePipe,
+  ],
   template: `
     <app-section title="Earnings history" [(expanded)]="expanded">
       @if (earnings.error() && !earnings.hasValue()) {
@@ -55,7 +72,8 @@ import { StockContext } from '../stock-context';
                 <div class="flex items-baseline justify-between gap-2">
                   <dt class="text-on-surface-variant">EPS</dt>
                   <dd class="text-right">
-                    {{ q.eps.estimate | price: q.currency }} → <span class="font-medium">{{ q.eps.actual | price: q.currency }}</span>
+                    {{ q.eps.estimate | price: q.currency }} →
+                    <span class="font-medium">{{ q.eps.actual | price: q.currency }}</span>
                     <app-change class="ml-1 text-xs" [value]="q.eps.surprisePercent" />
                   </dd>
                 </div>
@@ -86,7 +104,9 @@ import { StockContext } from '../stock-context';
         <!-- Desktop: a table with the reaction as extra columns. -->
         <div class="hidden overflow-x-auto md:block">
           <table class="w-full text-sm tabular-nums">
-            <caption class="sr-only">Earnings history and price reaction by quarter</caption>
+            <caption class="sr-only">
+              Earnings history and price reaction by quarter
+            </caption>
             <thead class="text-left text-xs text-on-surface-variant">
               <tr class="border-b border-outline-variant">
                 <th scope="col" class="py-2 pr-3 font-medium">Quarter</th>
@@ -95,10 +115,22 @@ import { StockContext } from '../stock-context';
                 <th scope="col" class="px-2 py-2 text-right font-medium">Revenue est. → act.</th>
                 <th scope="col" class="px-2 py-2 text-right font-medium">Surprise</th>
                 <th scope="col" class="px-2 py-2 font-medium">Result</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium" title="5 sessions before the report">Run-up</th>
+                <th
+                  scope="col"
+                  class="px-2 py-2 text-right font-medium"
+                  title="5 sessions before the report"
+                >
+                  Run-up
+                </th>
                 <th scope="col" class="px-2 py-2 text-right font-medium">Gap</th>
                 <th scope="col" class="px-2 py-2 text-right font-medium">Day</th>
-                <th scope="col" class="py-2 pl-2 text-right font-medium" title="5 sessions after the reaction day">Drift</th>
+                <th
+                  scope="col"
+                  class="py-2 pl-2 text-right font-medium"
+                  title="5 sessions after the reaction day"
+                >
+                  Drift
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -114,16 +146,24 @@ import { StockContext } from '../stock-context';
                     </span>
                   </th>
                   <td class="px-2 py-2 text-right whitespace-nowrap">
-                    {{ q.eps.estimate | price: q.currency }} → {{ q.eps.actual | price: q.currency }}
+                    {{ q.eps.estimate | price: q.currency }} →
+                    {{ q.eps.actual | price: q.currency }}
                   </td>
-                  <td class="px-2 py-2 text-right"><app-change [value]="q.eps.surprisePercent" /></td>
+                  <td class="px-2 py-2 text-right">
+                    <app-change [value]="q.eps.surprisePercent" />
+                  </td>
                   <td class="px-2 py-2 text-right whitespace-nowrap">
-                    {{ q.revenue.estimate | compact: q.currency }} → {{ q.revenue.actual | compact: q.currency }}
+                    {{ q.revenue.estimate | compact: q.currency }} →
+                    {{ q.revenue.actual | compact: q.currency }}
                   </td>
-                  <td class="px-2 py-2 text-right"><app-change [value]="q.revenue.surprisePercent" /></td>
+                  <td class="px-2 py-2 text-right">
+                    <app-change [value]="q.revenue.surprisePercent" />
+                  </td>
                   <td class="px-2 py-2"><app-result-badge [result]="q.result" /></td>
                   @for (cell of reaction(q); track cell.label) {
-                    <td class="px-2 py-2 text-right last:pr-0"><app-change [value]="cell.value" [digits]="1" /></td>
+                    <td class="px-2 py-2 text-right last:pr-0">
+                      <app-change [value]="cell.value" [digits]="1" />
+                    </td>
                   }
                 </tr>
               }
@@ -143,10 +183,16 @@ export class EarningsHistory {
     (symbol, options) => this.api.earnings(symbol, options),
     () => this.expanded(),
   );
-  protected readonly quarters = computed(() => (this.earnings.hasValue() ? (this.earnings.value()?.quarters ?? []) : []));
+  protected readonly quarters = computed(() =>
+    this.earnings.hasValue() ? (this.earnings.value()?.quarters ?? []) : [],
+  );
 
   protected label(q: EarningsQuarter): string {
-    return fiscalLabel(q.fiscalQuarter, q.fiscalYear) ?? 'Quarter';
+    // Sources without a fiscal period: name the report by its month.
+    // Sources without a fiscal period: name the report by its month.
+    return (
+      fiscalLabel(q.fiscalQuarter, q.fiscalYear) ?? `${formatDate(q.date, 'monthYear')} report`
+    );
   }
 
   protected reaction(q: EarningsQuarter): { label: string; value: number | null }[] {

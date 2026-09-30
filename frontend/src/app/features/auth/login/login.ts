@@ -31,34 +31,56 @@ import { GoogleLogo } from '../google-logo';
     GoogleLogo,
   ],
   template: `
-    <app-auth-card title="Earnings Tracker" subtitle="Sign in to see your stocks and earnings dates">
+    <app-auth-card
+      title="Earnings Tracker"
+      subtitle="Sign in to see your stocks and earnings dates"
+    >
       @if (busy()) {
         <mat-progress-bar mode="indeterminate" class="mb-4 rounded-full" aria-label="Signing in" />
       }
       @if (mockMode) {
-        <p class="mb-4 rounded-xl bg-secondary-container px-3 py-2 text-sm text-on-secondary-container">
+        <p
+          class="mb-4 rounded-xl bg-secondary-container px-3 py-2 text-sm text-on-secondary-container"
+        >
           Mock mode: any button signs you in as mock&#64;example.com.
         </p>
       }
       @if (error()) {
-        <p role="alert" class="mb-4 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container">
+        <p
+          role="alert"
+          class="mb-4 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container"
+        >
           {{ error() }}
         </p>
       }
 
-      <button matButton="outlined" type="button" class="h-12! w-full" [disabled]="busy()" (click)="google()">
+      <button
+        matButton="outlined"
+        type="button"
+        class="h-12! w-full"
+        [disabled]="busy()"
+        (click)="google()"
+      >
         <app-google-logo matButtonIcon />
         Continue with Google
       </button>
 
       <div class="my-6 flex items-center gap-3 text-xs text-on-surface-variant" aria-hidden="true">
-        <span class="h-px flex-1 bg-outline-variant"></span>or<span class="h-px flex-1 bg-outline-variant"></span>
+        <span class="h-px flex-1 bg-outline-variant"></span>or<span
+          class="h-px flex-1 bg-outline-variant"
+        ></span>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
         <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" inputmode="email" />
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            inputmode="email"
+          />
           @if (form.controls.email.hasError('email')) {
             <mat-error>Enter a valid email address.</mat-error>
           } @else {
@@ -84,7 +106,10 @@ import { GoogleLogo } from '../google-logo';
           </button>
           <mat-error>Password is required.</mat-error>
         </mat-form-field>
-        <a routerLink="/reset-password" class="-mt-2 mb-4 self-end py-2 text-sm font-medium text-primary">
+        <a
+          routerLink="/reset-password"
+          class="-mt-2 mb-4 self-end py-2 text-sm font-medium text-primary"
+        >
           Forgot password?
         </a>
         <button matButton="filled" type="submit" class="h-12!" [disabled]="busy()">Sign in</button>
@@ -141,7 +166,9 @@ export class Login {
       if ((await step()) === false) return;
       const user = this.auth.user();
       if (!user) return;
-      const target = user.emailVerified ? safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')) : '/verify-email';
+      const target = user.emailVerified
+        ? safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'))
+        : '/verify-email';
       await this.router.navigateByUrl(target);
     } catch (error) {
       this.error.set(authErrorMessage(error));

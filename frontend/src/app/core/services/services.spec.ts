@@ -43,7 +43,9 @@ describe('FollowsService', () => {
         {
           provide: NotifierService,
           useValue: {
-            show: vi.fn(async () => ({ onAction: () => ({ subscribe: (fn: () => void) => (undo = fn) }) })),
+            show: vi.fn(async () => ({
+              onAction: () => ({ subscribe: (fn: () => void) => (undo = fn) }),
+            })),
           },
         },
       ],
@@ -54,7 +56,13 @@ describe('FollowsService', () => {
   });
 
   it('follows and unfollows optimistically, with Undo', async () => {
-    const target = { symbol: 'MSFT', name: 'Microsoft', exchange: 'NASDAQ', region: 'US' as const, logoUrl: null };
+    const target = {
+      symbol: 'MSFT',
+      name: 'Microsoft',
+      exchange: 'NASDAQ',
+      region: 'US' as const,
+      logoUrl: null,
+    };
     const pending = follows.follow(target);
     expect(follows.isFollowed('MSFT')).toBe(true); // before the write completes
     await pending;
@@ -70,7 +78,13 @@ describe('FollowsService', () => {
   });
 
   it('lists follows newest first', async () => {
-    await follows.follow({ symbol: 'ZZZ', name: 'Newest', exchange: 'NYSE', region: 'US', logoUrl: null });
+    await follows.follow({
+      symbol: 'ZZZ',
+      name: 'Newest',
+      exchange: 'NYSE',
+      region: 'US',
+      logoUrl: null,
+    });
     expect(follows.follows()[0].symbol).toBe('ZZZ');
   });
 });
@@ -79,7 +93,9 @@ describe('SettingsService', () => {
   beforeEach(() => localStorage.clear());
 
   it('creates the user document with the contract defaults on first login', async () => {
-    TestBed.configureTestingModule({ providers: [{ provide: UserDataGateway, useClass: LocalUserDataGateway }] });
+    TestBed.configureTestingModule({
+      providers: [{ provide: UserDataGateway, useClass: LocalUserDataGateway }],
+    });
     const settings = TestBed.inject(SettingsService);
     const gateway = TestBed.inject(UserDataGateway);
     settings.start({
@@ -102,8 +118,12 @@ describe('SettingsService', () => {
   });
 
   it('repairs invalid stored settings', () => {
-    expect(normalizeSettings({ theme: 'neon', notifyDaysBefore: 12, notificationEmail: '' })).toEqual(DEFAULT_SETTINGS);
-    expect(normalizeSettings({ theme: 'dark', notificationsEnabled: false, notifyDaysBefore: 7 })).toEqual({
+    expect(
+      normalizeSettings({ theme: 'neon', notifyDaysBefore: 12, notificationEmail: '' }),
+    ).toEqual(DEFAULT_SETTINGS);
+    expect(
+      normalizeSettings({ theme: 'dark', notificationsEnabled: false, notifyDaysBefore: 7 }),
+    ).toEqual({
       ...DEFAULT_SETTINGS,
       theme: 'dark',
       notificationsEnabled: false,
@@ -118,10 +138,35 @@ describe('RecentSearchesService', () => {
   it('keeps the last 10 distinct symbols, newest first', () => {
     const recent = TestBed.inject(RecentSearchesService);
     for (let i = 0; i < 12; i++) {
-      recent.record({ symbol: `S${i}`, name: '', exchange: '', region: 'US', currency: 'USD', logoUrl: null });
+      recent.record({
+        symbol: `S${i}`,
+        name: '',
+        exchange: '',
+        region: 'US',
+        currency: 'USD',
+        logoUrl: null,
+      });
     }
-    recent.record({ symbol: 'S5', name: '', exchange: '', region: 'US', currency: 'USD', logoUrl: null });
-    expect(recent.items().map((s) => s.symbol)).toEqual(['S5', 'S11', 'S10', 'S9', 'S8', 'S7', 'S6', 'S4', 'S3', 'S2']);
+    recent.record({
+      symbol: 'S5',
+      name: '',
+      exchange: '',
+      region: 'US',
+      currency: 'USD',
+      logoUrl: null,
+    });
+    expect(recent.items().map((s) => s.symbol)).toEqual([
+      'S5',
+      'S11',
+      'S10',
+      'S9',
+      'S8',
+      'S7',
+      'S6',
+      'S4',
+      'S3',
+      'S2',
+    ]);
     recent.clear();
     expect(recent.items()).toEqual([]);
   });

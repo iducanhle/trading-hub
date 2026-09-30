@@ -18,13 +18,15 @@ export const routes: Routes = [
   {
     path: 'reset-password',
     title: 'Reset password',
-    loadComponent: () => import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
   },
   {
     path: 'verify-email',
     title: 'Verify your email',
     canActivate: [signedInGuard],
-    loadComponent: () => import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmail),
+    loadComponent: () =>
+      import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmail),
   },
   {
     path: 'no-access',
@@ -44,23 +46,28 @@ export const routes: Routes = [
       },
       {
         path: 'stock/:symbol',
-        title: (route: ActivatedRouteSnapshot) => (route.paramMap.get('symbol') ?? '').toUpperCase(),
-        loadComponent: () => import('./features/stock-detail/stock-detail-page').then((m) => m.StockDetailPage),
+        title: (route: ActivatedRouteSnapshot) =>
+          (route.paramMap.get('symbol') ?? '').toUpperCase(),
+        loadComponent: () =>
+          import('./features/stock-detail/stock-detail-page').then((m) => m.StockDetailPage),
       },
       {
         path: 'followed',
         title: 'Followed',
-        loadComponent: () => import('./features/followed/followed-page').then((m) => m.FollowedPage),
+        loadComponent: () =>
+          import('./features/followed/followed-page').then((m) => m.FollowedPage),
       },
       {
         path: 'calendar',
         title: 'Calendar',
-        loadComponent: () => import('./features/calendar/calendar-page').then((m) => m.CalendarPage),
+        loadComponent: () =>
+          import('./features/calendar/calendar-page').then((m) => m.CalendarPage),
       },
       {
         path: 'settings',
         title: 'Settings',
-        loadComponent: () => import('./features/settings/settings-page').then((m) => m.SettingsPage),
+        loadComponent: () =>
+          import('./features/settings/settings-page').then((m) => m.SettingsPage),
       },
       { path: '', pathMatch: 'full', redirectTo: 'followed' },
       { path: '**', redirectTo: 'followed' },

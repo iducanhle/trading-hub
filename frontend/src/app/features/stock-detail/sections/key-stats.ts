@@ -17,7 +17,9 @@ import { formatPlainPercent } from '../../../shared/utils/format';
           <dd class="font-medium tabular-nums">
             {{ o.keyStats.marketCap | compact: o.currency }}
             @if (o.currency !== 'USD' && o.keyStats.marketCapUsd !== null) {
-              <span class="text-xs font-normal text-on-surface-variant">≈ {{ o.keyStats.marketCapUsd | compact: 'USD' }}</span>
+              <span class="text-xs font-normal text-on-surface-variant"
+                >≈ {{ o.keyStats.marketCapUsd | compact: 'USD' }}</span
+              >
             }
           </dd>
         </div>

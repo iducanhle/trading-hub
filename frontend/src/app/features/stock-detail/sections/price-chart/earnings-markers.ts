@@ -47,7 +47,10 @@ export class EarningsMarkersPrimitive implements ISeriesPrimitive<Time> {
   private surface = '#ffffff';
 
   private readonly renderer: IPrimitivePaneRenderer = { draw: (target) => this.draw(target) };
-  private readonly view: IPrimitivePaneView = { zOrder: () => 'top', renderer: () => this.renderer };
+  private readonly view: IPrimitivePaneView = {
+    zOrder: () => 'top',
+    renderer: () => this.renderer,
+  };
 
   attached({ chart, series, requestUpdate }: SeriesAttachedParameter<Time>): void {
     this.chart = chart;
@@ -103,31 +106,33 @@ export class EarningsMarkersPrimitive implements ISeriesPrimitive<Time> {
   }
 
   private draw(target: DrawTarget): void {
-    target.useBitmapCoordinateSpace(({ context, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
-      context.save();
-      context.font = `700 ${Math.round(10 * vr)}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`;
-      context.textAlign = 'center';
-      context.textBaseline = 'middle';
-      for (const { x, y, marker } of this.placed) {
-        const cx = Math.round(x * hr);
-        const cy = Math.round(y * vr);
-        context.beginPath();
-        context.arc(cx, cy, RADIUS * hr, 0, Math.PI * 2);
-        if (marker.hollow) {
-          context.fillStyle = this.surface;
-          context.fill();
-          context.lineWidth = 2 * hr;
-          context.strokeStyle = marker.color;
-          context.stroke();
-          context.fillStyle = marker.color;
-        } else {
-          context.fillStyle = marker.color;
-          context.fill();
-          context.fillStyle = '#ffffff';
+    target.useBitmapCoordinateSpace(
+      ({ context, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
+        context.save();
+        context.font = `700 ${Math.round(10 * vr)}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        for (const { x, y, marker } of this.placed) {
+          const cx = Math.round(x * hr);
+          const cy = Math.round(y * vr);
+          context.beginPath();
+          context.arc(cx, cy, RADIUS * hr, 0, Math.PI * 2);
+          if (marker.hollow) {
+            context.fillStyle = this.surface;
+            context.fill();
+            context.lineWidth = 2 * hr;
+            context.strokeStyle = marker.color;
+            context.stroke();
+            context.fillStyle = marker.color;
+          } else {
+            context.fillStyle = marker.color;
+            context.fill();
+            context.fillStyle = '#ffffff';
+          }
+          context.fillText('E', cx, cy + 0.5 * vr);
         }
-        context.fillText('E', cx, cy + 0.5 * vr);
-      }
-      context.restore();
-    });
+        context.restore();
+      },
+    );
   }
 }

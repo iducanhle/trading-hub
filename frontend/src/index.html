@@ -5,7 +5,10 @@
     <title>Earnings Tracker</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="Earnings dates, results and price reactions for the stocks you follow." />
+    <meta
+      name="description"
+      content="Earnings dates, results and price reactions for the stocks you follow."
+    />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf9fd" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -22,11 +25,15 @@
       (function () {
         try {
           var pref = localStorage.getItem('et.theme') || 'system';
-          var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
           var root = document.documentElement;
           if (dark) root.classList.add('dark');
           root.style.colorScheme = dark ? 'dark' : 'light';
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#121316' : '#faf9fd');
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', dark ? '#121316' : '#faf9fd');
         } catch (e) {}
       })();
     </script>

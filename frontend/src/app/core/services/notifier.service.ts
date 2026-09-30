@@ -1,5 +1,9 @@
 import { Injectable, Injector, inject } from '@angular/core';
-import type { MatSnackBarConfig, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
+import type {
+  MatSnackBarConfig,
+  MatSnackBarRef,
+  TextOnlySnackBar,
+} from '@angular/material/snack-bar';
 
 /**
  * Snackbars, with Material's snack bar (and its overlay) loaded on first use instead of in the initial bundle.

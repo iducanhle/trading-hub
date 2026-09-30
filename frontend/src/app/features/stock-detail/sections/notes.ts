@@ -19,16 +19,34 @@ type Status = 'loading' | 'load-error' | 'idle' | 'editing' | 'saving' | 'saved'
 /** Section 13: private notes per stock (`users/{uid}/notes/{symbol}`), saved 1 s after the last keystroke. */
 @Component({
   selector: 'app-notes',
-  imports: [CdkTextareaAutosize, MatFormField, MatLabel, MatInput, MatHint, MatButton, Section, Skeleton, Icon, NumberPipe],
+  imports: [
+    CdkTextareaAutosize,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatHint,
+    MatButton,
+    Section,
+    Skeleton,
+    Icon,
+    NumberPipe,
+  ],
   template: `
     <app-section title="My notes" [(expanded)]="expanded">
-      <span sectionMeta class="text-xs font-normal text-on-surface-variant" role="status" aria-live="polite">
+      <span
+        sectionMeta
+        class="text-xs font-normal text-on-surface-variant"
+        role="status"
+        aria-live="polite"
+      >
         @switch (status()) {
           @case ('saving') {
             Saving…
           }
           @case ('saved') {
-            <span class="inline-flex items-center gap-1 text-gain"><app-icon name="check" [size]="14" />Saved</span>
+            <span class="inline-flex items-center gap-1 text-gain"
+              ><app-icon name="check" [size]="14" />Saved</span
+            >
           }
           @case ('save-error') {
             <span class="text-error">Not saved</span>

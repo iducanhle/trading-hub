@@ -4,7 +4,14 @@
 // `theme-type: color-scheme` emits light-dark() values, so the `color-scheme` that ThemeService (and the boot
 // script in index.html) sets on <html> switches every Material component between light and dark.
 // Tailwind reads the same --mat-sys-* tokens (see styles.css), so both always agree.
-$font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font:
+  system-ui,
+  -apple-system,
+  'Segoe UI',
+  Roboto,
+  'Helvetica Neue',
+  Arial,
+  sans-serif;
 
 html {
   color-scheme: light;

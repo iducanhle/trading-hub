@@ -1,61 +1,61 @@
 {
- "symbol": "SAP.DE",
- "name": "SAP SE",
- "exchange": "XETRA",
- "region": "EU",
- "currency": "EUR",
- "logoUrl": null,
- "sector": "Technology",
- "industry": "Software—Application",
- "website": "https://www.sap.com",
- "quote": {
-  "price": 212.35,
-  "change": -2.15,
-  "changePercent": -1,
-  "previousClose": 214.5,
-  "asOf": "2026-09-29T15:35:00Z"
- },
- "keyStats": {
-  "marketCap": 247000000000,
-  "marketCapUsd": 289000000000,
-  "week52High": 283.5,
-  "week52Low": 198.2,
-  "peRatio": 38.2,
-  "epsTtm": 5.56,
-  "avgVolume": 1400000
- },
- "performance": {
-  "w1": -1.8,
-  "m1": -4.2,
-  "ytd": -18.4,
-  "y1": -9.7
- },
- "nextEarnings": {
   "symbol": "SAP.DE",
   "name": "SAP SE",
   "exchange": "XETRA",
   "region": "EU",
-  "logoUrl": null,
-  "date": "2026-10-21",
-  "time": "AMC",
-  "fiscalQuarter": 3,
-  "fiscalYear": 2026,
   "currency": "EUR",
-  "epsEstimate": 1.72,
-  "epsActual": null,
-  "revenueEstimate": 9300000000,
-  "revenueActual": null,
-  "marketCapUsd": 289000000000
- },
- "earningsStats": {
-  "quartersAnalyzed": 8,
-  "beatRate": 62.5,
-  "streak": {
-   "result": "BEAT",
-   "count": 2
+  "logoUrl": null,
+  "sector": "Technology",
+  "industry": "Software—Application",
+  "website": "https://www.sap.com",
+  "quote": {
+    "price": 212.35,
+    "change": -2.15,
+    "changePercent": -1,
+    "previousClose": 214.5,
+    "asOf": "2026-09-29T15:35:00Z"
   },
-  "avgAbsReactionPercent": 4.4
- },
- "asOf": "2026-09-29T15:40:00Z",
- "stale": true
+  "keyStats": {
+    "marketCap": 247000000000,
+    "marketCapUsd": 289000000000,
+    "week52High": 283.5,
+    "week52Low": 198.2,
+    "peRatio": 38.2,
+    "epsTtm": 5.56,
+    "avgVolume": 1400000
+  },
+  "performance": {
+    "w1": -1.8,
+    "m1": -4.2,
+    "ytd": -18.4,
+    "y1": -9.7
+  },
+  "nextEarnings": {
+    "symbol": "SAP.DE",
+    "name": "SAP SE",
+    "exchange": "XETRA",
+    "region": "EU",
+    "logoUrl": null,
+    "date": "2026-10-21",
+    "time": "AMC",
+    "fiscalQuarter": 3,
+    "fiscalYear": 2026,
+    "currency": "EUR",
+    "epsEstimate": 1.72,
+    "epsActual": null,
+    "revenueEstimate": 9300000000,
+    "revenueActual": null,
+    "marketCapUsd": 289000000000
+  },
+  "earningsStats": {
+    "quartersAnalyzed": 8,
+    "beatRate": 62.5,
+    "streak": {
+      "result": "BEAT",
+      "count": 2
+    },
+    "avgAbsReactionPercent": 4.4
+  },
+  "asOf": "2026-09-29T15:40:00Z",
+  "stale": true
 }

@@ -30,7 +30,9 @@ export function beatRateText(stats: Stats): string | null {
             <dt class="text-xs text-on-surface-variant">Current streak</dt>
             <dd class="font-semibold sm:mt-1">
               @if (s.streak; as streak) {
-                <span [class.text-gain]="streak.result === 'BEAT'" [class.text-loss]="streak.result === 'MISS'"
+                <span
+                  [class.text-gain]="streak.result === 'BEAT'"
+                  [class.text-loss]="streak.result === 'MISS'"
                   >{{ streak.count }}× {{ streak.result }}</span
                 >
               } @else {

@@ -96,7 +96,8 @@ function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.D
   return format;
 }
 
-export type DateStyle = 'day' | 'dayMonth' | 'medium' | 'long' | 'monthYear' | 'weekday' | 'weekdayShort';
+export type DateStyle =
+  'day' | 'dayMonth' | 'medium' | 'long' | 'monthYear' | 'weekday' | 'weekdayShort';
 
 const DATE_STYLES: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   /** Fri 25 Sep */
@@ -115,13 +116,22 @@ const DATE_STYLES: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   weekdayShort: { weekday: 'short' },
 };
 
-export function formatDate(iso: string | null | undefined, style: DateStyle = 'medium', locale = APP_LOCALE): string {
+export function formatDate(
+  iso: string | null | undefined,
+  style: DateStyle = 'medium',
+  locale = APP_LOCALE,
+): string {
   if (!iso) return '—';
   return dateFormat(locale, DATE_STYLES[style]).format(parseIsoDate(iso.slice(0, 10)));
 }
 
 /** `22–26 Sep`, `29 Sep – 3 Oct`, with the year: `22–28 Sep 2026`. */
-export function formatDateRange(from: string, to: string, withYear = false, locale = APP_LOCALE): string {
+export function formatDateRange(
+  from: string,
+  to: string,
+  withYear = false,
+  locale = APP_LOCALE,
+): string {
   const options: Intl.DateTimeFormatOptions = withYear
     ? { day: 'numeric', month: 'short', year: 'numeric' }
     : { day: 'numeric', month: 'short' };
@@ -172,5 +182,10 @@ export function formatTime(timestamp: string, locale = APP_LOCALE): string {
 export function formatDateTime(timestamp: string, locale = APP_LOCALE): string {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return '—';
-  return dateFormat(locale, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(date);
+  return dateFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
 }

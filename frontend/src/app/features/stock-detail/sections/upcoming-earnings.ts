@@ -16,7 +16,16 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
 /** Section 6: the next report (from the overview): date, countdown, time, fiscal quarter, EPS and revenue estimates. */
 @Component({
   selector: 'app-upcoming-earnings',
-  imports: [Section, Skeleton, Icon, AppDatePipe, RelativeDayPipe, ReportTimePipe, PricePipe, CompactPipe],
+  imports: [
+    Section,
+    Skeleton,
+    Icon,
+    AppDatePipe,
+    RelativeDayPipe,
+    ReportTimePipe,
+    PricePipe,
+    CompactPipe,
+  ],
   template: `
     <app-section title="Upcoming earnings" [(expanded)]="expanded">
       @if (loading()) {
@@ -24,13 +33,16 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
       } @else if (event(); as e) {
         <div class="rounded-2xl bg-primary-container/60 p-4 text-on-primary-container">
           <div class="flex items-start gap-3">
-            <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface text-primary">
+            <span
+              class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface text-primary"
+            >
               <app-icon name="event" />
             </span>
             <div class="min-w-0 flex-1">
               <p class="text-lg font-semibold">{{ e.date | appDate: 'long' }}</p>
               <p class="text-sm">
-                <span class="font-medium">{{ e.date | relativeDay }}</span> · {{ e.time | reportTime }}
+                <span class="font-medium">{{ e.date | relativeDay }}</span> ·
+                {{ e.time | reportTime }}
                 @if (fiscal(e); as label) {
                   · {{ label }}
                 }

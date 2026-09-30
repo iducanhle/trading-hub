@@ -32,7 +32,9 @@ interface Tab {
       </div>
     }
 
-    <main class="min-h-dvh pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-24">
+    <main
+      class="min-h-dvh pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-24"
+    >
       <router-outlet />
     </main>
 
@@ -85,12 +87,19 @@ export class Shell {
   protected readonly tabs: Tab[] = [
     { path: '/search', label: 'Search', icon: 'search', activeIcon: 'search' },
     { path: '/followed', label: 'Followed', icon: 'star', activeIcon: 'star-fill' },
-    { path: '/calendar', label: 'Calendar', icon: 'calendar_month', activeIcon: 'calendar_month-fill' },
+    {
+      path: '/calendar',
+      label: 'Calendar',
+      icon: 'calendar_month',
+      activeIcon: 'calendar_month-fill',
+    },
     { path: '/settings', label: 'Settings', icon: 'settings', activeIcon: 'settings-fill' },
   ];
 
   /** The tab whose section is showing; none on a stock page. */
-  protected readonly activeTab = computed(() => this.tabs.find((t) => this.url().startsWith(t.path))?.path ?? null);
+  protected readonly activeTab = computed(
+    () => this.tabs.find((t) => this.url().startsWith(t.path))?.path ?? null,
+  );
 
   constructor() {
     inject(SessionService).start();

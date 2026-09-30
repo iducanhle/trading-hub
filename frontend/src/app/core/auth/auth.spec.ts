@@ -2,7 +2,13 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../api/api-error';
@@ -31,11 +37,17 @@ function fakeAuth(user: AppUser | null) {
   };
 }
 
-function runGuard(guard: typeof authGuard, url = '/stock/AAPL', query: Record<string, string> = {}) {
-  const route = { queryParamMap: new Map(Object.entries(query)) } as unknown as ActivatedRouteSnapshot;
-  return TestBed.runInInjectionContext(() => guard(route, { url } as RouterStateSnapshot)) as Promise<
-    boolean | UrlTree
-  >;
+function runGuard(
+  guard: typeof authGuard,
+  url = '/stock/AAPL',
+  query: Record<string, string> = {},
+) {
+  const route = {
+    queryParamMap: new Map(Object.entries(query)),
+  } as unknown as ActivatedRouteSnapshot;
+  return TestBed.runInInjectionContext(() =>
+    guard(route, { url } as RouterStateSnapshot),
+  ) as Promise<boolean | UrlTree>;
 }
 
 describe('guards', () => {
@@ -106,7 +118,9 @@ describe('AccessService', () => {
   });
 
   it('remembers a denial', async () => {
-    const me = vi.fn(() => throwError(() => new ApiError(403, 'NOT_ALLOWED', 'not on the allowlist')));
+    const me = vi.fn(() =>
+      throwError(() => new ApiError(403, 'NOT_ALLOWED', 'not on the allowlist')),
+    );
     TestBed.configureTestingModule({ providers: [{ provide: ApiService, useValue: { me } }] });
     const access = TestBed.inject(AccessService);
     expect(await access.check('u1')).toBe('denied');
@@ -143,15 +157,21 @@ describe('authInterceptor', () => {
     http.get(`${api}/me`).subscribe();
     http.get('https://example.com/other').subscribe();
     await flushMicrotasks();
-    expect(backend.expectOne(`${api}/me`).request.headers.get('Authorization')).toBe('Bearer token');
-    expect(backend.expectOne('https://example.com/other').request.headers.has('Authorization')).toBe(false);
+    expect(backend.expectOne(`${api}/me`).request.headers.get('Authorization')).toBe(
+      'Bearer token',
+    );
+    expect(
+      backend.expectOne('https://example.com/other').request.headers.has('Authorization'),
+    ).toBe(false);
   });
 
   it('retries a 401 once with a refreshed token', async () => {
     let body: unknown;
     http.get(`${api}/me`).subscribe((b) => (body = b));
     await flushMicrotasks();
-    backend.expectOne(`${api}/me`).flush({ code: 'UNAUTHENTICATED', message: 'expired' }, { status: 401, statusText: '' });
+    backend
+      .expectOne(`${api}/me`)
+      .flush({ code: 'UNAUTHENTICATED', message: 'expired' }, { status: 401, statusText: '' });
     await flushMicrotasks();
     const retry = backend.expectOne(`${api}/me`);
     expect(retry.request.headers.get('Authorization')).toBe('Bearer fresh-token');
@@ -174,12 +194,14 @@ describe('authInterceptor', () => {
 
 describe('resolveAuthDomain', () => {
   it('uses the Hosting domain the app is served from', () => {
-    expect(resolveAuthDomain('p.web.app', { hostname: 'p.firebaseapp.com', host: 'p.firebaseapp.com' })).toBe(
-      'p.firebaseapp.com',
-    );
-    expect(resolveAuthDomain('p.firebaseapp.com', { hostname: 'p.web.app', host: 'p.web.app' })).toBe('p.web.app');
-    expect(resolveAuthDomain('p.firebaseapp.com', { hostname: 'localhost', host: 'localhost:4200' })).toBe(
-      'p.firebaseapp.com',
-    );
+    expect(
+      resolveAuthDomain('p.web.app', { hostname: 'p.firebaseapp.com', host: 'p.firebaseapp.com' }),
+    ).toBe('p.firebaseapp.com');
+    expect(
+      resolveAuthDomain('p.firebaseapp.com', { hostname: 'p.web.app', host: 'p.web.app' }),
+    ).toBe('p.web.app');
+    expect(
+      resolveAuthDomain('p.firebaseapp.com', { hostname: 'localhost', host: 'localhost:4200' }),
+    ).toBe('p.firebaseapp.com');
   });
 });

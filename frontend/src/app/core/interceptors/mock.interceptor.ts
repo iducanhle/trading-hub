@@ -7,4 +7,6 @@ const API = `${environment.apiBaseUrl}/api`;
 
 /** Mock mode only (environment.useMocks): answers API calls from src/assets/mocks instead of the backend. */
 export const mockInterceptor: HttpInterceptorFn = (req, next) =>
-  req.url.startsWith(`${API}/`) ? inject(MockBackend).handle(req, req.url.slice(API.length)) : next(req);
+  req.url.startsWith(`${API}/`)
+    ? inject(MockBackend).handle(req, req.url.slice(API.length))
+    : next(req);

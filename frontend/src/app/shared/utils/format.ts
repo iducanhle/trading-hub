@@ -56,7 +56,10 @@ export function formatPrice(
 }
 
 /** A signed amount without a currency symbol, for day changes: `+2.31`, `−0.85`. */
-export function formatSignedNumber(value: number | null | undefined, locale = NUMBER_LOCALE): string {
+export function formatSignedNumber(
+  value: number | null | undefined,
+  locale = NUMBER_LOCALE,
+): string {
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
     minimumFractionDigits: 2,
@@ -155,7 +158,11 @@ export function reportTimeLabel(time: ReportTime | null | undefined): string {
   return REPORT_TIME_LABELS[time ?? 'UNKNOWN'];
 }
 
-const RESULT_LABELS: Record<EarningsResult, string> = { BEAT: 'Beat', MISS: 'Miss', INLINE: 'In line' };
+const RESULT_LABELS: Record<EarningsResult, string> = {
+  BEAT: 'Beat',
+  MISS: 'Miss',
+  INLINE: 'In line',
+};
 
 export function resultLabel(result: EarningsResult | null | undefined): string {
   return result ? RESULT_LABELS[result] : DASH;

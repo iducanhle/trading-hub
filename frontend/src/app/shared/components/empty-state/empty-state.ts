@@ -8,7 +8,9 @@ import { IconName } from '../../icon/icon-paths';
   imports: [Icon],
   template: `
     <div class="flex flex-col items-center gap-2 px-6 py-12 text-center">
-      <span class="mb-2 flex size-16 items-center justify-center rounded-full bg-surface-container-high text-primary">
+      <span
+        class="mb-2 flex size-16 items-center justify-center rounded-full bg-surface-container-high text-primary"
+      >
         <app-icon [name]="icon()" [size]="32" />
       </span>
       <h2 class="text-lg font-semibold">{{ title() }}</h2>

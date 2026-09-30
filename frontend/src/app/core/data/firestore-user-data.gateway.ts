@@ -24,7 +24,11 @@ export class FirestoreUserDataGateway extends UserDataGateway {
 
   /** Wraps an onSnapshot subscription in an Observable that also waits for the lazy SDK. */
   private listen<T>(
-    subscribe: (handle: Handle, next: (value: T) => void, error: (e: unknown) => void) => () => void,
+    subscribe: (
+      handle: Handle,
+      next: (value: T) => void,
+      error: (e: unknown) => void,
+    ) => () => void,
   ): Observable<T> {
     return new Observable<T>((subscriber) => {
       let unsubscribe: (() => void) | undefined;
@@ -59,7 +63,10 @@ export class FirestoreUserDataGateway extends UserDataGateway {
 
   async createUser(uid: string, doc: Omit<UserDoc, 'createdAt'>): Promise<void> {
     const { sdk, db, converters } = await this.handle();
-    await sdk.setDoc(sdk.doc(db, 'users', uid).withConverter(converters.user), { ...doc, createdAt: null });
+    await sdk.setDoc(sdk.doc(db, 'users', uid).withConverter(converters.user), {
+      ...doc,
+      createdAt: null,
+    });
   }
 
   async updateSettings(uid: string, patch: Partial<UserSettings>): Promise<void> {
@@ -81,7 +88,9 @@ export class FirestoreUserDataGateway extends UserDataGateway {
 
   async follow(uid: string, follow: NewFollow): Promise<void> {
     const { sdk, db, converters } = await this.handle();
-    const ref = sdk.doc(db, 'users', uid, 'follows', follow.symbol).withConverter(converters.follow);
+    const ref = sdk
+      .doc(db, 'users', uid, 'follows', follow.symbol)
+      .withConverter(converters.follow);
     await sdk.setDoc(ref, { ...follow, followedAt: follow.followedAt ?? null });
   }
 
@@ -92,7 +101,9 @@ export class FirestoreUserDataGateway extends UserDataGateway {
 
   async getNote(uid: string, symbol: string): Promise<NoteDoc | null> {
     const { sdk, db, converters } = await this.handle();
-    const snap = await sdk.getDoc(sdk.doc(db, 'users', uid, 'notes', symbol).withConverter(converters.note));
+    const snap = await sdk.getDoc(
+      sdk.doc(db, 'users', uid, 'notes', symbol).withConverter(converters.note),
+    );
     return snap.data() ?? null;
   }
 

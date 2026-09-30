@@ -1,7 +1,11 @@
 import { Component, booleanAttribute, computed, input } from '@angular/core';
 import { formatPercent, toneOf } from '../../utils/format';
 
-const TONE_TEXT = { gain: 'text-gain', loss: 'text-loss', flat: 'text-on-surface-variant' } as const;
+const TONE_TEXT = {
+  gain: 'text-gain',
+  loss: 'text-loss',
+  flat: 'text-on-surface-variant',
+} as const;
 const TONE_PILL = {
   gain: 'bg-gain-container',
   loss: 'bg-loss-container',
@@ -22,6 +26,8 @@ export class Change {
   protected readonly text = computed(() => formatPercent(this.value(), this.digits()));
   protected readonly classes = computed(() => {
     const tone = toneOf(this.value());
-    return this.pill() ? `${TONE_TEXT[tone]} ${TONE_PILL[tone]} rounded-md px-1.5 py-0.5` : TONE_TEXT[tone];
+    return this.pill()
+      ? `${TONE_TEXT[tone]} ${TONE_PILL[tone]} rounded-md px-1.5 py-0.5`
+      : TONE_TEXT[tone];
   });
 }

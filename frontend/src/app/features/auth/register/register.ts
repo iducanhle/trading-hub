@@ -22,21 +22,45 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, MatButton, MatFormField, MatLabel, MatInput, MatError, MatHint, MatProgressBar, AuthCard],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatHint,
+    MatProgressBar,
+    AuthCard,
+  ],
   template: `
     <app-auth-card title="Create account" subtitle="We'll email you a link to verify your address.">
       @if (busy()) {
-        <mat-progress-bar mode="indeterminate" class="mb-4 rounded-full" aria-label="Creating account" />
+        <mat-progress-bar
+          mode="indeterminate"
+          class="mb-4 rounded-full"
+          aria-label="Creating account"
+        />
       }
       @if (error()) {
-        <p role="alert" class="mb-4 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container">
+        <p
+          role="alert"
+          class="mb-4 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container"
+        >
           {{ error() }}
         </p>
       }
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
         <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" inputmode="email" />
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            inputmode="email"
+          />
           <mat-error>Enter a valid email address.</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">
@@ -53,7 +77,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         @if (form.hasError('mismatch') && form.controls.confirm.touched) {
           <p role="alert" class="-mt-3 mb-3 px-4 text-xs text-error">The passwords don't match.</p>
         }
-        <button matButton="filled" type="submit" class="mt-2 h-12!" [disabled]="busy()">Create account</button>
+        <button matButton="filled" type="submit" class="mt-2 h-12!" [disabled]="busy()">
+          Create account
+        </button>
       </form>
       <p class="mt-8 text-center text-sm text-on-surface-variant">
         Already have an account?

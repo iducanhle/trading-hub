@@ -14,8 +14,13 @@ import { mockInterceptor } from '../interceptors/mock.interceptor';
 
 export const dataLayerProviders: Provider[] = [
   { provide: AuthService, useClass: environment.useMocks ? MockAuthService : FirebaseAuthService },
-  { provide: UserDataGateway, useClass: environment.useMocks ? LocalUserDataGateway : FirestoreUserDataGateway },
+  {
+    provide: UserDataGateway,
+    useClass: environment.useMocks ? LocalUserDataGateway : FirestoreUserDataGateway,
+  },
 ];
 
 /** Runs closest to the network, after the auth interceptor. */
-export const dataLayerInterceptors: HttpInterceptorFn[] = environment.useMocks ? [mockInterceptor] : [];
+export const dataLayerInterceptors: HttpInterceptorFn[] = environment.useMocks
+  ? [mockInterceptor]
+  : [];

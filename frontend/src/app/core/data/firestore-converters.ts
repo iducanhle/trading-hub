@@ -7,7 +7,14 @@ import type {
   Timestamp,
 } from 'firebase/firestore';
 import type { FirestoreSdk } from '../firebase/firebase.service';
-import { DEFAULT_SETTINGS, FollowDoc, NoteDoc, ThemePreference, UserDoc, UserSettings } from '../models/user-data';
+import {
+  DEFAULT_SETTINGS,
+  FollowDoc,
+  NoteDoc,
+  ThemePreference,
+  UserDoc,
+  UserSettings,
+} from '../models/user-data';
 
 const THEMES: readonly ThemePreference[] = ['light', 'dark', 'system'];
 
@@ -15,7 +22,9 @@ const THEMES: readonly ThemePreference[] = ['light', 'dark', 'system'];
 const READ_OPTIONS: SnapshotOptions = { serverTimestamps: 'estimate' };
 
 function toDate(value: unknown): Date | null {
-  return value && typeof (value as Timestamp).toDate === 'function' ? (value as Timestamp).toDate() : null;
+  return value && typeof (value as Timestamp).toDate === 'function'
+    ? (value as Timestamp).toDate()
+    : null;
 }
 
 /** Settings as stored, with every missing or invalid field replaced by its default. */
@@ -23,11 +32,16 @@ export function normalizeSettings(raw: unknown): UserSettings {
   const s = (raw ?? {}) as Partial<Record<keyof UserSettings, unknown>>;
   const days = typeof s.notifyDaysBefore === 'number' ? Math.round(s.notifyDaysBefore) : NaN;
   return {
-    theme: THEMES.includes(s.theme as ThemePreference) ? (s.theme as ThemePreference) : DEFAULT_SETTINGS.theme,
+    theme: THEMES.includes(s.theme as ThemePreference)
+      ? (s.theme as ThemePreference)
+      : DEFAULT_SETTINGS.theme,
     notificationsEnabled:
-      typeof s.notificationsEnabled === 'boolean' ? s.notificationsEnabled : DEFAULT_SETTINGS.notificationsEnabled,
+      typeof s.notificationsEnabled === 'boolean'
+        ? s.notificationsEnabled
+        : DEFAULT_SETTINGS.notificationsEnabled,
     notifyDaysBefore: days >= 1 && days <= 7 ? days : DEFAULT_SETTINGS.notifyDaysBefore,
-    notificationEmail: typeof s.notificationEmail === 'string' && s.notificationEmail ? s.notificationEmail : null,
+    notificationEmail:
+      typeof s.notificationEmail === 'string' && s.notificationEmail ? s.notificationEmail : null,
   };
 }
 

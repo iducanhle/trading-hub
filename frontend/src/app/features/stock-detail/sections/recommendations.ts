@@ -65,7 +65,11 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
             @for (bar of bars(); track bar.period) {
               <li class="flex items-center gap-3 text-sm">
                 <span class="w-16 shrink-0 text-xs text-on-surface-variant">{{ bar.label }}</span>
-                <span class="flex h-6 flex-1 overflow-hidden rounded-md" role="img" [attr.aria-label]="bar.description">
+                <span
+                  class="flex h-6 flex-1 overflow-hidden rounded-md"
+                  role="img"
+                  [attr.aria-label]="bar.description"
+                >
                   @for (s of bar.segments; track s.label) {
                     @if (s.count) {
                       <span
@@ -78,11 +82,17 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
                     }
                   }
                 </span>
-                <span class="w-7 shrink-0 text-right text-xs text-on-surface-variant tabular-nums">{{ bar.total }}</span>
+                <span
+                  class="w-7 shrink-0 text-right text-xs text-on-surface-variant tabular-nums"
+                  >{{ bar.total }}</span
+                >
               </li>
             }
           </ul>
-          <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant" aria-label="Legend">
+          <ul
+            class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant"
+            aria-label="Legend"
+          >
             @for (s of scale; track s.key) {
               <li class="flex items-center gap-1.5">
                 <span class="size-2.5 rounded-sm" [style.background]="s.color"></span>{{ s.label }}
@@ -104,5 +114,7 @@ export class Recommendations {
     (symbol, options) => this.api.recommendations(symbol, options),
     () => this.expanded(),
   );
-  protected readonly bars = computed(() => recommendationBars(this.recs.hasValue() ? (this.recs.value() ?? []) : []));
+  protected readonly bars = computed(() =>
+    recommendationBars(this.recs.hasValue() ? (this.recs.value() ?? []) : []),
+  );
 }

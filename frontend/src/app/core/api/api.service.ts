@@ -89,7 +89,11 @@ export class ApiService {
   }
 
   recommendations(symbol: string, options?: LoadOptions): Observable<RecommendationPeriod[]> {
-    return this.get<RecommendationPeriod[]>(`/stocks/${encodeSymbol(symbol)}/recommendations`, {}, options);
+    return this.get<RecommendationPeriod[]>(
+      `/stocks/${encodeSymbol(symbol)}/recommendations`,
+      {},
+      options,
+    );
   }
 
   news(symbol: string, limit = 10, options?: LoadOptions): Observable<NewsItem[]> {
@@ -117,9 +121,19 @@ export class ApiService {
     this.cache.invalidate();
   }
 
-  private get<T>(path: string, params: Params, options: LoadOptions = {}, ttl: number = TTL.default): Observable<T> {
+  private get<T>(
+    path: string,
+    params: Params,
+    options: LoadOptions = {},
+    ttl: number = TTL.default,
+  ): Observable<T> {
     const httpParams = new HttpParams({ fromObject: params });
     const key = `${path}?${httpParams.toString()}`;
-    return this.cache.get(key, ttl, () => this.http.get<T>(this.baseUrl + path, { params: httpParams }), options.force);
+    return this.cache.get(
+      key,
+      ttl,
+      () => this.http.get<T>(this.baseUrl + path, { params: httpParams }),
+      options.force,
+    );
   }
 }

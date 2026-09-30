@@ -20,7 +20,9 @@ import { StockContext } from '../stock-context';
         } @else if (!news.hasValue()) {
           <div class="space-y-4" aria-hidden="true">
             @for (i of [1, 2, 3]; track i) {
-              <div class="flex gap-3"><app-skeleton class="h-10 flex-1" /><app-skeleton class="size-16" /></div>
+              <div class="flex gap-3">
+                <app-skeleton class="h-10 flex-1" /><app-skeleton class="size-16" />
+              </div>
             }
           </div>
         } @else {
@@ -71,8 +73,13 @@ export class News {
   private readonly api = inject(ApiService);
 
   protected readonly expanded = persistedSignal('et.section.news', true);
-  protected readonly news = this.ctx.resource((symbol, options) => this.api.news(symbol, 10, options), () => this.expanded());
-  protected readonly items = computed(() => (this.news.hasValue() ? (this.news.value() ?? []) : []));
+  protected readonly news = this.ctx.resource(
+    (symbol, options) => this.api.news(symbol, 10, options),
+    () => this.expanded(),
+  );
+  protected readonly items = computed(() =>
+    this.news.hasValue() ? (this.news.value() ?? []) : [],
+  );
   protected readonly brokenImages = signal(new Set<string>());
 
   protected imageFailed(url: string): void {

@@ -8,7 +8,16 @@ import {
   HttpResponse,
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, firstValueFrom, from, map, switchMap, throwError, timer } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  firstValueFrom,
+  from,
+  map,
+  switchMap,
+  throwError,
+  timer,
+} from 'rxjs';
 import {
   addDays,
   addMonths,
@@ -37,7 +46,13 @@ import {
   SearchResult,
   StockOverview,
 } from '../models/contract';
-import { aggregateHistory, generateBars, hashString, lastCompletedSession, reactionDay } from './mock-series';
+import {
+  aggregateHistory,
+  generateBars,
+  hashString,
+  lastCompletedSession,
+  reactionDay,
+} from './mock-series';
 
 /** The fixtures in src/assets/mocks describe the week of Monday 28 Sep 2026. */
 const FIXTURE_WEEK = '2026-09-28';
@@ -62,8 +77,10 @@ interface UniverseEntry extends SearchResult {
 function shiftDates<T>(value: T, days: number): T {
   if (typeof value === 'string') {
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return addDays(value, days) as T;
-    if (/^\d{4}-\d{2}$/.test(value)) return addMonths(`${value}-01`, Math.round(days / 30.44)).slice(0, 7) as T;
-    if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return new Date(Date.parse(value) + days * DAY_MS).toISOString() as T;
+    if (/^\d{4}-\d{2}$/.test(value))
+      return addMonths(`${value}-01`, Math.round(days / 30.44)).slice(0, 7) as T;
+    if (/^\d{4}-\d{2}-\d{2}T/.test(value))
+      return new Date(Date.parse(value) + days * DAY_MS).toISOString() as T;
     return value;
   }
   if (Array.isArray(value)) return value.map((v) => shiftDates(v, days)) as T;
@@ -92,7 +109,10 @@ export class MockBackend {
   handle(req: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
     return timer(150 + Math.random() * 350).pipe(
       switchMap(() => from(this.route(req.method, path, req.params))),
-      map((body) => new HttpResponse({ status: req.method === 'POST' ? 202 : 200, body, url: req.url })),
+      map(
+        (body) =>
+          new HttpResponse({ status: req.method === 'POST' ? 202 : 200, body, url: req.url }),
+      ),
       catchError((error: unknown) =>
         throwError(() =>
           error instanceof MockError
@@ -109,16 +129,19 @@ export class MockBackend {
 
   private async route(method: string, path: string, params: HttpParams): Promise<unknown> {
     const [first, second, third] = path.split('/').filter(Boolean).map(decodeURIComponent);
-    if (method === 'POST' && first === 'notifications' && second === 'test') return this.testEmail();
+    if (method === 'POST' && first === 'notifications' && second === 'test')
+      return this.testEmail();
     if (method !== 'GET') throw new MockError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
     if (first === 'health') return { status: 'UP' };
     if (first === 'me') return { uid: 'mock-user', email: 'mock@example.com', allowed: true };
-    if (first === 'search') return this.search(params.get('q') ?? '', Number(params.get('limit') ?? 10));
+    if (first === 'search')
+      return this.search(params.get('q') ?? '', Number(params.get('limit') ?? 10));
     if (first === 'calendar') return this.calendar(params);
     if (first === 'followed' && second === 'earnings') return this.followedEarnings();
     if (first === 'stocks' && second) {
       const symbol = second.toUpperCase();
-      if (symbol.startsWith('ERR')) throw new MockError(503, 'UPSTREAM_UNAVAILABLE', 'Mock provider outage');
+      if (symbol.startsWith('ERR'))
+        throw new MockError(503, 'UPSTREAM_UNAVAILABLE', 'Mock provider outage');
       await this.entry(symbol);
       switch (third) {
         case undefined:
@@ -132,7 +155,10 @@ export class MockBackend {
         case 'recommendations':
           return this.stockFile<RecommendationPeriod[]>(symbol, 'recommendations', []);
         case 'news':
-          return (await this.stockFile<NewsItem[]>(symbol, 'news', [])).slice(0, Number(params.get('limit') ?? 10));
+          return (await this.stockFile<NewsItem[]>(symbol, 'news', [])).slice(
+            0,
+            Number(params.get('limit') ?? 10),
+          );
         case 'peers':
           return this.stockFile<SearchResult[]>(symbol, 'peers', []);
       }
@@ -145,7 +171,9 @@ export class MockBackend {
   private fixture<T>(file: string): Promise<T> {
     let cached = this.fixtures.get(file);
     if (!cached) {
-      cached = firstValueFrom(this.http.get<T>(`assets/mocks/${file}`)).then((data) => shiftDates(data, this.shift));
+      cached = firstValueFrom(this.http.get<T>(`assets/mocks/${file}`)).then((data) =>
+        shiftDates(data, this.shift),
+      );
       this.fixtures.set(file, cached);
     }
     return cached.then((data) => structuredClone(data) as T);
@@ -153,7 +181,9 @@ export class MockBackend {
 
   /** A stock's own fixture, or the fallback for symbols without one. */
   private async stockFile<T>(symbol: string, file: string, fallback: T): Promise<T> {
-    return FIXTURE_SYMBOLS.includes(symbol) ? this.fixture<T>(`stocks/${symbol}/${file}.json`) : fallback;
+    return FIXTURE_SYMBOLS.includes(symbol)
+      ? this.fixture<T>(`stocks/${symbol}/${file}.json`)
+      : fallback;
   }
 
   private async universe(): Promise<Map<string, UniverseEntry>> {
@@ -164,10 +194,15 @@ export class MockBackend {
     const entries = new Map<string, UniverseEntry>();
     for (const day of week.days) {
       for (const e of day.events) {
-        entries.set(e.symbol, { ...e, currency: e.currency ?? 'USD', marketCapUsd: e.marketCapUsd });
+        entries.set(e.symbol, {
+          ...e,
+          currency: e.currency ?? 'USD',
+          marketCapUsd: e.marketCapUsd,
+        });
       }
     }
-    for (const s of search) entries.set(s.symbol, { ...s, marketCapUsd: entries.get(s.symbol)?.marketCapUsd ?? null });
+    for (const s of search)
+      entries.set(s.symbol, { ...s, marketCapUsd: entries.get(s.symbol)?.marketCapUsd ?? null });
     return entries;
   }
 
@@ -180,7 +215,8 @@ export class MockBackend {
   // ─── Stocks ───────────────────────────────────────────────────────────────────────────────────
 
   private async overview(symbol: string): Promise<StockOverview> {
-    if (FIXTURE_SYMBOLS.includes(symbol)) return this.fixture<StockOverview>(`stocks/${symbol}/overview.json`);
+    if (FIXTURE_SYMBOLS.includes(symbol))
+      return this.fixture<StockOverview>(`stocks/${symbol}/overview.json`);
     // Any other known symbol: Apple's shape with its own identity and a price derived from the symbol.
     const [template, entry] = await Promise.all([
       this.fixture<StockOverview>('stocks/AAPL/overview.json'),
@@ -218,7 +254,8 @@ export class MockBackend {
   }
 
   private async earnings(symbol: string): Promise<EarningsResponse> {
-    if (FIXTURE_SYMBOLS.includes(symbol)) return this.fixture<EarningsResponse>(`stocks/${symbol}/earnings.json`);
+    if (FIXTURE_SYMBOLS.includes(symbol))
+      return this.fixture<EarningsResponse>(`stocks/${symbol}/earnings.json`);
     const [template, entry] = await Promise.all([
       this.fixture<EarningsResponse>('stocks/AAPL/earnings.json'),
       this.entry(symbol),
@@ -233,14 +270,15 @@ export class MockBackend {
   private async bars(symbol: string): Promise<PriceBar[]> {
     let cached = this.series.get(symbol);
     if (!cached) {
-      cached = Promise.all([this.overview(symbol), this.earnings(symbol)]).then(([overview, earnings]) =>
-        generateBars({
-          symbol,
-          lastClose: overview.quote.previousClose,
-          avgVolume: overview.keyStats.avgVolume ?? 1_000_000,
-          quarters: earnings.quarters,
-          today: this.today,
-        }),
+      cached = Promise.all([this.overview(symbol), this.earnings(symbol)]).then(
+        ([overview, earnings]) =>
+          generateBars({
+            symbol,
+            lastClose: overview.quote.previousClose,
+            avgVolume: overview.keyStats.avgVolume ?? 1_000_000,
+            quarters: earnings.quarters,
+            today: this.today,
+          }),
       );
       this.series.set(symbol, cached);
     }
@@ -248,7 +286,11 @@ export class MockBackend {
   }
 
   private async prices(symbol: string, range: PriceRange): Promise<PricesResponse> {
-    const [overview, earnings, all] = await Promise.all([this.overview(symbol), this.earnings(symbol), this.bars(symbol)]);
+    const [overview, earnings, all] = await Promise.all([
+      this.overview(symbol),
+      this.earnings(symbol),
+      this.bars(symbol),
+    ]);
     const end = lastCompletedSession(this.today);
     const from = {
       '1W': addDays(end, -7),
@@ -291,7 +333,11 @@ export class MockBackend {
     const period = (params.get('period') as HistoryPeriod | null) ?? 'DAILY';
     const limit = Math.min(100, Math.max(1, Number(params.get('limit') ?? 30)));
     const before = params.get('before');
-    const [overview, earnings, bars] = await Promise.all([this.overview(symbol), this.earnings(symbol), this.bars(symbol)]);
+    const [overview, earnings, bars] = await Promise.all([
+      this.overview(symbol),
+      this.earnings(symbol),
+      this.bars(symbol),
+    ]);
     const partial: PriceBar | null = isWeekend(this.today)
       ? null
       : {
@@ -303,9 +349,15 @@ export class MockBackend {
           volume: Math.round((overview.keyStats.avgVolume ?? 1_000_000) * 0.4),
         };
     const reportDates = new Set(earnings.quarters.map((q) => q.date));
-    const rows = aggregateHistory(bars, period, reportDates, partial).filter((r) => !before || r.periodStart < before);
+    const rows = aggregateHistory(bars, period, reportDates, partial).filter(
+      (r) => !before || r.periodStart < before,
+    );
     const page = rows.slice(0, limit);
-    return { period, rows: page, nextBefore: rows.length > limit ? page[page.length - 1].periodStart : null };
+    return {
+      period,
+      rows: page,
+      nextBefore: rows.length > limit ? page[page.length - 1].periodStart : null,
+    };
   }
 
   // ─── Calendar and followed ────────────────────────────────────────────────────────────────────
@@ -345,7 +397,8 @@ export class MockBackend {
   /** The next report of a symbol: its fixture, else the (repeating) calendar within five weeks. */
   private async nextEvent(symbol: string): Promise<EarningsEvent | undefined> {
     if (FIXTURE_SYMBOLS.includes(symbol)) {
-      const next = (await this.fixture<StockOverview>(`stocks/${symbol}/overview.json`)).nextEarnings;
+      const next = (await this.fixture<StockOverview>(`stocks/${symbol}/overview.json`))
+        .nextEarnings;
       return next && next.date >= this.today ? next : undefined;
     }
     for (const date of eachDay(this.today, addDays(this.today, 35))) {
@@ -385,9 +438,12 @@ export class MockBackend {
     const all = [...(await this.universe()).values()];
     const exact = all.filter((s) => s.symbol === query || s.symbol.split('.')[0] === query);
     const rest = all.filter(
-      (s) => !exact.includes(s) && (s.symbol.startsWith(query) || s.name.toUpperCase().includes(query)),
+      (s) =>
+        !exact.includes(s) && (s.symbol.startsWith(query) || s.name.toUpperCase().includes(query)),
     );
-    return [...exact, ...rest].slice(0, Math.min(20, limit)).map(({ marketCapUsd: _cap, ...result }) => result);
+    return [...exact, ...rest]
+      .slice(0, Math.min(20, limit))
+      .map(({ marketCapUsd: _cap, ...result }) => result);
   }
 
   private async testEmail(): Promise<{ sentTo: string }> {

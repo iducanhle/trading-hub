@@ -1,18 +1,18 @@
 [
- {
-  "headline": "Sample headline: cloud backlog growth in focus before Q3 results",
-  "source": "",
-  "url": "https://example.com/news/sap-1",
-  "publishedAt": "2026-09-29T08:20:00Z",
-  "imageUrl": null,
-  "summary": null
- },
- {
-  "headline": "Sample headline: European software stocks slip on rate worries",
-  "source": "",
-  "url": "https://example.com/news/sap-2",
-  "publishedAt": "2026-09-25T13:45:00Z",
-  "imageUrl": null,
-  "summary": null
- }
+  {
+    "headline": "Sample headline: cloud backlog growth in focus before Q3 results",
+    "source": "",
+    "url": "https://example.com/news/sap-1",
+    "publishedAt": "2026-09-29T08:20:00Z",
+    "imageUrl": null,
+    "summary": null
+  },
+  {
+    "headline": "Sample headline: European software stocks slip on rate worries",
+    "source": "",
+    "url": "https://example.com/news/sap-2",
+    "publishedAt": "2026-09-25T13:45:00Z",
+    "imageUrl": null,
+    "summary": null
+  }
 ]

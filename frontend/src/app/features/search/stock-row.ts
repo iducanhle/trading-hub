@@ -21,7 +21,9 @@ import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
         </span>
         <span class="block truncate text-sm text-on-surface-variant">{{ stock().name }}</span>
       </span>
-      <span class="max-w-[35%] truncate text-right text-xs text-on-surface-variant">{{ stock().exchange }}</span>
+      <span class="max-w-[35%] truncate text-right text-xs text-on-surface-variant">{{
+        stock().exchange
+      }}</span>
     </a>
   `,
 })

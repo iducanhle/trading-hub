@@ -52,7 +52,8 @@ export function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0) return new ApiError(0, 'NETWORK', 'The server could not be reached.');
-    if (isErrorBody(error.error)) return new ApiError(error.status, error.error.code, error.error.message);
+    if (isErrorBody(error.error))
+      return new ApiError(error.status, error.error.code, error.error.message);
     const code = STATUS_CODES[error.status] ?? (error.status >= 500 ? 'INTERNAL_ERROR' : 'UNKNOWN');
     return new ApiError(error.status, code, error.message);
   }

@@ -26,7 +26,12 @@ import {
   createChart,
 } from 'lightweight-charts';
 import { ApiService } from '../../../../core/api/api.service';
-import { EarningsMarker, PriceBar, PriceRange, PricesResponse } from '../../../../core/models/contract';
+import {
+  EarningsMarker,
+  PriceBar,
+  PriceRange,
+  PricesResponse,
+} from '../../../../core/models/contract';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { Change } from '../../../../shared/components/change/change';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
@@ -62,7 +67,10 @@ function timeKey(time: Time): string {
   return `${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`;
 }
 
-const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 /**
  * Section 4: line or candlestick chart of daily bars with volume, earnings markers on the reaction days, a touch
@@ -91,7 +99,11 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { minimumFractionDigits
     <section class="border-t border-outline-variant pt-3 pb-2" aria-labelledby="price-chart-title">
       <h2 id="price-chart-title" class="sr-only">Price chart</h2>
       <div class="flex flex-wrap items-center justify-between gap-2 px-4">
-        <div class="flex rounded-full bg-surface-container-high p-1" role="group" aria-label="Chart range">
+        <div
+          class="flex rounded-full bg-surface-container-high p-1"
+          role="group"
+          aria-label="Chart range"
+        >
           @for (r of ranges; track r) {
             <button
               type="button"
@@ -122,7 +134,9 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { minimumFractionDigits
         </mat-button-toggle-group>
       </div>
 
-      <div class="flex min-h-9 flex-wrap items-center gap-x-3 px-4 pt-2 text-xs tabular-nums text-on-surface-variant">
+      <div
+        class="flex min-h-9 flex-wrap items-center gap-x-3 px-4 pt-2 text-xs tabular-nums text-on-surface-variant"
+      >
         @if (legend(); as bar) {
           <span class="font-medium text-on-surface">{{ bar.date | appDate: 'medium' }}</span>
           @if (type() === 'candles') {
@@ -131,7 +145,9 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { minimumFractionDigits
             <span>L {{ bar.low | num }}</span>
             <span class="text-on-surface">C {{ bar.close | num }}</span>
           } @else {
-            <span class="text-sm font-medium text-on-surface">{{ bar.close | price: currency() }}</span>
+            <span class="text-sm font-medium text-on-surface">{{
+              bar.close | price: currency()
+            }}</span>
           }
           <app-change [value]="bar.change" />
           <span>Vol {{ bar.volume | compact }}</span>
@@ -148,12 +164,17 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { minimumFractionDigits
         } @else if (!data()) {
           <app-skeleton shape="card" class="absolute inset-x-4 inset-y-2" />
         } @else if (!data()!.bars.length) {
-          <p class="absolute inset-0 flex items-center justify-center text-sm text-on-surface-variant">
+          <p
+            class="absolute inset-0 flex items-center justify-center text-sm text-on-surface-variant"
+          >
             No prices for this period.
           </p>
         }
         @if (prices.isLoading() && data()) {
-          <div class="absolute top-2 right-4 size-2 animate-ping rounded-full bg-primary" aria-hidden="true"></div>
+          <div
+            class="absolute top-2 right-4 size-2 animate-ping rounded-full bg-primary"
+            aria-hidden="true"
+          ></div>
         }
 
         @if (selected(); as marker) {
@@ -179,7 +200,13 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { minimumFractionDigits
                 </p>
               </div>
               <app-result-badge [result]="marker.result" />
-              <button matIconButton type="button" class="-mt-2 -mr-2" aria-label="Close" (click)="selected.set(null)">
+              <button
+                matIconButton
+                type="button"
+                class="-mt-2 -mr-2"
+                aria-label="Close"
+                (click)="selected.set(null)"
+              >
                 <app-icon name="close" [size]="20" />
               </button>
             </div>
@@ -219,11 +246,16 @@ export class PriceChart {
 
   protected readonly prices = rxResource({
     params: () =>
-      this.ctx.symbol() ? { symbol: this.ctx.symbol(), range: this.range(), version: this.ctx.version() } : undefined,
-    stream: ({ params }) => this.api.prices(params.symbol, params.range, { force: params.version > 0 }),
+      this.ctx.symbol()
+        ? { symbol: this.ctx.symbol(), range: this.range(), version: this.ctx.version() }
+        : undefined,
+    stream: ({ params }) =>
+      this.api.prices(params.symbol, params.range, { force: params.version > 0 }),
   });
   /** For the marker card; the same cached request the earnings sections use. */
-  private readonly earnings = this.ctx.resource((symbol, options) => this.api.earnings(symbol, options));
+  private readonly earnings = this.ctx.resource((symbol, options) =>
+    this.api.earnings(symbol, options),
+  );
 
   protected readonly data = computed<PricesResponse | undefined>(() =>
     this.prices.hasValue() ? this.prices.value() : undefined,
@@ -237,13 +269,19 @@ export class PriceChart {
     return new Map(
       bars.map((bar, i): [string, LegendBar] => [
         bar.date,
-        { ...bar, change: i > 0 ? ((bar.close - bars[i - 1].close) / bars[i - 1].close) * 100 : null },
+        {
+          ...bar,
+          change: i > 0 ? ((bar.close - bars[i - 1].close) / bars[i - 1].close) * 100 : null,
+        },
       ]),
     );
   });
   protected readonly legend = computed(() => {
     const bars = this.data()?.bars;
-    return this.hovered() ?? (bars?.length ? (this.legendBars().get(bars[bars.length - 1].date) ?? null) : null);
+    return (
+      this.hovered() ??
+      (bars?.length ? (this.legendBars().get(bars[bars.length - 1].date) ?? null) : null)
+    );
   });
 
   protected readonly selectedQuarter = computed(() => {
@@ -297,7 +335,10 @@ export class PriceChart {
         // Required by the Lightweight Charts licence: keep the TradingView attribution.
         attributionLogo: true,
       },
-      localization: { locale: NUMBER_LOCALE, priceFormatter: (price: number) => priceFormat.format(price) },
+      localization: {
+        locale: NUMBER_LOCALE,
+        priceFormatter: (price: number) => priceFormat.format(price),
+      },
       rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.08, bottom: 0.24 } },
       timeScale: {
         borderVisible: false,
@@ -311,7 +352,9 @@ export class PriceChart {
       handleScroll: { vertTouchDrag: false },
     });
     chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
-      this.hovered.set(param.time && param.point ? (this.legendBars().get(timeKey(param.time)) ?? null) : null);
+      this.hovered.set(
+        param.time && param.point ? (this.legendBars().get(timeKey(param.time)) ?? null) : null,
+      );
     });
     chart.subscribeClick((param: MouseEventParams<Time>) => {
       const marker = param.point ? this.markers.markerAt(param.point.x, param.point.y) : null;
@@ -350,7 +393,11 @@ export class PriceChart {
       this.main =
         type === 'candles'
           ? chart.addSeries(CandlestickSeries, { borderVisible: false, priceLineVisible: false })
-          : chart.addSeries(LineSeries, { lineWidth: 2, priceLineVisible: false, crosshairMarkerRadius: 4 });
+          : chart.addSeries(LineSeries, {
+              lineWidth: 2,
+              priceLineVisible: false,
+              crosshairMarkerRadius: 4,
+            });
       this.main.attachPrimitive(this.markers);
       this.mainType = type;
     }
@@ -372,17 +419,29 @@ export class PriceChart {
     const blanks = future.map((time) => ({ time }));
     if (type === 'candles') {
       (this.main as ISeriesApi<'Candlestick'>).setData([
-        ...bars.map((b) => ({ time: b.date, open: b.open, high: b.high, low: b.low, close: b.close })),
+        ...bars.map((b) => ({
+          time: b.date,
+          open: b.open,
+          high: b.high,
+          low: b.low,
+          close: b.close,
+        })),
         ...blanks,
       ]);
     } else {
-      (this.main as ISeriesApi<'Line'>).setData([...bars.map((b) => ({ time: b.date, value: b.close })), ...blanks]);
+      (this.main as ISeriesApi<'Line'>).setData([
+        ...bars.map((b) => ({ time: b.date, value: b.close })),
+        ...blanks,
+      ]);
     }
     volume.setData(
       bars.map((b, i) => ({
         time: b.date,
         value: b.volume,
-        color: withAlpha(b.close >= (i > 0 ? bars[i - 1].close : b.open) ? colors.gain : colors.loss, 0.35),
+        color: withAlpha(
+          b.close >= (i > 0 ? bars[i - 1].close : b.open) ? colors.gain : colors.loss,
+          0.35,
+        ),
       })),
     );
     this.markers.setMarkers(placeMarkers(bars, markers, type, colors, future), colors.surface);
