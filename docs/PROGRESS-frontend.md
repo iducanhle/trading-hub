@@ -94,7 +94,7 @@ Nothing: all phases are done.
 ## Next
 
 For the owner (details in [DEPLOYMENT-frontend.md](DEPLOYMENT-frontend.md)):
-1. Register the web app in the Firebase console and put `apiKey`, `appId`, `messagingSenderId` into both environment files (step 2); add the redirect URI `https://tradiqo.web.app/__/auth/handler` to the Google OAuth client.
+1. ~~Register the web app, fill in the config, add the Google redirect URI~~ (done 2026-09-30).
 2. `firebase login`, then `npm run deploy:rules -- <two addresses>` (step 4) and the first `firebase deploy --only hosting` (step 6).
 3. Create the `FIREBASE_SERVICE_ACCOUNT` secret and the `FIREBASE_DEPLOY_ENABLED` variable (step 7), commit the config, push.
 4. Run the verification checklist (step 9) on both phones.
@@ -109,7 +109,6 @@ From the backend (details in [PROGRESS-backend.md](PROGRESS-backend.md) and [DAT
 - `logoUrl` in search results is filled only for stocks whose profile is already cached. Google's favicon service (a logo fallback) returns a generic globe instead of an error, so such logos never fall back to initials.
 
 Frontend:
-- **The Firebase web-app keys are placeholders** (`apiKey`, `appId`, `messagingSenderId` in both environment files) until the web app is registered in the Firebase console. Until then `npm start` cannot sign in; mock mode and the emulator configuration work.
 - The Material theme uses CSS `light-dark()` (Material's `color-scheme` theme type): Safari/iOS 17.5+, Chrome 123+, Firefox 120+. Older browsers would show broken colours.
 - **Not yet verified against the real Firebase project** (the web app is not registered yet): Google sign-in (popup and redirect), the verification email and the password-reset email, deployed rules and Hosting. The same code paths ran against the Auth/Firestore emulators with email/password, and the checklist in DEPLOYMENT-frontend.md step 9 covers the rest.
 - The calendar was checked with real data only as an empty week (the backend's calendar job did not run in the fresh emulator database); its rendering was verified with the mock data, which has the same contract shape.
