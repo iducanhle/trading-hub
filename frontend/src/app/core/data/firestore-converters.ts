@@ -44,6 +44,7 @@ export function normalizeSettings(raw: unknown): UserSettings {
     notificationEmail:
       typeof s.notificationEmail === 'string' && s.notificationEmail ? s.notificationEmail : null,
     language: isLanguage(s.language) ? s.language : null,
+    termHints: typeof s.termHints === 'boolean' ? s.termHints : DEFAULT_SETTINGS.termHints,
   };
 }
 

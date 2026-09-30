@@ -108,6 +108,7 @@ describe('users/{uid}', () => {
       { ...settings, notificationEmail: 'not-an-email' },
       { ...settings, extra: true },
       { ...settings, language: 'de' },
+      { ...settings, termHints: 'no' },
     ];
     for (const s of bad)
       await assertFails(setDoc(doc(alice(), 'users/alice'), { ...newUser(), settings: s }));
@@ -126,6 +127,7 @@ describe('users/{uid}', () => {
       }),
     );
     await assertSucceeds(updateDoc(doc(alice(), 'users/alice'), { 'settings.language': 'cs' }));
+    await assertSucceeds(updateDoc(doc(alice(), 'users/alice'), { 'settings.termHints': false }));
     await assertSucceeds(updateDoc(doc(alice(), 'users/alice'), { 'settings.language': null }));
     await assertFails(updateDoc(doc(alice(), 'users/alice'), { 'settings.language': 'xx' }));
     await assertFails(updateDoc(doc(alice(), 'users/alice'), { 'settings.notifyDaysBefore': 9 }));

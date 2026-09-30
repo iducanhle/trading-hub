@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { StockOverview } from '../../../core/models/contract';
+import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { CompactPipe, NumberPipe, PricePipe } from '../../../shared/pipes/format.pipes';
 import { formatPlainPercent } from '../../../shared/utils/format';
@@ -7,13 +8,15 @@ import { formatPlainPercent } from '../../../shared/utils/format';
 /** Section 2: market cap, 52-week range with the current price, P/E, EPS (TTM), average volume. */
 @Component({
   selector: 'app-key-stats',
-  imports: [Skeleton, CompactPipe, PricePipe, NumberPipe],
+  imports: [TermInfo, Skeleton, CompactPipe, PricePipe, NumberPipe],
   template: `
     <h2 class="sr-only" i18n>Key stats</h2>
     @if (overview(); as o) {
       <dl class="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3 text-sm sm:grid-cols-3">
         <div>
-          <dt class="text-xs text-on-surface-variant" i18n>Market cap</dt>
+          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+            <span i18n>Market cap</span><app-term-info term="marketCap" />
+          </dt>
           <dd class="font-medium tabular-nums">
             {{ o.keyStats.marketCap | compact: o.currency }}
             @if (o.currency !== 'USD' && o.keyStats.marketCapUsd !== null) {
@@ -24,21 +27,28 @@ import { formatPlainPercent } from '../../../shared/utils/format';
           </dd>
         </div>
         <div>
-          <dt class="text-xs text-on-surface-variant" i18n="Price to earnings ratio">P/E</dt>
+          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+            <span i18n="Price to earnings ratio">P/E</span><app-term-info term="pe" />
+          </dt>
           <dd class="font-medium tabular-nums">{{ o.keyStats.peRatio | num: 1 }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-on-surface-variant" i18n="Earnings per share, trailing 12 months">
-            EPS (TTM)
+          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+            <span i18n="Earnings per share, trailing 12 months"> EPS (TTM) </span
+            ><app-term-info term="eps" />
           </dt>
           <dd class="font-medium tabular-nums">{{ o.keyStats.epsTtm | price: o.currency }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-on-surface-variant" i18n>Avg volume</dt>
+          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+            <span i18n>Avg volume</span><app-term-info term="avgVolume" />
+          </dt>
           <dd class="font-medium tabular-nums">{{ o.keyStats.avgVolume | compact }}</dd>
         </div>
         <div class="col-span-2">
-          <dt class="text-xs text-on-surface-variant" i18n>52-week range</dt>
+          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+            <span i18n>52-week range</span><app-term-info term="range52w" />
+          </dt>
           <dd class="mt-1">
             <div class="flex items-center gap-2 tabular-nums">
               <span class="text-xs">{{ o.keyStats.week52Low | price: o.currency }}</span>

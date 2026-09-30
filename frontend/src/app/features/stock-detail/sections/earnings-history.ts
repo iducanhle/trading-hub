@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { ApiService } from '../../../core/api/api.service';
 import { EarningsQuarter } from '../../../core/models/contract';
+import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Change } from '../../../shared/components/change/change';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { ResultBadge } from '../../../shared/components/result-badge/result-badge';
@@ -25,6 +26,7 @@ import { StockContext } from '../stock-context';
 @Component({
   selector: 'app-earnings-history',
   imports: [
+    TermInfo,
     Section,
     Change,
     ErrorState,
@@ -66,7 +68,9 @@ import { StockContext } from '../stock-context';
                     }
                   </p>
                 </div>
-                <app-result-badge [result]="q.result" />
+                <span class="flex items-center gap-1">
+                  <app-result-badge [result]="q.result" /><app-term-info term="result" />
+                </span>
               </div>
               <dl class="mt-3 space-y-1.5 tabular-nums">
                 <div class="flex items-baseline justify-between gap-2">
@@ -87,8 +91,10 @@ import { StockContext } from '../stock-context';
                 </div>
               </dl>
               <div class="mt-3 border-t border-outline-variant pt-3">
-                <p class="mb-1.5 text-xs font-medium text-on-surface-variant" i18n>
-                  Price reaction
+                <p
+                  class="mb-1.5 flex items-center gap-1 text-xs font-medium text-on-surface-variant"
+                >
+                  <span i18n>Price reaction</span><app-term-info term="reaction" />
                 </p>
                 <dl class="grid grid-cols-4 gap-1 text-center text-xs tabular-nums">
                   @for (cell of reaction(q); track cell.label) {
@@ -113,19 +119,29 @@ import { StockContext } from '../stock-context';
               <tr class="border-b border-outline-variant">
                 <th scope="col" class="py-2 pr-3 font-medium" i18n>Quarter</th>
                 <th scope="col" class="px-2 py-2 text-right font-medium" i18n>EPS est. → act.</th>
-                <th scope="col" class="px-2 py-2 text-right font-medium" i18n>Surprise</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium">
+                  <span class="inline-flex items-center gap-1"
+                    ><span i18n>Surprise</span><app-term-info term="surprise"
+                  /></span>
+                </th>
                 <th scope="col" class="px-2 py-2 text-right font-medium" i18n>
                   Revenue est. → act.
                 </th>
                 <th scope="col" class="px-2 py-2 text-right font-medium" i18n>Surprise</th>
-                <th scope="col" class="px-2 py-2 font-medium" i18n>Result</th>
+                <th scope="col" class="px-2 py-2 font-medium">
+                  <span class="inline-flex items-center gap-1"
+                    ><span i18n>Result</span><app-term-info term="result"
+                  /></span>
+                </th>
                 <th
                   scope="col"
                   class="px-2 py-2 text-right font-medium"
                   title="5 sessions before the report"
                   i18n-title
                 >
-                  {{ reactionLabels.runUp }}
+                  <span class="inline-flex items-center gap-1"
+                    ><app-term-info term="reaction" />{{ reactionLabels.runUp }}</span
+                  >
                 </th>
                 <th scope="col" class="px-2 py-2 text-right font-medium">
                   {{ reactionLabels.gap }}

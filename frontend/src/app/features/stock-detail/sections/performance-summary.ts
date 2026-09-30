@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { Performance } from '../../../core/models/contract';
+import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Change } from '../../../shared/components/change/change';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { PERIOD_LABELS } from '../../../shared/utils/format';
@@ -7,7 +8,7 @@ import { PERIOD_LABELS } from '../../../shared/utils/format';
 /** Section 3: 1W, 1M, YTD and 1Y performance chips. */
 @Component({
   selector: 'app-performance-summary',
-  imports: [Change, Skeleton],
+  imports: [TermInfo, Change, Skeleton],
   template: `
     <h2 class="sr-only" i18n>Performance</h2>
     <ul
@@ -28,6 +29,7 @@ import { PERIOD_LABELS } from '../../../shared/utils/format';
           }
         </li>
       }
+      <li class="flex shrink-0 items-center px-2"><app-term-info term="performance" /></li>
     </ul>
   `,
 })

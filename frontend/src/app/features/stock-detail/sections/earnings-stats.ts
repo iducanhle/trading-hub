@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { EarningsStats as Stats } from '../../../core/models/contract';
+import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import {
@@ -24,7 +25,7 @@ export function beatRateText(stats: Stats): string | null {
 /** Section 9: beat rate, current streak and average absolute reaction (from the overview). */
 @Component({
   selector: 'app-earnings-stats',
-  imports: [Section, Skeleton],
+  imports: [TermInfo, Section, Skeleton],
   template: `
     <app-section title="Earnings stats" i18n-title [(expanded)]="expanded">
       @if (stats(); as s) {
@@ -32,11 +33,15 @@ export function beatRateText(stats: Stats): string | null {
           class="divide-y divide-outline-variant/60 rounded-2xl bg-surface-container-low sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0"
         >
           <div class="flex items-center justify-between gap-3 px-4 py-3 sm:block">
-            <dt class="text-xs text-on-surface-variant" i18n>Beat rate</dt>
+            <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+              <span i18n>Beat rate</span><app-term-info term="beatRate" />
+            </dt>
             <dd class="text-right font-semibold sm:mt-1 sm:text-left">{{ beatRate() ?? '—' }}</dd>
           </div>
           <div class="flex items-center justify-between gap-3 px-4 py-3 sm:block">
-            <dt class="text-xs text-on-surface-variant" i18n>Current streak</dt>
+            <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+              <span i18n>Current streak</span><app-term-info term="streak" />
+            </dt>
             <dd class="font-semibold sm:mt-1">
               @if (s.streak; as streak) {
                 <span
@@ -50,7 +55,9 @@ export function beatRateText(stats: Stats): string | null {
             </dd>
           </div>
           <div class="flex items-center justify-between gap-3 px-4 py-3 sm:block">
-            <dt class="text-xs text-on-surface-variant" i18n>Avg. reaction (absolute)</dt>
+            <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+              <span i18n>Avg. reaction (absolute)</span><app-term-info term="avgReaction" />
+            </dt>
             <dd class="font-semibold tabular-nums sm:mt-1">{{ avgReaction() }}</dd>
           </div>
         </dl>

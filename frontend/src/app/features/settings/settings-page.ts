@@ -133,6 +133,22 @@ import { Icon } from '../../shared/icon/icon';
         </p>
       </section>
 
+      <section aria-labelledby="help-title" class="rounded-3xl bg-surface-container-low p-4">
+        <h2 id="help-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
+          Help
+        </h2>
+        <mat-slide-toggle
+          [checked]="settings().termHints"
+          [disabled]="!settingsService.loaded()"
+          (change)="save({ termHints: $event.checked })"
+        >
+          <ng-container i18n>Show term explanations</ng-container>
+        </mat-slide-toggle>
+        <p class="mt-2 text-xs text-on-surface-variant" i18n>
+          An ⓘ button next to terms such as EPS or P/E explains them in plain words.
+        </p>
+      </section>
+
       <section
         aria-labelledby="notifications-title"
         class="rounded-3xl bg-surface-container-low p-4"

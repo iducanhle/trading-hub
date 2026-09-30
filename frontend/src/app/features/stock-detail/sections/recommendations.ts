@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { ApiService } from '../../../core/api/api.service';
 import { RecommendationPeriod } from '../../../core/models/contract';
+import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
@@ -73,7 +74,7 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
 /** Section 10: analyst recommendations per month as stacked bars (hidden when there are none). */
 @Component({
   selector: 'app-recommendations',
-  imports: [Section, ErrorState, Skeleton],
+  imports: [TermInfo, Section, ErrorState, Skeleton],
   template: `
     @if (!recs.hasValue() || bars().length) {
       <app-section title="Analyst recommendations" i18n-title [(expanded)]="expanded">
@@ -124,6 +125,7 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
                 <span class="size-2.5 rounded-sm" [style.background]="s.color"></span>{{ s.label }}
               </li>
             }
+            <li class="flex items-center"><app-term-info term="recommendations" /></li>
           </ul>
         }
       </app-section>

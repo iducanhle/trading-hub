@@ -24,7 +24,14 @@ const SEED_FOLLOWS: { symbol: string; name: string; exchange: string; region: Re
 function revive(store: Store): Store {
   const date = (v: Date | string | null) => (v ? new Date(v) : null);
   return {
-    user: store.user ? { ...store.user, createdAt: date(store.user.createdAt) } : null,
+    // Settings saved by an older version miss newer fields: fill them with the defaults.
+    user: store.user
+      ? {
+          ...store.user,
+          createdAt: date(store.user.createdAt),
+          settings: { ...DEFAULT_SETTINGS, ...store.user.settings },
+        }
+      : null,
     follows: store.follows.map((f) => ({ ...f, followedAt: date(f.followedAt) })),
     notes: Object.fromEntries(
       Object.entries(store.notes).map(([k, n]) => [k, { ...n, updatedAt: date(n.updatedAt) }]),

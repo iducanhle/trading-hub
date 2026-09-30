@@ -33,6 +33,7 @@ import {
   PricesResponse,
 } from '../../../../core/models/contract';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { TermInfo } from '../../../../shared/components/term-info/term-info';
 import { Change } from '../../../../shared/components/change/change';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { ResultBadge } from '../../../../shared/components/result-badge/result-badge';
@@ -81,6 +82,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
 @Component({
   selector: 'app-price-chart',
   imports: [
+    TermInfo,
     MatButtonToggleGroup,
     MatButtonToggle,
     MatIconButton,
@@ -149,6 +151,9 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
             <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
           </mat-button-toggle>
         </mat-button-toggle-group>
+        @if (type() === 'candles') {
+          <app-term-info term="candles" class="-ml-1" />
+        }
       </div>
 
       <!-- The range's change, or in measure mode the change from A to B. -->

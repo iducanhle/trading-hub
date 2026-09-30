@@ -15,6 +15,8 @@ export interface UserSettings {
   notificationEmail: string | null;
   /** UI language; null = not chosen yet (the device's language decides). */
   language: Language | null;
+  /** Show the ⓘ buttons that explain trading terms. */
+  termHints: boolean;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   notifyDaysBefore: 1,
   notificationEmail: null,
   language: null,
+  termHints: true,
 };
 
 /** users/{uid} */

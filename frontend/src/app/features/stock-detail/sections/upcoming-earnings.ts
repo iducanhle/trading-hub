@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { EarningsEvent } from '../../../core/models/contract';
+import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { Icon } from '../../../shared/icon/icon';
@@ -17,6 +18,7 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
 @Component({
   selector: 'app-upcoming-earnings',
   imports: [
+    TermInfo,
     Section,
     Skeleton,
     Icon,
@@ -39,10 +41,12 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
               <app-icon name="event" />
             </span>
             <div class="min-w-0 flex-1">
-              <p class="text-lg font-semibold">{{ e.date | appDate: 'long' }}</p>
+              <p class="flex items-center gap-1.5 text-lg font-semibold">
+                {{ e.date | appDate: 'long' }}<app-term-info term="earnings" />
+              </p>
               <p class="text-sm">
                 <span class="font-medium">{{ e.date | relativeDay }}</span> ·
-                {{ e.time | reportTime }}
+                {{ e.time | reportTime }} <app-term-info term="reportTime" />
                 @if (fiscal(e); as label) {
                   · {{ label }}
                 }
@@ -51,11 +55,17 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
           </div>
           <dl class="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums">
             <div>
-              <dt class="text-xs opacity-80" i18n>EPS estimate</dt>
+              <dt class="flex items-center gap-1 text-xs">
+                <span class="opacity-80" i18n>EPS estimate</span
+                ><app-term-info term="epsEstimate" />
+              </dt>
               <dd class="font-semibold">{{ e.epsEstimate | price: e.currency }}</dd>
             </div>
             <div>
-              <dt class="text-xs opacity-80" i18n>Revenue estimate</dt>
+              <dt class="flex items-center gap-1 text-xs">
+                <span class="opacity-80" i18n>Revenue estimate</span
+                ><app-term-info term="revenueEstimate" />
+              </dt>
               <dd class="font-semibold">{{ e.revenueEstimate | compact: e.currency }}</dd>
             </div>
           </dl>
