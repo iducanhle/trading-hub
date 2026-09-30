@@ -4,6 +4,7 @@ import com.earningstracker.domain.EarningsMath;
 import com.earningstracker.domain.EarningsStatsCalculator;
 import com.earningstracker.domain.ReactionCalculator.Reaction;
 import com.earningstracker.market.EarningsReport;
+import com.earningstracker.market.Logos;
 import com.earningstracker.market.Region;
 import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.market.Symbols;
@@ -23,7 +24,7 @@ final class DtoMapper {
     static Dtos.EarningsEvent event(String symbol, String name, String exchange, String logoUrl, Double marketCapUsd,
             EarningsReport report) {
         Region region = Symbols.region(symbol);
-        return new Dtos.EarningsEvent(symbol, name, exchange, region, logoUrl, report.date(), report.time(),
+        return new Dtos.EarningsEvent(symbol, name, exchange, region, Logos.orFallback(symbol, logoUrl), report.date(), report.time(),
                 report.fiscalQuarter(), report.fiscalYear(), report.currency(), report.epsEstimate(),
                 report.epsActual(), report.revenueEstimate(), report.revenueActual(), marketCapUsd);
     }
@@ -50,6 +51,6 @@ final class DtoMapper {
 
     static Dtos.SearchResult searchResult(SymbolMatch match, String logoUrl) {
         return new Dtos.SearchResult(match.symbol(), match.name(), match.exchange().displayName(), match.region(),
-                match.currency(), logoUrl);
+                match.currency(), Logos.orFallback(match.symbol(), logoUrl));
     }
 }

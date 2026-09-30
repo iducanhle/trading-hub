@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import com.earningstracker.cache.TieredCache.Cached;
 import com.earningstracker.fx.FxService;
 import com.earningstracker.market.EarningsReport;
+import com.earningstracker.market.Logos;
 import com.earningstracker.market.Region;
 import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.market.Symbols;
@@ -248,7 +249,7 @@ public class CalendarRefreshJob implements Job {
     private static Dtos.EarningsEvent event(String symbol, String name, String exchange, StockProfile profile,
             EarningsReport report) {
         return new Dtos.EarningsEvent(symbol, name, exchange, Symbols.region(symbol),
-                profile == null ? null : profile.logoUrl(), report.date(), report.time(), report.fiscalQuarter(),
+                Logos.orFallback(symbol, profile == null ? null : profile.logoUrl()), report.date(), report.time(), report.fiscalQuarter(),
                 report.fiscalYear(), report.currency(), report.epsEstimate(), report.epsActual(),
                 report.revenueEstimate(), report.revenueActual(), profile == null ? null : profile.marketCapUsd());
     }

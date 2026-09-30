@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.earningstracker.cache.TieredCache.Cached;
 import com.earningstracker.market.EarningsReport;
+import com.earningstracker.market.Logos;
 import com.earningstracker.market.Symbols;
 import com.earningstracker.service.FollowService.Follow;
 import com.earningstracker.web.dto.Dtos;
@@ -59,7 +60,8 @@ public class FollowedEarningsService {
             } else {
                 String currency = profile.map(StockProfile::currency)
                         .orElseGet(() -> Symbols.euExchange(symbol).map(e -> e.currency()).orElse("USD"));
-                noUpcoming.add(new Dtos.SearchResult(symbol, follow.name(), exchange, follow.region(), currency, logo));
+                noUpcoming.add(new Dtos.SearchResult(symbol, follow.name(), exchange, follow.region(), currency,
+                        Logos.orFallback(symbol, logo)));
             }
         }
         upcoming.sort(Comparator.comparing(Dtos.EarningsEvent::date).thenComparing(Dtos.EarningsEvent::marketCapUsd,

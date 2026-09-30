@@ -3,6 +3,10 @@ package com.earningstracker.service;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,6 +21,8 @@ import com.earningstracker.provider.ProfileProvider;
 import com.earningstracker.provider.ProviderException;
 import com.earningstracker.provider.ProviderRouter;
 import com.earningstracker.provider.Sourced;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,6 +35,7 @@ import org.springframework.stereotype.Service;
 public class ProfileService {
 
     static final Duration FRESH_FOR = Duration.ofDays(7);
+    static final Duration UNKNOWN_FOR = Duration.ofHours(6);
     private static final Logger log = LoggerFactory.getLogger(ProfileService.class);
 
     private final TieredCache cache;
@@ -36,6 +43,11 @@ public class ProfileService {
     private final ProviderRouter router;
     private final FxService fx;
     private final Clock clock;
+    /** Symbols {@link #logos} found no stored profile for; forgotten when one is stored. */
+    private final Cache<String, Boolean> unknown = Caffeine.newBuilder()
+            .expireAfterWrite(UNKNOWN_FOR)
+            .maximumSize(10_000)
+            .build();
 
     public ProfileService(TieredCache cache, ProviderRouter router, FxService fx, Clock clock) {
         this.cache = cache;
@@ -57,6 +69,26 @@ public class ProfileService {
     /** Cached profile from memory only; for per-item enrichment of lists. */
     public Optional<StockProfile> peek(String symbol) {
         return cache.peek(policy, symbol);
+    }
+
+    /**
+     * Logos of stored profiles (memory, then one batched Firestore read), for lists such as search results and
+     * peers; never calls providers. Symbols without a stored profile are remembered for a while so repeated
+     * searches don't read them again.
+     */
+    public Map<String, String> logos(Collection<String> symbols) {
+        List<String> wanted = symbols.stream().distinct().filter(s -> unknown.getIfPresent(s) == null).toList();
+        Map<String, StockProfile> stored = cache.storedAll(policy, wanted);
+        Map<String, String> logos = new HashMap<>();
+        for (String symbol : wanted) {
+            StockProfile profile = stored.get(symbol);
+            if (profile == null) {
+                unknown.put(symbol, Boolean.TRUE);
+            } else if (profile.logoUrl() != null) {
+                logos.put(symbol, profile.logoUrl());
+            }
+        }
+        return logos;
     }
 
     /** Fetches now and stores (jobs: market caps of followed symbols are refreshed daily). */
@@ -84,6 +116,7 @@ public class ProfileService {
                     Symbols.region(symbol), p -> p.basics(symbol)).value();
             StockProfile profile = toProfile(symbol, basic, basic.sector(), basic.industry(), basic.website());
             cache.put(policy, symbol, profile, clock.instant().minus(FRESH_FOR));
+            unknown.invalidate(symbol);
             return Optional.of(profile);
         } catch (ProviderException e) {
             log.debug("No basics for {}: {}", symbol, e.getMessage());
@@ -119,6 +152,7 @@ public class ProfileService {
                 }
             }
         }
+        unknown.invalidate(symbol);
         return toProfile(symbol, profile, sector, industry, website);
     }
 

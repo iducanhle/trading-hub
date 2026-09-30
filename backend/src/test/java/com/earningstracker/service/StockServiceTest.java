@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.earningstracker.cache.TieredCache;
 import com.earningstracker.domain.EarningsResult;
 import com.earningstracker.domain.HistoryCalculator;
 import com.earningstracker.market.CompanyProfile;
@@ -22,6 +23,7 @@ import com.earningstracker.market.Region;
 import com.earningstracker.market.ReportTime;
 import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.provider.ProviderException;
+import com.earningstracker.provider.ProviderTestSupport;
 import com.earningstracker.web.dto.Dtos;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -140,12 +142,26 @@ class StockServiceTest {
     }
 
     @Test
+    void listsUseTheLogosOfStoredProfilesAfterARestart() {
+        f.profiles.profile(SAP);
+        ProfileService restarted = new ProfileService(new TieredCache(f.store, ProviderTestSupport.JSON, f.clock),
+                f.router, f.fx, f.clock);
+
+        assertThat(restarted.logos(List.of(SAP, "NOPE.DE")))
+                .containsExactly(Map.entry(SAP, "https://www.google.com/s2/favicons?domain=sap.com&sz=128"));
+        long reads = f.store.usage().reads();
+        restarted.logos(List.of("NOPE.DE"));
+        assertThat(f.store.usage().reads()).as("an unknown symbol is not read again").isEqualTo(reads);
+    }
+
+    @Test
     void peersComeWithListingData() {
         f.provider.peers.put(SAP, List.of("SIE.DE", "NOPE.DE"));
         f.provider.listings.put("SIE.DE", new SymbolMatch("SIE.DE", "Siemens AG", Exchange.XETRA, "EUR"));
 
         assertThat(f.stocks.peers(SAP)).containsExactly(
-                new Dtos.SearchResult("SIE.DE", "Siemens AG", "XETRA", Region.EU, "EUR", null));
+                new Dtos.SearchResult("SIE.DE", "Siemens AG", "XETRA", Region.EU, "EUR",
+                        "https://financialmodelingprep.com/image-stock/SIE.DE.png"));
     }
 
     @Test

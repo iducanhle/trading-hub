@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +26,7 @@ import com.earningstracker.market.EarningsReport;
 import com.earningstracker.market.Exchange;
 import com.earningstracker.market.PriceBar;
 import com.earningstracker.market.Quote;
+import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.market.Symbols;
 import com.earningstracker.web.dto.Dtos;
 import org.slf4j.Logger;
@@ -163,9 +165,9 @@ public class StockService {
     }
 
     public List<Dtos.SearchResult> peers(String symbol) {
-        return extras.peers(symbol).value().stream()
-                .map(m -> DtoMapper.searchResult(m, profiles.peek(m.symbol()).map(StockProfile::logoUrl).orElse(null)))
-                .toList();
+        List<SymbolMatch> peers = extras.peers(symbol).value();
+        Map<String, String> logos = profiles.logos(peers.stream().map(SymbolMatch::symbol).toList());
+        return peers.stream().map(m -> DtoMapper.searchResult(m, logos.get(m.symbol()))).toList();
     }
 
     private EarningsView view(String symbol, Cached<List<EarningsReport>> reports, List<PriceBar> bars) {

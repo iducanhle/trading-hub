@@ -54,11 +54,11 @@ public class SearchService {
         return cache.get(policy, q.toLowerCase(Locale.ROOT) + "|" + limit, () -> searchProviders(q, limit)).value();
     }
 
-    /** Search results as the API returns them; logos only for profiles already in memory (no extra calls). */
+    /** Search results as the API returns them, with the logos of stored profiles (no provider calls). */
     public List<Dtos.SearchResult> results(String query, int limit) {
-        return search(query, limit).stream()
-                .map(m -> DtoMapper.searchResult(m, profiles.peek(m.symbol()).map(StockProfile::logoUrl).orElse(null)))
-                .toList();
+        List<SymbolMatch> matches = search(query, limit);
+        Map<String, String> logos = profiles.logos(matches.stream().map(SymbolMatch::symbol).toList());
+        return matches.stream().map(m -> DtoMapper.searchResult(m, logos.get(m.symbol()))).toList();
     }
 
     private List<SymbolMatch> searchProviders(String query, int limit) {

@@ -3,7 +3,10 @@ package com.earningstracker.cache;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -110,6 +113,37 @@ public class TieredCache {
         return entry == null ? Optional.empty() : Optional.of(cached(entry, !isFresh(policy, entry)));
     }
 
+    /**
+     * Cached values of several ids, fresh or not, without calling any provider: L1 hits, then one batched store
+     * read for the rest (one read per id asked). Ids cached nowhere are absent from the result.
+     */
+    public <T> Map<String, T> storedAll(Policy<T> policy, Collection<String> ids) {
+        Cache<String, Entry> l1 = l1(policy);
+        Map<String, T> result = new LinkedHashMap<>();
+        List<String> misses = new ArrayList<>();
+        for (String id : ids) {
+            Entry entry = l1.getIfPresent(id);
+            if (entry != null) {
+                result.put(id, value(entry));
+            } else {
+                misses.add(id);
+            }
+        }
+        if (misses.isEmpty() || !policy.persistent()) {
+            return result;
+        }
+        try {
+            store.getAll(policy.name(), misses).forEach((id, doc) -> decode(policy, doc).ifPresent(entry -> {
+                l1.put(id, entry);
+                result.put(id, value(entry));
+            }));
+        } catch (RuntimeException e) {
+            log.warn("Reading {} ids of {} from the document store failed; treating them as misses: {}",
+                    misses.size(), policy.name(), e.getMessage());
+        }
+        return result;
+    }
+
     /** The value in L1 only; never touches the store (cheap enough for every search result). */
     public <T> Optional<T> peek(Policy<T> policy, String id) {
         Entry entry = l1(policy).getIfPresent(id);
@@ -168,21 +202,23 @@ public class TieredCache {
 
     private Optional<Entry> readL2(Policy<?> policy, String id) {
         try {
-            return store.get(policy.name(), id).flatMap(doc -> {
-                Object data = doc.get("data");
-                Instant updatedAt = doc.get("updatedAt") instanceof Timestamp ts
-                        ? Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos())
-                        : null;
-                if (data == null || updatedAt == null) {
-                    return Optional.empty();
-                }
-                return Optional.of(new Entry(jsonMapper.convertValue(data, policy.type()), updatedAt));
-            });
+            return store.get(policy.name(), id).flatMap(doc -> decode(policy, doc));
         } catch (RuntimeException e) {
             log.warn("Reading {}/{} from the document store failed; treating it as a miss: {}", policy.name(), id,
                     e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private Optional<Entry> decode(Policy<?> policy, Map<String, Object> doc) {
+        Object data = doc.get("data");
+        Instant updatedAt = doc.get("updatedAt") instanceof Timestamp ts
+                ? Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos())
+                : null;
+        if (data == null || updatedAt == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new Entry(jsonMapper.convertValue(data, policy.type()), updatedAt));
     }
 
     private void writeL2(Policy<?> policy, String id, Entry entry) {
