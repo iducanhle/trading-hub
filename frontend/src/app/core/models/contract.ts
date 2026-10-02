@@ -264,6 +264,221 @@ export interface TestEmailResponse {
   sentTo: string;
 }
 
+// ─── Trading 212 (per user). Money is in the account currency unless a field says otherwise. ───
+
+export type T212Environment = 'LIVE' | 'DEMO';
+export type T212SyncState = 'IDLE' | 'RUNNING' | 'FAILED';
+export type T212Side = 'BUY' | 'SELL';
+export type T212PositionStatus = 'OPEN' | 'CLOSED';
+/** CORPORATE_ACTION: any other non-trade fill (distributions, spin-offs, …). */
+export type T212TradeKind = 'TRADE' | 'STOCK_SPLIT' | 'CORPORATE_ACTION';
+export type T212TransactionType =
+  'DEPOSIT' | 'WITHDRAW' | 'FEE' | 'TRANSFER' | 'INTEREST_ON_FREE_CASH' | 'LENDING_INTEREST';
+
+export interface T212Status {
+  connected: boolean;
+  environment: T212Environment | null;
+  /** Last 4 characters of the API key; never the key or secret. */
+  keyHint: string | null;
+  accountCurrency: string | null;
+  /** False once Trading 212 rejects the stored key; null when not connected. */
+  credentialsValid: boolean | null;
+  connectedAt: string | null;
+  /** IDLE when not connected. */
+  syncState: T212SyncState;
+  syncStartedAt: string | null;
+  lastSyncAt: string | null;
+  lastError: { code: string; message: string } | null;
+  /** The server's IP, to restrict the key to. */
+  serverIpHint: string | null;
+}
+
+export interface T212CredentialsRequest {
+  apiKey: string;
+  /** null or "" for legacy keys without a secret. */
+  apiSecret: string | null;
+  environment: T212Environment;
+}
+
+export interface T212InstrumentRef {
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  logoUrl: string | null;
+  totalPnl: number;
+}
+
+/** A period: `from`/`to` days in `tz`; both null = all time. */
+export interface T212PeriodEcho {
+  from: string | null;
+  to: string | null;
+  tz: string;
+}
+
+export interface T212Summary extends T212PeriodEcho {
+  accountCurrency: string;
+  /** As of now (live); null when Trading 212 is unavailable and nothing is cached. */
+  totalValue: number | null;
+  cash: number | null;
+  /** Cost basis of holdings. */
+  invested: number | null;
+  currentValue: number | null;
+  unrealizedPnl: number | null;
+  /** In the period. */
+  realizedPnl: number;
+  dividends: number;
+  /** Trade fees + taxes + FEE transactions. */
+  fees: number;
+  interest: number;
+  deposits: number;
+  withdrawals: number;
+  netDeposits: number;
+  tradeCount: number;
+  /** realized + dividends − fees, plus unrealizedPnl only when includesUnrealized. */
+  totalPnl: number;
+  includesUnrealized: boolean;
+  /** All time only. */
+  totalPnlPct: number | null;
+  best: T212InstrumentRef | null;
+  worst: T212InstrumentRef | null;
+  syncState: T212SyncState;
+  lastSyncAt: string | null;
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212Instrument {
+  /** "AAPL_US_EQ" */
+  t212Ticker: string;
+  /** App symbol; null when unmapped (no stock-detail link). */
+  symbol: string | null;
+  name: string;
+  isin: string | null;
+  logoUrl: string | null;
+  /** Prices below are in this currency (LSE pence normalized to GBP). */
+  instrumentCurrency: string | null;
+  status: T212PositionStatus;
+  /** Held now; 0 when CLOSED. */
+  quantity: number;
+  /** Instrument currency, OPEN only. */
+  averageCost: number | null;
+  currentPrice: number | null;
+  /** Account currency, OPEN only, as of now. */
+  value: number | null;
+  costBasis: number | null;
+  /** In the period. */
+  bought: { quantity: number; value: number };
+  sold: { quantity: number; value: number };
+  realizedPnl: number;
+  dividends: number;
+  fees: number;
+  /** OPEN only, as of now. */
+  unrealizedPnl: number | null;
+  totalPnl: number;
+  /** All time only. */
+  totalPnlPct: number | null;
+  tradeCount: number;
+  /** All time. */
+  firstTradeAt: string | null;
+  lastTradeAt: string | null;
+}
+
+export interface T212InstrumentsResponse extends T212PeriodEcho {
+  accountCurrency: string;
+  /** Sorted by totalPnl, highest first. */
+  items: T212Instrument[];
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212Trade {
+  id: string;
+  executedAt: string;
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  side: T212Side;
+  kind: T212TradeKind;
+  /** Always positive. */
+  quantity: number;
+  /** Instrument currency (pence normalized). */
+  price: number | null;
+  priceCurrency: string | null;
+  /** Account currency, always positive. */
+  value: number;
+  fees: number;
+  taxes: number;
+  fxRate: number | null;
+  /** SELL only, before fees and taxes. */
+  realizedPnl: number | null;
+  orderType: 'MARKET' | 'LIMIT' | 'STOP' | 'STOP_LIMIT' | null;
+}
+
+export interface T212DetailTrade extends T212Trade {
+  /** Shares held right after this trade. */
+  positionAfter: number;
+}
+
+export interface T212Dividend {
+  id: string;
+  paidAt: string;
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  /** Shares the dividend was paid on. */
+  quantity: number;
+  /** Net, account currency. */
+  amount: number;
+  grossPerShare: number | null;
+  grossPerShareCurrency: string | null;
+  type: string;
+}
+
+export interface T212Transaction {
+  id: string;
+  at: string;
+  type: T212TransactionType;
+  /** Signed: negative = money out. */
+  amount: number;
+  currency: string;
+}
+
+export interface T212InstrumentDetail {
+  accountCurrency: string;
+  /** All time. */
+  instrument: T212Instrument;
+  /** Newest first. */
+  trades: T212DetailTrade[];
+  dividends: T212Dividend[];
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212TradesResponse {
+  /** Newest first. */
+  items: T212Trade[];
+  nextCursor: string | null;
+  accountCurrency: string;
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212DividendsResponse extends T212PeriodEcho {
+  accountCurrency: string;
+  total: number;
+  items: T212Dividend[];
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212TransactionsResponse extends T212PeriodEcho {
+  accountCurrency: string;
+  totals: { deposits: number; withdrawals: number; fees: number; interest: number };
+  items: T212Transaction[];
+  asOf: string;
+  stale: boolean;
+}
+
 export type ApiErrorCode =
   | 'BAD_REQUEST'
   | 'UNAUTHENTICATED'
@@ -273,7 +488,13 @@ export type ApiErrorCode =
   | 'METHOD_NOT_ALLOWED'
   | 'RATE_LIMITED'
   | 'INTERNAL_ERROR'
-  | 'UPSTREAM_UNAVAILABLE';
+  | 'UPSTREAM_UNAVAILABLE'
+  | 'T212_INVALID_CREDENTIALS'
+  | 'T212_MISSING_PERMISSIONS'
+  | 'T212_NOT_CONNECTED'
+  | 'T212_RATE_LIMITED'
+  | 'T212_NOT_CONFIGURED'
+  | 'T212_UNAVAILABLE';
 
 export interface ApiErrorBody {
   code: ApiErrorCode;

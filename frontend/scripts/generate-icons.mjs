@@ -11,6 +11,8 @@ import { join } from 'node:path';
 const VERSION = '0.47.5';
 const ICONS = [
   'account_balance',
+  'account_balance_wallet',
+  'account_balance_wallet-fill',
   'account_circle',
   'add',
   'arrow_back',
@@ -36,8 +38,10 @@ const ICONS = [
   'history',
   'how_to_vote',
   'info',
+  'key',
   'keyboard_arrow_down',
   'light_mode',
+  'link_off',
   'lock',
   'logout',
   'mail',
@@ -45,6 +49,8 @@ const ICONS = [
   'more_vert',
   'notifications',
   'open_in_new',
+  'payments',
+  'receipt_long',
   'refresh',
   'savings',
   'schedule',
@@ -53,8 +59,11 @@ const ICONS = [
   'send',
   'settings',
   'show_chart',
+  'sort',
   'straighten',
   'swap_vert',
+  'sync',
+  'trending_down',
   'trending_up',
   'settings-fill',
   'star',
@@ -62,6 +71,7 @@ const ICONS = [
   'tune',
   'visibility',
   'visibility_off',
+  'warning',
   'work',
 ];
 

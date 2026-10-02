@@ -49,6 +49,7 @@ import {
   SearchResult,
   StockOverview,
 } from '../models/contract';
+import { MockT212, MockT212Error, T212Fixture } from './mock-t212';
 import {
   aggregateHistory,
   generateBars,
@@ -97,7 +98,7 @@ function shiftDates<T>(value: T, days: number): T {
  * The backend in mock mode: contract-shaped responses from small fixtures (AAPL, SAP.DE, one calendar week, the
  * search universe) plus deterministic generated price series. Follows come from the mock user's local data, so
  * "followed only" and the Followed page react to follow / unfollow.
- * Symbols starting with ERR answer 503, unknown symbols 404.
+ * Symbols starting with ERR answer 503, unknown symbols 404. Trading 212 is in mock-t212.ts.
  */
 @Injectable({ providedIn: 'root' })
 export class MockBackend {
@@ -108,17 +109,22 @@ export class MockBackend {
   private readonly today = todayIso();
   private readonly shift = diffDays(FIXTURE_WEEK, startOfWeek(this.today));
   private lastTestEmail = 0;
+  private readonly t212 = new MockT212(() => this.fixture<T212Fixture>('t212-portfolio.json'));
 
   handle(req: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
     return timer(150 + Math.random() * 350).pipe(
-      switchMap(() => from(this.route(req.method, path, req.params))),
+      switchMap(() => from(this.route(req.method, path, req.params, req.body))),
       map(
         (body) =>
-          new HttpResponse({ status: req.method === 'POST' ? 202 : 200, body, url: req.url }),
+          new HttpResponse({
+            status: req.method === 'POST' ? 202 : req.method === 'DELETE' ? 204 : 200,
+            body,
+            url: req.url,
+          }),
       ),
       catchError((error: unknown) =>
         throwError(() =>
-          error instanceof MockError
+          error instanceof MockError || error instanceof MockT212Error
             ? new HttpErrorResponse({
                 status: error.status,
                 error: { code: error.code, message: error.message },
@@ -130,8 +136,15 @@ export class MockBackend {
     );
   }
 
-  private async route(method: string, path: string, params: HttpParams): Promise<unknown> {
-    const [first, second, third] = path.split('/').filter(Boolean).map(decodeURIComponent);
+  private async route(
+    method: string,
+    path: string,
+    params: HttpParams,
+    body: unknown,
+  ): Promise<unknown> {
+    const segments = path.split('/').filter(Boolean).map(decodeURIComponent);
+    const [first, second, third] = segments;
+    if (first === 't212') return this.t212.route(method, segments, params, body);
     if (method === 'POST' && first === 'notifications' && second === 'test')
       return this.testEmail();
     if (method !== 'GET') throw new MockError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');

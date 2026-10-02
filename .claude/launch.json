@@ -41,6 +41,20 @@
         "4300"
       ],
       "port": 4300
+    },
+    {
+      "name": "frontend-mock-4210",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "start:mock",
+        "--",
+        "--port",
+        "4210"
+      ],
+      "port": 4210
     }
   ]
 }

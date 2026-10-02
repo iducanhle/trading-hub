@@ -14,6 +14,12 @@ const CODES: readonly ApiErrorCode[] = [
   'RATE_LIMITED',
   'INTERNAL_ERROR',
   'UPSTREAM_UNAVAILABLE',
+  'T212_INVALID_CREDENTIALS',
+  'T212_MISSING_PERMISSIONS',
+  'T212_NOT_CONNECTED',
+  'T212_RATE_LIMITED',
+  'T212_NOT_CONFIGURED',
+  'T212_UNAVAILABLE',
 ];
 
 const STATUS_CODES: Record<number, ApiErrorCode> = {
@@ -83,6 +89,14 @@ export function errorMessage(error: unknown): string {
       return $localize`Access not granted.`;
     case 'UNAUTHENTICATED':
       return $localize`Your session expired. Sign in again.`;
+    case 'T212_RATE_LIMITED':
+      return $localize`Trading 212 is limiting requests. Try again in a minute.`;
+    case 'T212_UNAVAILABLE':
+      return $localize`Trading 212 is unavailable right now.`;
+    case 'T212_NOT_CONFIGURED':
+      return $localize`Trading 212 is not available on this server.`;
+    case 'T212_NOT_CONNECTED':
+      return $localize`Trading 212 is not connected.`;
     default:
       return $localize`Something went wrong.`;
   }

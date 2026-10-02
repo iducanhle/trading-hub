@@ -1,0 +1,356 @@
+{
+  "accountCurrency": "EUR",
+  "account": {
+    "totalValue": 12480.4,
+    "cash": 1310.25,
+    "invested": 10820.0,
+    "currentValue": 11170.15,
+    "unrealizedPnl": 350.15
+  },
+  "instruments": [
+    {
+      "t212Ticker": "AAPL_US_EQ",
+      "symbol": "AAPL",
+      "name": "Apple",
+      "isin": "US0378331005",
+      "currency": "USD",
+      "logoUrl": "https://financialmodelingprep.com/image-stock/AAPL.png"
+    },
+    {
+      "t212Ticker": "MSFT_US_EQ",
+      "symbol": "MSFT",
+      "name": "Microsoft",
+      "isin": "US5949181045",
+      "currency": "USD",
+      "logoUrl": "https://financialmodelingprep.com/image-stock/MSFT.png"
+    },
+    {
+      "t212Ticker": "SAPd_EQ",
+      "symbol": "SAP.DE",
+      "name": "SAP",
+      "isin": "DE0007164600",
+      "currency": "EUR",
+      "logoUrl": "https://financialmodelingprep.com/image-stock/SAP.DE.png"
+    },
+    {
+      "t212Ticker": "NVDA_US_EQ",
+      "symbol": "NVDA",
+      "name": "NVIDIA",
+      "isin": "US67066G1040",
+      "currency": "USD",
+      "logoUrl": "https://financialmodelingprep.com/image-stock/NVDA.png"
+    },
+    {
+      "t212Ticker": "VUSAl_EQ",
+      "symbol": null,
+      "name": "Vanguard S&P 500 UCITS ETF",
+      "isin": "IE00B3XXRP09",
+      "currency": "GBP",
+      "logoUrl": null
+    }
+  ],
+  "positions": [
+    {
+      "t212Ticker": "AAPL_US_EQ",
+      "quantity": 10,
+      "averageCost": 196.4,
+      "currentPrice": 171.2,
+      "value": 1575.0,
+      "costBasis": 1806.9,
+      "unrealizedPnl": -231.9
+    },
+    {
+      "t212Ticker": "NVDA_US_EQ",
+      "quantity": 40,
+      "averageCost": 31.5,
+      "currentPrice": 178.3,
+      "value": 6561.4,
+      "costBasis": 1160.0,
+      "unrealizedPnl": 5401.4
+    },
+    {
+      "t212Ticker": "VUSAl_EQ",
+      "quantity": 30,
+      "averageCost": 88.2,
+      "currentPrice": 92.75,
+      "value": 3033.75,
+      "costBasis": 2895.0,
+      "unrealizedPnl": 138.75
+    }
+  ],
+  "trades": [
+    {
+      "id": "t-01",
+      "executedAt": "2025-11-03T15:42:10Z",
+      "t212Ticker": "NVDA_US_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 4,
+      "price": 290.0,
+      "priceCurrency": "USD",
+      "value": 1160.0,
+      "fees": 1.74,
+      "taxes": 0,
+      "fxRate": 0.86,
+      "realizedPnl": null,
+      "orderType": "MARKET"
+    },
+    {
+      "id": "t-02",
+      "executedAt": "2026-01-12T14:31:00Z",
+      "t212Ticker": "MSFT_US_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 4,
+      "price": 420.0,
+      "priceCurrency": "USD",
+      "value": 1450.0,
+      "fees": 2.18,
+      "taxes": 0,
+      "fxRate": 0.86,
+      "realizedPnl": null,
+      "orderType": "LIMIT"
+    },
+    {
+      "id": "t-03",
+      "executedAt": "2026-02-02T09:05:12Z",
+      "t212Ticker": "SAPd_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 5,
+      "price": 240.0,
+      "priceCurrency": "EUR",
+      "value": 1200.0,
+      "fees": 0,
+      "taxes": 0,
+      "fxRate": null,
+      "realizedPnl": null,
+      "orderType": "MARKET"
+    },
+    {
+      "id": "t-04",
+      "executedAt": "2026-03-02T15:31:00Z",
+      "t212Ticker": "AAPL_US_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 10,
+      "price": 210.0,
+      "priceCurrency": "USD",
+      "value": 1806.9,
+      "fees": 2.71,
+      "taxes": 0,
+      "fxRate": 0.86,
+      "realizedPnl": null,
+      "orderType": "MARKET"
+    },
+    {
+      "id": "t-05",
+      "executedAt": "2026-03-16T10:15:00Z",
+      "t212Ticker": "VUSAl_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 20,
+      "price": 87.5,
+      "priceCurrency": "GBP",
+      "value": 1925.0,
+      "fees": 2.89,
+      "taxes": 0,
+      "fxRate": 1.1,
+      "realizedPnl": null,
+      "orderType": "MARKET"
+    },
+    {
+      "id": "t-06",
+      "executedAt": "2026-05-04T13:45:00Z",
+      "t212Ticker": "AAPL_US_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 5,
+      "price": 205.0,
+      "priceCurrency": "USD",
+      "value": 881.5,
+      "fees": 1.32,
+      "taxes": 0,
+      "fxRate": 0.86,
+      "realizedPnl": null,
+      "orderType": "LIMIT"
+    },
+    {
+      "id": "t-07",
+      "executedAt": "2026-06-10T04:00:00Z",
+      "t212Ticker": "NVDA_US_EQ",
+      "side": "BUY",
+      "kind": "STOCK_SPLIT",
+      "quantity": 36,
+      "price": null,
+      "priceCurrency": "USD",
+      "value": 0,
+      "fees": 0,
+      "taxes": 0,
+      "fxRate": null,
+      "realizedPnl": null,
+      "orderType": null
+    },
+    {
+      "id": "t-08",
+      "executedAt": "2026-06-22T08:30:40Z",
+      "t212Ticker": "SAPd_EQ",
+      "side": "SELL",
+      "kind": "TRADE",
+      "quantity": 5,
+      "price": 226.0,
+      "priceCurrency": "EUR",
+      "value": 1130.0,
+      "fees": 0,
+      "taxes": 0,
+      "fxRate": null,
+      "realizedPnl": -70.0,
+      "orderType": "MARKET"
+    },
+    {
+      "id": "t-09",
+      "executedAt": "2026-07-07T09:20:00Z",
+      "t212Ticker": "VUSAl_EQ",
+      "side": "BUY",
+      "kind": "TRADE",
+      "quantity": 10,
+      "price": 88.6,
+      "priceCurrency": "GBP",
+      "value": 970.0,
+      "fees": 1.46,
+      "taxes": 0,
+      "fxRate": 1.1,
+      "realizedPnl": null,
+      "orderType": "MARKET"
+    },
+    {
+      "id": "t-10",
+      "executedAt": "2026-08-18T14:02:31Z",
+      "t212Ticker": "MSFT_US_EQ",
+      "side": "SELL",
+      "kind": "TRADE",
+      "quantity": 4,
+      "price": 495.0,
+      "priceCurrency": "USD",
+      "value": 1702.8,
+      "fees": 2.55,
+      "taxes": 0,
+      "fxRate": 0.86,
+      "realizedPnl": 252.8,
+      "orderType": "LIMIT"
+    },
+    {
+      "id": "t-11",
+      "executedAt": "2026-09-21T15:00:00Z",
+      "t212Ticker": "AAPL_US_EQ",
+      "side": "SELL",
+      "kind": "TRADE",
+      "quantity": 5,
+      "price": 232.0,
+      "priceCurrency": "USD",
+      "value": 997.6,
+      "fees": 1.5,
+      "taxes": 0,
+      "fxRate": 0.86,
+      "realizedPnl": 101.47,
+      "orderType": "MARKET"
+    }
+  ],
+  "dividends": [
+    {
+      "id": "d-1",
+      "paidAt": "2026-05-15T00:00:00Z",
+      "t212Ticker": "AAPL_US_EQ",
+      "quantity": 10,
+      "amount": 1.95,
+      "grossPerShare": 0.26,
+      "grossPerShareCurrency": "USD",
+      "type": "ORDINARY"
+    },
+    {
+      "id": "d-2",
+      "paidAt": "2026-06-11T00:00:00Z",
+      "t212Ticker": "MSFT_US_EQ",
+      "quantity": 4,
+      "amount": 2.43,
+      "grossPerShare": 0.83,
+      "grossPerShareCurrency": "USD",
+      "type": "ORDINARY"
+    },
+    {
+      "id": "d-3",
+      "paidAt": "2026-06-24T00:00:00Z",
+      "t212Ticker": "VUSAl_EQ",
+      "quantity": 20,
+      "amount": 4.62,
+      "grossPerShare": 0.21,
+      "grossPerShareCurrency": "USD",
+      "type": "DIVIDEND"
+    },
+    {
+      "id": "d-4",
+      "paidAt": "2026-08-14T00:00:00Z",
+      "t212Ticker": "AAPL_US_EQ",
+      "quantity": 15,
+      "amount": 2.92,
+      "grossPerShare": 0.26,
+      "grossPerShareCurrency": "USD",
+      "type": "ORDINARY"
+    },
+    {
+      "id": "d-5",
+      "paidAt": "2026-09-24T00:00:00Z",
+      "t212Ticker": "VUSAl_EQ",
+      "quantity": 30,
+      "amount": 6.95,
+      "grossPerShare": 0.21,
+      "grossPerShareCurrency": "USD",
+      "type": "DIVIDEND"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "x-1",
+      "at": "2025-11-01T10:00:00Z",
+      "type": "DEPOSIT",
+      "amount": 5000,
+      "currency": "EUR"
+    },
+    {
+      "id": "x-2",
+      "at": "2026-01-10T10:00:00Z",
+      "type": "DEPOSIT",
+      "amount": 3000,
+      "currency": "EUR"
+    },
+    {
+      "id": "x-3",
+      "at": "2026-03-01T10:00:00Z",
+      "type": "DEPOSIT",
+      "amount": 4000,
+      "currency": "EUR"
+    },
+    {
+      "id": "x-4",
+      "at": "2026-07-01T00:00:00Z",
+      "type": "INTEREST_ON_FREE_CASH",
+      "amount": 2.4,
+      "currency": "EUR"
+    },
+    {
+      "id": "x-5",
+      "at": "2026-08-20T12:00:00Z",
+      "type": "WITHDRAW",
+      "amount": -500,
+      "currency": "EUR"
+    },
+    {
+      "id": "x-6",
+      "at": "2026-09-01T00:00:00Z",
+      "type": "INTEREST_ON_FREE_CASH",
+      "amount": 1.85,
+      "currency": "EUR"
+    },
+    { "id": "x-7", "at": "2026-09-15T00:00:00Z", "type": "FEE", "amount": -0.5, "currency": "EUR" }
+  ]
+}

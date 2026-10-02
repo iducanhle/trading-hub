@@ -21,8 +21,12 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
+import { T212Settings } from './t212-settings';
 
-/** `/settings`: account, theme, the email digest (stored in `users/{uid}.settings`), a test email, and About. */
+/**
+ * `/settings`: account, theme, the email digest (stored in `users/{uid}.settings`), a test email, Trading 212, and
+ * About. `/settings#trading212` scrolls to the Trading 212 section.
+ */
 @Component({
   selector: 'app-settings-page',
   imports: [
@@ -42,6 +46,7 @@ import { Icon } from '../../shared/icon/icon';
     ErrorState,
     Skeleton,
     Icon,
+    T212Settings,
   ],
   template: `
     <app-page-header title="Settings" i18n-title />
@@ -232,6 +237,8 @@ import { Icon } from '../../shared/icon/icon';
           </button>
         }
       </section>
+
+      <app-t212-settings id="trading212" />
 
       <section
         aria-labelledby="about-title"

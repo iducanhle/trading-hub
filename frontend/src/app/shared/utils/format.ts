@@ -83,6 +83,28 @@ export function formatSignedNumber(
   return withMinus(format.format(value));
 }
 
+/** A signed amount of money, for profit and loss: `+€123.45`, `−$12.00`, `€0.00`. */
+export function formatSignedMoney(
+  value: number | null | undefined,
+  currency?: string | null,
+  locale = NUMBER_LOCALE,
+): string {
+  if (!isNumber(value)) return DASH;
+  const format = numberFormat(locale, {
+    ...currencyOptions(currency),
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    signDisplay: 'exceptZero',
+  });
+  return withMinus(format.format(value));
+}
+
+/** Share quantities, fractional ones included: `10`, `0.5`, `1.234567`. */
+export function formatQuantity(value: number | null | undefined, locale = NUMBER_LOCALE): string {
+  if (!isNumber(value)) return DASH;
+  return withMinus(numberFormat(locale, { maximumFractionDigits: 6 }).format(value));
+}
+
 /** Large amounts: `$8.4B`, `€312M`, `1.23T`; without a currency for counts such as volume (`52.3M`). */
 export function formatCompact(
   value: number | null | undefined,

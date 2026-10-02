@@ -6,6 +6,8 @@ import {
   formatPercent,
   formatPlainPercent,
   formatPrice,
+  formatQuantity,
+  formatSignedMoney,
   formatSignedNumber,
   reportTimeLabel,
   toneClass,
@@ -23,6 +25,21 @@ describe('format', () => {
     expect(formatPercent(null)).toBe(DASH);
     expect(formatNumber(Number.NaN)).toBe(DASH);
     expect(formatSignedNumber(null)).toBe(DASH);
+  });
+
+  it('signs profit and loss amounts', () => {
+    expect(formatSignedMoney(123.4, 'EUR', 'en-US')).toBe('+€123.40');
+    expect(formatSignedMoney(-12, 'USD', 'en-US')).toBe(`${MINUS}$12.00`);
+    expect(formatSignedMoney(0, 'EUR', 'en-US')).toBe('€0.00');
+    expect(formatSignedMoney(1.5, 'EUR', 'cs-CZ')).toBe('+1,50 €');
+    expect(formatSignedMoney(null, 'EUR')).toBe(DASH);
+  });
+
+  it('shows fractional share quantities', () => {
+    expect(formatQuantity(10, 'en-US')).toBe('10');
+    expect(formatQuantity(0.5, 'en-US')).toBe('0.5');
+    expect(formatQuantity(1.2345678, 'en-US')).toBe('1.234568');
+    expect(formatQuantity(null)).toBe(DASH);
   });
 
   it('formats prices with 2 decimals and the currency symbol', () => {

@@ -6,6 +6,8 @@ import {
   formatNumber,
   formatPercent,
   formatPrice,
+  formatQuantity,
+  formatSignedMoney,
   formatSignedNumber,
   reportTimeLabel,
 } from '../utils/format';
@@ -39,6 +41,22 @@ export class PercentPipe implements PipeTransform {
 export class SignedNumberPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     return formatSignedNumber(value);
+  }
+}
+
+/** `{{ 123.4 | money: 'EUR' }}` → `+€123.40` (always signed, for profit and loss) */
+@Pipe({ name: 'money' })
+export class SignedMoneyPipe implements PipeTransform {
+  transform(value: number | null | undefined, currency?: string | null): string {
+    return formatSignedMoney(value, currency);
+  }
+}
+
+/** `{{ 0.5 | qty }}` → `0.5` */
+@Pipe({ name: 'qty' })
+export class QuantityPipe implements PipeTransform {
+  transform(value: number | null | undefined): string {
+    return formatQuantity(value);
   }
 }
 

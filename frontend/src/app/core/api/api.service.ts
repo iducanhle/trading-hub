@@ -20,13 +20,24 @@ import {
   RegionFilter,
   SearchResult,
   StockOverview,
+  T212CredentialsRequest,
+  T212DividendsResponse,
+  T212InstrumentDetail,
+  T212InstrumentsResponse,
+  T212PositionStatus,
+  T212Side,
+  T212Status,
+  T212Summary,
+  T212TradesResponse,
+  T212TransactionType,
+  T212TransactionsResponse,
   TestEmailResponse,
 } from '../models/contract';
 import { ResponseCache } from './response-cache';
 
 const MINUTE = 60_000;
 /** Overview (price) data is cached for 60 s, everything else for 5 min. */
-const TTL = { overview: MINUTE, default: 5 * MINUTE } as const;
+const TTL = { overview: MINUTE, default: 5 * MINUTE, t212: MINUTE, t212Status: 10_000 } as const;
 
 export interface LoadOptions {
   /** Skip the session cache (pull-to-refresh, Retry). */
@@ -49,12 +60,35 @@ export interface MarketEventsQuery {
   includeEarnings: boolean;
 }
 
+/** A Trading 212 period: `from`/`to` days (inclusive) in the IANA zone `tz`; both omitted = all time. */
+export interface T212PeriodQuery {
+  from?: string | null;
+  to?: string | null;
+  tz: string;
+}
+
+export interface T212TradesQuery extends T212PeriodQuery {
+  side?: T212Side | null;
+  ticker?: string | null;
+  cursor?: string | null;
+  limit?: number;
+}
+
 /** Canonical, URL-encoded symbol for a path segment (`sap.de` → `SAP.DE`, `BRK-B` stays as is). */
 export function encodeSymbol(symbol: string): string {
   return encodeURIComponent(symbol.trim().toUpperCase());
 }
 
 type Params = Record<string, string | number | boolean>;
+
+/** Leaves out null, undefined and empty values. */
+function present(values: Record<string, string | number | boolean | null | undefined>): Params {
+  const params: Params = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== null && value !== undefined && value !== '') params[key] = value;
+  }
+  return params;
+}
 
 /** One method per endpoint in docs/CONTRACT.md. */
 @Injectable({ providedIn: 'root' })
@@ -129,6 +163,87 @@ export class ApiService {
 
   sendTestEmail(): Observable<TestEmailResponse> {
     return this.http.post<TestEmailResponse>(`${this.baseUrl}/notifications/test`, null);
+  }
+
+  // ─── Trading 212 ───
+
+  t212Status(options?: LoadOptions): Observable<T212Status> {
+    return this.get<T212Status>('/t212/status', {}, options, TTL.t212Status);
+  }
+
+  /** Validates and stores the key, then starts the first sync. The key is sent once and never kept here. */
+  t212Connect(body: T212CredentialsRequest): Observable<T212Status> {
+    this.cache.invalidate('/t212');
+    return this.http.put<T212Status>(`${this.baseUrl}/t212/credentials`, body);
+  }
+
+  /** Deletes the stored key and every synced item. */
+  t212Disconnect(): Observable<void> {
+    this.cache.invalidate('/t212');
+    return this.http.delete<void>(`${this.baseUrl}/t212/credentials`);
+  }
+
+  t212Sync(): Observable<T212Status> {
+    this.cache.invalidate('/t212/status');
+    return this.http.post<T212Status>(`${this.baseUrl}/t212/sync`, null);
+  }
+
+  t212Summary(query: T212PeriodQuery, options?: LoadOptions): Observable<T212Summary> {
+    return this.get<T212Summary>('/t212/summary', present({ ...query }), options, TTL.t212);
+  }
+
+  t212Instruments(
+    query: T212PeriodQuery & { status?: T212PositionStatus | 'ALL' },
+    options?: LoadOptions,
+  ): Observable<T212InstrumentsResponse> {
+    return this.get<T212InstrumentsResponse>(
+      '/t212/instruments',
+      present({ ...query }),
+      options,
+      TTL.t212,
+    );
+  }
+
+  t212Instrument(t212Ticker: string, options?: LoadOptions): Observable<T212InstrumentDetail> {
+    return this.get<T212InstrumentDetail>(
+      `/t212/instruments/${encodeURIComponent(t212Ticker)}`,
+      {},
+      options,
+      TTL.t212,
+    );
+  }
+
+  t212Trades(query: T212TradesQuery, options?: LoadOptions): Observable<T212TradesResponse> {
+    return this.get<T212TradesResponse>('/t212/trades', present({ ...query }), options, TTL.t212);
+  }
+
+  t212Dividends(
+    query: T212PeriodQuery & { ticker?: string | null },
+    options?: LoadOptions,
+  ): Observable<T212DividendsResponse> {
+    return this.get<T212DividendsResponse>(
+      '/t212/dividends',
+      present({ ...query }),
+      options,
+      TTL.t212,
+    );
+  }
+
+  t212Transactions(
+    query: T212PeriodQuery & { type?: T212TransactionType | null },
+    options?: LoadOptions,
+  ): Observable<T212TransactionsResponse> {
+    return this.get<T212TransactionsResponse>(
+      '/t212/transactions',
+      present({ ...query }),
+      options,
+      TTL.t212,
+    );
+  }
+
+  /** Forgets cached Trading 212 responses (after a sync finished, or a key changed). */
+  clearT212Cache(): void {
+    this.cache.invalidate('/t212');
   }
 
   /** Forgets every cached response (sign-out). */

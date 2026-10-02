@@ -19,24 +19,34 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | Phase | Status |
 |---|---|
 | 1 – Research & contract | Done (2026-10-02) |
-| 5 – Frontend: Settings + mocks | — (after backend phases 2–4) |
+| 5 – Frontend: Settings + mocks | Done (2026-10-02) |
 | 6 – Frontend: Portfolio tab | — |
 | 7 – Integration & polish | — |
 
 **Done**
 - Phase 1: contract for `/api/t212/**` agreed (types `T212Status`, `T212Summary`, `T212Instrument`, `T212Trade`, `T212Dividend`, `T212Transaction`).
+- Phase 5:
+  - Contract types and the six `T212_…` error codes in `core/models/contract.ts`; `ApiService` methods for every `/api/t212` endpoint (reads cached 60 s, status 10 s; PUT/DELETE/POST drop the Trading 212 cache).
+  - `T212Service` (root): status, connect, disconnect, sync; polls every 3 s while a sync runs; `dataVersion` goes up when the synced data may have changed. Reset on sign-out.
+  - Settings → Trading 212 (`features/settings/t212-settings.ts`, anchor `/settings#trading212`): guide (menu path, permissions, IP restriction with the server's IP from the status), Live/Demo toggle, key and secret as password fields with show/hide, inline errors in the user's language, Connect; connected view with account, `•••• hint`, last sync / syncing / failed, a warning when the key stopped working, Sync now, Replace key, Disconnect (confirmation sheet). The fields are cleared after every submit; nothing is stored in the browser. "Not available on this server" when the backend answers `T212_NOT_CONFIGURED`.
+  - Shared `ConfirmSheet`; `formatSignedMoney`/`money` pipe and `formatQuantity`/`qty` pipe; icons `account_balance_wallet`(-fill), `key`, `link_off`, `payments`, `receipt_long`, `sort`, `sync`, `trending_down`, `warning`.
+  - Mock mode: `mock-t212.ts` + `assets/mocks/t212-portfolio.json` (starts disconnected; keys with "bad" / "noperm" fail; a 2.5 s sync; AAPL open at a loss, MSFT closed with a profit, SAP closed at a loss, an NVDA split, an unmapped LSE ETF with dividends; P/L computed with the backend's rules for any period).
+  - Czech for every new string (428 messages). Checked in mock mode in the browser: rejected key (error, fields cleared), connect → syncing → last sync, no key in local/session storage, disconnect with confirmation. Tests: 69 unit tests, lint, build pass.
 
 **In progress:** nothing.
 
-**Next:** phase 5 after the backend phases.
+**Next (phase 6):** Portfolio tab: navigation (6th tab), Overview, Stocks, Trades, Dividends & cash, instrument detail, period selector in the URL, term hints.
 
-**Known issues:** none yet.
+**Known issues**
+- The in-app browser used for checks does not render frames while hidden, so bottom sheets never finish their close animation there; the flow was completed by firing `animationend`. Not an app issue.
 
 **Decisions (from the contract, relevant to the UI)**
 - **2026-10-02 —** Periods are sent as `from`/`to` days plus `tz` (the device's IANA zone); All = no `from`/`to`.
 - **2026-10-02 —** `unrealizedPnl` is as of now; `totalPnl` includes it only for All (`includesUnrealized`). `totalPnlPct` is `null` for a period, so P/L % sorting puts those last.
 - **2026-10-02 —** Prices (`averageCost`, `currentPrice`, trade `price`) are in the instrument currency; every other amount is in `accountCurrency`.
 - **2026-10-02 —** When `GET /api/t212/status` answers 503 `T212_NOT_CONFIGURED`, Settings shows "not available on this server" instead of the connect form.
+- **2026-10-02 —** The connect form clears the key and secret on every submit, also when it fails, so the key never outlives the request (the user pastes it again after an error).
+- **2026-10-02 —** Server error messages are English; the connect form shows its own translated text per error code and only takes the list of missing permissions from the server's message.
 
 ## Done
 
