@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "start:mock": "ng serve --configuration mock",
+    "start:remote": "ng serve --configuration remote --port 4200",
     "start:emulators": "ng serve --configuration emulators",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",

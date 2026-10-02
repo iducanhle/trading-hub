@@ -12,6 +12,7 @@ Node 24 LTS. From this folder:
 |---|---|
 | `npm install` | Dependencies (once) |
 | `npm run start:mock` | **No backend, no Firebase.** Fixtures from `src/assets/mocks` and a fake signed-in user. Open <http://localhost:4200>. |
+| `npm run start:remote` | **The production backend on the VM** (`https://tradiqo.duckdns.org`) with the real Firebase project: real data, so anything you change is real. Port 4200 only (the backend's CORS allows it). |
 | `npm start` | Against the backend on `localhost:8080` and the real Firebase project (fill in `src/environments/environment.ts` first). |
 | `npm run start:emulators` | Against the local backend in emulator mode and the Firebase Auth/Firestore emulators (see [backend/README.md](../backend/README.md)). |
 | `npm run test:ci` | Unit tests once (Vitest); `npm test` watches. |

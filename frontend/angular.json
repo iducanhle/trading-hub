@@ -93,6 +93,17 @@
                   "with": "src/environments/environment.emulators.ts"
                 }
               ]
+            },
+            "remote": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.remote.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -111,6 +122,9 @@
             },
             "emulators": {
               "buildTarget": "earnings-tracker:build:emulators"
+            },
+            "remote": {
+              "buildTarget": "earnings-tracker:build:remote"
             }
           },
           "defaultConfiguration": "development"
