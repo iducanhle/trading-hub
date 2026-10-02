@@ -62,7 +62,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource(SecurityProperties properties) {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(properties.corsAllowedOrigins());
-        cors.setAllowedMethods(List.of("GET", "POST"));
+        cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         cors.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
         cors.setMaxAge(Duration.ofHours(1));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

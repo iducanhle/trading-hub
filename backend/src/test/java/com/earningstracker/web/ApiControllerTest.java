@@ -104,6 +104,12 @@ class ApiControllerTest {
     }
 
     @Test
+    void trading212AnswersNotConfiguredWithoutAMasterKey() {
+        assertThat(get("/api/t212/status")).hasStatus(HttpStatus.SERVICE_UNAVAILABLE).bodyJson()
+                .extractingPath("$.code").isEqualTo("T212_NOT_CONFIGURED");
+    }
+
+    @Test
     void rejectsUnsupportedSymbols() {
         assertBadRequest("/api/stocks/SAP.F");
         assertBadRequest("/api/stocks/BRK.B/earnings");

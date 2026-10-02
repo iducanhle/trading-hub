@@ -67,6 +67,12 @@ public class FirestoreDocumentStore implements DocumentStore {
     }
 
     @Override
+    public void delete(String collection, String id) {
+        writes.incrementAndGet();
+        await(firestore.collection(collection).document(id).delete(), collection, id);
+    }
+
+    @Override
     public Map<String, Map<String, Object>> list(String collectionPath) {
         List<QueryDocumentSnapshot> documents = await(firestore.collection(collectionPath).get(), collectionPath, "*")
                 .getDocuments();

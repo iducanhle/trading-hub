@@ -1,0 +1,12 @@
+[
+  {
+    "instrument": { "ticker": "AAPL_US_EQ", "isin": "US0378331005", "name": "Apple", "currency": "USD" },
+    "quantity": 10,
+    "quantityAvailableForTrading": 10,
+    "quantityInPies": 0,
+    "averagePricePaid": 180.0,
+    "currentPrice": 170.0,
+    "createdAt": "2026-03-02T15:31:00Z",
+    "walletImpact": { "currency": "EUR", "currentValue": 1564.0, "totalCost": 1656.0, "unrealizedProfitLoss": -92.0, "fxImpact": 3.1 }
+  }
+]

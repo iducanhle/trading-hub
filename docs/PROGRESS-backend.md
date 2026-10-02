@@ -20,21 +20,25 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | Phase | Status |
 |---|---|
 | 1 – Research & contract | Done (2026-10-02) |
-| 2 – Backend: credentials | Next |
-| 3 – Backend: sync | — |
+| 2 – Backend: credentials | Done (2026-10-02) |
+| 3 – Backend: sync | Next |
 | 4 – Backend: P/L engine & read endpoints | — |
 | 7 – Integration & polish (demo account check) | — |
 
 **Done**
 - Phase 1: read the official OpenAPI file and the help centre's key guide; endpoints, fields, units, pagination, rate limits and open questions are in DATA-SOURCES.md. Contract: `/api/t212/**`, `T212…` types, error codes, P/L definitions, storage. No code yet.
 
-**In progress:** nothing (waiting for "continue").
+- Phase 2:
+  - `T212Crypto` (AES-256-GCM, random 12-byte IV per value, uid as AAD, key fingerprint) and `T212Encryption` (`T212_ENCRYPTION_KEY`; missing or malformed → feature off, 503 `T212_NOT_CONFIGURED`, rest of the app unaffected).
+  - `T212CredentialStore` (`t212Credentials/{uid}`, ciphertexts and hint only, cached) and `T212StateStore` (`t212/{uid}`, deletes subcollections). `DocumentStore` gained `delete`.
+  - Read-only `T212Client` (GET only, no redirects, Basic or legacy auth, per-account/endpoint limiter from the `x-ratelimit-*` headers, waits and retries on 429 up to `max-rate-limit-wait`, retries 5xx/I/O, `nextPagePath` must stay under `/api/v0/equity/history/`, `Authorization` redacted in debug logs).
+  - `T212ConnectionService` + `T212Controller`: `GET /status`, `PUT` (checks 5 permissions, wipes data on an account change) and `DELETE /credentials` (204). CORS now allows PUT and DELETE.
+  - Rules: explicit deny for `t212Credentials/**` and `t212/**`, 3 rules tests (owner, other user, anonymous). DEPLOYMENT-backend.md 6.4 and 9.5, `.env.example`, README.
+  - Tests: crypto (round trip, wrong master key, wrong user, tampering, bad key), client (auth headers, GET only, error mapping, 429 wait/retry, `remaining: 0` wait, too-long wait, `nextPagePath` guard, log redaction), service (connect, permissions, rejected key, validation, account change, disconnect, changed master key, not configured), controller (auth, two users, error codes, no key in responses). Backend 179 tests, rules 14 tests: pass.
 
-**Next (phase 2)**
-- `T212_ENCRYPTION_KEY` config (`t212.encryption-key`), AES-256-GCM `T212Crypto`, `T212CredentialStore` (Firestore `t212Credentials/{uid}`).
-- `GET /api/t212/status`, `PUT` / `DELETE /api/t212/credentials`, with the validation calls behind a minimal read-only client (account summary, positions, one page of each history).
-- `T212_NOT_CONFIGURED` when the key is missing; log redaction of `Authorization`.
-- Rules: explicit deny for `t212Credentials/**` and `t212/**` plus rules tests; DEPLOYMENT-backend.md and `backend/.env.example`.
+**In progress:** nothing.
+
+**Next (phase 3):** history DTOs and normalization, symbol mapper, `T212SyncService` (full + incremental, one per user, state), `t212-sync` job, `POST /api/t212/sync`, first sync after connect.
 
 **Known issues**
 - No Trading 212 key was available, so nothing has been called yet. The open questions (sell quantity sign, whether realized P/L includes fees, split fills, ticker suffixes, pence currency code) are listed as UNVERIFIED in DATA-SOURCES.md and get checked against a demo account in phase 7. Until then, the code normalizes defensively (absolute values plus `side`) and covers both readings in tests.

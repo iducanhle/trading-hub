@@ -287,6 +287,7 @@ Fill in every line (the arrow keys move the cursor; paste with right-click or Ct
 | `DUCKDNS_SUBDOMAIN` | `YOURNAME` (without `.duckdns.org`) |
 | `DUCKDNS_TOKEN` | from section 5 |
 | `TZ` | `Europe/Prague` |
+| `T212_ENCRYPTION_KEY`, `T212_SERVER_IP_HINT` | optional, for the Trading 212 portfolio: see 6.4 (empty = the feature is off) |
 | `APP_USER` | add this line: the output of `echo "$(id -u):$(id -g)"` on the VM, usually `1001:1001` on Oracle's Ubuntu image. The app runs as this user so it can read the key. |
 
 Save with **Ctrl+O**, **Enter**, then exit with **Ctrl+X**. Then lock the two secret files so only your user can read them:
@@ -298,6 +299,37 @@ VM$ ls -l
 **You should see:** `.env` and `firebase-sa.json` with `-rw-------` and owner `ubuntu`, next to `Caddyfile` and `docker-compose.yml`. The app container runs as `APP_USER`, the same user, so it can still read the key.
 
 The stack is started in 7.4, once GitHub has built the image.
+
+### 6.4 Trading 212 encryption key (optional)
+The Portfolio tab lets each user connect their own Trading 212 account with an API key. The backend stores those keys **encrypted** in Firestore, with a master key that exists only in the VM's `.env`. Without it, the Portfolio tab and the Trading 212 section of Settings say the feature is not available on this server, and everything else works normally.
+
+The steps are the same on a server that is already running. On the VM:
+```bash
+VM$ cd /opt/earnings-tracker
+VM$ openssl rand -base64 32
+```
+**You should see:** one line of 44 characters ending in `=` (different every time). That line is the master key.
+
+```bash
+VM$ nano .env
+```
+Add these two lines at the end, with the key you just generated and the VM's public IP from 4.5:
+```
+T212_ENCRYPTION_KEY=the-44-characters-from-openssl
+T212_SERVER_IP_HINT=VM_IP
+```
+Save (**Ctrl+O**, **Enter**, **Ctrl+X**), then apply it:
+```bash
+VM$ docker compose up -d
+VM$ docker compose logs app | grep -i "trading 212"
+```
+**You should see:** no line saying `Trading 212 is off`. Compose already passes `.env` to the app (`env_file`), so `docker-compose.yml` needs no change.
+
+`T212_SERVER_IP_HINT` is only displayed in Settings, so users can restrict their Trading 212 key to the server's IP (Trading 212 app → Settings → API → "Restrict access to trusted IPs"). That is recommended: a leaked key then cannot be used from anywhere else.
+
+> **Keep a copy of the master key** with your other secrets (a password manager). If it is lost or changed, the stored keys can no longer be decrypted: the app then shows "Connect again" and each user has to enter their Trading 212 key once more (their synced history stays). Never commit it, and don't reuse it for anything else.
+
+**If the log says `Trading 212 is off: T212_ENCRYPTION_KEY must be 32 bytes`:** the value was cut off or has extra characters. Generate a new one with the command above and paste the whole line.
 
 ---
 
@@ -506,6 +538,7 @@ After each change: edit `.env` (or replace the file) on the VM, then `docker com
 | Finnhub / Twelve Data / FMP key | Create a new key in the provider's dashboard (Twelve Data and FMP can have several; Finnhub: dashboard or support), update `.env`, then delete the old key. |
 | Gmail app password | <https://myaccount.google.com/apppasswords>: create a new one, update `MAIL_APP_PASSWORD`, then delete the old one there. |
 | Firebase service-account key | Firebase console → Project settings → Service accounts → **Generate new private key**. Copy it to the VM as `firebase-sa.json` (as in 6.3), `chmod 600 firebase-sa.json`, `docker compose up -d --force-recreate app`. Then delete the old key: Google Cloud console → **IAM & Admin → Service Accounts** → `firebase-adminsdk-…` → **Keys**. |
+| `T212_ENCRYPTION_KEY` | Only if it leaked: generate a new one (6.4), then `docker compose up -d`. Every user must reconnect Trading 212 in Settings (stored keys cannot be decrypted with the new one), and should revoke their old Trading 212 key in the Trading 212 app. |
 | DuckDNS token | duckdns.org → **recreate token**, update `DUCKDNS_TOKEN`. |
 | CI deploy key | Create a new pair (7.5), replace its line in the VM's `~/.ssh/authorized_keys` (`nano ~/.ssh/authorized_keys`), and update the `DEPLOY_SSH_KEY` secret. |
 

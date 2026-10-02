@@ -102,6 +102,15 @@ service cloud.firestore {
       }
     }
 
+    // Trading 212: encrypted API keys and synced brokerage history. Written and read only by the backend (Admin
+    // SDK); not even the owner may touch them from the web app. Explicit so a later rule can never open them.
+    match /t212Credentials/{document=**} {
+      allow read, write: if false;
+    }
+    match /t212/{document=**} {
+      allow read, write: if false;
+    }
+
     // Everything else, including the backend-only collections (symbols, prices, earnings, earningsCalendar, fx,
     // jobRuns, notificationLog, viewed), is closed to clients.
     match /{document=**} {

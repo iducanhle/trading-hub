@@ -197,3 +197,40 @@ describe('backend-only collections', () => {
     }
   });
 });
+
+describe('Trading 212 (backend-only)', () => {
+  /** Seeds documents as the backend would (Admin SDK = rules disabled). */
+  async function seedTrading212(): Promise<void> {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore() as unknown as Firestore;
+      await setDoc(doc(db, 't212Credentials/alice'), { keyHint: 'WXYZ', apiKey: { iv: 'x', ciphertext: 'y' } });
+      await setDoc(doc(db, 't212/alice'), { syncState: 'IDLE' });
+      await setDoc(doc(db, 't212/alice/orders/2026-09'), { items: [] });
+    });
+  }
+
+  it('the signed-in owner can neither read nor write their stored key', async () => {
+    await seedTrading212();
+    await assertFails(getDoc(doc(alice(), 't212Credentials/alice')));
+    await assertFails(setDoc(doc(alice(), 't212Credentials/alice'), { keyHint: '1234' }));
+    await assertFails(updateDoc(doc(alice(), 't212Credentials/alice'), { keyHint: '1234' }));
+    await assertFails(deleteDoc(doc(alice(), 't212Credentials/alice')));
+  });
+
+  it('the owner can neither read nor write their synced data', async () => {
+    await seedTrading212();
+    for (const path of ['t212/alice', 't212/alice/orders/2026-09', 't212/alice/dividends/2026']) {
+      await assertFails(getDoc(doc(alice(), path)));
+      await assertFails(setDoc(doc(alice(), path), { x: 1 }));
+      await assertFails(deleteDoc(doc(alice(), path)));
+    }
+  });
+
+  it('other users and anonymous clients are refused too', async () => {
+    await seedTrading212();
+    await assertFails(getDoc(doc(as('bob', 'bob@example.com'), 't212Credentials/alice')));
+    await assertFails(getDoc(doc(as('bob', 'bob@example.com'), 't212/alice')));
+    await assertFails(getDoc(doc(anonymous(), 't212Credentials/alice')));
+    await assertFails(getDoc(doc(anonymous(), 't212/alice/orders/2026-09')));
+  });
+});

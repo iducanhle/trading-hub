@@ -20,6 +20,9 @@ public interface DocumentStore {
     /** Writes the given top-level fields, keeping the document's other fields. */
     void merge(String collection, String id, Map<String, Object> fields);
 
+    /** Deletes the document if it exists (its subcollections are not touched). */
+    void delete(String collection, String id);
+
     /**
      * Every document of a (sub)collection such as {@code users/{uid}/follows}, keyed by id. Costs one read per
      * document (at least one per query).

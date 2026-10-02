@@ -125,6 +125,8 @@ Real environment variables always win over `.env`.
 | `CORS_ALLOWED_ORIGINS` | Frontend origins allowed to call `/api/**` |
 | `MAIL_USERNAME`, `MAIL_APP_PASSWORD`, `MAIL_FROM_NAME` | Gmail SMTP sender for the digest |
 | `APP_BASE_URL` | Frontend URL used in email links |
+| `T212_ENCRYPTION_KEY` | Master key (base64 of 32 bytes, `openssl rand -base64 32`) for the users' stored Trading 212 keys; empty turns `/api/t212/**` off (503 `T212_NOT_CONFIGURED`) |
+| `T212_SERVER_IP_HINT` | The server's public IP, shown in Settings so users can restrict their Trading 212 key to it |
 | `TZ` | Container time zone (`Europe/Prague`) |
 | `JOBS_ENABLED` | `false` turns off the schedules and the startup run (local development) |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_SMTP_AUTH`, `MAIL_STARTTLS` | Local mail catchers only; the defaults are Gmail's |
@@ -145,7 +147,8 @@ Swagger UI: <http://localhost:8080/swagger-ui.html>. The UI itself is public; it
 | `firebase`, `security` | Admin SDK setup (incl. emulator mode), token filter, allowlist, CORS |
 | `web` | Controllers, contract DTOs, the error format |
 | `market` | Exchanges, symbols, money, the shared value records |
-| `provider` | Capability interfaces, `ProviderRouter` (fallback chains), rate-limited HTTP, the Finnhub / Twelve Data / FMP / Yahoo adapters |
+| `provider` | Capability interfaces, `ProviderRouter` (fallback chains), rate-limited HTTP, the Finnhub / Twelve Data / FMP / Yahoo / Compass adapters, the read-only Trading 212 client |
+| `t212` | Trading 212 portfolio: key encryption (AES-256-GCM) and storage, connection state, sync |
 | `cache` | `TieredCache` (Caffeine in memory + Firestore documents) |
 | `fx`, `universe` | USD exchange rates; the EU seed universe (`eu-universe.csv`) |
 | `domain` | Calculators: performance, history, earnings results, price reactions, stats, the earnings merge |

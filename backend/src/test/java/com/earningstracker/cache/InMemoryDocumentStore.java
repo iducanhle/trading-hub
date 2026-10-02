@@ -58,6 +58,13 @@ public class InMemoryDocumentStore implements DocumentStore {
     }
 
     @Override
+    public void delete(String collection, String id) {
+        check();
+        writes.incrementAndGet();
+        documents.remove(collection + "/" + id);
+    }
+
+    @Override
     public Map<String, Map<String, Object>> list(String collectionPath) {
         check();
         String prefix = collectionPath + "/";

@@ -75,6 +75,18 @@ app:
   universe:
     resource: eu-universe.csv
     validate-on-startup: true
+  # Trading 212 portfolio (docs/PROMPT-trading212.md). Without T212_ENCRYPTION_KEY (base64 of 32 random bytes) the
+  # /api/t212 endpoints answer 503 T212_NOT_CONFIGURED and the rest of the app works normally.
+  t212:
+    encryption-key: ${T212_ENCRYPTION_KEY:}
+    server-ip-hint: ${T212_SERVER_IP_HINT:}  # shown in Settings: restrict the key to this IP
+    live-url: https://live.trading212.com
+    demo-url: https://demo.trading212.com
+    sync-interval: 6h
+    connect-timeout: 5s
+    read-timeout: 30s
+    live-cache-ttl: 60s       # account summary and positions
+    max-rate-limit-wait: 70s  # longest wait for Trading 212's per-account rate limit to reset
   # Findings behind these settings: docs/DATA-SOURCES.md
   providers:
     http:

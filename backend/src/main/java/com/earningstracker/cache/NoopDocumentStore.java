@@ -28,6 +28,11 @@ public class NoopDocumentStore implements DocumentStore {
     }
 
     @Override
+    public void delete(String collection, String id) {
+        // nothing to delete
+    }
+
+    @Override
     public Map<String, Map<String, Object>> list(String collectionPath) {
         return Map.of();
     }
