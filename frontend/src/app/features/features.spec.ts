@@ -300,14 +300,8 @@ describe('portfolio model', () => {
         lastTradeAt: '2026-07-07T09:00:00Z',
       }),
     ];
-    expect(filterInstruments(items, 'OPEN', '').map((i) => i.name)).toEqual([
-      'Apple',
-      'Vanguard S&P 500',
-    ]);
-    expect(filterInstruments(items, 'ALL', 'vusa').map((i) => i.name)).toEqual([
-      'Vanguard S&P 500',
-    ]);
-    expect(filterInstruments(items, 'CLOSED', 'apple')).toEqual([]);
+    expect(filterInstruments(items, '').length).toBe(3);
+    expect(filterInstruments(items, 'vusa').map((i) => i.name)).toEqual(['Vanguard S&P 500']);
     const names = (sort: StockSort) => sortInstruments(items, sort).map((i) => i.name);
     expect(names('pnl')).toEqual(['Microsoft', 'Vanguard S&P 500', 'Apple']);
     expect(names('pnlPct')).toEqual(['Vanguard S&P 500', 'Apple', 'Microsoft']); // missing last

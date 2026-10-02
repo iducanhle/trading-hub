@@ -1,5 +1,5 @@
 import { T212PeriodQuery } from '../../core/api/api.service';
-import { T212Instrument, T212PositionStatus, T212Trade } from '../../core/models/contract';
+import { T212Instrument, T212Trade } from '../../core/models/contract';
 import { addDays, todayIso } from '../../shared/utils/dates';
 
 /** The device's IANA time zone; periods are whole days there. */
@@ -94,30 +94,41 @@ export function periodQuery(period: PortfolioPeriod, tz: string = DEVICE_TZ): T2
   return { from: period.from, to: period.to, tz };
 }
 
-export type StatusFilter = T212PositionStatus | 'ALL';
 export type StockSort = 'pnl' | 'pnlPct' | 'value' | 'lastTrade' | 'name';
 
-/** Status and a name/ticker/symbol search (case-insensitive). */
+/** A name/ticker/symbol search (case-insensitive). */
 export function filterInstruments(
   items: readonly T212Instrument[],
-  status: StatusFilter,
   search: string,
 ): T212Instrument[] {
   const q = search.trim().toLowerCase();
   return items.filter(
     (i) =>
-      (status === 'ALL' || i.status === status) &&
-      (!q ||
-        i.name.toLowerCase().includes(q) ||
-        i.t212Ticker.toLowerCase().includes(q) ||
-        (i.symbol ?? '').toLowerCase().includes(q)),
+      !q ||
+      i.name.toLowerCase().includes(q) ||
+      i.t212Ticker.toLowerCase().includes(q) ||
+      (i.symbol ?? '').toLowerCase().includes(q),
   );
+}
+
+/** Profit/loss of an instrument; without unrealized, only what is realized, dividends and fees. */
+export function instrumentPnl(i: T212Instrument, includeUnrealized: boolean): number {
+  return includeUnrealized ? i.totalPnl : i.totalPnl - (i.unrealizedPnl ?? 0);
+}
+
+/** All-time percentage of the money bought; null outside all time. */
+export function instrumentPnlPct(i: T212Instrument, includeUnrealized: boolean): number | null {
+  if (includeUnrealized || i.totalPnlPct === null) return i.totalPnlPct;
+  return i.bought.value > 0
+    ? Math.round((instrumentPnl(i, false) / i.bought.value) * 10000) / 100
+    : null;
 }
 
 /** Highest first for numbers (missing values last), newest first for the last trade, A–Z for names. */
 export function sortInstruments(
   items: readonly T212Instrument[],
   sort: StockSort,
+  includeUnrealized = true,
 ): T212Instrument[] {
   const desc =
     (pick: (i: T212Instrument) => number | null) => (a: T212Instrument, b: T212Instrument) => {
@@ -131,9 +142,9 @@ export function sortInstruments(
   const sorted = [...items];
   switch (sort) {
     case 'pnl':
-      return sorted.sort(desc((i) => i.totalPnl));
+      return sorted.sort(desc((i) => instrumentPnl(i, includeUnrealized)));
     case 'pnlPct':
-      return sorted.sort(desc((i) => i.totalPnlPct));
+      return sorted.sort(desc((i) => instrumentPnlPct(i, includeUnrealized)));
     case 'value':
       return sorted.sort(desc((i) => i.value));
     case 'lastTrade':

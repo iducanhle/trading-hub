@@ -20,10 +20,11 @@ import { Pnl } from './pnl';
 import { SORT_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
-  StatusFilter,
   StockSort,
   displayTicker,
   filterInstruments,
+  instrumentPnl,
+  instrumentPnlPct,
   isAllTime,
   periodQuery,
   sortInstruments,
@@ -56,17 +57,16 @@ import {
     <div class="mb-2 flex flex-wrap items-center gap-2">
       <mat-button-toggle-group
         hideSingleSelectionIndicator
-        aria-label="Position status"
+        aria-label="Profit and loss"
         i18n-aria-label
-        [value]="status()"
-        (change)="status.set($event.value)"
+        [value]="unrealized()"
+        (change)="unrealized.set($event.value)"
       >
-        <mat-button-toggle value="ALL" i18n="All positions">All</mat-button-toggle>
-        <mat-button-toggle value="OPEN" i18n="Position status|Shares still held"
-          >Open</mat-button-toggle
+        <mat-button-toggle [value]="false" i18n="Profit/loss basis|Realized only"
+          >Without</mat-button-toggle
         >
-        <mat-button-toggle value="CLOSED" i18n="Position status|Shares fully sold"
-          >Closed</mat-button-toggle
+        <mat-button-toggle [value]="true" i18n="Profit/loss basis|Includes unrealized"
+          >With unrealized</mat-button-toggle
         >
       </mat-button-toggle-group>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="sort-field ml-auto">
@@ -147,9 +147,9 @@ import {
                 <app-pnl
                   strong
                   class="max-w-[45%] text-right"
-                  [value]="item.totalPnl"
+                  [value]="pnl(item)"
                   [currency]="data.value().accountCurrency"
-                  [pct]="allTime() ? item.totalPnlPct : undefined"
+                  [pct]="allTime() ? pct(item) : undefined"
                 />
               </a>
             </li>
@@ -171,7 +171,7 @@ export class PortfolioStocks {
   readonly period = input.required<PortfolioPeriod>();
   readonly version = input(0);
 
-  protected readonly status = persistedSignal<StatusFilter>('portfolio.stocks.status', 'ALL');
+  protected readonly unrealized = persistedSignal<boolean>('portfolio.stocks.unrealized', false);
   protected readonly sort = persistedSignal<StockSort>('portfolio.stocks.sort', 'pnl');
   protected readonly search = signal('');
   protected readonly sortOptions: StockSort[] = ['pnl', 'pnlPct', 'value', 'lastTrade', 'name'];
@@ -189,8 +189,9 @@ export class PortfolioStocks {
   protected readonly items = computed(() =>
     this.data.hasValue()
       ? sortInstruments(
-          filterInstruments(this.data.value().items, this.status(), this.search()),
+          filterInstruments(this.data.value().items, this.search()),
           this.sort(),
+          this.unrealized(),
         )
       : [],
   );
@@ -200,6 +201,14 @@ export class PortfolioStocks {
     emptyText: $localize`Stocks you trade or receive dividends from appear here.`,
     noMatch: $localize`No stocks match`,
   };
+
+  protected pnl(item: T212Instrument): number {
+    return instrumentPnl(item, this.unrealized());
+  }
+
+  protected pct(item: T212Instrument): number | null {
+    return instrumentPnlPct(item, this.unrealized());
+  }
 
   protected ticker(item: T212Instrument): string {
     return displayTicker(item);
