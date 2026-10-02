@@ -105,27 +105,31 @@ class T212PortfolioEngineTest {
     }
 
     @Test
-    void feesAndTaxesOfBuysAndSellsReduceTheTotal() {
+    void realizedIsBeforeFeesAndTheTotalIsWhatCameBackMinusWhatWasPaid() {
+        // netValue includes the fees: 1,000 paid (of which 6.50 fees), 1,100 received (after a 2.00 fee)
         fill("2026-01-05", T212Fill.Side.BUY, T212Fill.TRADE, 10, 1000, 1.5, 5, null);
         fill("2026-02-05", T212Fill.Side.SELL, T212Fill.TRADE, 10, 1100, 2, 0, null);
 
         InstrumentResult r = allTime();
-        assertThat(r.realizedPnl()).isEqualTo(100);
+        assertThat(r.realizedPnl()).isEqualTo(108.5); // 1,102 − 993.50, as Trading 212 computes it
         assertThat(r.fees()).isEqualTo(8.5);
-        assertThat(r.totalPnl(true)).isEqualTo(91.5);
+        assertThat(r.totalPnl(true)).isEqualTo(100); // 1,100 − 1,000
     }
 
     @Test
     void aStockSplitKeepsTheCostAndChangesTheAverage() {
         buy("2026-01-05", 10, 1000);
-        fill("2026-02-01", T212Fill.Side.BUY, T212Fill.STOCK_SPLIT, 30, 0, 0, 0, null); // 4-for-1
+        // As Trading 212 sends a 4-for-1 split: the 10 old shares go out, 40 new ones come in, no value
+        fill("2026-02-01", T212Fill.Side.SELL, T212Fill.STOCK_SPLIT, 10, 0, 0, 0, null);
+        fill("2026-02-01", T212Fill.Side.BUY, T212Fill.STOCK_SPLIT, 40, 0, 0, 0, null);
         sell("2026-03-05", 20, 800, null); // average 25: 800 − 500 = 300
 
         T212PortfolioEngine.Result result = compute(T212Period.ALL_TIME);
         assertThat(result.instruments().get(T).realizedPnl()).isEqualTo(300);
         assertThat(result.instruments().get(T).heldQuantity()).isEqualTo(20);
         assertThat(result.instruments().get(T).tradeCount()).isEqualTo(2); // the split is not a trade
-        assertThat(result.fills().get("o2").positionAfter()).isEqualTo(40);
+        assertThat(result.fills().get("o2").positionAfter()).isZero();
+        assertThat(result.fills().get("o3").positionAfter()).isEqualTo(40);
     }
 
     @Test

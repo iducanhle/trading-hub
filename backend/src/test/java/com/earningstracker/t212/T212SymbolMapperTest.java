@@ -18,10 +18,13 @@ class T212SymbolMapperTest {
             "AZNl_EQ, GBP, AZN.L",
             "MCp_EQ, EUR, MC.PA",
             "ASMLa_EQ, EUR, ASML.AS",
-            "NESNz_EQ, CHF, NESN.SW",
-            "ENIm_EQ, EUR, ENI.MI",
+            "DAXEXs_EQ, CHF, DAXEX.SW",
+            "CSGOLD1s_EQ, USD, CSGOLD1.SW",
+            "VUAAm_EQ, EUR, VUAA.MI",
             "SANe_EQ, EUR, SAN.MC",
-            "VOLV_Bs_EQ, SEK, VOLV-B.ST",
+            "VUAAl_EQ, USD, VUAA.L",
+            "5SPEl_EQ, EUR, 5SPE.L",
+            "RBI_AT_EQ, EUR, RBI.VI",
     })
     void mapsKnownConventions(String ticker, String currency, String symbol) {
         assertThat(T212SymbolMapper.map(ticker, currency)).isEqualTo(symbol);
@@ -30,8 +33,7 @@ class T212SymbolMapperTest {
     @ParameterizedTest
     @CsvSource({
             "AAPL_US_EQ, EUR",     // a US ticker quoted in EUR is not the NASDAQ listing
-            "SAPd_EQ, USD",        // currency does not match Xetra
-            "VUSAl_EQ, USD",       // LSE ETF line in USD
+            "DSV_CA_EQ, CAD",      // Toronto is not a supported exchange
             "CEZq_EQ, CZK",        // exchange letter not in the table
             "XYZ_EQ, EUR",         // no exchange letter
             "AAPL, USD",           // not a Trading 212 ticker

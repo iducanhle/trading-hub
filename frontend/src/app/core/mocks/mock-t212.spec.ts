@@ -57,7 +57,7 @@ const fixture: T212Fixture = {
   ],
   trades: [
     trade('t1', '2026-01-05T15:00:00Z', 'BUY', 10, 1000),
-    trade('t2', '2026-03-05T15:00:00Z', 'SELL', 5, 600), // average 100: +100
+    trade('t2', '2026-03-05T15:00:00Z', 'SELL', 5, 600), // before fees: 601 − 5 × 99.90 = +101.50
   ],
   dividends: [
     {
@@ -117,25 +117,25 @@ describe('MockT212', () => {
     });
 
     const all = (await get(mock, 't212/summary', { tz: 'UTC' })) as T212Summary;
-    expect(all.realizedPnl).toBe(100);
+    expect(all.realizedPnl).toBe(101.5);
     expect(all.fees).toBe(2);
     expect(all.dividends).toBe(2);
-    expect(all.totalPnl).toBe(50); // 100 + 2 − 2 − 50 unrealized
+    expect(all.totalPnl).toBe(51.5); // 101.50 + 2 − 2 − 50 unrealized
     expect(all.includesUnrealized).toBe(true);
-    expect(all.totalPnlPct).toBe(5); // ÷ 1,000 bought
+    expect(all.totalPnlPct).toBe(5.15); // ÷ 1,000 bought
 
     const march = (await get(mock, 't212/summary', {
       from: '2026-03-01',
       to: '2026-03-31',
       tz: 'Europe/Prague',
     })) as T212Summary;
-    expect(march.realizedPnl).toBe(100); // against the January cost
+    expect(march.realizedPnl).toBe(101.5); // against the January cost
     expect(march.dividends).toBe(0);
-    expect(march.totalPnl).toBe(99);
+    expect(march.totalPnl).toBe(100.5);
     expect(march.totalPnlPct).toBeNull();
 
     const list = (await get(mock, 't212/instruments', { tz: 'UTC' })) as T212InstrumentsResponse;
     const aapl: T212Instrument = list.items[0];
-    expect(aapl).toMatchObject({ status: 'OPEN', quantity: 5, totalPnl: 50, tradeCount: 2 });
+    expect(aapl).toMatchObject({ status: 'OPEN', quantity: 5, totalPnl: 51.5, tradeCount: 2 });
   });
 });

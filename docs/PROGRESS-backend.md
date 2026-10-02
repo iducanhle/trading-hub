@@ -23,7 +23,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | 2 – Backend: credentials | Done (2026-10-02) |
 | 3 – Backend: sync | Done (2026-10-02) |
 | 4 – Backend: P/L engine & read endpoints | Done (2026-10-02) |
-| 7 – Integration & polish (demo account check) | In progress: waiting for a demo key |
+| 7 – Integration & polish (real account check) | Done (2026-10-02) |
 
 **Done**
 - Phase 1: read the official OpenAPI file and the help centre's key guide; endpoints, fields, units, pagination, rate limits and open questions are in DATA-SOURCES.md. Contract: `/api/t212/**`, `T212…` types, error codes, P/L definitions, storage. No code yet.
@@ -54,12 +54,13 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 
 **Next:** frontend phases 5–6 (see PROGRESS-frontend.md), then phase 7: check the UNVERIFIED points against a demo account.
 
-- Phase 7 (backend part): `LiveT212Test`, an opt-in read-only probe for a demo key (`LIVE_T212=true`, key in `backend/.env`), writes the raw answers and `findings.md` to `target/t212-probe/`. **Waiting for the owner to run it**; then the normalizer, the fee handling and the ticker table get adjusted to what it shows, and the UNVERIFIED list shrinks.
+- Phase 7 (backend part): `LiveT212Test`, an opt-in read-only probe for a demo key (`LIVE_T212=true`, key in `backend/.env`), writes the raw answers and `findings.md` to `target/t212-probe/`. Run on 2026-10-02 against the owner's real account (read-only; the key was a live one). Fixes from it: the realized fallback and the cost basis exclude fees (Trading 212's rule, 1,102/1,104 sells within 1%); splits (a SELL + BUY pair) keep the cost basis through zero; transaction amounts keep Trading 212's sign; foreign-currency transactions are converted for the totals; ticker letters corrected (`s` = SIX, LSE in USD/EUR, `_AT_EQ` = Vienna). Replaying the full history reproduces all 126 positions and Trading 212's all-time realized P/L exactly. Backend 236 tests pass.
 
 **Known issues**
 - Transactions in another currency than the account's are summed as they are in deposits/withdrawals/interest (Trading 212 says amounts are in the transaction's currency; whether that ever differs is unverified).
 - A sell of shares the synced history never bought (transferred in, or history older than the API returns) has no cost basis; Trading 212's own realized figure is used when present, otherwise the whole value counts as profit.
-- No Trading 212 key was available, so nothing has been called yet. The open questions (sell quantity sign, whether realized P/L includes fees, split fills, ticker suffixes, pence currency code) are listed as UNVERIFIED in DATA-SOURCES.md and get checked against a demo account in phase 7. Until then, the code normalizes defensively (absolute values plus `side`) and covers both readings in tests.
+- Checked against a real account (DATA-SOURCES.md "Verified"). Still open: rate-limit headers were not recorded, corporate actions other than splits and interest transactions did not occur in that account.
+- Foreign-currency transactions are converted at today's rate, not the rate of their day.
 
 **Decisions**
 - **2026-10-02 — The docs win over the prompt where they differ:**
@@ -77,6 +78,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 - **2026-10-02 — Rate limits:** one limiter per user and endpoint, fed by the `x-ratelimit-*` headers. When `remaining` is 0, the next call waits until `reset`. On a 429 the client waits until `reset` (at most 70 s) and retries, up to 3 times, then fails the sync with `T212_RATE_LIMITED`. Live calls (summary 1/5 s, positions 1/s) are cached per user for 60 s.
 - **2026-10-02 — Instrument metadata** (`/metadata/instruments`, thousands of rows, 1 per 50 s) is fetched at most once per sync and only when a ticker is new, kept in memory for 24 h, and only the user's own instruments are stored. History items already carry name, ISIN and currency.
 - **2026-10-02 — P/L semantics** (contract "P/L definitions"): realized P/L is Trading 212's per-sell figure, **before** fees. Fees and taxes of all trades are a separate `fees` line subtracted in `totalPnl`. This changes the prompt's wording, which subtracts only fees of sells, so that buy fees and FX fees are not lost. If the demo check shows that Trading 212's figure already includes fees, the engine subtracts only the remainder. Percentages are for all time only (a period has no meaningful base). Unrealized P/L is as of now and counts only for all time; no historical portfolio value is computed, because there is no daily price history of the portfolio.
+- **2026-10-02 — Fees count once:** `netValue` includes the fees and Trading 212's realized result excludes them, so `totalPnl = realized + dividends − fees` equals what came back minus what was paid. The engine's fallback follows the same rule.
 - **2026-10-02 — Periods take a `tz`** (default UTC, the frontend sends the device's zone), so a trade at 00:30 in Prague falls on the right day.
 
 ## Done

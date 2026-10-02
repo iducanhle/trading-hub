@@ -9,26 +9,30 @@ import com.earningstracker.market.Symbols;
 
 /**
  * Trading 212 tickers to the app's canonical symbols: {@code AAPL_US_EQ} → {@code AAPL}, {@code BRK_B_US_EQ} →
- * {@code BRK-B}, {@code SAPd_EQ} → {@code SAP.DE}, {@code AZNl_EQ} → {@code AZN.L}.
+ * {@code BRK-B}, {@code SAPd_EQ} → {@code SAP.DE}, {@code AZNl_EQ} → {@code AZN.L}, {@code RBI_AT_EQ} →
+ * {@code RBI.VI}.
  *
- * <p>The suffix letters follow the convention seen in public Trading 212 integrations (UNVERIFIED, see
- * docs/DATA-SOURCES.md). A mapping is returned only when the instrument's currency matches the exchange's, so an
- * uncertain case gives null (the instrument still works, just without a stock-detail link) rather than a wrong
- * stock.
+ * <p>Checked against a real account's 214 tickers (docs/DATA-SOURCES.md): {@code d} Xetra, {@code l} LSE,
+ * {@code p} Paris, {@code a} Amsterdam, {@code m} Milan and {@code s} SIX are seen; {@code e} (Madrid) follows the
+ * same convention but was not in that account. A European line can trade in another currency than the exchange's
+ * own (LSE and SIX list ETFs in USD and EUR), so only US tickers are checked against their currency. Anything else
+ * (Toronto {@code _CA_EQ}, unknown letters) gives null: the instrument still works, just without a stock-detail
+ * link.
  */
 public final class T212SymbolMapper {
 
     private static final Pattern US = Pattern.compile("([A-Z0-9][A-Z0-9_]*)_US_EQ");
-    private static final Pattern EUROPE = Pattern.compile("([A-Z0-9][A-Z0-9_]*?)([a-z])_EQ");
-    private static final Map<String, Exchange> EXCHANGES = Map.of(
+    private static final Pattern COUNTRY = Pattern.compile("([A-Z0-9][A-Z0-9_]*)_([A-Z]{2})_EQ");
+    private static final Pattern LETTER = Pattern.compile("([A-Z0-9][A-Z0-9_]*?)([a-z])_EQ");
+    private static final Map<String, Exchange> LETTERS = Map.of(
             "d", Exchange.XETRA,
             "l", Exchange.LSE,
             "p", Exchange.EURONEXT_PARIS,
             "a", Exchange.EURONEXT_AMSTERDAM,
-            "z", Exchange.SIX,
             "m", Exchange.BORSA_ITALIANA,
             "e", Exchange.BME_MADRID,
-            "s", Exchange.NASDAQ_STOCKHOLM);
+            "s", Exchange.SIX);
+    private static final Map<String, Exchange> COUNTRIES = Map.of("AT", Exchange.WIENER_BORSE);
 
     private T212SymbolMapper() {
     }
@@ -48,18 +52,21 @@ public final class T212SymbolMapper {
             }
             return Symbols.normalize(us.group(1).replace('_', '-')).filter(s -> s.indexOf('.') < 0).orElse(null);
         }
-        Matcher europe = EUROPE.matcher(t212Ticker);
-        if (europe.matches()) {
-            Exchange exchange = EXCHANGES.get(europe.group(2));
-            if (exchange == null) {
-                return null;
-            }
-            String normalizedCurrency = T212Normalizer.isPence(currency) ? "GBP" : currency;
-            if (normalizedCurrency != null && !exchange.currency().equalsIgnoreCase(normalizedCurrency)) {
-                return null;
-            }
-            return Symbols.normalize(europe.group(1).replace('_', '-') + "." + exchange.suffix()).orElse(null);
+        Matcher country = COUNTRY.matcher(t212Ticker);
+        if (country.matches()) {
+            return european(country.group(1), COUNTRIES.get(country.group(2)));
+        }
+        Matcher letter = LETTER.matcher(t212Ticker);
+        if (letter.matches()) {
+            return european(letter.group(1), LETTERS.get(letter.group(2)));
         }
         return null;
+    }
+
+    private static String european(String base, Exchange exchange) {
+        if (exchange == null) {
+            return null;
+        }
+        return Symbols.normalize(base.replace('_', '-') + "." + exchange.suffix()).orElse(null);
     }
 }

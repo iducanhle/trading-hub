@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.earningstracker.fx.FxService;
 import com.earningstracker.market.Logos;
 import com.earningstracker.service.ProfileService;
 import com.earningstracker.t212.T212PortfolioEngine.FillResult;
@@ -41,14 +42,16 @@ public class T212PortfolioService {
     private final T212DataStore store;
     private final T212LiveService liveService;
     private final ProfileService profiles;
+    private final FxService fx;
     private final Clock clock;
 
     public T212PortfolioService(T212ConnectionService connection, T212DataStore store, T212LiveService liveService,
-            ProfileService profiles, Clock clock) {
+            ProfileService profiles, FxService fx, Clock clock) {
         this.connection = connection;
         this.store = store;
         this.liveService = liveService;
         this.profiles = profiles;
+        this.fx = fx;
         this.clock = clock;
     }
 
@@ -95,24 +98,12 @@ public class T212PortfolioService {
             trades += instrument.tradeCount();
             totalBought += instrument.totalBoughtAllTime();
         }
-        double deposits = 0;
-        double withdrawals = 0;
-        double interest = 0;
-        for (T212CashTransaction transaction : ctx.data().transactions().values()) {
-            if (!period.contains(transaction.at())) {
-                continue;
-            }
-            switch (transaction.type()) {
-                case "DEPOSIT" -> deposits += transaction.amount();
-                case "WITHDRAW" -> withdrawals += Math.abs(transaction.amount());
-                case "FEE" -> fees += Math.abs(transaction.amount());
-                default -> {
-                    if (INTEREST.contains(transaction.type())) {
-                        interest += transaction.amount();
-                    }
-                }
-            }
-        }
+        CashTotals cash = cashTotals(ctx.data().transactions().values().stream()
+                .filter(t -> period.contains(t.at())).toList(), ctx.currency());
+        fees += cash.fees();
+        double deposits = cash.deposits();
+        double withdrawals = cash.withdrawals();
+        double interest = cash.interest();
 
         T212Live.Account account = ctx.live() == null ? null : ctx.live().account();
         Double unrealized = account == null ? null : account.unrealizedPnl() != null ? account.unrealizedPnl()
@@ -209,15 +200,12 @@ public class T212PortfolioService {
                 .sorted(Comparator.comparing(T212CashTransaction::at).thenComparing(T212CashTransaction::id)
                         .reversed())
                 .toList();
-        double deposits = sum(inPeriod, "DEPOSIT");
-        double withdrawals = Math.abs(sum(inPeriod, "WITHDRAW"));
-        double fees = Math.abs(sum(inPeriod, "FEE"));
-        double interest = inPeriod.stream().filter(t -> INTEREST.contains(t.type()))
-                .mapToDouble(T212CashTransaction::amount).sum();
+        CashTotals cash = cashTotals(inPeriod, ctx.currency());
         List<T212Dtos.Transaction> items = inPeriod.stream().filter(t -> type == null || t.type().equals(type))
                 .map(t -> new T212Dtos.Transaction(t.id(), t.at(), t.type(), t.amount(), t.currency())).toList();
         return new T212Dtos.TransactionList(period.from(), period.to(), period.tz(), ctx.currency(),
-                new T212Dtos.TransactionTotals(round(deposits), round(withdrawals), round(fees), round(interest)),
+                new T212Dtos.TransactionTotals(round(cash.deposits()), round(cash.withdrawals()), round(cash.fees()),
+                        round(cash.interest())),
                 items, ctx.asOf(), ctx.stale());
     }
 
@@ -305,9 +293,45 @@ public class T212PortfolioService {
         return logos;
     }
 
-    private static double sum(List<T212CashTransaction> transactions, String type) {
-        return transactions.stream().filter(t -> t.type().equals(type)).mapToDouble(T212CashTransaction::amount)
-                .sum();
+    /** Deposits, withdrawals and fees as positive amounts, interest signed; all in the account currency. */
+    private record CashTotals(double deposits, double withdrawals, double fees, double interest) {
+    }
+
+    /**
+     * Totals in the account currency. A transaction in another currency (a USD deposit into a CZK account) is
+     * converted at today's rate, so its total is approximate; without a rate it is left out of the totals.
+     */
+    private CashTotals cashTotals(List<T212CashTransaction> transactions, String accountCurrency) {
+        double deposits = 0;
+        double withdrawals = 0;
+        double fees = 0;
+        double interest = 0;
+        for (T212CashTransaction t : transactions) {
+            Double amount = inAccountCurrency(t.amount(), t.currency(), accountCurrency);
+            if (amount == null) {
+                continue;
+            }
+            switch (t.type()) {
+                case "DEPOSIT" -> deposits += amount;
+                case "WITHDRAW" -> withdrawals -= amount;
+                case "FEE" -> fees -= amount; // fees are negative; a refund is positive and lowers the total
+                default -> {
+                    if (INTEREST.contains(t.type())) {
+                        interest += amount;
+                    }
+                }
+            }
+        }
+        return new CashTotals(deposits, withdrawals, fees, interest);
+    }
+
+    private Double inAccountCurrency(double amount, String currency, String accountCurrency) {
+        if (currency == null || accountCurrency == null || currency.equalsIgnoreCase(accountCurrency)) {
+            return amount;
+        }
+        Double usd = fx.toUsd(amount, currency);
+        Double usdPerUnit = fx.toUsd(1.0, accountCurrency);
+        return usd == null || usdPerUnit == null || usdPerUnit == 0 ? null : usd / usdPerUnit;
     }
 
     private static double round(double value) {

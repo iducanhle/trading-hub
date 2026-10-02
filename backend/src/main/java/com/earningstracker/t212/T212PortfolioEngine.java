@@ -15,11 +15,15 @@ import java.util.stream.Collectors;
  * live positions. Money is in the account currency.
  *
  * <ul>
- *   <li>A buy adds its quantity and value to the position's cost. A sell takes {@code average cost × quantity}
- *       off the cost; its realized result is Trading 212's {@code realisedProfitLoss}, or value minus that cost
- *       when Trading 212 sent none.</li>
- *   <li>A stock split (or another corporate action without a value) changes the quantity only, so the cost stays
- *       and the average cost per share follows. A corporate action with a value counts like a trade.</li>
+ *   <li>A buy adds its quantity and its value <em>before fees</em> to the position's cost. A sell takes
+ *       {@code average cost × quantity} off the cost; its realized result is Trading 212's
+ *       {@code realisedProfitLoss}, or else its proceeds before fees minus that cost. This is how Trading 212
+ *       computes it: checked on a real account, 1,102 of 1,104 sells within 1% (docs/DATA-SOURCES.md).
+ *       {@code netValue} includes the fees (paid on buys, deducted on sells), so fees count once, in
+ *       {@code fees}.</li>
+ *   <li>A stock split arrives as a sell of the old shares and a buy of the new ones (same time, no value): it
+ *       changes the quantity only, and the cost carries over even when the quantity passes through zero. Another
+ *       corporate action without a value changes the quantity too; one with a value counts like a trade.</li>
  *   <li>The cost basis always comes from the whole history; the period only selects which sells, buys,
  *       dividends and fees are counted.</li>
  * </ul>
@@ -106,11 +110,13 @@ public final class T212PortfolioEngine {
                             : -fill.quantity()));
                     if (quantity < EPSILON) {
                         quantity = 0;
-                        cost = 0;
+                        if (!T212Fill.STOCK_SPLIT.equals(fill.kind())) {
+                            cost = 0; // e.g. shares removed after a delisting
+                        }
                     }
                 } else if (fill.side() == T212Fill.Side.BUY) {
                     quantity += fill.quantity();
-                    cost += fill.value();
+                    cost += Math.max(0, fill.value() - fill.fees() - fill.taxes());
                     totalBought += fill.value();
                     if (inPeriod) {
                         boughtQuantity += fill.quantity();
@@ -120,7 +126,8 @@ public final class T212PortfolioEngine {
                     double average = quantity > EPSILON ? cost / quantity : 0;
                     double sold = Math.min(fill.quantity(), quantity);
                     double soldCost = average * sold;
-                    fillRealized = fill.realizedPnl() != null ? fill.realizedPnl() : fill.value() - soldCost;
+                    fillRealized = fill.realizedPnl() != null ? fill.realizedPnl()
+                            : fill.value() + fill.fees() + fill.taxes() - soldCost;
                     cost -= soldCost;
                     quantity -= fill.quantity();
                     if (quantity < EPSILON) {

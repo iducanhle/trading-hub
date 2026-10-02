@@ -21,7 +21,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | 1 – Research & contract | Done (2026-10-02) |
 | 5 – Frontend: Settings + mocks | Done (2026-10-02) |
 | 6 – Frontend: Portfolio tab | Done (2026-10-02) |
-| 7 – Integration & polish | In progress: waiting for a demo key |
+| 7 – Integration & polish | Done (2026-10-02; chart markers not checked visually) |
 
 **Done**
 - Phase 1: contract for `/api/t212/**` agreed (types `T212Status`, `T212Summary`, `T212Instrument`, `T212Trade`, `T212Dividend`, `T212Transaction`).
@@ -50,7 +50,9 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
   - Buy ▲ / sell ▼ markers of the user's own trades on the price chart (Lightweight Charts' series markers, one per day and side with a count, on the exchange's day, moved to the next session after a weekend), with a "My trades" toggle (remembered) shown only when there are trades. Unit-tested; **not checked visually**: the in-app browser does not paint frames while hidden, so the deferred chart never loads there.
   - README (root, frontend) mention the feature and mock mode. 75 unit tests, lint, build pass.
 
-**Next:** the end-to-end check with a demo account (see PROGRESS-backend phase 7), then adjust anything it shows.
+- The mock engine follows the verified fee rule too (cost and the realized fallback before fees).
+
+**Next:** look at the chart markers on a real phone; connect in the deployed app.
 
 **Known issues**
 - The in-app browser used for checks does not render frames while hidden, so bottom sheets never finish their close animation there; the flow was completed by firing `animationend`. Not an app issue.

@@ -10,14 +10,14 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Turns Trading 212 history items into the stored records. Where the API's conventions are unverified
- * (docs/DATA-SOURCES.md), it reads them defensively: sells may come with negative quantities and values, so
- * quantities and values are made positive and {@code side} carries the direction.
+ * (docs/DATA-SOURCES.md), it reads them defensively. Checked on a real account: sells come with negative
+ * quantities and positive {@code netValue}; quantities and values are made positive and {@code side} carries the
+ * direction.
  */
 public final class T212Normalizer {
 
     /** Tax names that are taxes; every other charge counts as a fee. */
     static final Set<String> TAX_NAMES = Set.of("STAMP_DUTY", "STAMP_DUTY_RESERVE_TAX", "FRENCH_TRANSACTION_TAX");
-    private static final Set<String> MONEY_OUT = Set.of("WITHDRAW", "FEE");
 
     private T212Normalizer() {
     }
@@ -148,8 +148,8 @@ public final class T212Normalizer {
         }
         String id = Optional.ofNullable(Json.text(item.path("reference")))
                 .orElse("t-" + type + "-" + at.toEpochMilli() + "-" + amount);
-        double signed = MONEY_OUT.contains(type) ? -Math.abs(amount)
-                : "TRANSFER".equals(type) ? amount : Math.abs(amount);
+        // Trading 212 signs the amounts (withdrawals and fees negative); an unsigned withdrawal is still money out.
+        double signed = "WITHDRAW".equals(type) && amount > 0 ? -amount : amount;
         String currency = Optional.ofNullable(Json.text(item.path("currency"))).orElse(accountCurrency);
         return Optional.of(new T212CashTransaction(id, at, type, signed, currency));
     }

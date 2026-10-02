@@ -2,6 +2,7 @@ package com.earningstracker.t212;
 
 import static com.earningstracker.provider.ProviderTestSupport.JSON;
 import static com.earningstracker.provider.ProviderTestSupport.body;
+import static com.earningstracker.provider.ProviderTestSupport.fixture;
 import static com.earningstracker.provider.ProviderTestSupport.json;
 import static com.earningstracker.provider.t212.T212TestSupport.API_KEY;
 import static com.earningstracker.provider.t212.T212TestSupport.API_SECRET;
@@ -19,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.earningstracker.cache.InMemoryDocumentStore;
+import com.earningstracker.fx.FxService;
 import com.earningstracker.provider.ProviderTestSupport.Routes;
 import com.earningstracker.provider.t212.T212Client;
 import com.earningstracker.provider.t212.T212Environment;
@@ -49,6 +51,7 @@ class T212PortfolioServiceTest {
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private T212ConnectionService connection;
     private T212PortfolioService portfolio;
+    private T212SyncService sync;
 
     @BeforeEach
     void start() throws Exception {
@@ -69,11 +72,17 @@ class T212PortfolioServiceTest {
         T212SyncTracker tracker = new T212SyncTracker();
         connection = new T212ConnectionService(client, new T212CredentialStore(store, encryption, clock), states, data,
                 tracker, encryption, properties, clock);
-        T212SyncService sync = new T212SyncService(client, connection, states, data, tracker, executor, clock);
+        sync = new T212SyncService(client, connection, states, data, tracker, executor, clock);
         ProfileService profiles = mock(ProfileService.class);
         given(profiles.logos(any())).willReturn(Map.of("AAPL", "https://logos.example/aapl.png"));
+        FxService fx = mock(FxService.class);
+        given(fx.toUsd(any(), any())).willAnswer(call -> switch ((String) call.getArgument(1)) {
+            case "EUR" -> (Double) call.getArgument(0) * 1.10;
+            case "USD" -> call.getArgument(0);
+            default -> null;
+        });
         portfolio = new T212PortfolioService(connection, data, new T212LiveService(client, connection, properties,
-                clock), profiles, clock);
+                clock), profiles, fx, clock);
 
         connection.connect(UID, new T212Dtos.CredentialsRequest(API_KEY, API_SECRET, T212Environment.DEMO));
         sync.runNow(UID).orElseThrow();
@@ -237,6 +246,19 @@ class T212PortfolioServiceTest {
         T212Dtos.Summary stale = portfolio.summary(UID, T212Period.ALL_TIME);
         assertThat(stale.stale()).isTrue();
         assertThat(stale.unrealizedPnl()).isEqualTo(400.0); // the last good copy
+    }
+
+    @Test
+    void foreignCurrencyTransactionsAreConvertedForTheTotals() {
+        routes.on("/api/v0/equity/history/transactions", body(200, fixture("t212/transactions.json").replace(
+                "\"items\": [", "\"items\": [ { \"reference\": \"tx-usd\", \"type\": \"DEPOSIT\", \"amount\": 110, "
+                        + "\"currency\": \"USD\", \"dateTime\": \"2026-09-30T12:00:00Z\" },")));
+        sync.runNow(UID).orElseThrow();
+
+        T212Dtos.TransactionList list = portfolio.transactions(UID, T212Period.ALL_TIME, null);
+        assertThat(list.totals().deposits()).isEqualTo(5100); // 110 USD = 100 EUR at 1.10
+        assertThat(list.items().getFirst().currency()).isEqualTo("USD"); // the item keeps its own currency
+        assertThat(portfolio.summary(UID, T212Period.ALL_TIME).netDeposits()).isEqualTo(4900);
     }
 
     @Test

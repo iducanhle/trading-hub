@@ -476,7 +476,7 @@ function compute(
         quantity = Math.max(0, quantity + (t.side === 'BUY' ? t.quantity : -t.quantity));
       } else if (t.side === 'BUY') {
         quantity += t.quantity;
-        cost += t.value;
+        cost += Math.max(0, t.value - t.fees - t.taxes); // netValue includes the fees
         totalBought += t.value;
         if (inside) {
           bought.quantity += t.quantity;
@@ -484,7 +484,7 @@ function compute(
         }
       } else {
         const average = quantity > 0 ? cost / quantity : 0;
-        tradeRealized = t.realizedPnl ?? t.value - average * t.quantity;
+        tradeRealized = t.realizedPnl ?? t.value + t.fees + t.taxes - average * t.quantity;
         cost -= average * Math.min(t.quantity, quantity);
         quantity -= t.quantity;
         if (quantity < 1e-9) {

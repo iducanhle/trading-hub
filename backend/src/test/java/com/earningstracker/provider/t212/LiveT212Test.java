@@ -113,10 +113,11 @@ class LiveT212Test {
             double cost = position.get(1);
             if (normalized.side() == T212Fill.Side.BUY) {
                 position.set(0, held + normalized.quantity());
-                position.set(1, cost + normalized.value());
+                position.set(1, cost + normalized.value() - normalized.fees() - normalized.taxes());
             } else {
                 double average = held > 0 ? cost / held : 0;
-                double computed = normalized.value() - average * normalized.quantity();
+                double computed = normalized.value() + normalized.fees() + normalized.taxes()
+                        - average * normalized.quantity();
                 sells.add("| " + normalized.ticker() + " | " + normalized.executedAt() + " | "
                         + normalized.realizedPnl() + " | " + round(computed) + " | "
                         + round(normalized.fees() + normalized.taxes()) + " |");
@@ -130,9 +131,10 @@ class LiveT212Test {
         md.append("\nOrder ids with more than one history item: ").append(repeated).append("\n\n");
         md.append("Taxes seen: ").append(taxCurrencies).append("\n\n");
         md.append("Instrument currencies seen: ").append(instrumentCurrencies).append("\n\n");
-        md.append("## Sells: Trading 212's realized result vs. average cost before fees\n\n")
-                .append("If T212 = computed − fees, Trading 212's figure already includes the fees.\n\n")
-                .append("| Ticker | At | T212 realised | Computed (before fees) | Fees + taxes |\n|---|---|---|---|---|\n");
+        md.append("## Sells: Trading 212's realized result vs. the engine's rule\n\n")
+                .append("Computed = proceeds before fees − average cost before fees; it should equal T212's figure "
+                        + "(splits are not applied here, so sells after a split can differ).\n\n")
+                .append("| Ticker | At | T212 realised | Computed | Fees + taxes |\n|---|---|---|---|---|\n");
         sells.forEach(line -> md.append(line).append('\n'));
         md.append("\nAccount summary realizedProfitLoss: ").append(summary.path("investments")
                 .path("realizedProfitLoss")).append("\n\n");

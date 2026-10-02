@@ -90,7 +90,7 @@ Curated in `backend/src/main/resources/market-events.json` (checked against the 
 
 ## Trading 212 Public API (per-user brokerage data)
 
-Read from the official OpenAPI file (`https://docs.trading212.com/_bundle/api.yaml`, API `v0`, status **Beta**) and the help centre on **2026-10-02**. No call was made: there is no key here. Everything marked **UNVERIFIED** is checked against a demo account in phase 7 of [PROMPT-trading212.md](PROMPT-trading212.md).
+Read from the official OpenAPI file (`https://docs.trading212.com/_bundle/api.yaml`, API `v0`, status **Beta**) and the help centre on **2026-10-02**, then **checked against a real Invest account on 2026-10-02** with the read-only probe below (about 3,100 orders, 90 dividends, 200 transactions, 126 positions, account currency CZK). The probe used a live key: the owner's key was created in the real account, which the probe only reads.
 
 **Basics**
 - **Base URLs:** live `https://live.trading212.com/api/v0`, demo (paper trading) `https://demo.trading212.com/api/v0`. A key belongs to one environment.
@@ -123,50 +123,54 @@ Read from the official OpenAPI file (`https://docs.trading212.com/_bundle/api.ya
 | `GET /equity/metadata/instruments` | Array of every tradable instrument: `{ ticker, isin, name, shortName, currencyCode, type (STOCK, ETF, …), workingScheduleId, addedOn, maxOpenQuantity, extendedHours }`. Thousands of rows. |
 | `GET /equity/metadata/exchanges` | `{ id, name, workingSchedules[] { id, timeEvents[] } }`. Maps an instrument's `workingScheduleId` to an exchange name. |
 
-**Corporate actions are fills.** `fill.type` is `TRADE` for normal trades, otherwise one of `STOCK_SPLIT`, `STOCK_DISTRIBUTION`, `FOP`, `FOP_CORRECTION`, `CUSTOM_STOCK_DISTRIBUTION`, `EQUITY_RIGHTS`, `SCRIP_STOCK_DIVIDENDS`, `STOCK_DIVIDENDS`, `STOCK_ACQUISITION`, `CASH_AND_STOCK_ACQUISITION`, `SPIN_OFF`. So stock splits arrive in the order history; how their quantity and price are filled in is **UNVERIFIED**.
+**Corporate actions are fills.** `fill.type` is `TRADE` for normal trades, otherwise one of `STOCK_SPLIT`, `STOCK_DISTRIBUTION`, `FOP`, `FOP_CORRECTION`, `CUSTOM_STOCK_DISTRIBUTION`, `EQUITY_RIGHTS`, `SCRIP_STOCK_DIVIDENDS`, `STOCK_DIVIDENDS`, `STOCK_ACQUISITION`, `CASH_AND_STOCK_ACQUISITION`, `SPIN_OFF`. So stock splits arrive in the order history. **Verified:** a split is a pair of fills at the same time, `STOCK_SPLIT` with `side: SELL` and a negative quantity for the old shares and `STOCK_SPLIT` with `side: BUY` for the new ones; `realisedProfitLoss` is `0` or missing. The cost basis carries over (the engine keeps it while the quantity passes through zero).
 
 **What T212 provides vs what the backend computes** (decided in phase 1; the engine is phase 4)
 
 | Value | Source |
 |---|---|
-| Realized P/L of one sell | `fill.walletImpact.realisedProfitLoss` (account currency). Computed with average cost from the earlier fills only when it is missing. |
-| Fees and taxes of one trade | Sum of `fill.walletImpact.taxes[].quantity`. Converted to the account currency with `fxRate` when a tax's `currency` differs. |
+| Realized P/L of one sell | `fill.walletImpact.realisedProfitLoss` (account currency, **before fees**). Computed only when it is missing, the way Trading 212 does: proceeds before fees − average cost before fees. |
+| Fees and taxes of one trade | Sum of `fill.walletImpact.taxes[].quantity` (sent negative; every tax seen was in the account currency). Converted with the rate implied by the fill if one ever is not. |
 | Trade value | `fill.walletImpact.netValue` (account currency). `price × quantity` stays in the instrument currency for display. |
 | Unrealized P/L, cost basis, current value of open positions | `GET /equity/positions` → `walletImpact` (account currency). Account totals from `GET /equity/account/summary`. |
 | Average cost, current price | `averagePricePaid`, `currentPrice` from positions (instrument currency). For closed positions there is no average cost. |
 | Running position size, bought/sold totals, realized P/L in a period, dividends and fees per instrument and period | Computed from the stored fills, dividends and transactions. |
 
-**UNVERIFIED (to check against a demo account)**
-- Whether sells have a **negative** `fill.quantity` (orders are placed with a negative quantity) and whether `netValue` is signed. The sync normalizes to a positive quantity plus `side`.
-- Whether `realisedProfitLoss` already **includes fees and taxes**. If it does, the engine must not subtract them again.
-- Whether `realisedProfitLoss` is `0` or missing on buys, and whether `fxRate` is instrument→account or the reverse.
-- How a `STOCK_SPLIT` fill sets quantity, price and value, and whether `side` is set on it.
-- Whether one order can produce several history items (partial fills with the same `order.id`); the stored id is `order.id` plus `fill.id`.
-- Whether `instrument` is included in history items for **delisted** instruments.
-- How far back the history goes and whether it matches the app's own history (CSV export exists as a fallback).
-- Ticker suffixes and the LSE pence currency code (`GBX`), below.
-- Error body shape; behaviour of a revoked key (401 vs 403).
+**Verified on a real account (2026-10-02)**
+- **Sells** have a negative `fill.quantity`; `netValue` is positive for buys and sells. The sync stores a positive quantity plus `side`.
+- **`netValue` includes the fees:** what was paid on a buy (fees included), what was received on a sell (fees deducted). The FX fee (`CURRENCY_CONVERSION_FEE`), stamp duty reserve tax and the French transaction tax are the charges seen.
+- **`realisedProfitLoss` is before fees** and uses the average cost before fees, in the account currency: `(netValue + fees) − averageCost × quantity`, where each buy adds `netValue − fees` to the cost. 1,102 of 1,104 sells match this to within 1%. Buys have no `realisedProfitLoss` (missing, not 0). The sells' figures add up exactly to the account summary's `investments.realizedProfitLoss` exactly.
+- **History is complete:** replaying all fills (splits included) gives exactly the quantity of every open position (126 of 126) and no shares left over.
+- **Several history items can share an `order.id`** (37 orders with partial fills); the stored id is `order.id` + `fill.id`.
+- **Unfilled orders** (`CANCELLED`) come without `fill` and are skipped.
+- **Instrument currencies** seen: USD, EUR, GBP, **GBX** (LSE pence), CHF, CAD. Positions report `averagePricePaid`/`currentPrice` in GBX for pence lines (divided by 100); `walletImpact` values are always in the account currency.
+- **Dividends:** all `type: DIVIDEND`, `amount` positive in the account currency, always with `reference` and `instrument`; **no `tickerCurrency` field** (the per-share amount's currency is taken from the instrument).
+- **Transactions:** `DEPOSIT`, `WITHDRAW`, `FEE`, `TRANSFER` seen, all with `reference`; amounts are **signed** (withdrawals and fees negative). A few were in another currency than the account's (USD, CHF): totals convert them at today's rate (approximate), the list shows them in their own currency.
+- **Account summary and positions:** the positions' `walletImpact.unrealizedProfitLoss` add up exactly to `investments.unrealizedProfitLoss`.
+- **Keys belong to one environment:** a key made in the real account answers 401 on the demo host.
 
-**T212 ticker → app symbol** (convention seen in public T212 integrations, **UNVERIFIED**; the mapper uses the instrument's ISIN, currency and exchange name as checks and returns `null` when unsure):
+**Still open:** the rate-limit headers were not recorded (the client honours them; no 429 happened during a full sync of this account); corporate actions other than splits did not occur; `LENDING_INTEREST`/`INTEREST_ON_FREE_CASH` and Madrid (`e`) tickers were not in the account.
+
+**T212 ticker → app symbol** (verified on the account's 214 tickers; anything else gives `null`, so the instrument works without a stock-detail link):
 
 | T212 ticker | App symbol | Rule |
 |---|---|---|
-| `AAPL_US_EQ`, `BRK_B_US_EQ` | `AAPL`, `BRK-B` | `_US_EQ`: US listing; `_` inside the base → `-` |
+| `AAPL_US_EQ`, `BRK_B_US_EQ` | `AAPL`, `BRK-B` | `_US_EQ`, currency USD; `_` inside the base → `-` |
 | `SAPd_EQ` | `SAP.DE` | `d` = Xetra |
-| `AZNl_EQ` | `AZN.L` | `l` = LSE; prices in pence (`GBX`) are divided by 100 |
-| `MCp_EQ` | `MC.PA` | `p` = Euronext Paris |
-| `ASMLa_EQ` | `ASML.AS` | `a` = Euronext Amsterdam |
-| `NESNz_EQ` | `NESN.SW` | `z` = SIX |
-| `ENIm_EQ`, `SANe_EQ`, `VOLV_Bs_EQ` | `ENI.MI`, `SAN.MC`, `VOLV-B.ST` | `m` Milan, `e` Madrid, `s` Stockholm |
-| anything else (ETFs on other venues, OTC, Prague…) | `null` | still listed, without a stock-detail link |
+| `AZNl_EQ`, `VUAAl_EQ` | `AZN.L`, `VUAA.L` | `l` = LSE, in GBX, GBP, **USD or EUR** (ETF lines); pence divided by 100 |
+| `ASMLa_EQ`, `GOLDp_EQ`, `VUAAm_EQ` | `ASML.AS`, `GOLD.PA`, `VUAA.MI` | `a` Amsterdam, `p` Paris, `m` Milan |
+| `DAXEXs_EQ` | `DAXEX.SW` | `s` = **SIX Swiss** (in CHF or USD), not Stockholm |
+| `RBI_AT_EQ` | `RBI.VI` | `_AT_EQ` = Vienna |
+| `SANe_EQ` | `SAN.MC` | `e` = Madrid (convention, not in the account) |
+| `DSV_CA_EQ` | `null` | `_CA_EQ` = Toronto, not a supported exchange |
 
-**Checking against a real account.** An opt-in, read-only probe saves what Trading 212 really returns and a `findings.md` that answers the questions above (signs, realized result vs. fees, fill types, currencies, ticker mapping). Put a **demo** key in `backend/.env` (git-ignored) as `T212_PROBE_API_KEY` and `T212_PROBE_API_SECRET`, then from `backend/`:
+**Checking against a real account.** An opt-in, read-only probe saves what Trading 212 returns and a `findings.md` (signs, the realized result vs. the engine's rule, fill types, currencies, ticker mapping). Put a key in `backend/.env` (git-ignored) as `T212_PROBE_API_KEY` and `T212_PROBE_API_SECRET` (and `T212_PROBE_ENV=LIVE` for a real-account key), then from `backend/`:
 
 ```bash
 LIVE_T212=true ./mvnw test -Dtest=LiveT212Test
 ```
 
-The output lands in `backend/target/t212-probe/` (git-ignored); the key is never written or printed. Not run yet.
+The output lands in `backend/target/t212-probe/` (git-ignored, contains the account's data: keep it local); the key is never written or printed.
 
 **Not used:** order placing/cancelling (`/equity/orders/*`), pending orders, pies (deprecated), CSV exports (a fallback if the history turns out incomplete).
 
