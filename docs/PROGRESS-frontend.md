@@ -12,6 +12,32 @@
 | 3 – Followed + Calendar + Settings | Done |
 | 4 – Polish + deployment | Done |
 
+## Trading 212 feature
+
+Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Trading 212 part of [CONTRACT.md](CONTRACT.md). Backend state and storage decisions: [PROGRESS-backend.md](PROGRESS-backend.md#trading-212-feature).
+
+| Phase | Status |
+|---|---|
+| 1 – Research & contract | Done (2026-10-02) |
+| 5 – Frontend: Settings + mocks | — (after backend phases 2–4) |
+| 6 – Frontend: Portfolio tab | — |
+| 7 – Integration & polish | — |
+
+**Done**
+- Phase 1: contract for `/api/t212/**` agreed (types `T212Status`, `T212Summary`, `T212Instrument`, `T212Trade`, `T212Dividend`, `T212Transaction`).
+
+**In progress:** nothing.
+
+**Next:** phase 5 after the backend phases.
+
+**Known issues:** none yet.
+
+**Decisions (from the contract, relevant to the UI)**
+- **2026-10-02 —** Periods are sent as `from`/`to` days plus `tz` (the device's IANA zone); All = no `from`/`to`.
+- **2026-10-02 —** `unrealizedPnl` is as of now; `totalPnl` includes it only for All (`includesUnrealized`). `totalPnlPct` is `null` for a period, so P/L % sorting puts those last.
+- **2026-10-02 —** Prices (`averageCost`, `currentPrice`, trade `price`) are in the instrument currency; every other amount is in `accountCurrency`.
+- **2026-10-02 —** When `GET /api/t212/status` answers 503 `T212_NOT_CONFIGURED`, Settings shows "not available on this server" instead of the connect form.
+
 ## Done
 
 **Phase 0 – Setup**

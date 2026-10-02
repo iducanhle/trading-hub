@@ -13,6 +13,50 @@
 | 4 – Jobs + email | Done |
 | 5 – Deployment | Done |
 
+## Trading 212 feature
+
+Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Trading 212 part of [CONTRACT.md](CONTRACT.md). What the API returns: [DATA-SOURCES.md](DATA-SOURCES.md#trading-212-public-api-per-user-brokerage-data). Frontend state: [PROGRESS-frontend.md](PROGRESS-frontend.md#trading-212-feature).
+
+| Phase | Status |
+|---|---|
+| 1 – Research & contract | Done (2026-10-02) |
+| 2 – Backend: credentials | Next |
+| 3 – Backend: sync | — |
+| 4 – Backend: P/L engine & read endpoints | — |
+| 7 – Integration & polish (demo account check) | — |
+
+**Done**
+- Phase 1: read the official OpenAPI file and the help centre's key guide; endpoints, fields, units, pagination, rate limits and open questions are in DATA-SOURCES.md. Contract: `/api/t212/**`, `T212…` types, error codes, P/L definitions, storage. No code yet.
+
+**In progress:** nothing (waiting for "continue").
+
+**Next (phase 2)**
+- `T212_ENCRYPTION_KEY` config (`t212.encryption-key`), AES-256-GCM `T212Crypto`, `T212CredentialStore` (Firestore `t212Credentials/{uid}`).
+- `GET /api/t212/status`, `PUT` / `DELETE /api/t212/credentials`, with the validation calls behind a minimal read-only client (account summary, positions, one page of each history).
+- `T212_NOT_CONFIGURED` when the key is missing; log redaction of `Authorization`.
+- Rules: explicit deny for `t212Credentials/**` and `t212/**` plus rules tests; DEPLOYMENT-backend.md and `backend/.env.example`.
+
+**Known issues**
+- No Trading 212 key was available, so nothing has been called yet. The open questions (sell quantity sign, whether realized P/L includes fees, split fills, ticker suffixes, pence currency code) are listed as UNVERIFIED in DATA-SOURCES.md and get checked against a demo account in phase 7. Until then, the code normalizes defensively (absolute values plus `side`) and covers both readings in tests.
+
+**Decisions**
+- **2026-10-02 — The docs win over the prompt where they differ:**
+  - Legacy single keys still appear in the spec (`legacyApiKeyHeader`), so they are supported: `apiSecret: null` sends the raw key as `Authorization`.
+  - Transactions use a string cursor and an optional `time` parameter; orders and dividends a numeric cursor and a `ticker` filter. The client always follows `nextPagePath` as given.
+  - Stock splits and other corporate actions arrive as order-history fills (`fill.type`), so the engine handles them from history.
+  - Transaction amounts are in the transaction's own currency, not necessarily the account currency.
+- **2026-10-02 — Saving a key checks every permission the app needs** (account, portfolio, the three histories) with one call each. A missing permission is reported as 400 `T212_MISSING_PERMISSIONS` (new code) rather than failing later during sync. `metadata` is optional: the mapper falls back to the ticker suffix.
+- **2026-10-02 — Storage layout** (all backend-only):
+  - `t212Credentials/{uid}`: `{ environment, apiKey: {iv, ct}, apiSecret: {iv, ct} | null, keyHint, keyId, createdAt, updatedAt }`. AES-256-GCM with a random 12-byte IV per value and a 128-bit tag. The uid is the additional authenticated data, so a ciphertext copied into another user's document does not decrypt. `keyId` is the first 8 hex characters of SHA-256 of the master key: a changed `T212_ENCRYPTION_KEY` is detected and reported ("reconnect") instead of failing with a crypto error.
+  - `t212/{uid}`: `{ environment, accountIdHash, accountCurrency, connectedAt, credentialsValid, syncState, syncStartedAt, lastSyncAt, lastError, counts }`. `accountIdHash` (SHA-256 of uid + Trading 212 account id; the account number itself is not stored) detects a replacement key for a different account, which wipes the synced data.
+  - Synced items are **bucketed**: `t212/{uid}/orders/{YYYY-MM}` (filled orders of that UTC month), `dividends/{YYYY}`, `transactions/{YYYY}`, each `{ items: [...] }`, and `instruments/all` (ticker → name, ISIN, currency, symbol). One document per trade would cost one Firestore read per trade every time the cache is loaded; buckets cost about 75 reads for five years of history. A fill is about 300 bytes, so a month bucket holds ~3,000 fills before Firestore's 1 MiB limit; the sync fails with a clear error if one ever gets close (900 KB).
+  - The backend keeps each user's items in memory after the first read (dropped after 6 h without use); syncs update memory and rewrite only the buckets they touched.
+- **2026-10-02 — Sync:** history is newest first, so a sync pages until it reaches an item already stored (orders by `order.id`+`fill.id`, dividends and transactions by `reference`), or to the end on the first sync. Only filled orders are stored. One sync per user (in-memory lock, like the job locks). The `t212-sync` job runs every 6 hours for all connected users, one user after the other.
+- **2026-10-02 — Rate limits:** one limiter per user and endpoint, fed by the `x-ratelimit-*` headers. When `remaining` is 0, the next call waits until `reset`. On a 429 the client waits until `reset` (at most 70 s) and retries, up to 3 times, then fails the sync with `T212_RATE_LIMITED`. Live calls (summary 1/5 s, positions 1/s) are cached per user for 60 s.
+- **2026-10-02 — Instrument metadata** (`/metadata/instruments`, thousands of rows, 1 per 50 s) is fetched at most once per sync and only when a ticker is new, kept in memory for 24 h, and only the user's own instruments are stored. History items already carry name, ISIN and currency.
+- **2026-10-02 — P/L semantics** (contract "P/L definitions"): realized P/L is Trading 212's per-sell figure, **before** fees. Fees and taxes of all trades are a separate `fees` line subtracted in `totalPnl`. This changes the prompt's wording, which subtracts only fees of sells, so that buy fees and FX fees are not lost. If the demo check shows that Trading 212's figure already includes fees, the engine subtracts only the remainder. Percentages are for all time only (a period has no meaningful base). Unrealized P/L is as of now and counts only for all time; no historical portfolio value is computed, because there is no daily price history of the portfolio.
+- **2026-10-02 — Periods take a `tz`** (default UTC, the frontend sends the device's zone), so a trade at 00:30 in Prague falls on the right day.
+
 ## Done
 
 **Phase 0 – Setup**

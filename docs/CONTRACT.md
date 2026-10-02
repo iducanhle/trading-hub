@@ -35,6 +35,12 @@ The HTTP status plus the body `{ "code": string, "message": string }`.
 | 429 | `RATE_LIMITED` |
 | 500 | `INTERNAL_ERROR` (unexpected server error) |
 | 503 | `UPSTREAM_UNAVAILABLE` (no cached data available) |
+| 400 | `T212_INVALID_CREDENTIALS` (Trading 212 rejected the key on save) |
+| 400 | `T212_MISSING_PERMISSIONS` (the key lacks a permission the app needs; `message` names it) |
+| 409 | `T212_NOT_CONNECTED` (no Trading 212 key saved for the caller) |
+| 429 | `T212_RATE_LIMITED` (Trading 212's per-account limit, and nothing cached to serve) |
+| 503 | `T212_NOT_CONFIGURED` (the server has no `T212_ENCRYPTION_KEY`; the rest of the API works) |
+| 503 | `T212_UNAVAILABLE` (Trading 212 failed or timed out, and nothing cached to serve) |
 
 ### Types
 ```ts
@@ -109,6 +115,93 @@ type EarningsQuarter = {
 
 type RecommendationPeriod = { period: string /* YYYY-MM */; strongBuy: number; buy: number; hold: number; sell: number; strongSell: number };
 type NewsItem = { headline: string; source: string; url: string; publishedAt: string; imageUrl: string | null; summary: string | null };
+
+// ---- Trading 212 (per user). Money is in the account currency unless a field says otherwise. ----
+type T212Environment = "LIVE" | "DEMO";
+type T212SyncState = "IDLE" | "RUNNING" | "FAILED";
+type T212Side = "BUY" | "SELL";
+type T212PositionStatus = "OPEN" | "CLOSED";
+type T212TradeKind = "TRADE" | "STOCK_SPLIT" | "CORPORATE_ACTION";  // CORPORATE_ACTION: any other non-trade fill type
+type T212TransactionType = "DEPOSIT" | "WITHDRAW" | "FEE" | "TRANSFER" | "INTEREST_ON_FREE_CASH" | "LENDING_INTEREST";
+
+type T212Status = {
+  connected: boolean;
+  environment: T212Environment | null;
+  keyHint: string | null;              // last 4 characters of the API key; never the key or secret
+  accountCurrency: string | null;
+  credentialsValid: boolean | null;    // false once Trading 212 rejects the stored key; null when not connected
+  connectedAt: string | null;
+  syncState: T212SyncState;            // IDLE when not connected
+  syncStartedAt: string | null;        // the running or the last sync
+  lastSyncAt: string | null;           // last successful sync
+  lastError: { code: string; message: string } | null;  // of the last failed sync
+  serverIpHint: string | null;         // the server's IP, to restrict the key to; from config
+};
+
+type T212InstrumentRef = { t212Ticker: string; symbol: string | null; name: string; logoUrl: string | null; totalPnl: number };
+
+type T212Summary = {
+  from: string | null; to: string | null; tz: string;   // the period asked for; both null = all time
+  accountCurrency: string;
+  // As of now (live, cached ~60 s); null when Trading 212 is unavailable and nothing is cached
+  totalValue: number | null; cash: number | null; invested: number | null /* cost basis of holdings */;
+  currentValue: number | null /* of holdings */; unrealizedPnl: number | null;
+  // In the period
+  realizedPnl: number; dividends: number; fees: number /* trade fees + taxes + FEE transactions */;
+  interest: number; deposits: number; withdrawals: number; netDeposits: number;
+  tradeCount: number;
+  totalPnl: number;                    // realized + dividends − fees, plus unrealizedPnl only when includesUnrealized
+  includesUnrealized: boolean;         // true only for all time
+  totalPnlPct: number | null;          // all time only: totalPnl ÷ total bought value
+  best: T212InstrumentRef | null; worst: T212InstrumentRef | null;   // by totalPnl in the period
+  syncState: T212SyncState; lastSyncAt: string | null;
+  asOf: string; stale: boolean;
+};
+
+type T212Instrument = {
+  t212Ticker: string;                  // "AAPL_US_EQ"
+  symbol: string | null;               // app symbol; null when unmapped (no stock-detail link)
+  name: string; isin: string | null; logoUrl: string | null;
+  instrumentCurrency: string | null;   // prices below are in this currency (LSE pence normalized to GBP)
+  status: T212PositionStatus;
+  quantity: number;                    // held now; 0 when CLOSED
+  averageCost: number | null;          // instrument currency, OPEN only
+  currentPrice: number | null;         // instrument currency, OPEN only
+  value: number | null; costBasis: number | null;   // account currency, OPEN only, as of now
+  // In the period
+  bought: { quantity: number; value: number }; sold: { quantity: number; value: number };
+  realizedPnl: number; dividends: number; fees: number;
+  unrealizedPnl: number | null;        // OPEN only, as of now
+  totalPnl: number;                    // realized + dividends − fees (+ unrealized for all time)
+  totalPnlPct: number | null;          // all time only: totalPnl ÷ total bought value
+  tradeCount: number;
+  // All time
+  firstTradeAt: string | null; lastTradeAt: string | null;
+};
+
+type T212Trade = {
+  id: string; executedAt: string;
+  t212Ticker: string; symbol: string | null; name: string;
+  side: T212Side; kind: T212TradeKind;
+  quantity: number;                    // always positive
+  price: number | null; priceCurrency: string | null;   // instrument currency (pence normalized)
+  value: number;                       // account currency, always positive
+  fees: number; taxes: number;         // account currency
+  fxRate: number | null;
+  realizedPnl: number | null;          // SELL only, before fees and taxes
+  orderType: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT" | null;
+};
+
+type T212Dividend = {
+  id: string; paidAt: string;
+  t212Ticker: string; symbol: string | null; name: string;
+  quantity: number;                    // shares the dividend was paid on
+  amount: number;                      // net, account currency
+  grossPerShare: number | null; grossPerShareCurrency: string | null;
+  type: string;                        // Trading 212's dividend type, e.g. "ORDINARY"
+};
+
+type T212Transaction = { id: string; at: string; type: T212TransactionType; amount: number /* signed: − = money out */; currency: string };
 ```
 
 ### Endpoints
@@ -127,7 +220,17 @@ type NewsItem = { headline: string; source: string; url: string; publishedAt: st
 | `GET /api/calendar?from=&to=&minMarketCapUsd=0&region=ALL\|US\|EU&followedOnly=false` | `{ from, to, days: { date: string, events: EarningsEvent[] }[] }` | Every date in the range is present (possibly empty). Events are sorted by `marketCapUsd` desc, nulls last. `minMarketCapUsd > 0` excludes unknown caps. Max span 42 days. |
 | `GET /api/followed/earnings` | `{ upcoming: EarningsEvent[] /* date ≥ today, asc */, noUpcomingDate: SearchResult[] }` | Based on the caller's `users/{uid}/follows` |
 | `POST /api/notifications/test` | `202 { sentTo: string }` | |
-| `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest` |
+| `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`, `t212-sync` |
+| `GET /api/t212/status` | `T212Status` | Works when not connected (`connected: false`) |
+| `PUT /api/t212/credentials` | `T212Status` | Body `{ apiKey: string, apiSecret: string \| null, environment: T212Environment }`. Validates with Trading 212, encrypts, stores, starts the first sync (`syncState: "RUNNING"`) |
+| `DELETE /api/t212/credentials` | `204` | Deletes the key **and** all synced data. Idempotent |
+| `POST /api/t212/sync` | `202 T212Status` | Incremental sync; if one is running, returns its status and starts nothing |
+| `GET /api/t212/summary?from=&to=&tz=` | `T212Summary` | |
+| `GET /api/t212/instruments?from=&to=&tz=&status=OPEN\|CLOSED\|ALL` | `{ from, to, tz, accountCurrency, items: T212Instrument[], asOf, stale }` | Sorted by `totalPnl` desc |
+| `GET /api/t212/instruments/{t212Ticker}` | `{ accountCurrency, instrument: T212Instrument /* all time */, trades: (T212Trade & { positionAfter: number })[], dividends: T212Dividend[], asOf, stale }` | Both lists newest first. 404 `NOT_FOUND` if the caller never held it |
+| `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker` |
+| `GET /api/t212/dividends?from=&to=&tz=&ticker=` | `{ from, to, tz, accountCurrency, total: number, items: T212Dividend[] /* newest first */, asOf, stale }` | |
+| `GET /api/t212/transactions?from=&to=&tz=&type=` | `{ from, to, tz, accountCurrency, totals: { deposits, withdrawals, fees, interest }, items: T212Transaction[] /* newest first */, asOf, stale }` | `type` is one `T212TransactionType`; totals ignore it |
 
 ### Firestore — user-owned documents (written by the frontend)
 ```
@@ -144,7 +247,7 @@ users/{uid}
 users/{uid}/follows/{symbol}   { symbol, name, exchange, region, logoUrl, followedAt: timestamp }
 users/{uid}/notes/{symbol}     { symbol, text, updatedAt: timestamp }
 ```
-Backend-only collections (all client access is denied by the rules): `symbols`, `prices`, `earnings`, `earningsCalendar`, `fx`, `jobRuns`, `notificationLog`, `viewed`.
+Backend-only collections (all client access is denied by the rules): `symbols`, `prices`, `earnings`, `earningsCalendar`, `fx`, `jobRuns`, `notificationLog`, `viewed`, `t212Credentials`, `t212` (with its subcollections).
 
 ---
 
@@ -180,6 +283,35 @@ Behaviour the tables above leave open, as the backend implements it. No field na
   - If that job is already running, the response carries the running job's `startedAt` and no second run starts.
   - An unknown `jobName` returns 400. The outcome is recorded in the backend-only `jobRuns/{jobName}` document (Firebase console).
 
+### Trading 212 (`/api/t212/**`)
+
+Every endpoint acts on the caller's own account only; there is no way to address another user. The browser never talks to Trading 212. Field-level sources are in [DATA-SOURCES.md](DATA-SOURCES.md#trading-212-public-api-per-user-brokerage-data).
+
+- **Not configured:** without `T212_ENCRYPTION_KEY` on the server, every `/api/t212/**` endpoint (including `status`) returns 503 `T212_NOT_CONFIGURED`. The frontend hides the feature's controls and explains why.
+- **Not connected:** `GET /status` answers `connected: false`; every read endpoint and `POST /sync` return 409 `T212_NOT_CONNECTED`.
+- **`PUT /credentials`:**
+  - `apiKey` is required (1–200 characters after trimming). `apiSecret` is required for current keys; `null` or `""` sends the key alone as the `Authorization` header (Trading 212's legacy keys).
+  - The backend checks the key with Trading 212 (account summary, positions, one page each of order, dividend and transaction history). 401 → 400 `T212_INVALID_CREDENTIALS` (nothing stored). 403 on any of them → 400 `T212_MISSING_PERMISSIONS`, `message` lists the missing permissions. Trading 212 down → 503 `T212_UNAVAILABLE`.
+  - Replacing a key for the **same** Trading 212 account keeps the synced data; a key for a **different** account (or environment) deletes it and syncs from scratch.
+  - Neither the key nor the secret is ever returned or logged; `keyHint` is the last 4 characters of the key.
+- **`DELETE /credentials`** stops a running sync, then deletes the stored key and every synced document. 204 even when nothing was stored.
+- **Sync:** history (orders, dividends, transactions) is copied from Trading 212 into backend-only storage. The first sync reads everything; later ones stop at the first item already stored. It starts after `PUT /credentials`, on `POST /sync`, and every 6 hours (`t212-sync` job, all connected users). One sync per user at a time. A first sync of a long history can take minutes (Trading 212 allows 20 history pages of 50 per minute); until it finishes, read endpoints answer with what is stored so far and `syncState: "RUNNING"`.
+- **Rejected key later:** when Trading 212 answers 401/403 during a sync or a live call, status shows `credentialsValid: false`, `syncState: "FAILED"`, `lastError.code: "T212_INVALID_CREDENTIALS"`; read endpoints keep serving stored history with `stale: true` until the user replaces the key or disconnects.
+- **Live values** (summary totals, open positions: quantity, average cost, current price, value, unrealized P/L) are fetched from Trading 212 and cached per user for about 60 s. If that fails, the last cached values are served with `stale: true`; with nothing cached the live fields are `null` (summary) or the endpoint answers 503 `T212_UNAVAILABLE` / 429 `T212_RATE_LIMITED` (instruments).
+- **`asOf`** is the oldest of the last successful sync and the live fetch used. **`stale`** as above.
+- **Periods:** `from` and `to` are optional `YYYY-MM-DD` days, both inclusive, read in the IANA time zone `tz` (default `UTC`; the frontend sends the device's zone). Missing `from` = since the first item; missing `to` = today. Both missing = all time. `from > to` or an unknown `tz` → 400.
+- **P/L definitions** (average-cost method, as Trading 212 shows it):
+  - `realizedPnl` = Trading 212's realized result of each sell in the period, **before** fees and taxes; the cost basis comes from all earlier buys, including those before `from`.
+  - `fees` = fees and taxes of every trade in the period (buys and sells) plus `FEE` transactions. `dividends` = net dividends paid in the period.
+  - `unrealizedPnl` is always **as of now** and only counted in `totalPnl` for all time (`includesUnrealized: true`). There is no historical portfolio value.
+  - `totalPnl` = `realizedPnl` + `dividends` − `fees` (+ `unrealizedPnl` for all time). `interest`, deposits and withdrawals are not part of it.
+  - `totalPnlPct` (all time only) = `totalPnl` ÷ the total value of all buys × 100.
+- **`GET /instruments`:** all time lists every instrument ever traded or held; a period lists the instruments with a trade or dividend in it. `status` (default `ALL`) filters by the current state. `bought`/`sold`/`realizedPnl`/`dividends`/`fees`/`tradeCount` are for the period; quantity, prices, value and unrealized P/L are as of now.
+- **`{t212Ticker}` in paths** is case-sensitive (`SAPd_EQ`). `positionAfter` is the number of shares held right after that trade.
+- **`GET /trades`:** filled trades only (cancelled and rejected orders are not stored), including corporate-action fills (`kind`). `cursor` is opaque; pass `nextCursor` back with the same filters.
+- **`symbol`** is mapped from the Trading 212 ticker and instrument data; `null` when no supported exchange matches. `logoUrl` as for search results (stored profile, else `null`).
+- **Firestore** (backend-only, rules deny all client access): `t212Credentials/{uid}` (encrypted key and secret, hint, environment) and `t212/{uid}` (sync state) with subcollections `orders`, `dividends`, `transactions` (items bucketed by month) and `instruments`.
+
 ---
 
 ## Changelog
@@ -190,3 +322,4 @@ Behaviour the tables above leave open, as the backend implements it. No field na
 | 2026-09-27 | Errors: added `404 NOT_FOUND` (unknown endpoint), `405 METHOD_NOT_ALLOWED` and `500 INTERNAL_ERROR`, so every error response has a documented code. |
 | 2026-09-27 | Added "Implementation notes": defaults, limits, cursor paging, marker and quarter semantics, the inclusive 42-day calendar span. No field changes. |
 | 2026-09-27 | Implementation notes for `POST /api/notifications/test` (recipient, 7-day window, sample data, 429, 503) and `POST /api/admin/jobs/{jobName}/run` (background start, already-running behaviour, 400). No field changes. |
+| 2026-10-02 | Trading 212 portfolio (additive): `/api/t212/**` endpoints, the `T212…` types, six `T212_…` error codes, the `t212-sync` job and the backend-only `t212Credentials` / `t212` collections. Differences from the feature prompt: `apiSecret` may be `null` for legacy keys, `T212_MISSING_PERMISSIONS` is new, `DELETE` answers 204, periods take a `tz`, and fees are reported separately from realized P/L (see the P/L definitions). |
