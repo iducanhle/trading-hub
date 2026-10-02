@@ -20,7 +20,11 @@ export type TermId =
   | 'streak'
   | 'avgReaction'
   | 'recommendations'
-  | 'peers';
+  | 'peers'
+  | 'averageCost'
+  | 'realizedPnl'
+  | 'unrealizedPnl'
+  | 'totalPnl';
 
 export interface Term {
   title: string;
@@ -166,5 +170,37 @@ export const TERMS: Record<TermId, Term> = {
     body: [
       $localize`:Term text:Companies in the same industry. Useful for comparing numbers such as P/E or how the price reacted to results.`,
     ],
+  },
+  averageCost: {
+    title: $localize`:Term title:Average cost`,
+    body: [
+      $localize`:Term text:What you paid per share, on average, for the shares you hold now. Every buy moves it; a sell does not change it.`,
+      $localize`:Term text:Trading 212 calculates it this way, and profits from sells are measured against it.`,
+    ],
+    example: $localize`:Term example:10 shares at $100 and 10 more at $120: the average cost is $110.`,
+  },
+  realizedPnl: {
+    title: $localize`:Term title:Realized profit/loss`,
+    body: [
+      $localize`:Term text:Money you actually made or lost by selling: the sale price minus the average cost of the shares sold.`,
+      $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees are shown separately.`,
+    ],
+    example: $localize`:Term example:Average cost $110, you sell 5 shares at $130: realized profit is 5 × $20 = $100.`,
+  },
+  unrealizedPnl: {
+    title: $localize`:Term title:Unrealized profit/loss`,
+    body: [
+      $localize`:Term text:How much the shares you still hold are up or down: their current value minus what you paid for them.`,
+      $localize`:Term text:It changes with the price every day and becomes realized only when you sell. It is always as of now.`,
+    ],
+    example: $localize`:Term example:You hold 10 shares with an average cost of $110 and the price is $100: unrealized loss is −$100.`,
+  },
+  totalPnl: {
+    title: $localize`:Term title:Total profit/loss`,
+    body: [
+      $localize`:Term text:Realized profit/loss plus dividends, minus fees and taxes. For all time, the unrealized profit/loss of what you still hold is added too.`,
+      $localize`:Term text:The percentage compares it with everything you spent on buying the stock.`,
+    ],
+    example: $localize`:Term example:Realized +$100, dividends +$5, fees −$2 and unrealized −$40: total +$63.`,
   },
 };

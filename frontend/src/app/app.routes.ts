@@ -1,6 +1,7 @@
 import { ActivatedRouteSnapshot, Routes } from '@angular/router';
 import { allowedGuard, authGuard, guestGuard, signedInGuard } from './core/auth/auth.guards';
 import { Shell } from './core/layout/shell';
+import { displayTicker } from './features/portfolio/portfolio-model';
 
 export const routes: Routes = [
   {
@@ -68,6 +69,19 @@ export const routes: Routes = [
         title: $localize`Events`,
         loadComponent: () =>
           import('./features/market-events/events-page').then((m) => m.EventsPage),
+      },
+      {
+        path: 'portfolio',
+        title: $localize`Portfolio`,
+        loadComponent: () =>
+          import('./features/portfolio/portfolio-page').then((m) => m.PortfolioPage),
+      },
+      {
+        path: 'portfolio/:t212Ticker',
+        title: (route: ActivatedRouteSnapshot) =>
+          displayTicker({ symbol: null, t212Ticker: route.paramMap.get('t212Ticker') ?? '' }),
+        loadComponent: () =>
+          import('./features/portfolio/instrument-page').then((m) => m.InstrumentPage),
       },
       {
         path: 'settings',

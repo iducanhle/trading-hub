@@ -110,6 +110,12 @@ export class Shell {
       activeIcon: 'bolt-fill',
     },
     {
+      path: '/portfolio',
+      label: $localize`:Bottom navigation tab:Portfolio`,
+      icon: 'account_balance_wallet',
+      activeIcon: 'account_balance_wallet-fill',
+    },
+    {
       path: '/settings',
       label: $localize`Settings`,
       icon: 'settings',

@@ -51,3 +51,22 @@ Numbers and dates use Czech formats when the app is in Czech: `254,43 $`, `+1,24
 | N events | Událostí: N | Same form after any number |
 
 Event titles and notes (for example "Consumer Price Index (CPI)") come from the backend in English and are not translated.
+
+## Portfolio (Trading 212)
+
+| English | Czech | Note |
+|---|---|---|
+| Portfolio | Portfolio | The tab |
+| Profit/loss (P/L) | Zisk/ztráta | |
+| Realized / Unrealized profit/loss | Realizovaný / Nerealizovaný zisk/ztráta | Unrealized is always "as of now" (nyní) |
+| Total profit/loss | Celkový zisk/ztráta | |
+| Average cost | Průměrná nákupní cena | |
+| Open / Closed (position) | Otevřená / Uzavřená | Position status |
+| Buy / Sell (a trade) | Nákup / Prodej | Nouns; the analyst ratings use the verbs Koupit / Prodat |
+| Shares (count) | ks | "30 ks" |
+| Stock split / Corporate action | Split akcií / Korporátní akce | |
+| Deposits / Withdrawals / Interest | Vklady / Výběry / Úroky | |
+| Live / Demo (account) | Ostrý / Demo (cvičný účet) | Trading 212 environments |
+| API key / API secret | API klíč / Tajný klíč (API secret) | |
+| Sync | Synchronizace / Synchronizovat | |
+| 1M / 3M / YTD / 1Y / All / Custom | 1M / 3M / YTD / 1R / Vše / Vlastní | Periods |

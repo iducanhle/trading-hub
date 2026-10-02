@@ -20,7 +20,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 |---|---|
 | 1 – Research & contract | Done (2026-10-02) |
 | 5 – Frontend: Settings + mocks | Done (2026-10-02) |
-| 6 – Frontend: Portfolio tab | — |
+| 6 – Frontend: Portfolio tab | Done (2026-10-02) |
 | 7 – Integration & polish | — |
 
 **Done**
@@ -33,9 +33,19 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
   - Mock mode: `mock-t212.ts` + `assets/mocks/t212-portfolio.json` (starts disconnected; keys with "bad" / "noperm" fail; a 2.5 s sync; AAPL open at a loss, MSFT closed with a profit, SAP closed at a loss, an NVDA split, an unmapped LSE ETF with dividends; P/L computed with the backend's rules for any period).
   - Czech for every new string (428 messages). Checked in mock mode in the browser: rejected key (error, fields cleared), connect → syncing → last sync, no key in local/session storage, disconnect with confirmation. Tests: 69 unit tests, lint, build pass.
 
+- Phase 6:
+  - `/portfolio` (6th tab, wallet icon): sub-tabs Overview · Stocks · Trades · Dividends & cash and the period (1M · 3M · YTD · 1Y · All · Custom with two date fields) in the URL (`?tab=…&period=…&from=…&to=…`, trade filters `side`, `ticker`); pull-to-refresh and the header button start a sync; lists refetch when it finishes. Not connected: explanation + "Connect Trading 212" → `/settings#trading212`. Not configured on the server: its own empty state. A rejected key: a banner linking to Settings.
+  - Overview: total value, total P/L (with % for All; "in this period" without unrealized otherwise), realized, unrealized (All only), dividends, fees and taxes, net deposits, cash, best/worst, sync line, first-sync notice.
+  - Stocks: logo, name, Open/Closed chip, P/L (and % for All); Open / Closed / All and sort (P/L, P/L %, value, last trade, name) remembered; search by name/ticker/symbol.
+  - Trades: grouped by day in the device's zone, 50 per page loaded on scroll; Buy / Sell / corporate-action badges, quantity × price, value, realized P/L on sells; filters (side, stock autocomplete) inline from `lg`, in a bottom sheet on phones; active filters as removable chips.
+  - Dividends & cash: dividends with the period total; deposits, withdrawals, account fees, interest and the list.
+  - `/portfolio/:t212Ticker`: header (status, shares held, average cost, current price, value, total / realized / unrealized P/L, dividends, fees, bought/sold, first and last trade), "Open stock detail" when mapped, timeline of trades and dividends with the shares held after each trade; "not in your portfolio" for unknown tickers.
+  - ⓘ hints for average cost, realized, unrealized and total P/L; Czech for every string (532 messages, plural forms for the trade count); glossary section "Portfolio (Trading 212)".
+  - Checked in mock mode: every tab, a custom period, filters from the URL, the detail page and its 404, Czech and English, 360 px (no horizontal overflow; sticky header 96 px). Tests: 73 unit tests (period presets incl. month-end clamping, URL round trip, filter/sort, day grouping across time zones, ticker display), lint, build.
+
 **In progress:** nothing.
 
-**Next (phase 6):** Portfolio tab: navigation (6th tab), Overview, Stocks, Trades, Dividends & cash, instrument detail, period selector in the URL, term hints.
+**Next (phase 7):** "Your position" card on the stock page; optional buy/sell markers on its chart; end-to-end check with a demo account.
 
 **Known issues**
 - The in-app browser used for checks does not render frames while hidden, so bottom sheets never finish their close animation there; the flow was completed by firing `animationend`. Not an app issue.
@@ -46,6 +56,10 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 - **2026-10-02 —** Prices (`averageCost`, `currentPrice`, trade `price`) are in the instrument currency; every other amount is in `accountCurrency`.
 - **2026-10-02 —** When `GET /api/t212/status` answers 503 `T212_NOT_CONFIGURED`, Settings shows "not available on this server" instead of the connect form.
 - **2026-10-02 —** The connect form clears the key and secret on every submit, also when it fails, so the key never outlives the request (the user pastes it again after an error).
+- **2026-10-02 — Six tabs in the bottom bar, all with labels:** measured at 360 px in Czech (the longest language): each tab is 60 px and the widest label ("Sledované") 56 px, with no horizontal overflow, so neither shorter labels nor active-only labels are needed.
+- **2026-10-02 —** The portfolio sub-tabs sit in the sticky header (they scroll sideways on narrow phones); the period selector is at the top of the content, so the sticky header stays 96 px on a phone instead of ~170 px.
+- **2026-10-02 —** Default period is All (the only one with unrealized P/L and percentages). Periods end today and start the same day a month/3 months/a year back plus one day (`shiftMonths` clamps to month end; the shared `addMonths` returns the 1st and does not fit).
+- **2026-10-02 —** Buy/Sell and Open/Closed have their own i18n meaning, so Czech uses the nouns Nákup/Prodej (the analyst ratings keep the verbs Koupit/Prodat).
 - **2026-10-02 —** Server error messages are English; the connect form shows its own translated text per error code and only takes the list of missing permissions from the server's message.
 
 ## Done

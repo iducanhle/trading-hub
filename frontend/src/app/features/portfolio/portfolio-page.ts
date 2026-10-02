@@ -1,0 +1,238 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { errorMessage } from '../../core/api/api-error';
+import { T212Side } from '../../core/models/contract';
+import { NotifierService } from '../../core/services/notifier.service';
+import { T212Service } from '../../core/services/t212.service';
+import { EmptyState } from '../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../shared/components/error-state/error-state';
+import { PageHeader } from '../../shared/components/page-header/page-header';
+import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
+import { Skeleton } from '../../shared/components/skeleton/skeleton';
+import { Icon } from '../../shared/icon/icon';
+import { PeriodSelector } from './period-selector';
+import { PortfolioCash } from './portfolio-cash';
+import { TAB_LABELS } from './portfolio-labels';
+import {
+  PORTFOLIO_TABS,
+  PortfolioPeriod,
+  PortfolioTab,
+  parsePeriod,
+  periodParams,
+} from './portfolio-model';
+import { PortfolioOverview } from './portfolio-overview';
+import { PortfolioStocks } from './portfolio-stocks';
+import { PortfolioTrades } from './portfolio-trades';
+import { TradeFilters } from './trades-filters';
+
+/**
+ * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Dividends & cash share one
+ * period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
+ * down starts a sync. Without a connection it explains the feature and links to Settings.
+ */
+@Component({
+  selector: 'app-portfolio-page',
+  imports: [
+    RouterLink,
+    MatButton,
+    MatIconButton,
+    EmptyState,
+    ErrorState,
+    PageHeader,
+    PullToRefresh,
+    Skeleton,
+    Icon,
+    PeriodSelector,
+    PortfolioOverview,
+    PortfolioStocks,
+    PortfolioTrades,
+    PortfolioCash,
+  ],
+  template: `
+    <app-pull-to-refresh [refreshing]="t212.syncing()" (refresh)="sync()">
+      <app-page-header title="Portfolio" i18n-title maxWidth="max-w-3xl">
+        @if (t212.connected()) {
+          <div actions class="flex items-center">
+            <button
+              matIconButton
+              type="button"
+              [attr.aria-label]="t212.syncing() ? labels.syncing : labels.sync"
+              [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
+              (click)="sync()"
+            >
+              <app-icon name="sync" [class.animate-spin]="t212.syncing()" />
+            </button>
+          </div>
+        }
+        @if (t212.connected()) {
+          <div class="mx-auto max-w-3xl px-4 pb-2">
+            <nav
+              class="-mx-1 flex gap-1 overflow-x-auto px-1"
+              aria-label="Portfolio sections"
+              i18n-aria-label
+            >
+              @for (t of tabs; track t) {
+                <a
+                  [routerLink]="[]"
+                  [queryParams]="{ tab: t === 'overview' ? null : t }"
+                  queryParamsHandling="merge"
+                  replaceUrl
+                  [attr.aria-current]="tab() === t ? 'page' : null"
+                  class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap"
+                  [class]="
+                    tab() === t
+                      ? 'bg-secondary-container text-on-secondary-container'
+                      : 'text-on-surface-variant hover:bg-surface-container-high'
+                  "
+                  >{{ tabLabels[t] }}</a
+                >
+              }
+            </nav>
+          </div>
+        }
+      </app-page-header>
+
+      <div class="mx-auto max-w-3xl px-4 pt-2 pb-10">
+        @if (!t212.loaded()) {
+          <div class="space-y-3" aria-hidden="true">
+            <app-skeleton shape="card" class="h-32" />
+            <app-skeleton shape="card" class="h-20" />
+          </div>
+        } @else if (t212.notConfigured()) {
+          <app-empty-state
+            icon="account_balance_wallet"
+            title="Portfolio isn't available yet"
+            i18n-title
+            text="This server is not set up for Trading 212 yet."
+            i18n-text
+          />
+        } @else if (t212.error()) {
+          <app-error-state [error]="t212.error()" (retry)="t212.load(true)" />
+        } @else if (!t212.connected()) {
+          <app-empty-state
+            icon="account_balance_wallet"
+            title="Your Trading 212 portfolio"
+            i18n-title
+            text="Connect your Trading 212 account to see every trade, filter them, and how much you made or lost on each stock and overall, for any period. The app only reads your account."
+            i18n-text
+          >
+            <a matButton="filled" routerLink="/settings" fragment="trading212">
+              <app-icon matButtonIcon name="account_balance_wallet" [size]="18" />
+              <ng-container i18n>Connect Trading 212</ng-container>
+            </a>
+          </app-empty-state>
+        } @else {
+          @if (t212.status()?.credentialsValid === false) {
+            <a
+              routerLink="/settings"
+              fragment="trading212"
+              class="mb-4 flex items-center gap-3 rounded-2xl bg-error-container p-3 text-sm text-on-error-container"
+            >
+              <app-icon name="warning" [size]="20" class="shrink-0" />
+              <span class="flex-1" i18n
+                >Trading 212 no longer accepts the stored key, so this data isn't updated. Replace
+                the key in Settings.</span
+              >
+              <app-icon name="chevron_right" [size]="20" />
+            </a>
+          }
+          <app-period-selector
+            class="mb-4 block"
+            [period]="period()"
+            (periodChange)="setPeriod($event)"
+          />
+          @switch (tab()) {
+            @case ('stocks') {
+              <app-portfolio-stocks [period]="period()" [version]="version()" />
+            }
+            @case ('trades') {
+              <app-portfolio-trades
+                [period]="period()"
+                [version]="version()"
+                [filters]="tradeFilters()"
+                (filtersChange)="setTradeFilters($event)"
+              />
+            }
+            @case ('cash') {
+              <app-portfolio-cash [period]="period()" [version]="version()" />
+            }
+            @default {
+              <app-portfolio-overview [period]="period()" [version]="version()" />
+            }
+          }
+        }
+      </div>
+    </app-pull-to-refresh>
+  `,
+})
+export class PortfolioPage {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly notifier = inject(NotifierService);
+  protected readonly t212 = inject(T212Service);
+
+  private readonly query = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  protected readonly tabs = PORTFOLIO_TABS;
+  protected readonly tabLabels = TAB_LABELS;
+  protected readonly version = signal(0);
+
+  protected readonly tab = computed<PortfolioTab>(() => {
+    const value = this.query().get('tab') as PortfolioTab | null;
+    return value && PORTFOLIO_TABS.includes(value) ? value : 'overview';
+  });
+  protected readonly period = computed(() =>
+    parsePeriod({
+      period: this.query().get('period'),
+      from: this.query().get('from'),
+      to: this.query().get('to'),
+    }),
+  );
+  protected readonly tradeFilters = computed<TradeFilters>(() => {
+    const side = this.query().get('side');
+    return {
+      side: side === 'BUY' || side === 'SELL' ? (side as T212Side) : null,
+      ticker: this.query().get('ticker') || null,
+    };
+  });
+
+  protected readonly labels = {
+    sync: $localize`Sync with Trading 212`,
+    syncing: $localize`Syncing with Trading 212`,
+  };
+
+  constructor() {
+    void this.t212.load(true);
+  }
+
+  protected setPeriod(period: PortfolioPeriod): void {
+    this.navigate(periodParams(period));
+  }
+
+  protected setTradeFilters(filters: TradeFilters): void {
+    this.navigate({ side: filters.side, ticker: filters.ticker });
+  }
+
+  /** Starts a sync; the lists refresh when it finishes (T212Service.dataVersion). */
+  protected async sync(): Promise<void> {
+    if (!this.t212.connected() || this.t212.syncing()) return;
+    try {
+      await this.t212.sync();
+      this.version.update((v) => v + 1);
+    } catch (error) {
+      void this.notifier.show(errorMessage(error));
+    }
+  }
+
+  private navigate(params: Record<string, string | null>): void {
+    void this.router.navigate([], {
+      queryParams: params,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+}

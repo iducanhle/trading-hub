@@ -1,4 +1,10 @@
-import { CalendarDay, EarningsEvent, MarketEvent, SearchResult } from '../core/models/contract';
+import {
+  CalendarDay,
+  EarningsEvent,
+  MarketEvent,
+  SearchResult,
+  T212Instrument,
+} from '../core/models/contract';
 import {
   DEFAULT_FILTERS,
   filtersAreDefault,
@@ -14,6 +20,19 @@ import {
   notableMove,
 } from './market-events/events-model';
 import { groupFollowed } from './followed/followed-groups';
+import {
+  StockSort,
+  addCustomDefaults,
+  displayTicker,
+  filterInstruments,
+  groupByDay,
+  isAllTime,
+  parsePeriod,
+  periodParams,
+  presetRange,
+  shiftMonths,
+  sortInstruments,
+} from './portfolio/portfolio-model';
 
 const event = (
   symbol: string,
@@ -199,5 +218,114 @@ describe('events model', () => {
       false,
     );
     expect(DEFAULT_EVENT_FILTERS.minImportance).toBe('MEDIUM');
+  });
+});
+
+describe('portfolio model', () => {
+  const today = '2026-10-02';
+  const instrument = (
+    t212Ticker: string,
+    name: string,
+    status: 'OPEN' | 'CLOSED',
+    totalPnl: number,
+    extra: Partial<T212Instrument> = {},
+  ): T212Instrument => ({
+    t212Ticker,
+    symbol: null,
+    name,
+    isin: null,
+    logoUrl: null,
+    instrumentCurrency: 'USD',
+    status,
+    quantity: status === 'OPEN' ? 1 : 0,
+    averageCost: null,
+    currentPrice: null,
+    value: null,
+    costBasis: null,
+    bought: { quantity: 1, value: 100 },
+    sold: { quantity: 0, value: 0 },
+    realizedPnl: 0,
+    dividends: 0,
+    fees: 0,
+    unrealizedPnl: null,
+    totalPnl,
+    totalPnlPct: null,
+    tradeCount: 1,
+    firstTradeAt: null,
+    lastTradeAt: null,
+    ...extra,
+  });
+
+  it('turns presets into days ending today', () => {
+    expect(presetRange('1M', today)).toEqual({ from: '2026-09-03', to: today });
+    expect(presetRange('3M', today)).toEqual({ from: '2026-07-03', to: today });
+    expect(presetRange('YTD', today)).toEqual({ from: '2026-01-01', to: today });
+    expect(presetRange('1Y', today)).toEqual({ from: '2025-10-03', to: today });
+    expect(presetRange('ALL', today)).toEqual({ from: null, to: null });
+    expect(shiftMonths('2026-03-31', -1)).toBe('2026-02-28');
+    expect(shiftMonths('2028-03-31', -1)).toBe('2028-02-29');
+    expect(shiftMonths('2026-01-15', -1)).toBe('2025-12-15');
+  });
+
+  it('reads the period from the URL and writes it back', () => {
+    expect(parsePeriod({}, today)).toEqual({ preset: 'ALL', from: null, to: null });
+    expect(parsePeriod({ period: 'nonsense' }, today).preset).toBe('ALL');
+    expect(parsePeriod({ period: 'CUSTOM', from: '2026-09-30', to: '2026-06-01' }, today)).toEqual({
+      preset: 'CUSTOM',
+      from: '2026-06-01',
+      to: '2026-09-30',
+    });
+    expect(parsePeriod({ period: 'CUSTOM', from: 'bad' }, today).preset).toBe('ALL');
+    const custom = parsePeriod({ period: 'CUSTOM', from: '2026-06-01' }, today);
+    expect(periodParams(custom)).toEqual({ period: 'CUSTOM', from: '2026-06-01', to: null });
+    expect(periodParams(parsePeriod({ period: '3M' }, today))).toEqual({
+      period: '3M',
+      from: null,
+      to: null,
+    });
+    expect(addCustomDefaults(parsePeriod({}, today), today)).toEqual({
+      preset: 'CUSTOM',
+      ...presetRange('1M', today),
+    });
+    expect(isAllTime(parsePeriod({}, today))).toBe(true);
+  });
+
+  it('filters and sorts instruments', () => {
+    const items = [
+      instrument('AAPL_US_EQ', 'Apple', 'OPEN', -50, { value: 900, totalPnlPct: -5 }),
+      instrument('MSFT_US_EQ', 'Microsoft', 'CLOSED', 250, { lastTradeAt: '2026-08-18T14:00:00Z' }),
+      instrument('VUSAl_EQ', 'Vanguard S&P 500', 'OPEN', 7, {
+        value: 3000,
+        totalPnlPct: 2,
+        lastTradeAt: '2026-07-07T09:00:00Z',
+      }),
+    ];
+    expect(filterInstruments(items, 'OPEN', '').map((i) => i.name)).toEqual([
+      'Apple',
+      'Vanguard S&P 500',
+    ]);
+    expect(filterInstruments(items, 'ALL', 'vusa').map((i) => i.name)).toEqual([
+      'Vanguard S&P 500',
+    ]);
+    expect(filterInstruments(items, 'CLOSED', 'apple')).toEqual([]);
+    const names = (sort: StockSort) => sortInstruments(items, sort).map((i) => i.name);
+    expect(names('pnl')).toEqual(['Microsoft', 'Vanguard S&P 500', 'Apple']);
+    expect(names('pnlPct')).toEqual(['Vanguard S&P 500', 'Apple', 'Microsoft']); // missing last
+    expect(names('value')).toEqual(['Vanguard S&P 500', 'Apple', 'Microsoft']);
+    expect(names('lastTrade')).toEqual(['Microsoft', 'Vanguard S&P 500', 'Apple']);
+    expect(names('name')).toEqual(['Apple', 'Microsoft', 'Vanguard S&P 500']);
+  });
+
+  it('groups by the day in the time zone and shortens tickers', () => {
+    const at = ['2026-09-30T22:30:00Z', '2026-09-30T08:00:00Z', '2026-09-29T12:00:00Z'];
+    expect(groupByDay(at, (x) => x, 'Europe/Prague').map((g) => [g.date, g.items.length])).toEqual([
+      ['2026-10-01', 1],
+      ['2026-09-30', 1],
+      ['2026-09-29', 1],
+    ]);
+    expect(groupByDay(at, (x) => x, 'UTC').map((g) => g.items.length)).toEqual([2, 1]);
+    expect(displayTicker({ symbol: 'SAP.DE', t212Ticker: 'SAPd_EQ' })).toBe('SAP.DE');
+    expect(displayTicker({ symbol: null, t212Ticker: 'VUSAl_EQ' })).toBe('VUSA');
+    expect(displayTicker({ symbol: null, t212Ticker: 'BRK_B_US_EQ' })).toBe('BRK-B');
   });
 });

@@ -238,7 +238,7 @@ import { T212Settings } from './t212-settings';
         }
       </section>
 
-      <app-t212-settings id="trading212" />
+      <app-t212-settings id="trading212" class="block scroll-mt-20" />
 
       <section
         aria-labelledby="about-title"

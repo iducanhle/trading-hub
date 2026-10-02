@@ -3,9 +3,9 @@
   "account": {
     "totalValue": 12480.4,
     "cash": 1310.25,
-    "invested": 10820.0,
+    "invested": 5861.9,
     "currentValue": 11170.15,
-    "unrealizedPnl": 350.15
+    "unrealizedPnl": 5308.25
   },
   "instruments": [
     {
@@ -55,7 +55,7 @@
       "quantity": 10,
       "averageCost": 196.4,
       "currentPrice": 171.2,
-      "value": 1575.0,
+      "value": 1575,
       "costBasis": 1806.9,
       "unrealizedPnl": -231.9
     },
@@ -65,7 +65,7 @@
       "averageCost": 31.5,
       "currentPrice": 178.3,
       "value": 6561.4,
-      "costBasis": 1160.0,
+      "costBasis": 1160,
       "unrealizedPnl": 5401.4
     },
     {
@@ -74,7 +74,7 @@
       "averageCost": 88.2,
       "currentPrice": 92.75,
       "value": 3033.75,
-      "costBasis": 2895.0,
+      "costBasis": 2895,
       "unrealizedPnl": 138.75
     }
   ],
@@ -86,9 +86,9 @@
       "side": "BUY",
       "kind": "TRADE",
       "quantity": 4,
-      "price": 290.0,
+      "price": 290,
       "priceCurrency": "USD",
-      "value": 1160.0,
+      "value": 1160,
       "fees": 1.74,
       "taxes": 0,
       "fxRate": 0.86,
@@ -102,9 +102,9 @@
       "side": "BUY",
       "kind": "TRADE",
       "quantity": 4,
-      "price": 420.0,
+      "price": 420,
       "priceCurrency": "USD",
-      "value": 1450.0,
+      "value": 1450,
       "fees": 2.18,
       "taxes": 0,
       "fxRate": 0.86,
@@ -118,9 +118,9 @@
       "side": "BUY",
       "kind": "TRADE",
       "quantity": 5,
-      "price": 240.0,
+      "price": 240,
       "priceCurrency": "EUR",
-      "value": 1200.0,
+      "value": 1200,
       "fees": 0,
       "taxes": 0,
       "fxRate": null,
@@ -134,7 +134,7 @@
       "side": "BUY",
       "kind": "TRADE",
       "quantity": 10,
-      "price": 210.0,
+      "price": 210,
       "priceCurrency": "USD",
       "value": 1806.9,
       "fees": 2.71,
@@ -152,7 +152,7 @@
       "quantity": 20,
       "price": 87.5,
       "priceCurrency": "GBP",
-      "value": 1925.0,
+      "value": 1925,
       "fees": 2.89,
       "taxes": 0,
       "fxRate": 1.1,
@@ -166,7 +166,7 @@
       "side": "BUY",
       "kind": "TRADE",
       "quantity": 5,
-      "price": 205.0,
+      "price": 205,
       "priceCurrency": "USD",
       "value": 881.5,
       "fees": 1.32,
@@ -198,13 +198,13 @@
       "side": "SELL",
       "kind": "TRADE",
       "quantity": 5,
-      "price": 226.0,
+      "price": 226,
       "priceCurrency": "EUR",
-      "value": 1130.0,
+      "value": 1130,
       "fees": 0,
       "taxes": 0,
       "fxRate": null,
-      "realizedPnl": -70.0,
+      "realizedPnl": -70,
       "orderType": "MARKET"
     },
     {
@@ -216,7 +216,7 @@
       "quantity": 10,
       "price": 88.6,
       "priceCurrency": "GBP",
-      "value": 970.0,
+      "value": 970,
       "fees": 1.46,
       "taxes": 0,
       "fxRate": 1.1,
@@ -230,7 +230,7 @@
       "side": "SELL",
       "kind": "TRADE",
       "quantity": 4,
-      "price": 495.0,
+      "price": 495,
       "priceCurrency": "USD",
       "value": 1702.8,
       "fees": 2.55,
@@ -246,7 +246,7 @@
       "side": "SELL",
       "kind": "TRADE",
       "quantity": 5,
-      "price": 232.0,
+      "price": 232,
       "priceCurrency": "USD",
       "value": 997.6,
       "fees": 1.5,
@@ -351,6 +351,12 @@
       "amount": 1.85,
       "currency": "EUR"
     },
-    { "id": "x-7", "at": "2026-09-15T00:00:00Z", "type": "FEE", "amount": -0.5, "currency": "EUR" }
+    {
+      "id": "x-7",
+      "at": "2026-09-15T00:00:00Z",
+      "type": "FEE",
+      "amount": -0.5,
+      "currency": "EUR"
+    }
   ]
 }
