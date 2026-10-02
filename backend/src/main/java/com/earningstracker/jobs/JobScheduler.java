@@ -55,6 +55,12 @@ class JobScheduler {
         runner.run(EarningsDigestJob.NAME, "schedule");
     }
 
+    /** Trading 212: every {@code app.t212.sync-interval}, first 15 minutes after startup. */
+    @Scheduled(fixedDelayString = "${app.t212.sync-interval}", initialDelayString = "PT15M")
+    void trading212Sync() {
+        runner.run(T212SyncJob.NAME, "schedule");
+    }
+
     /** §7: run calendar-refresh once on startup if its last success is older than 24 h. */
     @EventListener(ApplicationReadyEvent.class)
     void onStartup() {

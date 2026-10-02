@@ -94,7 +94,7 @@ class T212ControllerTest {
         MvcTestResult saved = put("alice", BODY);
         assertThat(saved).hasStatusOk().bodyJson().isLenientlyEqualTo("""
                 {"connected":true,"environment":"DEMO","keyHint":"WXYZ","accountCurrency":"EUR",
-                 "credentialsValid":true,"syncState":"IDLE","lastError":null,"serverIpHint":"203.0.113.7"}
+                 "credentialsValid":true,"syncState":"RUNNING","lastError":null,"serverIpHint":"203.0.113.7"}
                 """);
         assertThat(saved.getResponse().getContentAsString()).doesNotContain(API_KEY, API_SECRET);
 
@@ -110,6 +110,18 @@ class T212ControllerTest {
         assertThat(mvc.delete().uri("/api/t212/credentials").header(HttpHeaders.AUTHORIZATION, "Bearer alice"))
                 .hasStatus(HttpStatus.NO_CONTENT);
         assertThat(get("alice", "/api/t212/status")).bodyJson().extractingPath("$.connected").isEqualTo(false);
+    }
+
+    @Test
+    void syncNeedsAConnectionAndAnswers202() {
+        assertThat(mvc.post().uri("/api/t212/sync").header(HttpHeaders.AUTHORIZATION, "Bearer bob"))
+                .hasStatus(HttpStatus.CONFLICT).bodyJson().extractingPath("$.code").isEqualTo("T212_NOT_CONNECTED");
+
+        assertThat(put("bob", BODY)).hasStatusOk();
+        assertThat(mvc.post().uri("/api/t212/sync").header(HttpHeaders.AUTHORIZATION, "Bearer bob"))
+                .hasStatus(HttpStatus.ACCEPTED).bodyJson().extractingPath("$.connected").isEqualTo(true);
+        assertThat(mvc.delete().uri("/api/t212/credentials").header(HttpHeaders.AUTHORIZATION, "Bearer bob"))
+                .hasStatus(HttpStatus.NO_CONTENT);
     }
 
     @Test

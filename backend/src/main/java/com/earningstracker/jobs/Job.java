@@ -9,8 +9,8 @@ public interface Job {
     ZoneId ZONE = ZoneId.of("Europe/Prague");
 
     /**
-     * {@code calendar-refresh}, {@code market-events-refresh}, {@code eu-universe-refresh}, {@code prices-refresh} or
-     * {@code earnings-digest}.
+     * {@code calendar-refresh}, {@code market-events-refresh}, {@code eu-universe-refresh}, {@code prices-refresh},
+     * {@code earnings-digest} or {@code t212-sync}.
      */
     String name();
 

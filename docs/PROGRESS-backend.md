@@ -21,8 +21,8 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 |---|---|
 | 1 – Research & contract | Done (2026-10-02) |
 | 2 – Backend: credentials | Done (2026-10-02) |
-| 3 – Backend: sync | Next |
-| 4 – Backend: P/L engine & read endpoints | — |
+| 3 – Backend: sync | Done (2026-10-02) |
+| 4 – Backend: P/L engine & read endpoints | Next |
 | 7 – Integration & polish (demo account check) | — |
 
 **Done**
@@ -36,9 +36,17 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
   - Rules: explicit deny for `t212Credentials/**` and `t212/**`, 3 rules tests (owner, other user, anonymous). DEPLOYMENT-backend.md 6.4 and 9.5, `.env.example`, README.
   - Tests: crypto (round trip, wrong master key, wrong user, tampering, bad key), client (auth headers, GET only, error mapping, 429 wait/retry, `remaining: 0` wait, too-long wait, `nextPagePath` guard, log redaction), service (connect, permissions, rejected key, validation, account change, disconnect, changed master key, not configured), controller (auth, two users, error codes, no key in responses). Backend 179 tests, rules 14 tests: pass.
 
+- Phase 3:
+  - `T212Normalizer`: filled orders → `T212Fill` (positive quantity and value + `side`, pence → GBP, fees vs taxes, charges in the instrument currency converted with the rate implied by the fill itself, realized P/L on sells only, corporate actions with their direction from the quantity sign); dividends; transactions (signed: withdrawals and fees negative). Unfilled orders are skipped.
+  - `T212SymbolMapper` (`_US_EQ`, exchange letters d/l/p/a/z/m/e/s, currency cross-check, else null).
+  - `T212DataStore` (month/year buckets, instruments document, Caffeine cache 6 h after last use) and `T212UserData` snapshots.
+  - `T212SyncService`: full sync until each history was read to the end once (`completeHistories` in `t212/{uid}`), then incremental; one per user (`T212SyncTracker`); saves after each history under the user's lock and only while the account is unchanged; disconnect or an account change cancels it; 401/403 mark the key invalid; other failures → `FAILED` with the error, and unsaved items are dropped from memory so the next sync saves them. Instrument metadata is fetched only when an instrument has no currency.
+  - `PUT /credentials` starts the first sync; `POST /api/t212/sync` (202); `t212-sync` job (every `app.t212.sync-interval`, first 15 min after startup; skips rejected keys). Status reports a sync stored as running but not running in this process (restart) as `FAILED` "interrupted".
+  - Tests: mapper (12 mappings, 6 refusals), normalizer (sell, unfilled, pence + stamp duty, split, positive-quantity sells, dividends, transactions), sync (full, restart round trip, incremental stop, incremental add, interrupted first sync, rejected key, one per user + disconnect cancels, job). Backend 213 tests pass.
+
 **In progress:** nothing.
 
-**Next (phase 3):** history DTOs and normalization, symbol mapper, `T212SyncService` (full + incremental, one per user, state), `t212-sync` job, `POST /api/t212/sync`, first sync after connect.
+**Next (phase 4):** live summary and positions (60 s cache), average-cost engine, period filtering, `/summary`, `/instruments`, `/instruments/{t212Ticker}`, `/trades`, `/dividends`, `/transactions`.
 
 **Known issues**
 - No Trading 212 key was available, so nothing has been called yet. The open questions (sell quantity sign, whether realized P/L includes fees, split fills, ticker suffixes, pence currency code) are listed as UNVERIFIED in DATA-SOURCES.md and get checked against a demo account in phase 7. Until then, the code normalizes defensively (absolute values plus `side`) and covers both readings in tests.
@@ -55,7 +63,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
   - `t212/{uid}`: `{ environment, accountIdHash, accountCurrency, connectedAt, credentialsValid, syncState, syncStartedAt, lastSyncAt, lastError, counts }`. `accountIdHash` (SHA-256 of uid + Trading 212 account id; the account number itself is not stored) detects a replacement key for a different account, which wipes the synced data.
   - Synced items are **bucketed**: `t212/{uid}/orders/{YYYY-MM}` (filled orders of that UTC month), `dividends/{YYYY}`, `transactions/{YYYY}`, each `{ items: [...] }`, and `instruments/all` (ticker → name, ISIN, currency, symbol). One document per trade would cost one Firestore read per trade every time the cache is loaded; buckets cost about 75 reads for five years of history. A fill is about 300 bytes, so a month bucket holds ~3,000 fills before Firestore's 1 MiB limit; the sync fails with a clear error if one ever gets close (900 KB).
   - The backend keeps each user's items in memory after the first read (dropped after 6 h without use); syncs update memory and rewrite only the buckets they touched.
-- **2026-10-02 — Sync:** history is newest first, so a sync pages until it reaches an item already stored (orders by `order.id`+`fill.id`, dividends and transactions by `reference`), or to the end on the first sync. Only filled orders are stored. One sync per user (in-memory lock, like the job locks). The `t212-sync` job runs every 6 hours for all connected users, one user after the other.
+- **2026-10-02 — Sync:** history is newest first, so a sync pages until it reaches a page with known items and nothing new (orders by `order.id`+`fill.id`, dividends and transactions by `reference`), or to the end until a history type has been read completely once. A whole page rather than one known item, so an order filled later than newer ones still gets a page of overlap. Only filled orders are stored. One sync per user (in-memory lock, like the job locks). The `t212-sync` job runs every 6 hours for all connected users, one user after the other.
 - **2026-10-02 — Rate limits:** one limiter per user and endpoint, fed by the `x-ratelimit-*` headers. When `remaining` is 0, the next call waits until `reset`. On a 429 the client waits until `reset` (at most 70 s) and retries, up to 3 times, then fails the sync with `T212_RATE_LIMITED`. Live calls (summary 1/5 s, positions 1/s) are cached per user for 60 s.
 - **2026-10-02 — Instrument metadata** (`/metadata/instruments`, thousands of rows, 1 per 50 s) is fetched at most once per sync and only when a ticker is new, kept in memory for 24 h, and only the user's own instruments are stored. History items already carry name, ISIN and currency.
 - **2026-10-02 — P/L semantics** (contract "P/L definitions"): realized P/L is Trading 212's per-sell figure, **before** fees. Fees and taxes of all trades are a separate `fees` line subtracted in `totalPnl`. This changes the prompt's wording, which subtracts only fees of sells, so that buy fees and FX fees are not lost. If the demo check shows that Trading 212's figure already includes fees, the engine subtracts only the remainder. Percentages are for all time only (a period has no meaningful base). Unrealized P/L is as of now and counts only for all time; no historical portfolio value is computed, because there is no daily price history of the portfolio.

@@ -38,16 +38,21 @@ public class T212ConnectionService {
     private final T212Client client;
     private final T212CredentialStore credentials;
     private final T212StateStore states;
+    private final T212DataStore data;
+    private final T212SyncTracker syncs;
     private final T212Encryption encryption;
     private final T212Properties properties;
     private final Clock clock;
     private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<>();
 
     public T212ConnectionService(T212Client client, T212CredentialStore credentials, T212StateStore states,
-            T212Encryption encryption, T212Properties properties, Clock clock) {
+            T212DataStore data, T212SyncTracker syncs, T212Encryption encryption, T212Properties properties,
+            Clock clock) {
         this.client = client;
         this.credentials = credentials;
         this.states = states;
+        this.data = data;
+        this.syncs = syncs;
         this.encryption = encryption;
         this.properties = properties;
         this.clock = clock;
@@ -67,9 +72,17 @@ public class T212ConnectionService {
         T212State.Error error = readable ? s.lastError()
                 : new T212State.Error(ErrorCode.T212_INVALID_CREDENTIALS.name(), UNREADABLE_MESSAGE);
         T212State.SyncState syncState = readable ? s.syncState() : T212State.SyncState.FAILED;
+        Optional<T212SyncTracker.Run> run = syncs.current(uid);
+        if (readable && run.isPresent()) {
+            syncState = T212State.SyncState.RUNNING;
+        } else if (syncState == T212State.SyncState.RUNNING) {
+            // Stored as running, but no sync runs in this process: the server restarted during it.
+            syncState = T212State.SyncState.FAILED;
+            error = new T212State.Error(ErrorCode.T212_UNAVAILABLE.name(), "The last sync was interrupted.");
+        }
         return new T212Dtos.Status(true, key.get().environment(), blankToNull(key.get().keyHint()),
                 s.accountCurrency(), readable && s.credentialsValid(), s.connectedAt(), syncState.name(),
-                s.syncStartedAt(), s.lastSyncAt(),
+                run.filter(r -> readable).map(T212SyncTracker.Run::startedAt).orElse(s.syncStartedAt()), s.lastSyncAt(),
                 error == null ? null : new T212Dtos.Error(error.code(), error.message()), serverIpHint);
     }
 
@@ -91,13 +104,15 @@ public class T212ConnectionService {
             boolean sameAccount = existing.map(s -> accountIdHash.equals(s.accountIdHash())).orElse(false);
             if (existing.isPresent() && !sameAccount) {
                 log.info("Trading 212 key for a different account: deleting the synced data of {}", uid);
-                states.deleteData(uid);
+                syncs.cancel(uid);
+                data.deleteAll(uid);
             }
             credentials.save(uid, key);
             T212State state = new T212State(key.environment(), accountIdHash, account.currency(),
                     sameAccount ? existing.get().connectedAt() : now, true, T212State.SyncState.IDLE,
                     sameAccount ? existing.get().syncStartedAt() : null,
-                    sameAccount ? existing.get().lastSyncAt() : null, null);
+                    sameAccount ? existing.get().lastSyncAt() : null, null,
+                    sameAccount ? existing.get().completeHistories() : java.util.Set.of());
             states.save(uid, state);
             log.info("Trading 212 connected for {} ({}, {})", uid, key.environment(), account.currency());
         } finally {
@@ -112,8 +127,10 @@ public class T212ConnectionService {
         ReentrantLock lock = lock(uid);
         lock.lock();
         try {
+            syncs.cancel(uid);
             credentials.delete(uid);
-            states.deleteAll(uid);
+            states.delete(uid);
+            data.deleteAll(uid);
             log.info("Trading 212 disconnected for {}", uid);
         } finally {
             lock.unlock();

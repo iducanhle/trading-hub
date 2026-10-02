@@ -1,0 +1,40 @@
+{
+  "items": [
+    {
+      "order": {
+        "id": 1003, "ticker": "AAPL_US_EQ", "side": "SELL", "type": "MARKET", "status": "FILLED", "strategy": "QUANTITY",
+        "quantity": -5, "filledQuantity": -5, "currency": "USD", "createdAt": "2026-09-20T14:59:58Z", "initiatedFrom": "ANDROID",
+        "instrument": { "ticker": "AAPL_US_EQ", "isin": "US0378331005", "name": "Apple", "currency": "USD" }
+      },
+      "fill": {
+        "id": 2003, "filledAt": "2026-09-20T15:00:00Z", "price": 200.0, "quantity": -5, "tradingMethod": "TOTV", "type": "TRADE",
+        "walletImpact": {
+          "currency": "EUR", "fxRate": 0.9, "netValue": 900.0, "realisedProfitLoss": 90.5,
+          "taxes": [ { "name": "CURRENCY_CONVERSION_FEE", "quantity": 1.35, "currency": "EUR", "chargedAt": "2026-09-20T15:00:00Z" } ]
+        }
+      }
+    },
+    {
+      "order": {
+        "id": 1002, "ticker": "MSFT_US_EQ", "side": "BUY", "type": "LIMIT", "status": "CANCELLED", "strategy": "QUANTITY",
+        "quantity": 3, "filledQuantity": 0, "limitPrice": 300, "currency": "USD", "createdAt": "2026-09-10T10:00:00Z",
+        "instrument": { "ticker": "MSFT_US_EQ", "isin": "US5949181045", "name": "Microsoft", "currency": "USD" }
+      }
+    },
+    {
+      "order": {
+        "id": 1001, "ticker": "AZNl_EQ", "side": "BUY", "type": "MARKET", "status": "FILLED", "strategy": "QUANTITY",
+        "quantity": 10, "filledQuantity": 10, "currency": "GBX", "createdAt": "2026-07-01T09:00:00Z",
+        "instrument": { "ticker": "AZNl_EQ", "isin": "GB0009895292", "name": "AstraZeneca", "currency": "GBX" }
+      },
+      "fill": {
+        "id": 2001, "filledAt": "2026-07-01T09:00:01Z", "price": 12000, "quantity": 10, "type": "TRADE",
+        "walletImpact": {
+          "currency": "EUR", "fxRate": 1.1667, "netValue": 1400.0, "realisedProfitLoss": 0,
+          "taxes": [ { "name": "STAMP_DUTY", "quantity": 6.0, "currency": "GBP" } ]
+        }
+      }
+    }
+  ],
+  "nextPagePath": "/api/v0/equity/history/orders?limit=50&cursor=1751360400000"
+}

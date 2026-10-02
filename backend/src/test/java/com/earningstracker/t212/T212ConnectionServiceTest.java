@@ -57,8 +57,8 @@ class T212ConnectionServiceTest {
         T212Properties properties = T212TestSupport.properties(baseUrl, masterKey);
         T212Encryption encryption = new T212Encryption(properties);
         return new T212ConnectionService(new T212Client(properties, JSON, clock, new RecordingSleeper(clock)),
-                new T212CredentialStore(store, encryption, clock), new T212StateStore(store), encryption, properties,
-                clock);
+                new T212CredentialStore(store, encryption, clock), new T212StateStore(store), new T212DataStore(store),
+                new T212SyncTracker(), encryption, properties, clock);
     }
 
     private void allPermissions() {

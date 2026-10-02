@@ -4,19 +4,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.earningstracker.cache.DocumentStore;
 import com.earningstracker.provider.t212.T212Environment;
 import org.springframework.stereotype.Component;
 
-/** {@code t212/{uid}} state documents, cached in memory, plus deletion of everything synced for a user. */
+/** {@code t212/{uid}} state documents, cached in memory. */
 @Component
 public class T212StateStore {
 
     static final String COLLECTION = "t212";
-    /** Subcollections of {@code t212/{uid}} holding synced data. */
-    static final List<String> DATA_COLLECTIONS = List.of("orders", "dividends", "transactions", "instruments");
 
     private final DocumentStore store;
     private final Map<String, Optional<T212State>> cache = new ConcurrentHashMap<>();
@@ -39,19 +38,8 @@ public class T212StateStore {
         return List.copyOf(store.list(COLLECTION).keySet());
     }
 
-    /** Deletes the synced documents (subcollections) only. */
-    public void deleteData(String uid) {
-        for (String collection : DATA_COLLECTIONS) {
-            String path = COLLECTION + "/" + uid + "/" + collection;
-            for (String id : store.list(path).keySet()) {
-                store.delete(path, id);
-            }
-        }
-    }
-
-    /** Deletes the state document and every synced document. */
-    public void deleteAll(String uid) {
-        deleteData(uid);
+    /** Deletes the state document (the synced data is {@link T212DataStore}'s). */
+    public void delete(String uid) {
         store.delete(COLLECTION, uid);
         cache.put(uid, Optional.empty());
     }
@@ -68,6 +56,7 @@ public class T212StateStore {
         doc.put("lastSyncAt", Timestamps.of(state.lastSyncAt()));
         doc.put("lastError", state.lastError() == null ? null
                 : Map.of("code", state.lastError().code(), "message", state.lastError().message()));
+        doc.put("completeHistories", List.copyOf(new java.util.TreeSet<>(state.completeHistories())));
         return doc;
     }
 
@@ -84,6 +73,7 @@ public class T212StateStore {
                 (String) doc.get("accountIdHash"), (String) doc.get("accountCurrency"),
                 Timestamps.instant(doc.get("connectedAt")), !Boolean.FALSE.equals(doc.get("credentialsValid")),
                 syncState, Timestamps.instant(doc.get("syncStartedAt")), Timestamps.instant(doc.get("lastSyncAt")),
-                error);
+                error, doc.get("completeHistories") instanceof List<?> list
+                        ? list.stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet()) : Set.of());
     }
 }

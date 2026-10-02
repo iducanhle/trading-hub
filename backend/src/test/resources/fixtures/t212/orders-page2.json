@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "order": {
+        "id": 900, "ticker": "NVDA_US_EQ", "status": "FILLED", "currency": "USD", "createdAt": "2026-06-10T04:00:00Z",
+        "instrument": { "ticker": "NVDA_US_EQ", "isin": "US67066G1040", "name": "NVIDIA", "currency": "USD" }
+      },
+      "fill": { "id": 901, "filledAt": "2026-06-10T04:00:00Z", "price": 0, "quantity": 9, "type": "STOCK_SPLIT",
+        "walletImpact": { "currency": "EUR", "netValue": 0, "taxes": [] } }
+    },
+    {
+      "order": {
+        "id": 1000, "ticker": "AAPL_US_EQ", "side": "BUY", "type": "MARKET", "status": "FILLED", "strategy": "QUANTITY",
+        "quantity": 10, "filledQuantity": 10, "currency": "USD", "createdAt": "2026-03-02T15:30:00Z",
+        "instrument": { "ticker": "AAPL_US_EQ", "isin": "US0378331005", "name": "Apple", "currency": "USD" }
+      },
+      "fill": {
+        "id": 2000, "filledAt": "2026-03-02T15:31:00Z", "price": 180.0, "quantity": 10, "type": "TRADE",
+        "walletImpact": { "currency": "EUR", "fxRate": 0.92, "netValue": 1656.0, "taxes": [] }
+      }
+    }
+  ],
+  "nextPagePath": null
+}
