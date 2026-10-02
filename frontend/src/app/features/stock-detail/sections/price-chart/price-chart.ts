@@ -24,7 +24,11 @@ import {
   MouseEventParams,
   Time,
   createChart,
+  ISeriesMarkersPluginApi,
+  SeriesMarker,
+  createSeriesMarkers,
 } from 'lightweight-charts';
+import { of } from 'rxjs';
 import { ApiService } from '../../../../core/api/api.service';
 import {
   EarningsMarker,
@@ -32,6 +36,7 @@ import {
   PriceRange,
   PricesResponse,
 } from '../../../../core/models/contract';
+import { T212Service } from '../../../../core/services/t212.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { TermInfo } from '../../../../shared/components/term-info/term-info';
 import { Change } from '../../../../shared/components/change/change';
@@ -56,6 +61,8 @@ import { readChartColors, withAlpha } from './chart-colors';
 import { ChartType, futureSessions, placeMarkers } from './chart-data';
 import { EarningsMarkersPrimitive } from './earnings-markers';
 import { MeasurePoint, MeasurePrimitive, measure, rangeChange } from './measure';
+import { DEVICE_TZ } from '../../../portfolio/portfolio-model';
+import { tradeMarks } from './trade-markers';
 
 const RANGES: PriceRange[] = ['1W', '1M', '6M', '1Y', '5Y'];
 
@@ -204,6 +211,32 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         </button>
       </div>
 
+      @if (hasTrades()) {
+        <div class="flex items-center gap-3 px-4 pt-1 text-xs text-on-surface-variant">
+          <button
+            type="button"
+            class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
+            [class.bg-secondary-container]="showTrades()"
+            [class.border-transparent]="showTrades()"
+            [attr.aria-pressed]="showTrades()"
+            (click)="showTrades.set(!showTrades())"
+          >
+            <app-icon name="account_balance_wallet" [size]="16" />
+            <ng-container i18n>My trades</ng-container>
+          </button>
+          @if (showTrades()) {
+            <span class="inline-flex items-center gap-1" aria-hidden="true"
+              ><span class="text-primary">▲</span>
+              <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
+            >
+            <span class="inline-flex items-center gap-1" aria-hidden="true"
+              ><span class="text-on-surface">▼</span>
+              <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
+            >
+          }
+        </div>
+      }
+
       <div
         class="flex min-h-7 flex-wrap items-center gap-x-3 px-4 pt-1 text-xs tabular-nums text-on-surface-variant"
       >
@@ -314,6 +347,7 @@ export class PriceChart {
   private readonly ctx = inject(StockContext);
   private readonly api = inject(ApiService);
   private readonly theme = inject(ThemeService);
+  private readonly t212 = inject(T212Service);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
   private readonly container = viewChild.required<ElementRef<HTMLDivElement>>('container');
 
@@ -334,6 +368,29 @@ export class PriceChart {
   private readonly earnings = this.ctx.resource((symbol, options) =>
     this.api.earnings(symbol, options),
   );
+
+  /** The user's Trading 212 trades in this stock, for the buy/sell markers (nothing when not connected). */
+  private readonly holdings = rxResource({
+    params: () => ({ connected: this.t212.connected(), version: this.t212.dataVersion() }),
+    stream: ({ params }) =>
+      params.connected ? this.api.t212Instruments({ tz: DEVICE_TZ, status: 'ALL' }) : of(null),
+  });
+  private readonly t212Ticker = computed(() => {
+    const list = this.holdings.hasValue() ? this.holdings.value() : null;
+    return list?.items.find((i) => i.symbol === this.ctx.symbol())?.t212Ticker ?? null;
+  });
+  private readonly myTrades = rxResource({
+    params: () => {
+      const ticker = this.t212Ticker();
+      return ticker ? { ticker, version: this.t212.dataVersion() } : undefined;
+    },
+    stream: ({ params }) => this.api.t212Instrument(params.ticker),
+  });
+  private readonly trades = computed(() =>
+    this.myTrades.hasValue() ? this.myTrades.value().trades : [],
+  );
+  protected readonly hasTrades = computed(() => this.trades().some((t) => t.kind === 'TRADE'));
+  protected readonly showTrades = persistedSignal('et.chartTrades', true);
 
   protected readonly data = computed<PricesResponse | undefined>(() =>
     this.prices.hasValue() ? this.prices.value() : undefined,
@@ -388,6 +445,7 @@ export class PriceChart {
   private volume?: ISeriesApi<'Histogram'>;
   private readonly markers = new EarningsMarkersPrimitive();
   private readonly measureOverlay = new MeasurePrimitive();
+  private tradeMarkers?: ISeriesMarkersPluginApi<Time>;
   private readonly ready = signal(false);
 
   constructor() {
@@ -400,6 +458,14 @@ export class PriceChart {
       const type = this.type();
       this.theme.dark(); // re-read the colours when the theme changes
       if (this.ready()) untracked(() => this.render(data, type));
+    });
+    effect(() => {
+      this.data();
+      this.type();
+      this.trades();
+      this.showTrades();
+      this.theme.dark();
+      if (this.ready()) untracked(() => this.drawTrades());
     });
     effect(() => {
       const points = this.points();
@@ -493,6 +559,8 @@ export class PriceChart {
 
     if (this.mainType !== type || !this.main) {
       if (this.main) {
+        this.tradeMarkers?.detach();
+        this.tradeMarkers = undefined;
         this.main.detachPrimitive(this.markers);
         this.main.detachPrimitive(this.measureOverlay);
         chart.removeSeries(this.main);
@@ -554,6 +622,35 @@ export class PriceChart {
     );
     this.markers.setMarkers(placeMarkers(bars, markers, type, colors, future), colors.surface);
     chart.timeScale().fitContent();
+  }
+
+  /** Buy (▲ below the bar) and sell (▼ above it) markers of the user's own trades, when switched on. */
+  private drawTrades(): void {
+    if (!this.main) return;
+    const bars = this.data()?.bars ?? [];
+    const marks =
+      this.showTrades() && this.hasTrades()
+        ? tradeMarks(
+            this.trades(),
+            this.ctx.symbol(),
+            bars.map((b) => b.date),
+          )
+        : [];
+    if (!this.tradeMarkers) {
+      if (marks.length === 0) return;
+      this.tradeMarkers = createSeriesMarkers(this.main, [], { zOrder: 'aboveSeries' });
+    }
+    const colors = readChartColors(this.host);
+    this.tradeMarkers.setMarkers(
+      marks.map((m): SeriesMarker<Time> => ({
+        time: m.date,
+        position: m.side === 'BUY' ? 'belowBar' : 'aboveBar',
+        shape: m.side === 'BUY' ? 'arrowUp' : 'arrowDown',
+        color: m.side === 'BUY' ? colors.line : colors.labelBackground,
+        text: m.count > 1 ? `${m.count}×` : '',
+        size: 1,
+      })),
+    );
   }
 
   /** Adds the tapped bar as A or B (a tap after B starts over); taps off the bars are ignored. */

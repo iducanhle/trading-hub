@@ -1,6 +1,6 @@
 # Earnings Tracker
 
-A personal, mobile-first web app (installable PWA) for two users that tracks US and European stocks: upcoming earnings dates, past results (EPS and revenue, estimate vs actual), price reactions around earnings, analyst recommendations and news, plus a daily email digest for followed stocks. Everything runs on free tiers.
+A personal, mobile-first web app (installable PWA) for two users that tracks US and European stocks: upcoming earnings dates, past results (EPS and revenue, estimate vs actual), price reactions around earnings, analyst recommendations and news, a daily email digest for followed stocks, market-moving events, and each user's own Trading 212 portfolio (trades and profit/loss per stock and period, read-only). Everything runs on free tiers.
 
 - **App:** <https://tradiqo.web.app> (Angular on Firebase Hosting, once deployed per [DEPLOYMENT-frontend.md](docs/DEPLOYMENT-frontend.md))
 - **API:** <https://tradiqo.duckdns.org/api/health> (Spring Boot on an Oracle Cloud Always Free VM)
@@ -25,6 +25,7 @@ Angular PWA (Firebase Hosting) ──HTTPS + Firebase ID token──▶ Caddy (T
 
 - **Auth:** Firebase Auth (Google and email/password with verification). The backend verifies ID tokens and only lets allowlisted, verified emails through; the Firestore rules enforce the same allowlist and per-user ownership.
 - **Data:** the frontend writes follows, notes and settings directly to Firestore. The backend owns the cache collections and reads user data with the Admin SDK.
+- **Trading 212:** each user's API key goes once to the backend, which stores it AES-256-GCM encrypted (`T212_ENCRYPTION_KEY`), syncs the history into backend-only Firestore documents and computes the profit/loss. The browser never talks to Trading 212.
 - **Hosting:** the app on Firebase Hosting (Spark plan); the API on an Oracle Cloud Always Free Ampere VM in Frankfurt, with Caddy (automatic HTTPS) and DuckDNS.
 
 ## Documentation
@@ -37,7 +38,7 @@ Angular PWA (Firebase Hosting) ──HTTPS + Firebase ID token──▶ Caddy (T
 | [docs/BACKEND-OPS-EXPLAINED.md](docs/BACKEND-OPS-EXPLAINED.md) | How the backend deployment works and how to operate it, explained for developers new to ops |
 | [docs/PROGRESS-frontend.md](docs/PROGRESS-frontend.md) | Frontend build status, decisions and known issues. Resume from here. |
 | [docs/PROGRESS-backend.md](docs/PROGRESS-backend.md) | Backend build status, decisions and known issues |
-| [docs/PROMPT-frontend.md](docs/PROMPT-frontend.md), [docs/PROMPT-backend.md](docs/PROMPT-backend.md) | Full specifications |
+| [docs/PROMPT-frontend.md](docs/PROMPT-frontend.md), [docs/PROMPT-backend.md](docs/PROMPT-backend.md), [docs/PROMPT-trading212.md](docs/PROMPT-trading212.md) | Full specifications |
 | [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) | What each free data provider really returns |
 | [frontend/README.md](frontend/README.md) | Frontend development: mock mode, emulators, tests |
 | [backend/README.md](backend/README.md) | Backend development: local run, emulators, tests, configuration |

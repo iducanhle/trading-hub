@@ -1,10 +1,11 @@
-import { EarningsMarker, PriceBar } from '../../core/models/contract';
+import { EarningsMarker, PriceBar, T212Trade } from '../../core/models/contract';
 import { beatRateText } from './sections/earnings-stats';
 import { calendarCells, intensity } from './sections/history-calendar';
 import { periodLabel } from './sections/performance-history';
 import { ChartColors, withAlpha } from './sections/price-chart/chart-colors';
 import { futureSessions, placeMarkers, weekdaysAfter } from './sections/price-chart/chart-data';
 import { measure, rangeChange } from './sections/price-chart/measure';
+import { tradeDay, tradeMarks } from './sections/price-chart/trade-markers';
 import { recommendationBars } from './sections/recommendations';
 
 const bar = (date: string, close: number): PriceBar => ({
@@ -159,5 +160,41 @@ describe('stock sections', () => {
     expect(cells.filter(Boolean).length).toBe(22);
     expect(cells[2]?.row).toBeNull();
     expect([null, 0, 0.4, -2, 3, -7].map(intensity)).toEqual([0, 0, 1, 2, 3, 4]);
+  });
+});
+
+describe('trade markers', () => {
+  const trade = (
+    id: string,
+    executedAt: string,
+    side: 'BUY' | 'SELL',
+    kind: T212Trade['kind'] = 'TRADE',
+  ) => ({ id, executedAt, side, kind, t212Ticker: 'AAPL_US_EQ' }) as T212Trade;
+  const bars = ['2026-09-25', '2026-09-28', '2026-09-29', '2026-09-30'];
+
+  it('puts each trade on its exchange day, or the next session after a weekend', () => {
+    const marks = tradeMarks(
+      [
+        trade('a', '2026-09-28T15:00:00Z', 'BUY'),
+        trade('b', '2026-09-28T16:00:00Z', 'BUY'),
+        trade('c', '2026-09-27T12:00:00Z', 'SELL'), // Sunday → Monday's bar
+        trade('d', '2026-09-30T00:30:00Z', 'SELL'), // 20:30 the day before in New York
+        trade('e', '2026-09-29T12:00:00Z', 'BUY', 'STOCK_SPLIT'),
+        trade('f', '2026-08-01T12:00:00Z', 'BUY'), // before the bars
+      ],
+      'AAPL',
+      bars,
+    );
+    expect(marks).toEqual([
+      { date: '2026-09-28', side: 'BUY', count: 2 },
+      { date: '2026-09-28', side: 'SELL', count: 1 },
+      { date: '2026-09-29', side: 'SELL', count: 1 },
+    ]);
+  });
+
+  it('uses Central European time for European listings', () => {
+    expect(tradeDay('2026-09-29T22:30:00Z', 'SAP.DE')).toBe('2026-09-30');
+    expect(tradeDay('2026-09-29T22:30:00Z', 'AAPL')).toBe('2026-09-29');
+    expect(tradeMarks([], 'AAPL', [])).toEqual([]);
   });
 });

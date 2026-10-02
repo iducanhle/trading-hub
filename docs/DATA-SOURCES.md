@@ -160,6 +160,14 @@ Read from the official OpenAPI file (`https://docs.trading212.com/_bundle/api.ya
 | `ENIm_EQ`, `SANe_EQ`, `VOLV_Bs_EQ` | `ENI.MI`, `SAN.MC`, `VOLV-B.ST` | `m` Milan, `e` Madrid, `s` Stockholm |
 | anything else (ETFs on other venues, OTC, Prague…) | `null` | still listed, without a stock-detail link |
 
+**Checking against a real account.** An opt-in, read-only probe saves what Trading 212 really returns and a `findings.md` that answers the questions above (signs, realized result vs. fees, fill types, currencies, ticker mapping). Put a **demo** key in `backend/.env` (git-ignored) as `T212_PROBE_API_KEY` and `T212_PROBE_API_SECRET`, then from `backend/`:
+
+```bash
+LIVE_T212=true ./mvnw test -Dtest=LiveT212Test
+```
+
+The output lands in `backend/target/t212-probe/` (git-ignored); the key is never written or printed. Not run yet.
+
 **Not used:** order placing/cancelling (`/equity/orders/*`), pending orders, pies (deprecated), CSV exports (a fallback if the history turns out incomplete).
 
 ## Resulting fallback chains

@@ -23,6 +23,8 @@ Node 24 LTS. From this folder:
 
 In mock mode, symbols starting with `ERR` answer 503 and unknown symbols 404, so error states can be tried out.
 
+Trading 212 in mock mode starts disconnected: connect in Settings with any key (a key containing `bad` is rejected, one containing `noperm` lacks permissions). The connection is kept in `localStorage` (`mock.t212`; only the hint, never the key) and the portfolio comes from `src/assets/mocks/t212-portfolio.json`.
+
 ## Layout
 
 ```

@@ -532,6 +532,10 @@
     "5058967185300821965": "Realizovaný zisk/ztráta plus dividendy, minus poplatky a daně. Za celé období se přičte i nerealizovaný zisk/ztráta toho, co stále držíte.",
     "3408086457484971599": "Procento ho porovnává se vším, co jste za nákupy akcie utratili.",
     "7505133899992093767": "Realizováno +100 $, dividendy +5 $, poplatky −2 $ a nerealizováno −40 $: celkem +63 $.",
-    "6163375206365108469": "{VAR_PLURAL, plural, =1 {1 obchod v tomto období} =2 {2 obchody v tomto období} =3 {3 obchody v tomto období} =4 {4 obchody v tomto období} other {{INTERPOLATION} obchodů v tomto období}}"
+    "6163375206365108469": "{VAR_PLURAL, plural, =1 {1 obchod v tomto období} =2 {2 obchody v tomto období} =3 {3 obchody v tomto období} =4 {4 obchody v tomto období} other {{INTERPOLATION} obchodů v tomto období}}",
+    "989678739416237815": "Vaše pozice",
+    "4140867418485229369": "prům.",
+    "8635173042879983553": "Vše prodáno",
+    "5540369600481329479": "Moje obchody"
   }
 }

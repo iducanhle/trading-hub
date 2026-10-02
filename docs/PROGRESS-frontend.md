@@ -21,7 +21,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | 1 – Research & contract | Done (2026-10-02) |
 | 5 – Frontend: Settings + mocks | Done (2026-10-02) |
 | 6 – Frontend: Portfolio tab | Done (2026-10-02) |
-| 7 – Integration & polish | — |
+| 7 – Integration & polish | In progress: waiting for a demo key |
 
 **Done**
 - Phase 1: contract for `/api/t212/**` agreed (types `T212Status`, `T212Summary`, `T212Instrument`, `T212Trade`, `T212Dividend`, `T212Transaction`).
@@ -45,7 +45,12 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 
 **In progress:** nothing.
 
-**Next (phase 7):** "Your position" card on the stock page; optional buy/sell markers on its chart; end-to-end check with a demo account.
+- Phase 7:
+  - "Your position" card on the stock page (below the performance chips): shares and average cost, or "Fully sold", and total P/L with %; links to `/portfolio/:t212Ticker`. Nothing when not connected, never traded, or not configured. Checked in mock mode (AAPL open at a loss, MSFT closed).
+  - Buy ▲ / sell ▼ markers of the user's own trades on the price chart (Lightweight Charts' series markers, one per day and side with a count, on the exchange's day, moved to the next session after a weekend), with a "My trades" toggle (remembered) shown only when there are trades. Unit-tested; **not checked visually**: the in-app browser does not paint frames while hidden, so the deferred chart never loads there.
+  - README (root, frontend) mention the feature and mock mode. 75 unit tests, lint, build pass.
+
+**Next:** the end-to-end check with a demo account (see PROGRESS-backend phase 7), then adjust anything it shows.
 
 **Known issues**
 - The in-app browser used for checks does not render frames while hidden, so bottom sheets never finish their close animation there; the flow was completed by firing `animationend`. Not an app issue.

@@ -27,6 +27,7 @@ import { Notes } from './sections/notes';
 import { Peers } from './sections/peers';
 import { PerformanceHistory } from './sections/performance-history';
 import { PerformanceSummary } from './sections/performance-summary';
+import { YourPosition } from './sections/your-position';
 import { PriceChart } from './sections/price-chart/price-chart';
 import { Recommendations } from './sections/recommendations';
 import { UpcomingEarnings } from './sections/upcoming-earnings';
@@ -58,6 +59,7 @@ import { StockContext } from './stock-context';
     PercentPipe,
     KeyStats,
     PerformanceSummary,
+    YourPosition,
     PriceChart,
     PerformanceHistory,
     UpcomingEarnings,
@@ -166,6 +168,7 @@ import { StockContext } from './stock-context';
 
           <app-key-stats [overview]="stock()" />
           <app-performance-summary [performance]="stock()?.performance" />
+          <app-your-position />
 
           @defer (on viewport; prefetch on idle) {
             <app-price-chart />

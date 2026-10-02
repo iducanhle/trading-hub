@@ -23,7 +23,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | 2 – Backend: credentials | Done (2026-10-02) |
 | 3 – Backend: sync | Done (2026-10-02) |
 | 4 – Backend: P/L engine & read endpoints | Done (2026-10-02) |
-| 7 – Integration & polish (demo account check) | — |
+| 7 – Integration & polish (demo account check) | In progress: waiting for a demo key |
 
 **Done**
 - Phase 1: read the official OpenAPI file and the help centre's key guide; endpoints, fields, units, pagination, rate limits and open questions are in DATA-SOURCES.md. Contract: `/api/t212/**`, `T212…` types, error codes, P/L definitions, storage. No code yet.
@@ -53,6 +53,8 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 **In progress:** nothing.
 
 **Next:** frontend phases 5–6 (see PROGRESS-frontend.md), then phase 7: check the UNVERIFIED points against a demo account.
+
+- Phase 7 (backend part): `LiveT212Test`, an opt-in read-only probe for a demo key (`LIVE_T212=true`, key in `backend/.env`), writes the raw answers and `findings.md` to `target/t212-probe/`. **Waiting for the owner to run it**; then the normalizer, the fee handling and the ticker table get adjusted to what it shows, and the UNVERIFIED list shrinks.
 
 **Known issues**
 - Transactions in another currency than the account's are summed as they are in deposits/withdrawals/interest (Trading 212 says amounts are in the transaction's currency; whether that ever differs is unverified).
