@@ -302,6 +302,40 @@ export class MockBackend {
     return cached;
   }
 
+  /** 1D: a 6.5-hour session of 5-minute bars ending now, walking from the last close (seeded per symbol). */
+  private intraday(symbol: string, currency: string, all: PriceBar[]): PricesResponse {
+    const last = all[all.length - 1];
+    const bars: PriceBar[] = [];
+    let price = last?.close ?? 100;
+    let seed = [...symbol].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+    const start = Date.now() - 78 * 5 * 60_000;
+    for (let i = 0; i < 78; i++) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const open = price;
+      price = Math.max(0.01, price * (1 + (seed / 2 ** 32 - 0.5) * 0.004));
+      const time = new Date(start + i * 5 * 60_000);
+      bars.push({
+        date: time.toISOString().slice(0, 10),
+        time: time.toISOString(),
+        open: Math.round(open * 100) / 100,
+        high: Math.round(Math.max(open, price) * 1.001 * 100) / 100,
+        low: Math.round(Math.min(open, price) * 0.999 * 100) / 100,
+        close: Math.round(price * 100) / 100,
+        volume: 10_000 + (seed % 50_000),
+      });
+    }
+    return {
+      symbol,
+      currency,
+      range: '1D',
+      bars,
+      baseClose: last?.close ?? null,
+      earningsMarkers: [],
+      asOf: new Date().toISOString(),
+      stale: false,
+    };
+  }
+
   private async prices(symbol: string, range: PriceRange): Promise<PricesResponse> {
     const [overview, earnings, all] = await Promise.all([
       this.overview(symbol),
@@ -309,11 +343,15 @@ export class MockBackend {
       this.bars(symbol),
     ]);
     const end = lastCompletedSession(this.today);
+    if (range === '1D') return this.intraday(symbol, overview.currency, all);
     const from = {
       '1W': addDays(end, -7),
       '1M': addMonths(end, -1).slice(0, 8) + end.slice(8),
+      '2M': addMonths(end, -2).slice(0, 8) + end.slice(8),
+      '3M': addMonths(end, -3).slice(0, 8) + end.slice(8),
       '6M': addMonths(end, -6).slice(0, 8) + end.slice(8),
       '1Y': addDays(end, -365),
+      '3Y': addDays(end, -3 * 365),
       '5Y': addDays(end, -5 * 365),
     }[range];
     const bars = all.filter((b) => b.date > from);

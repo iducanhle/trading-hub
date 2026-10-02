@@ -15,11 +15,15 @@ export const PERCENT_SIGN = LANGUAGE === 'cs' ? ' %' : '%';
 
 /** Short period labels: 1W, 1M, YTD, 1Y, 5Y (Czech: 1T, 1M, YTD, 1R, 5R). */
 export const PERIOD_LABELS = {
+  '1D': $localize`:One day:1D`,
   '1W': $localize`:One week:1W`,
   '1M': $localize`:One month:1M`,
+  '2M': $localize`:Two months:2M`,
+  '3M': $localize`:Three months:3M`,
   '6M': $localize`:Six months:6M`,
   YTD: $localize`:Year to date:YTD`,
   '1Y': $localize`:One year:1Y`,
+  '3Y': $localize`:Three years:3Y`,
   '5Y': $localize`:Five years:5Y`,
 } as const;
 

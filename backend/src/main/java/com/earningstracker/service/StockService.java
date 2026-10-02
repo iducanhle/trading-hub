@@ -3,6 +3,7 @@ package com.earningstracker.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -23,6 +24,7 @@ import com.earningstracker.domain.LivePrice;
 import com.earningstracker.domain.PerformanceCalculator;
 import com.earningstracker.domain.ReactionCalculator;
 import com.earningstracker.market.EarningsReport;
+import com.earningstracker.market.IntradayBar;
 import com.earningstracker.market.Exchange;
 import com.earningstracker.market.PriceBar;
 import com.earningstracker.market.Quote;
@@ -47,6 +49,7 @@ public class StockService {
     private final ProfileService profiles;
     private final QuoteService quotes;
     private final PriceService prices;
+    private final IntradayService intraday;
     private final EarningsService earnings;
     private final StockExtrasService extras;
     private final ViewTracker views;
@@ -54,12 +57,13 @@ public class StockService {
     private final ExecutorService executor;
     private final Clock clock;
 
-    public StockService(ProfileService profiles, QuoteService quotes, PriceService prices, EarningsService earnings,
-            StockExtrasService extras, ViewTracker views, EarningsProperties properties, ExecutorService executor,
-            Clock clock) {
+    public StockService(ProfileService profiles, QuoteService quotes, PriceService prices, IntradayService intraday,
+            EarningsService earnings, StockExtrasService extras, ViewTracker views, EarningsProperties properties,
+            ExecutorService executor, Clock clock) {
         this.profiles = profiles;
         this.quotes = quotes;
         this.prices = prices;
+        this.intraday = intraday;
         this.earnings = earnings;
         this.extras = extras;
         this.views = views;
@@ -95,6 +99,9 @@ public class StockService {
     }
 
     public Dtos.Prices prices(String symbol, PriceRange range) {
+        if (range.intraday()) {
+            return intradayPrices(symbol);
+        }
         CompletableFuture<Cached<List<EarningsReport>>> reportsF = async(() -> earnings.reports(symbol));
         StockProfile profile = profiles.profile(symbol).value();
         Cached<List<PriceBar>> bars = prices.bars(symbol);
@@ -121,9 +128,32 @@ public class StockService {
                 .map(PriceBar::close).orElse(null);
         return new Dtos.Prices(symbol, profile.currency(), range.label(),
                 all.stream().filter(bar -> bar.date().isAfter(from))
-                        .map(b -> new Dtos.PriceBar(b.date(), b.open(), b.high(), b.low(), b.close(), b.volume()))
+                        .map(b -> new Dtos.PriceBar(b.date(), null, b.open(), b.high(), b.low(), b.close(),
+                                b.volume()))
                         .toList(),
                 baseClose, markers, asOf(bars, reports), stale(bars, reports));
+    }
+
+    /**
+     * The latest session in 5-minute bars. {@code baseClose} is the close of the last completed session before
+     * it, so the change is today's change; no earnings markers (they mark days).
+     */
+    private Dtos.Prices intradayPrices(String symbol) {
+        StockProfile profile = profiles.profile(symbol).value();
+        CompletableFuture<Cached<List<PriceBar>>> dailyF = async(() -> prices.bars(symbol));
+        Cached<List<IntradayBar>> bars = intraday.bars(symbol);
+        Cached<List<PriceBar>> daily = optional(dailyF, "prices", symbol);
+        ZoneId zone = Symbols.sessionExchange(symbol).zone();
+        LocalDate session = bars.value().isEmpty() ? today(symbol)
+                : bars.value().getLast().time().atZone(zone).toLocalDate();
+        Double baseClose = daily == null ? null : daily.value().stream().filter(b -> b.date().isBefore(session))
+                .reduce((a, b) -> b).map(PriceBar::close).orElse(null);
+        List<Dtos.PriceBar> out = bars.value().stream()
+                .map(b -> new Dtos.PriceBar(b.time().atZone(zone).toLocalDate(), b.time(), b.open(), b.high(),
+                        b.low(), b.close(), b.volume()))
+                .toList();
+        return new Dtos.Prices(symbol, profile.currency(), PriceRange.D1.label(), out, baseClose, List.of(),
+                daily == null ? asOf(bars) : asOf(bars, daily), daily == null ? stale(bars) : stale(bars, daily));
     }
 
     public Dtos.History history(String symbol, HistoryCalculator.Period period, LocalDate before, int limit) {

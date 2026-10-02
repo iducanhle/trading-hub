@@ -19,6 +19,7 @@ import {
   CrosshairMode,
   HistogramSeries,
   IChartApi,
+  IPriceLine,
   ISeriesApi,
   LineSeries,
   MouseEventParams,
@@ -55,6 +56,7 @@ import {
   SignedNumberPipe,
 } from '../../../../shared/pipes/format.pipes';
 import { NUMBER_LOCALE, PERIOD_LABELS } from '../../../../shared/utils/format';
+import { APP_LOCALE } from '../../../../shared/utils/locale';
 import { persistedSignal } from '../../../../shared/utils/persisted-signal';
 import { StockContext } from '../../stock-context';
 import { readChartColors, withAlpha } from './chart-colors';
@@ -63,17 +65,25 @@ import { EarningsMarkersPrimitive } from './earnings-markers';
 import { MeasurePoint, MeasurePrimitive, measure, rangeChange } from './measure';
 import { DEVICE_TZ } from '../../../portfolio/portfolio-model';
 import { tradeMarks } from './trade-markers';
+import {
+  PositionPrices,
+  barTime,
+  drawPositionLines,
+  majorCurrency,
+  withPositionPrices,
+} from './position-lines';
 
-const RANGES: PriceRange[] = ['1W', '1M', '6M', '1Y', '5Y'];
+const RANGES: PriceRange[] = ['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'];
 
 interface LegendBar extends PriceBar {
   /** Percent change from the previous close. */
   change: number | null;
 }
 
+/** Legend key of a chart time: the date for daily bars, the shifted timestamp for 1D. */
 function timeKey(time: Time): string {
   if (typeof time === 'string') return time;
-  if (typeof time === 'number') return new Date(time * 1000).toISOString().slice(0, 10);
+  if (typeof time === 'number') return String(time);
   return `${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`;
 }
 
@@ -112,7 +122,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
       <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
       <div class="flex flex-wrap items-center justify-between gap-2 px-4">
         <div
-          class="flex rounded-full bg-surface-container-high p-1"
+          class="flex max-w-full overflow-x-auto rounded-full bg-surface-container-high p-1"
           role="group"
           aria-label="Chart range"
           i18n-aria-label
@@ -120,7 +130,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
           @for (r of ranges; track r) {
             <button
               type="button"
-              class="h-9 min-w-10 rounded-full px-1.5 text-sm font-medium transition-colors"
+              class="h-9 min-w-9 shrink-0 rounded-full px-1.5 text-sm font-medium transition-colors"
               [class.bg-surface]="range() === r"
               [class.text-on-surface]="range() === r"
               [class.shadow-sm]="range() === r"
@@ -194,6 +204,9 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         <button
           type="button"
           class="flex h-9 shrink-0 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium"
+          [class.invisible]="intraday()"
+          [attr.aria-hidden]="intraday() || null"
+          [disabled]="intraday()"
           [class.bg-secondary-container]="measuring()"
           [class.text-on-secondary-container]="measuring()"
           [class.border-transparent]="measuring()"
@@ -211,8 +224,34 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         </button>
       </div>
 
-      @if (hasTrades()) {
-        <div class="flex items-center gap-3 px-4 pt-1 text-xs text-on-surface-variant">
+      <div class="flex flex-wrap items-center gap-2 px-4 pt-1 text-xs text-on-surface-variant">
+        @if (positionPrices()) {
+          <button
+            type="button"
+            class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
+            [class.bg-secondary-container]="showLines()"
+            [class.border-transparent]="showLines()"
+            [attr.aria-pressed]="showLines()"
+            (click)="showLines.set(!showLines())"
+          >
+            <app-icon name="straighten" [size]="16" />
+            <ng-container i18n="Chart toggle: average cost and current price lines"
+              >Average and current price</ng-container
+            >
+          </button>
+        }
+        <button
+          type="button"
+          class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
+          [class.bg-secondary-container]="showEarnings()"
+          [class.border-transparent]="showEarnings()"
+          [attr.aria-pressed]="showEarnings()"
+          (click)="showEarnings.set(!showEarnings())"
+        >
+          <app-icon name="event" [size]="16" />
+          <ng-container i18n="Chart toggle: earnings markers">Earnings</ng-container>
+        </button>
+        @if (hasTrades()) {
           <button
             type="button"
             class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
@@ -234,14 +273,16 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
               <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
             >
           }
-        </div>
-      }
+        }
+      </div>
 
       <div
         class="flex min-h-7 flex-wrap items-center gap-x-3 px-4 pt-1 text-xs tabular-nums text-on-surface-variant"
       >
         @if (legend(); as bar) {
-          <span class="font-medium text-on-surface">{{ bar.date | appDate: 'medium' }}</span>
+          <span class="font-medium text-on-surface">{{
+            bar.time ? clock(bar.time) : (bar.date | appDate: 'medium')
+          }}</span>
           @if (type() === 'candles') {
             <span>O {{ bar.open | num }}</span>
             <span>H {{ bar.high | num }}</span>
@@ -391,6 +432,23 @@ export class PriceChart {
   );
   protected readonly hasTrades = computed(() => this.trades().some((t) => t.kind === 'TRADE'));
   protected readonly showTrades = persistedSignal('et.chartTrades', true);
+  protected readonly showEarnings = persistedSignal('et.chartEarnings', true);
+  protected readonly showLines = persistedSignal('et.chartPositionLines', true);
+  protected readonly intraday = computed(() => this.range() === '1D');
+
+  /** Average cost and current price of an open Trading 212 position, when in the chart's currency. */
+  protected readonly positionPrices = computed<PositionPrices | null>(() => {
+    const detail = this.myTrades.hasValue() ? this.myTrades.value() : null;
+    const i = detail?.instrument;
+    const chartCurrency = majorCurrency(this.data()?.currency);
+    if (!i || i.status !== 'OPEN' || !chartCurrency) return null;
+    if (majorCurrency(i.instrumentCurrency) !== chartCurrency) return null;
+    if (i.averageCost == null && i.currentPrice == null) return null;
+    return { average: i.averageCost, current: i.currentPrice };
+  });
+  private readonly shownPositionPrices = computed(() =>
+    this.showLines() ? this.positionPrices() : null,
+  );
 
   protected readonly data = computed<PricesResponse | undefined>(() =>
     this.prices.hasValue() ? this.prices.value() : undefined,
@@ -413,7 +471,7 @@ export class PriceChart {
     const bars = this.data()?.bars ?? [];
     return new Map(
       bars.map((bar, i): [string, LegendBar] => [
-        bar.date,
+        timeKey(barTime(bar)),
         {
           ...bar,
           change: i > 0 ? ((bar.close - bars[i - 1].close) / bars[i - 1].close) * 100 : null,
@@ -425,7 +483,9 @@ export class PriceChart {
     const bars = this.data()?.bars;
     return (
       this.hovered() ??
-      (bars?.length ? (this.legendBars().get(bars[bars.length - 1].date) ?? null) : null)
+      (bars?.length
+        ? (this.legendBars().get(timeKey(barTime(bars[bars.length - 1]))) ?? null)
+        : null)
     );
   });
 
@@ -446,6 +506,13 @@ export class PriceChart {
   private readonly markers = new EarningsMarkersPrimitive();
   private readonly measureOverlay = new MeasurePrimitive();
   private tradeMarkers?: ISeriesMarkersPluginApi<Time>;
+  private positionLines: IPriceLine[] = [];
+  private readonly clockFormat = new Intl.DateTimeFormat(APP_LOCALE, {
+    day: 'numeric',
+    month: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
   private readonly ready = signal(false);
 
   constructor() {
@@ -456,8 +523,16 @@ export class PriceChart {
     effect(() => {
       const data = this.data();
       const type = this.type();
+      this.showEarnings();
       this.theme.dark(); // re-read the colours when the theme changes
       if (this.ready()) untracked(() => this.render(data, type));
+    });
+    effect(() => {
+      this.data();
+      this.type();
+      const prices = this.shownPositionPrices();
+      this.theme.dark();
+      if (this.ready()) untracked(() => this.drawLines(prices));
     });
     effect(() => {
       this.data();
@@ -480,6 +555,11 @@ export class PriceChart {
     this.range.set(range);
     this.selected.set(null);
     this.points.set([]);
+    if (range === '1D') this.measuring.set(false);
+  }
+
+  protected clock(time: string): string {
+    return this.clockFormat.format(new Date(time));
   }
 
   protected toggleMeasuring(): void {
@@ -565,13 +645,22 @@ export class PriceChart {
         this.main.detachPrimitive(this.measureOverlay);
         chart.removeSeries(this.main);
       }
+      // Keep the position lines inside the price scale even when the price is far from them.
+      const autoscaleInfoProvider = (original: () => ReturnType<typeof withPositionPrices>) =>
+        withPositionPrices(original(), this.shownPositionPrices());
+      this.positionLines = [];
       this.main =
         type === 'candles'
-          ? chart.addSeries(CandlestickSeries, { borderVisible: false, priceLineVisible: false })
+          ? chart.addSeries(CandlestickSeries, {
+              borderVisible: false,
+              priceLineVisible: false,
+              autoscaleInfoProvider,
+            })
           : chart.addSeries(LineSeries, {
               lineWidth: 2,
               priceLineVisible: false,
               crosshairMarkerRadius: 4,
+              autoscaleInfoProvider,
             });
       this.main.attachPrimitive(this.markers);
       this.main.attachPrimitive(this.measureOverlay);
@@ -590,13 +679,16 @@ export class PriceChart {
     }
 
     const bars = data?.bars ?? [];
-    const markers = data?.earningsMarkers ?? [];
+    const markers = this.showEarnings() ? (data?.earningsMarkers ?? []) : [];
     const future = futureSessions(bars, markers);
+    chart.applyOptions({
+      timeScale: { timeVisible: bars.some((b) => b.time), secondsVisible: false },
+    });
     const blanks = future.map((time) => ({ time }));
     if (type === 'candles') {
       (this.main as ISeriesApi<'Candlestick'>).setData([
         ...bars.map((b) => ({
-          time: b.date,
+          time: barTime(b),
           open: b.open,
           high: b.high,
           low: b.low,
@@ -606,13 +698,13 @@ export class PriceChart {
       ]);
     } else {
       (this.main as ISeriesApi<'Line'>).setData([
-        ...bars.map((b) => ({ time: b.date, value: b.close })),
+        ...bars.map((b) => ({ time: barTime(b), value: b.close })),
         ...blanks,
       ]);
     }
     volume.setData(
       bars.map((b, i) => ({
-        time: b.date,
+        time: barTime(b),
         value: b.volume,
         color: withAlpha(
           b.close >= (i > 0 ? bars[i - 1].close : b.open) ? colors.gain : colors.loss,
@@ -628,8 +720,9 @@ export class PriceChart {
   private drawTrades(): void {
     if (!this.main) return;
     const bars = this.data()?.bars ?? [];
+    // Trade markers sit on days; 1D has no day bars to hang them on.
     const marks =
-      this.showTrades() && this.hasTrades()
+      this.showTrades() && this.hasTrades() && !bars.some((b) => b.time)
         ? tradeMarks(
             this.trades(),
             this.ctx.symbol(),
@@ -650,6 +743,16 @@ export class PriceChart {
         text: m.count > 1 ? `${m.count}×` : '',
         size: 1,
       })),
+    );
+  }
+
+  private drawLines(prices: PositionPrices | null): void {
+    if (!this.main) return;
+    this.positionLines = drawPositionLines(
+      this.main,
+      this.positionLines,
+      prices,
+      readChartColors(this.host),
     );
   }
 

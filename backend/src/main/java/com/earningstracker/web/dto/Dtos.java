@@ -47,7 +47,8 @@ public final class Dtos {
             boolean stale) {
     }
 
-    public record PriceBar(LocalDate date, double open, double high, double low, double close, long volume) {
+    /** {@code time} is the bar's start for 1D (5-minute bars), null for daily bars. */
+    public record PriceBar(LocalDate date, Instant time, double open, double high, double low, double close, long volume) {
     }
 
     /** {@code result} is BEAT, MISS, INLINE, UPCOMING or null. */

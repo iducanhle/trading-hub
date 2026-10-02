@@ -16,9 +16,11 @@ import java.util.concurrent.ExecutorService;
 import com.earningstracker.cache.InMemoryDocumentStore;
 import com.earningstracker.cache.TieredCache;
 import com.earningstracker.fx.FxService;
+import com.earningstracker.market.IntradayBar;
 import com.earningstracker.market.PriceBar;
 import com.earningstracker.market.Region;
 import com.earningstracker.provider.Capability;
+import com.earningstracker.provider.IntradayProvider;
 import com.earningstracker.provider.ProviderRouter;
 import com.earningstracker.provider.ProviderSettings;
 import com.earningstracker.provider.ProviderTestSupport;
@@ -89,7 +91,20 @@ public class ServiceFixture {
     public final StockExtrasService extras = new StockExtrasService(cache, router, ProviderTestSupport.JSON);
     public final ViewTracker views = new ViewTracker(store, executor, clock);
     public final FollowService follows = new FollowService(store, cache, ProviderTestSupport.JSON);
-    public final StockService stocks = new StockService(profiles, quotes, prices, earnings, extras, views,
+    /** 5-minute bars the fake intraday provider answers with, by symbol. */
+    public final Map<String, List<IntradayBar>> intradayBars = new java.util.concurrent.ConcurrentHashMap<>();
+    public final IntradayService intraday = new IntradayService(List.of(new IntradayProvider() {
+        @Override
+        public String id() {
+            return "fake";
+        }
+
+        @Override
+        public List<IntradayBar> intradayBars(String symbol) {
+            return intradayBars.getOrDefault(symbol, List.of());
+        }
+    }), clock);
+    public final StockService stocks = new StockService(profiles, quotes, prices, intraday, earnings, extras, views,
             new EarningsProperties(5), executor, clock);
     public final CalendarService calendar = new CalendarService(store, follows, ProviderTestSupport.JSON, clock);
     public final FollowedEarningsService followed = new FollowedEarningsService(follows, earnings, profiles, clock);

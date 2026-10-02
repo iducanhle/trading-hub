@@ -540,6 +540,10 @@
     "6685892931357659955": "Průměr",
     "8235805970201248247": "Nyní",
     "5245016052837286041": " Graf je v {$INTERPOLATION} a pozice v {$INTERPOLATION_1}, takže čáry cen nejsou zobrazené. ",
-    "852469638677614365": "Cenový graf s průměrnou nákupní cenou a aktuální cenou"
+    "852469638677614365": "Cenový graf s průměrnou nákupní cenou a aktuální cenou",
+    "8463680427170906537": "Průměrná a aktuální cena",
+    "359411959731333284": "1D",
+    "6675204538846266344": "2M",
+    "3079229011211800338": "3R"
   }
 }

@@ -16,13 +16,18 @@ import {
   IPriceLine,
   ISeriesApi,
   LineSeries,
-  LineStyle,
   createChart,
 } from 'lightweight-charts';
 import { PriceBar } from '../../core/models/contract';
 import { ThemeService } from '../../core/services/theme.service';
 import { NUMBER_LOCALE } from '../../shared/utils/format';
 import { readChartColors } from '../stock-detail/sections/price-chart/chart-colors';
+import {
+  PositionPrices,
+  barTime,
+  drawPositionLines,
+  withPositionPrices,
+} from '../stock-detail/sections/price-chart/position-lines';
 
 const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
   minimumFractionDigits: 2,
@@ -31,7 +36,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
 
 /**
  * A compact closing-price line with two horizontal lines: the average price paid (dashed) and the current price.
- * Prices are in the chart's currency; a line is left out when its price is null.
+ * Prices are in the chart's currency; a line is left out when its price is null. 1D bars carry a time.
  */
 @Component({
   selector: 'app-position-chart',
@@ -61,10 +66,9 @@ export class PositionChart {
     });
     effect(() => {
       const bars = this.bars();
-      const average = this.averagePrice();
-      const current = this.currentPrice();
+      const prices = { average: this.averagePrice(), current: this.currentPrice() };
       this.theme.dark(); // re-read the colours when the theme changes
-      if (this.ready()) untracked(() => this.render(bars, average, current));
+      if (this.ready()) untracked(() => this.render(bars, prices));
     });
     inject(DestroyRef).onDestroy(() => this.chart?.remove());
   }
@@ -89,63 +93,27 @@ export class PositionChart {
       priceLineVisible: false,
       lastValueVisible: false,
       crosshairMarkerRadius: 4,
-      // Keep both lines in view even when the price is far from them.
-      autoscaleInfoProvider: (
-        original: () => { priceRange: { minValue: number; maxValue: number } } | null,
-      ) => {
-        const base = original();
-        const extra = [this.averagePrice(), this.currentPrice()].filter(
-          (v): v is number => v !== null,
-        );
-        if (!base || !extra.length) return base;
-        return {
-          ...base,
-          priceRange: {
-            minValue: Math.min(base.priceRange.minValue, ...extra),
-            maxValue: Math.max(base.priceRange.maxValue, ...extra),
-          },
-        };
-      },
+      autoscaleInfoProvider: (original: () => ReturnType<typeof withPositionPrices>) =>
+        withPositionPrices(original(), {
+          average: this.averagePrice(),
+          current: this.currentPrice(),
+        }),
     });
   }
 
-  private render(bars: PriceBar[], average: number | null, current: number | null): void {
+  private render(bars: PriceBar[], prices: PositionPrices): void {
     const { chart, series } = this;
     if (!chart || !series) return;
     const colors = readChartColors(this.host);
+    const intraday = bars.some((b) => b.time);
     chart.applyOptions({
       layout: { textColor: colors.text },
       grid: { vertLines: { visible: false }, horzLines: { color: colors.grid } },
+      timeScale: { timeVisible: intraday, secondsVisible: false },
     });
     series.applyOptions({ color: colors.line });
-    series.setData(bars.map((b) => ({ time: b.date, value: b.close })));
-    this.lines.forEach((line) => series.removePriceLine(line));
-    this.lines = [];
-    if (average !== null) {
-      this.lines.push(
-        series.createPriceLine({
-          price: average,
-          color: colors.neutral,
-          lineWidth: 2,
-          lineStyle: LineStyle.Dashed,
-          axisLabelVisible: true,
-          title: $localize`:Chart line at the average price paid:Average`,
-        }),
-      );
-    }
-    if (current !== null) {
-      const up = average === null || current >= average;
-      this.lines.push(
-        series.createPriceLine({
-          price: current,
-          color: up ? colors.gain : colors.loss,
-          lineWidth: 2,
-          lineStyle: LineStyle.Solid,
-          axisLabelVisible: true,
-          title: $localize`:Chart line at the current price:Now`,
-        }),
-      );
-    }
+    series.setData(bars.map((b) => ({ time: barTime(b), value: b.close })));
+    this.lines = drawPositionLines(series, this.lines, prices, colors);
     chart.timeScale().fitContent();
   }
 }

@@ -17,6 +17,7 @@ import com.earningstracker.domain.HistoryCalculator;
 import com.earningstracker.market.CompanyProfile;
 import com.earningstracker.market.EarningsReport;
 import com.earningstracker.market.Exchange;
+import com.earningstracker.market.IntradayBar;
 import com.earningstracker.market.PriceBar;
 import com.earningstracker.market.Quote;
 import com.earningstracker.market.Region;
@@ -112,6 +113,24 @@ class StockServiceTest {
                 LocalDate.of(2026, 10, 21)); // AMC reacts next day; unknown time in Europe = before open
         assertThat(year.earningsMarkers()).extracting(Dtos.EarningsMarker::result)
                 .containsExactly("BEAT", "BEAT", "MISS", "UPCOMING");
+    }
+
+    @Test
+    void oneDayIsTheLatestSessionInFiveMinuteBarsMeasuredFromThePreviousClose() {
+        f.intradayBars.put(SAP, List.of(
+                new IntradayBar(Instant.parse("2026-09-28T07:00:00Z"), 200, 201, 199, 200.5, 1000),
+                new IntradayBar(Instant.parse("2026-09-28T07:05:00Z"), 200.5, 202, 200, 201.5, 800)));
+
+        Dtos.Prices day = f.stocks.prices(SAP, PriceRange.D1);
+
+        assertThat(day.range()).isEqualTo("1D");
+        assertThat(day.bars()).extracting(Dtos.PriceBar::time).containsExactly(
+                Instant.parse("2026-09-28T07:00:00Z"), Instant.parse("2026-09-28T07:05:00Z"));
+        assertThat(day.bars().getFirst().date()).isEqualTo(LocalDate.of(2026, 9, 28));
+        double sep25 = f.provider.bars.get(SAP).getLast().close();
+        assertThat(day.baseClose()).isEqualTo(sep25);
+        assertThat(day.earningsMarkers()).isEmpty();
+        assertThat(f.stocks.prices(SAP, PriceRange.M1).bars().getLast().time()).isNull();
     }
 
     @Test

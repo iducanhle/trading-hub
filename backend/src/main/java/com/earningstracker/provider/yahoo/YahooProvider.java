@@ -33,6 +33,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import com.earningstracker.market.CompanyProfile;
 import com.earningstracker.market.EarningsReport;
+import com.earningstracker.market.IntradayBar;
 import com.earningstracker.market.Exchange;
 import com.earningstracker.market.Money;
 import com.earningstracker.market.NewsArticle;
@@ -45,6 +46,7 @@ import com.earningstracker.market.SymbolMatch;
 import com.earningstracker.market.Symbols;
 import com.earningstracker.provider.EarningsProvider;
 import com.earningstracker.provider.FxRateProvider;
+import com.earningstracker.provider.IntradayProvider;
 import com.earningstracker.provider.ListingProvider;
 import com.earningstracker.provider.NewsProvider;
 import com.earningstracker.provider.PeersProvider;
@@ -77,7 +79,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Component
 public class YahooProvider implements SymbolSearchProvider, QuoteProvider, ProfileProvider, PriceHistoryProvider,
-        EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider, SymbolValidator, ListingProvider {
+        EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider, SymbolValidator, ListingProvider,
+        IntradayProvider {
 
     public static final String ID = "yahoo";
     static final Map<String, Exchange> US_EXCHANGES = Map.of("NYQ", Exchange.NYSE, "NMS", Exchange.NASDAQ,
@@ -216,6 +219,30 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
     }
 
     @Override
+    public List<IntradayBar> intradayBars(String symbol) {
+        JsonNode result = chart(symbol, "range=1d&interval=5m");
+        String currency = Json.text(result.path("meta").path("currency"));
+        JsonNode quote = result.path("indicators").path("quote").path(0);
+        JsonNode timestamps = result.path("timestamp");
+        List<IntradayBar> bars = new ArrayList<>();
+        for (int i = 0; i < timestamps.size(); i++) {
+            Double open = Json.number(quote.path("open").path(i));
+            Double high = Json.number(quote.path("high").path(i));
+            Double low = Json.number(quote.path("low").path(i));
+            Double close = Json.number(quote.path("close").path(i));
+            Long time = Json.longNumber(timestamps.path(i));
+            if (open == null || high == null || low == null || close == null || time == null) {
+                continue;
+            }
+            Long volume = Json.longNumber(quote.path("volume").path(i));
+            bars.add(new IntradayBar(Instant.ofEpochSecond(time), Money.toMajor(open, currency),
+                    Money.toMajor(high, currency), Money.toMajor(low, currency), Money.toMajor(close, currency),
+                    volume == null ? 0 : volume));
+        }
+        return List.copyOf(bars);
+    }
+
+    @Override
     public List<EarningsReport> earnings(String symbol) {
         JsonNode summary = quoteSummary(symbol, "price,earnings,earningsHistory,calendarEvents,earningsTrend");
         JsonNode spEarnings;
@@ -348,7 +375,8 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
     }
 
     private JsonNode chart(String symbol, String query) {
-        JsonNode body = http.getJson(properties.query1Url() + "/v8/finance/chart/{s}?" + query + "&interval=1d", symbol);
+        JsonNode body = http.getJson(properties.query1Url() + "/v8/finance/chart/{s}?" + query
+                + (query.contains("interval=") ? "" : "&interval=1d"), symbol);
         JsonNode result = body.path("chart").path("result").path(0);
         if (result.isMissingNode() || result.isNull()) {
             throw new ProviderException(ID, Kind.NOT_FOUND, "no chart for " + symbol);

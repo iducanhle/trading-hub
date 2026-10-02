@@ -85,6 +85,8 @@ export interface StockOverview {
 
 export interface PriceBar {
   date: string;
+  /** Start of the bar (ISO) for 1D's 5-minute bars; null or absent for daily bars. */
+  time?: string | null;
   open: number;
   high: number;
   low: number;
@@ -152,7 +154,7 @@ export interface NewsItem {
 
 // ─── Endpoint responses ──────────────────────────────────────────────────────────────────────────
 
-export type PriceRange = '1W' | '1M' | '6M' | '1Y' | '5Y';
+export type PriceRange = '1D' | '1W' | '1M' | '2M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
 export type HistoryPeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 export type RegionFilter = 'ALL' | Region;
 

@@ -52,7 +52,7 @@ public class StockController {
     @GetMapping("/stocks/{symbol}/prices")
     public Dtos.Prices prices(@PathVariable String symbol, @RequestParam(defaultValue = "1Y") String range) {
         PriceRange priceRange = PriceRange.parse(range)
-                .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST, "range must be 1W, 1M, 6M, 1Y or 5Y"));
+                .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST, "range must be 1D, 1W, 1M, 2M, 3M, 6M, 1Y, 3Y or 5Y"));
         return stocks.prices(symbol(symbol), priceRange);
     }
 

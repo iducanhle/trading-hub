@@ -17,18 +17,13 @@ import { PERIOD_LABELS } from '../../shared/utils/format';
 import { Pnl } from './pnl';
 import { displayTicker } from './portfolio-model';
 import { PositionChart } from './position-chart';
+import { majorCurrency } from '../stock-detail/sections/price-chart/position-lines';
 
 export interface PositionDialogData {
   t212Ticker: string;
 }
 
-const RANGES: PriceRange[] = ['1M', '6M', '1Y', '5Y'];
-
-/** Pence quotes (GBX, GBp) are shown in pounds, as Trading 212's prices are. */
-function normalize(currency: string | null): { code: string | null; factor: number } {
-  if (currency === 'GBX' || currency === 'GBp') return { code: 'GBP', factor: 0.01 };
-  return { code: currency, factor: 1 };
-}
+const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5Y'];
 
 /**
  * Opened from an open position on the Overview: price chart with the average price paid and the current price,
@@ -98,12 +93,17 @@ function normalize(currency: string | null): { code: string | null; factor: numb
                   {{ i.instrumentCurrency }}, so the price lines are not shown.
                 </p>
               }
-              <div class="mt-2 flex justify-between gap-2">
-                <div class="flex rounded-full bg-surface-container-high p-1" role="group">
+              <div class="mt-2 flex flex-wrap items-center gap-2">
+                <div
+                  class="flex max-w-full overflow-x-auto rounded-full bg-surface-container-high p-1"
+                  role="group"
+                  aria-label="Chart range"
+                  i18n-aria-label
+                >
                   @for (r of ranges; track r) {
                     <button
                       type="button"
-                      class="h-8 min-w-10 rounded-full px-1.5 text-sm font-medium"
+                      class="h-8 min-w-8 shrink-0 rounded-full px-1 text-sm font-medium"
                       [class.bg-surface]="range() === r"
                       [class.shadow-sm]="range() === r"
                       [class.text-on-surface-variant]="range() !== r"
@@ -228,22 +228,17 @@ export class PositionDialog {
     this.detail.hasValue() ? displayTicker(this.detail.value().instrument) : this.data.t212Ticker,
   );
 
-  private readonly chartUnit = computed(() => normalize(this.prices.value()?.currency ?? null));
-  protected readonly chartCurrency = computed(() => this.chartUnit().code);
+  protected readonly chartCurrency = computed(() => majorCurrency(this.prices.value()?.currency));
 
   /** The position's prices are in the instrument currency; the lines only make sense in the chart's. */
   protected readonly sameCurrency = computed(() => {
     const instrument = this.detail.hasValue()
-      ? this.detail.value().instrument.instrumentCurrency
+      ? majorCurrency(this.detail.value().instrument.instrumentCurrency)
       : null;
-    return !!instrument && instrument === this.chartUnit().code;
+    return !!instrument && instrument === this.chartCurrency();
   });
 
-  protected readonly chartBars = computed(() => {
-    const bars = this.prices.value()?.bars ?? [];
-    const { factor } = this.chartUnit();
-    return factor === 1 ? bars : bars.map((b) => ({ ...b, close: b.close * factor }));
-  });
+  protected readonly chartBars = computed(() => this.prices.value()?.bars ?? []);
 
   protected readonly chartLabel = computed(
     () => $localize`Price chart with the average cost and the current price`,
