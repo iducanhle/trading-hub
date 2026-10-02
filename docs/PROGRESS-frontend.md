@@ -69,6 +69,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 - **2026-10-02 —** Buy/Sell and Open/Closed have their own i18n meaning, so Czech uses the nouns Nákup/Prodej (the analyst ratings keep the verbs Koupit/Prodat).
 - **2026-10-02 —** Server error messages are English; the connect form shows its own translated text per error code and only takes the list of missing permissions from the server's message.
 - **2026-10-03 — Open positions on the Overview,** grouped as in the Trading 212 app: a pie is one row and expands in place (a disclosure button with `aria-expanded`, not a modal); its instruments link to their detail like the other rows.
+- **2026-10-03 — Position dialog:** tapping an open position on the Overview opens a dialog (not the page) with a closing-price line chart, a dashed line at the average cost and a solid line at the current price (both kept in the price scale), then P/L and position details; links to the stock page and to the full position. The lines are drawn only when the chart and the position are in the same currency (pence quotes are shown in pounds); unmapped instruments get no chart.
 
 ## Done
 

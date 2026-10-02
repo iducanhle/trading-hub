@@ -1,7 +1,7 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
 import { T212Holding, T212HoldingPosition } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
@@ -12,24 +12,15 @@ import { Icon } from '../../shared/icon/icon';
 import { PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
 import { Pnl } from './pnl';
 import { displayTicker } from './portfolio-model';
+import { PositionDialog, PositionDialogData } from './position-dialog';
 
 /**
  * Open positions as Trading 212 lists them, largest value first. A pie is one row; tapping it expands its
- * instruments in place.
+ * instruments in place. Tapping a position opens its chart and profit/loss in a dialog.
  */
 @Component({
   selector: 'app-portfolio-holdings',
-  imports: [
-    NgTemplateOutlet,
-    RouterLink,
-    ErrorState,
-    Skeleton,
-    StockLogo,
-    Icon,
-    PricePipe,
-    QuantityPipe,
-    Pnl,
-  ],
+  imports: [NgTemplateOutlet, ErrorState, Skeleton, StockLogo, Icon, PricePipe, QuantityPipe, Pnl],
   template: `
     <h2 class="mt-6 mb-2 text-sm font-semibold text-on-surface-variant" i18n>Open positions</h2>
     @if (data.error() && !data.hasValue()) {
@@ -128,9 +119,10 @@ import { displayTicker } from './portfolio-model';
     }
 
     <ng-template #row let-p let-currency="currency">
-      <a
-        [routerLink]="['/portfolio', p.t212Ticker]"
-        class="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-container-high"
+      <button
+        type="button"
+        class="flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left hover:bg-surface-container-high"
+        (click)="openPosition(p)"
       >
         <app-stock-logo [symbol]="ticker(p)" [logoUrl]="p.logoUrl" [size]="36" />
         <span class="min-w-0 flex-1">
@@ -143,7 +135,7 @@ import { displayTicker } from './portfolio-model';
           [ngTemplateOutlet]="amounts"
           [ngTemplateOutletContext]="{ value: p.value, pnl: p.pnl, pct: p.pnlPct, currency }"
         />
-      </a>
+      </button>
     </ng-template>
 
     <ng-template #amounts let-value="value" let-pnl="pnl" let-pct="pct" let-currency="currency">
@@ -157,6 +149,7 @@ import { displayTicker } from './portfolio-model';
 export class PortfolioHoldings {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
+  private readonly dialog = inject(MatDialog);
 
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
@@ -177,6 +170,15 @@ export class PortfolioHoldings {
       const next = new Set(set);
       if (!next.delete(key)) next.add(key);
       return next;
+    });
+  }
+
+  protected openPosition(p: T212HoldingPosition): void {
+    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      data: { t212Ticker: p.t212Ticker },
+      width: 'calc(100vw - 32px)',
+      maxWidth: '32rem',
+      autoFocus: 'dialog',
     });
   }
 

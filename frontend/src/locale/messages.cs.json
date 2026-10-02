@@ -536,6 +536,10 @@
     "4677822868923977140": "Žádné otevřené pozice.",
     "6730902161366554510": "Koláč",
     "382373333658224385": "{VAR_PLURAL, plural, =1 {1 pozice} =2 {2 pozice} =3 {3 pozice} =4 {4 pozice} other {{INTERPOLATION} pozic}}",
-    "7233935681618361413": " Trading 212 nevrátil koláče, takže vše, co máte v koláčích, je zobrazené jako jeden koláč. "
+    "7233935681618361413": " Trading 212 nevrátil koláče, takže vše, co máte v koláčích, je zobrazené jako jeden koláč. ",
+    "6685892931357659955": "Průměr",
+    "8235805970201248247": "Nyní",
+    "5245016052837286041": " Graf je v {$INTERPOLATION} a pozice v {$INTERPOLATION_1}, takže čáry cen nejsou zobrazené. ",
+    "852469638677614365": "Cenový graf s průměrnou nákupní cenou a aktuální cenou"
   }
 }
