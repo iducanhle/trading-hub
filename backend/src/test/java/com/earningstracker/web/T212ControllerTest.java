@@ -125,6 +125,32 @@ class T212ControllerTest {
     }
 
     @Test
+    void readEndpointsNeedAConnectionAndValidateParameters() {
+        for (String uri : new String[] {"/api/t212/summary", "/api/t212/instruments", "/api/t212/trades",
+                "/api/t212/dividends", "/api/t212/transactions", "/api/t212/instruments/AAPL_US_EQ"}) {
+            assertThat(get("bob", uri)).hasStatus(HttpStatus.CONFLICT).bodyJson().extractingPath("$.code")
+                    .isEqualTo("T212_NOT_CONNECTED");
+        }
+        assertThat(put("alice", BODY)).hasStatusOk();
+        assertThat(get("alice", "/api/t212/summary?from=2026-09-01&to=2026-09-30&tz=Europe/Prague")).hasStatusOk()
+                .bodyJson().isLenientlyEqualTo("{\"from\":\"2026-09-01\",\"to\":\"2026-09-30\","
+                        + "\"tz\":\"Europe/Prague\",\"accountCurrency\":\"EUR\",\"includesUnrealized\":false}");
+        assertThat(get("alice", "/api/t212/instruments?status=OPEN")).hasStatusOk();
+        assertThat(get("alice", "/api/t212/trades?side=SELL&limit=10")).hasStatusOk();
+        assertThat(get("alice", "/api/t212/transactions?type=deposit")).hasStatusOk();
+
+        for (String uri : new String[] {"/api/t212/summary?from=2026-09-30&to=2026-09-01",
+                "/api/t212/summary?tz=Mars/Olympus", "/api/t212/summary?from=2026-13-01",
+                "/api/t212/instruments?status=SOLD", "/api/t212/trades?limit=0", "/api/t212/trades?limit=101",
+                "/api/t212/trades?side=HOLD", "/api/t212/trades?cursor=@@@", "/api/t212/dividends?ticker=a%20b"}) {
+            assertThat(get("alice", uri)).hasStatus(HttpStatus.BAD_REQUEST);
+        }
+        assertThat(get("alice", "/api/t212/instruments/TSLA_US_EQ")).hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(mvc.delete().uri("/api/t212/credentials").header(HttpHeaders.AUTHORIZATION, "Bearer alice"))
+                .hasStatus(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
     void mapsTrading212ErrorsToContractCodes() {
         ROUTES.on("/api/v0/equity/account/summary", body(401, "{}"));
         assertThat(put("alice", BODY)).hasStatus(HttpStatus.BAD_REQUEST).bodyJson().extractingPath("$.code")

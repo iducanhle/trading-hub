@@ -154,6 +154,41 @@ public class T212ConnectionService {
         }
     }
 
+    /**
+     * The decrypted key when it can be used for a call: stored, readable, and not rejected by Trading 212 since it
+     * was saved. Never throws for those cases, so read endpoints can still serve stored data.
+     */
+    public Optional<T212Credentials> usableCredentials(String uid) {
+        if (encryption.crypto().isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<T212CredentialStore.StoredKey> stored = credentials.find(uid);
+        Optional<T212State> state = states.find(uid);
+        if (stored.isEmpty() || state.isEmpty() || !state.get().credentialsValid()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(credentials.decrypt(uid, stored.get()));
+        } catch (T212Crypto.UnreadableException e) {
+            return Optional.empty();
+        }
+    }
+
+    /** 409 {@code T212_NOT_CONNECTED} unless a key and state are stored (whether or not the key still works). */
+    public T212State requireConnected(String uid) {
+        encryption.require();
+        if (credentials.find(uid).isEmpty()) {
+            throw new ApiException(ErrorCode.T212_NOT_CONNECTED, "Trading 212 is not connected");
+        }
+        return states.find(uid)
+                .orElseThrow(() -> new ApiException(ErrorCode.T212_NOT_CONNECTED, "Trading 212 is not connected"));
+    }
+
+    /** True when the stored key cannot be used (rejected by Trading 212 or not decryptable). */
+    public boolean credentialsUnusable(String uid) {
+        return usableCredentials(uid).isEmpty();
+    }
+
     /** After Trading 212 rejected the stored key (401/403 outside of connecting). */
     public void markInvalid(String uid, String message) {
         states.find(uid).ifPresent(state -> states.save(uid, state.withCredentialsValid(false)

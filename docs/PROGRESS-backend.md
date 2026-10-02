@@ -22,7 +22,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 | 1 – Research & contract | Done (2026-10-02) |
 | 2 – Backend: credentials | Done (2026-10-02) |
 | 3 – Backend: sync | Done (2026-10-02) |
-| 4 – Backend: P/L engine & read endpoints | Next |
+| 4 – Backend: P/L engine & read endpoints | Done (2026-10-02) |
 | 7 – Integration & polish (demo account check) | — |
 
 **Done**
@@ -44,11 +44,19 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
   - `PUT /credentials` starts the first sync; `POST /api/t212/sync` (202); `t212-sync` job (every `app.t212.sync-interval`, first 15 min after startup; skips rejected keys). Status reports a sync stored as running but not running in this process (restart) as `FAILED` "interrupted".
   - Tests: mapper (12 mappings, 6 refusals), normalizer (sell, unfilled, pence + stamp duty, split, positive-quantity sells, dividends, transactions), sync (full, restart round trip, incremental stop, incremental add, interrupted first sync, rejected key, one per user + disconnect cancels, job). Backend 213 tests pass.
 
+- Phase 4:
+  - `T212LiveService`: account summary + positions per user, 60 s cache (one fetch shared by concurrent requests), last good copy served as stale, no calls with a rejected key; pence prices → GBP.
+  - `T212PortfolioEngine` (pure): average cost over the whole history, Trading 212's realized result preferred, splits change quantity only, corporate actions with a value count as trades, period selection by `T212Period` (days in an IANA zone), position after each fill, open/closed from live positions (history when unknown).
+  - `T212PortfolioService` + controller: `/summary`, `/instruments`, `/instruments/{t212Ticker}`, `/trades` (opaque cursor), `/dividends`, `/transactions`; logos from stored profiles with the ticker fallback, only for mapped symbols.
+  - Tests: engine (partial sells, T212 realized preferred, close + re-buy, fractional, fees/taxes, split, dividends, period vs. cost history, time zone, live open/unrealized), service over the synced fixtures (all-time and period summaries, instruments, detail timeline, trade paging and filters, dividends/transactions totals, Trading 212 down with and without a cached copy, 409), controller (409 on every read, parameter validation, 404). Backend 232 tests pass.
+
 **In progress:** nothing.
 
-**Next (phase 4):** live summary and positions (60 s cache), average-cost engine, period filtering, `/summary`, `/instruments`, `/instruments/{t212Ticker}`, `/trades`, `/dividends`, `/transactions`.
+**Next:** frontend phases 5–6 (see PROGRESS-frontend.md), then phase 7: check the UNVERIFIED points against a demo account.
 
 **Known issues**
+- Transactions in another currency than the account's are summed as they are in deposits/withdrawals/interest (Trading 212 says amounts are in the transaction's currency; whether that ever differs is unverified).
+- A sell of shares the synced history never bought (transferred in, or history older than the API returns) has no cost basis; Trading 212's own realized figure is used when present, otherwise the whole value counts as profit.
 - No Trading 212 key was available, so nothing has been called yet. The open questions (sell quantity sign, whether realized P/L includes fees, split fills, ticker suffixes, pence currency code) are listed as UNVERIFIED in DATA-SOURCES.md and get checked against a demo account in phase 7. Until then, the code normalizes defensively (absolute values plus `side`) and covers both readings in tests.
 
 **Decisions**
