@@ -138,11 +138,13 @@ import { TradeFilters } from './trades-filters';
               <app-icon name="chevron_right" [size]="20" />
             </a>
           }
-          <app-period-selector
-            class="mb-4 block"
-            [period]="period()"
-            (periodChange)="setPeriod($event)"
-          />
+          @if (tab() !== 'overview') {
+            <app-period-selector
+              class="mb-4 block"
+              [period]="period()"
+              (periodChange)="setPeriod($event)"
+            />
+          }
           @switch (tab()) {
             @case ('stocks') {
               <app-portfolio-stocks [period]="period()" [version]="version()" />
@@ -159,7 +161,7 @@ import { TradeFilters } from './trades-filters';
               <app-portfolio-cash [period]="period()" [version]="version()" />
             }
             @default {
-              <app-portfolio-overview [period]="period()" [version]="version()" />
+              <app-portfolio-overview [version]="version()" />
             }
           }
         }

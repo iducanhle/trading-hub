@@ -485,14 +485,6 @@
     "5655285967214777787": "Úrok z půjčování akcií",
     "8999687648309620064": "Probíhá první synchronizace. Historie se tu objevuje průběžně.",
     "5636269064834199982": "Celková hodnota · nyní",
-    "283720014033039017": "Zisk/ztráta v tomto období",
-    "1360194855790260692": " Realizovaný zisk/ztráta, dividendy a poplatky za období; nerealizovaný zisk/ztráta není započten. ",
-    "3074232275695358978": "Čisté vklady",
-    "5246765628187698200": "Hotovost · nyní",
-    "70839130452248419": " Nejlepší a nejhorší v tomto období ",
-    "6332222538515469742": " V tomto období žádné obchody ani dividendy. ",
-    "3305995014522863255": "Synchronizuji s Trading 212…",
-    "8964682564851501753": "Synchronizováno s Trading 212 · {$INTERPOLATION}",
     "1649035832083209812": "Nejlepší",
     "5614367840516299633": "Nejhorší",
     "1493319162734299625": "Části portfolia",
@@ -532,10 +524,11 @@
     "5058967185300821965": "Realizovaný zisk/ztráta plus dividendy, minus poplatky a daně. Za celé období se přičte i nerealizovaný zisk/ztráta toho, co stále držíte.",
     "3408086457484971599": "Procento ho porovnává se vším, co jste za nákupy akcie utratili.",
     "7505133899992093767": "Realizováno +100 $, dividendy +5 $, poplatky −2 $ a nerealizováno −40 $: celkem +63 $.",
-    "6163375206365108469": "{VAR_PLURAL, plural, =1 {1 obchod v tomto období} =2 {2 obchody v tomto období} =3 {3 obchody v tomto období} =4 {4 obchody v tomto období} other {{INTERPOLATION} obchodů v tomto období}}",
     "989678739416237815": "Vaše pozice",
     "4140867418485229369": "prům.",
     "8635173042879983553": "Vše prodáno",
-    "5540369600481329479": "Moje obchody"
+    "5540369600481329479": "Moje obchody",
+    "6673271017427862858": "Nejlepší a nejhorší",
+    "1997842718553188724": " Zatím žádné obchody ani dividendy. "
   }
 }
