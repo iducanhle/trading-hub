@@ -158,7 +158,7 @@ Log in: `ssh -i $HOME\.ssh\oracle_ed25519 ubuntu@130.61.9.108`, then `cd /opt/ea
 | Restart the app | `docker compose restart app` |
 | Change a setting / key | `nano .env`, then `docker compose up -d` (a plain `restart` does not re-read `.env`) |
 | Roll back to an older version | add `APP_IMAGE=ghcr.io/iducanhle/earnings-tracker-backend:sha-<commit>` to `.env`, then `docker compose up -d`; remove the line to return to `latest` |
-| Run a job now | `POST https://tradiqo.duckdns.org/api/admin/jobs/<name>/run` with a login token (job names: `calendar-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`) |
+| Run a job now | `POST https://tradiqo.duckdns.org/api/admin/jobs/<name>/run` with a login token (job names: `calendar-refresh`, `market-events-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`) |
 | See when jobs last ran | Firebase console → Firestore → collection `jobRuns` |
 | Update Ubuntu (monthly) | `sudo apt update && sudo apt -y upgrade` (reboot if it asks; containers restart by themselves) |
 

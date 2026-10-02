@@ -39,3 +39,15 @@ when an English text has no Czech translation.
 
 Numbers and dates use Czech formats when the app is in Czech: `254,43 $`, `+1,24 %`, `8,4 mld. $`,
 `3,78 bil. $`, `29. 9. 2026`. In Czech, *bilion* means 10¹², which is the English "trillion".
+
+## Market events
+
+| English | Czech | Note |
+|---|---|---|
+| Market events | Tržní události | The Events tab |
+| Importance (Low / Medium / High) | Důležitost (Nízká / Střední / Vysoká) | How strongly an event tends to move the market |
+| Central bank / Inflation / Jobs / Growth | Centrální banka / Inflace / Trh práce / Růst | Event categories |
+| Treasury / Market structure / Politics | Státní dluhopisy / Struktura trhu / Politika | Event categories |
+| N events | Událostí: N | Same form after any number |
+
+Event titles and notes (for example "Consumer Price Index (CPI)") come from the backend in English and are not translated.

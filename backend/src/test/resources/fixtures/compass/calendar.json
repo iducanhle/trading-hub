@@ -1,0 +1,160 @@
+{
+ "schema_version": "1.0.0",
+ "window": {
+  "start": "2026-09-27",
+  "end": "2027-10-28"
+ },
+ "events": [
+  {
+   "id": "fred-cpi-2026-10-14",
+   "event_type": "macro_release_cpi",
+   "title": "Consumer Price Index (CPI)",
+   "start_utc": "2026-10-14T12:30:00Z",
+   "end_utc": "2026-10-14T13:00:00Z",
+   "all_day": false,
+   "date_et": "2026-10-14",
+   "time_et": "08:30",
+   "market_impact": "high",
+   "source": "FRED",
+   "source_url": "https://fred.stlouisfed.org/releases/10",
+   "note": "Headline and core consumer inflation from the BLS. The core month-over-month print drives the immediate rates and equity reaction.",
+   "fred_release_id": 10,
+   "primary_source_url": "https://www.bls.gov/schedule/news_release/cpi.htm",
+   "attribution": "This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+   "typical_move": {
+    "ratio": 1.22,
+    "notable": true,
+    "move_notable": false,
+    "vol_notable": true,
+    "summary": "Historically moves about as much as a normal day. Implied volatility usually drops into it (-1.9% vs -0.7% on an ordinary day), so the market prices real uncertainty here.",
+    "window": "recent",
+    "sample_start": "2023-09-02",
+    "vol_window": "full",
+    "spx": {
+     "median_abs_pct": 0.599,
+     "ratio": 1.22,
+     "n": 36
+    },
+    "ndx": {
+     "median_abs_pct": 0.94,
+     "ratio": 1.34,
+     "n": 36
+    },
+    "vol_crush": {
+     "median_pct": -1.928,
+     "excess_pct": -1.262,
+     "n": 124
+    }
+   }
+  },
+  {
+   "id": "fomc-statement-2026-10-28",
+   "event_type": "fomc_statement",
+   "title": "FOMC Statement & Rate Decision",
+   "start_utc": "2026-10-28T18:00:00Z",
+   "end_utc": "2026-10-28T18:30:00Z",
+   "all_day": false,
+   "date_et": "2026-10-28",
+   "time_et": "14:00",
+   "market_impact": "high",
+   "source": "federalreserve.gov",
+   "source_url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+   "note": "Interest rate decision and policy statement released at 2:00pm ET. Expect a sharp repricing in index futures on the release and again during the 2:30pm press conference.",
+   "meeting_start_date": "2026-10-27",
+   "meeting_end_date": "2026-10-28",
+   "has_sep": false,
+   "typical_move": {
+    "ratio": 1.63,
+    "notable": true,
+    "move_notable": true,
+    "vol_notable": true,
+    "summary": "Historically moves about 1.6x as much as a normal day. Implied volatility usually drops into it (-3.1% vs -0.7% on an ordinary day), so the market prices real uncertainty here.",
+    "window": "recent",
+    "sample_start": "2023-09-02",
+    "vol_window": "full",
+    "spx": {
+     "median_abs_pct": 0.797,
+     "ratio": 1.63,
+     "n": 24
+    },
+    "ndx": {
+     "median_abs_pct": 1.072,
+     "ratio": 1.53,
+     "n": 24
+    },
+    "vol_crush": {
+     "median_pct": -3.129,
+     "excess_pct": -2.463,
+     "n": 45
+    }
+   }
+  },
+  {
+   "id": "market-holiday-2026-11-26",
+   "event_type": "market_holiday",
+   "title": "Market Closed — Thanksgiving Day",
+   "start_utc": "2026-11-26T00:00:00Z",
+   "end_utc": null,
+   "all_day": true,
+   "date_et": "2026-11-26",
+   "time_et": null,
+   "market_impact": "low",
+   "source": "computed",
+   "source_url": "https://www.nyse.com/markets/hours-calendars",
+   "note": "US equity markets are closed for Thanksgiving Day. CME equity index futures are also closed or on a holiday schedule -- check CME's calendar for the exact session.",
+   "holiday_name": "Thanksgiving Day",
+   "computed": true
+  },
+  {
+   "id": "quad-witching-2026-12",
+   "event_type": "quad_witching",
+   "title": "Quad Witching",
+   "start_utc": "2026-12-18T21:00:00Z",
+   "end_utc": "2026-12-18T21:30:00Z",
+   "all_day": false,
+   "date_et": "2026-12-18",
+   "time_et": "16:00",
+   "market_impact": "high",
+   "source": "computed",
+   "source_url": "https://www.cmegroup.com/trading/equity-index/rolldates.html",
+   "note": "Index futures, index options, single-stock options and single-stock futures all expire. Expect elevated volume all session and a large closing auction.",
+   "computed": true,
+   "holiday_adjusted": false
+  },
+  {
+   "id": "treasury-auction-912797VJ3-2026-09-28",
+   "event_type": "treasury_auction",
+   "title": "Treasury Auction: 13-Week Bill",
+   "start_utc": "2026-09-28T15:30:00Z",
+   "end_utc": "2026-09-28T16:00:00Z",
+   "all_day": false,
+   "date_et": "2026-09-28",
+   "time_et": "11:30",
+   "market_impact": "low",
+   "source": "TreasuryDirect",
+   "source_url": "https://www.treasurydirect.gov/auctions/announcements-data-results/",
+   "note": "Competitive bidding for the 13-Week Bill closes at 11:30 ET. A weak auction (low bid-to-cover, high tail) pushes yields up and typically pressures index futures.",
+   "security_type": "Bill",
+   "security_term": "13-Week",
+   "cusip": "912797VJ3",
+   "announcement_date": "2026-09-24",
+   "part_of_quarterly_refunding": false
+  },
+  {
+   "id": "weird",
+   "event_type": "brand_new_type",
+   "title": "Something New",
+   "start_utc": "2026-10-20T12:00:00Z",
+   "all_day": false,
+   "date_et": "2026-10-20",
+   "time_et": "08:00",
+   "market_impact": "medium"
+  },
+  {
+   "id": "broken",
+   "event_type": "macro_release_cpi",
+   "title": "No impact",
+   "date_et": "2026-10-21"
+  }
+ ]
+}

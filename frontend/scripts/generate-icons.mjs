@@ -10,10 +10,14 @@ import { join } from 'node:path';
 
 const VERSION = '0.47.5';
 const ICONS = [
+  'account_balance',
   'account_circle',
   'add',
   'arrow_back',
+  'bar_chart',
   'block',
+  'bolt',
+  'bolt-fill',
   'calendar_month',
   'candlestick_chart',
   'calendar_month-fill',
@@ -30,6 +34,7 @@ const ICONS = [
   'error',
   'event',
   'history',
+  'how_to_vote',
   'info',
   'keyboard_arrow_down',
   'light_mode',
@@ -41,6 +46,7 @@ const ICONS = [
   'notifications',
   'open_in_new',
   'refresh',
+  'savings',
   'schedule',
   'search',
   'search_off',
@@ -48,12 +54,15 @@ const ICONS = [
   'settings',
   'show_chart',
   'straighten',
+  'swap_vert',
+  'trending_up',
   'settings-fill',
   'star',
   'star-fill',
   'tune',
   'visibility',
   'visibility_off',
+  'work',
 ];
 
 async function load(name) {

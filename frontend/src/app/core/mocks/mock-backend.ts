@@ -38,6 +38,9 @@ import {
   FollowedEarningsResponse,
   HistoryPeriod,
   HistoryResponse,
+  Importance,
+  MarketEvent,
+  MarketEventsResponse,
   NewsItem,
   PriceBar,
   PriceRange,
@@ -137,6 +140,7 @@ export class MockBackend {
     if (first === 'search')
       return this.search(params.get('q') ?? '', Number(params.get('limit') ?? 10));
     if (first === 'calendar') return this.calendar(params);
+    if (first === 'market-events') return this.marketEvents(params);
     if (first === 'followed' && second === 'earnings') return this.followedEarnings();
     if (first === 'stocks' && second) {
       const symbol = second.toUpperCase();
@@ -390,6 +394,47 @@ export class MockBackend {
           .filter((e) => region === 'ALL' || e.region === region)
           .filter((e) => !followed || followed.has(e.symbol))
           .sort((a, b) => (b.marketCapUsd ?? -1) - (a.marketCapUsd ?? -1));
+        return { date, events };
+      }),
+    );
+    return { from, to, days };
+  }
+
+  /** The fixture week's market events, repeated by weekday for any date. */
+  private async marketEventsOn(date: string): Promise<MarketEvent[]> {
+    const week = await this.fixture<MarketEventsResponse>('market-events-week.json');
+    const source = week.days.find((d) => weekdayIndex(d.date) === weekdayIndex(date));
+    const shift = diffDays(week.days[0].date, startOfWeek(date));
+    return (source?.events ?? []).map((e) => ({
+      ...shiftDates(e, shift),
+      id: `${e.id}-${date}`,
+      date,
+    }));
+  }
+
+  private async marketEvents(params: HttpParams): Promise<MarketEventsResponse> {
+    const from = params.get('from');
+    const to = params.get('to');
+    if (!from || !to || to < from || diffDays(from, to) + 1 > 42) {
+      throw new MockError(400, 'BAD_REQUEST', 'from/to are required and span at most 42 days');
+    }
+    const rank: Record<Importance, number> = { LOW: 0, MEDIUM: 1, HIGH: 2 };
+    const min = rank[(params.get('minImportance') as Importance | null) ?? 'LOW'];
+    const region = params.get('region') ?? 'ALL';
+    const includeEarnings = params.get('includeEarnings') !== 'false';
+    const days = await Promise.all(
+      eachDay(from, to).map(async (date) => {
+        const events = (await this.marketEventsOn(date))
+          .filter((e) => includeEarnings || e.category !== 'EARNINGS')
+          .filter((e) => rank[e.importance] >= min)
+          .filter(
+            (e) =>
+              region === 'ALL' ||
+              (region === 'OTHER'
+                ? e.country !== 'US' && e.country !== 'EU'
+                : e.country === region),
+          )
+          .sort((a, b) => rank[b.importance] - rank[a.importance]);
         return { date, events };
       }),
     );

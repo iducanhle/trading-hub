@@ -104,6 +104,12 @@ export class Shell {
       activeIcon: 'calendar_month-fill',
     },
     {
+      path: '/events',
+      label: $localize`Events`,
+      icon: 'bolt',
+      activeIcon: 'bolt-fill',
+    },
+    {
       path: '/settings',
       label: $localize`Settings`,
       icon: 'settings',

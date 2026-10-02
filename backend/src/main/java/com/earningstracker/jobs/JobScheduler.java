@@ -35,6 +35,11 @@ class JobScheduler {
         runner.run(CalendarRefreshJob.NAME, "schedule");
     }
 
+    @Scheduled(cron = "0 30 6 * * *", zone = "Europe/Prague")
+    void marketEventsRefresh() {
+        runner.run(MarketEventsRefreshJob.NAME, "schedule");
+    }
+
     @Scheduled(cron = "0 0 3 * * SUN", zone = "Europe/Prague")
     void euUniverseRefresh() {
         runner.run(EuUniverseRefreshJob.NAME, "schedule");
@@ -57,6 +62,11 @@ class JobScheduler {
         if (last.isBefore(clock.instant().minus(STARTUP_REFRESH_AFTER))) {
             log.info("calendar-refresh last succeeded at {}; running it now", last);
             runner.trigger(CalendarRefreshJob.NAME, "startup");
+        }
+        Instant lastEvents = runner.lastSuccess(MarketEventsRefreshJob.NAME).orElse(Instant.EPOCH);
+        if (lastEvents.isBefore(clock.instant().minus(STARTUP_REFRESH_AFTER))) {
+            log.info("market-events-refresh last succeeded at {}; running it now", lastEvents);
+            runner.trigger(MarketEventsRefreshJob.NAME, "startup");
         }
     }
 }

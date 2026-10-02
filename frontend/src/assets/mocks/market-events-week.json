@@ -1,0 +1,209 @@
+{
+  "from": "2026-09-28",
+  "to": "2026-10-04",
+  "days": [
+    {
+      "date": "2026-09-28",
+      "events": [
+        {
+          "id": "compass-treasury-13w",
+          "date": "2026-09-28",
+          "startsAt": "2026-09-28T15:30:00Z",
+          "allDay": false,
+          "title": "Treasury Auction: 13-Week Bill",
+          "label": "Auction",
+          "category": "TREASURY",
+          "importance": "LOW",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": null,
+          "note": "A weak auction pushes yields up and typically pressures index futures.",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "events": [
+        {
+          "id": "compass-jolts",
+          "date": "2026-09-29",
+          "startsAt": "2026-09-29T14:00:00Z",
+          "allDay": false,
+          "title": "JOLTS Job Openings",
+          "label": "JOLTS",
+          "category": "JOBS",
+          "importance": "MEDIUM",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": null,
+          "note": "Job openings from the BLS: a read on how tight the labour market is.",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "date": "2026-09-30",
+      "events": [
+        {
+          "id": "compass-pce",
+          "date": "2026-09-30",
+          "startsAt": "2026-09-30T12:30:00Z",
+          "allDay": false,
+          "title": "Personal Income & Outlays (PCE)",
+          "label": "PCE",
+          "category": "INFLATION",
+          "importance": "HIGH",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": 1.15,
+          "note": "The Fed’s preferred inflation gauge.",
+          "country": "US"
+        },
+        {
+          "id": "compass-gdp",
+          "date": "2026-09-30",
+          "startsAt": "2026-09-30T12:30:00Z",
+          "allDay": false,
+          "title": "GDP (Third Estimate)",
+          "label": "GDP",
+          "category": "GROWTH",
+          "importance": "LOW",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": null,
+          "note": null,
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-01",
+      "events": [
+        {
+          "id": "compass-ism-mfg",
+          "date": "2026-10-01",
+          "startsAt": "2026-10-01T14:00:00Z",
+          "allDay": false,
+          "title": "ISM Manufacturing PMI",
+          "label": "ISM Mfg",
+          "category": "GROWTH",
+          "importance": "HIGH",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": 1.1,
+          "note": null,
+          "country": "US"
+        },
+        {
+          "id": "compass-claims",
+          "date": "2026-10-01",
+          "startsAt": "2026-10-01T12:30:00Z",
+          "allDay": false,
+          "title": "Initial Jobless Claims",
+          "label": "Claims",
+          "category": "JOBS",
+          "importance": "MEDIUM",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": null,
+          "note": null,
+          "country": "US"
+        },
+        {
+          "id": "ecb-mock",
+          "date": "2026-10-01",
+          "startsAt": "2026-10-01T13:15:00Z",
+          "allDay": false,
+          "title": "ECB Rate Decision",
+          "label": "ECB",
+          "category": "CENTRAL_BANK",
+          "importance": "HIGH",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": null,
+          "note": "Governing Council interest-rate decision, followed by the press conference.",
+          "country": "EU"
+        },
+        {
+          "id": "earnings-AAPL-mock",
+          "date": "2026-10-01",
+          "startsAt": null,
+          "allDay": true,
+          "title": "Apple Inc. earnings",
+          "label": "AAPL",
+          "category": "EARNINGS",
+          "importance": "HIGH",
+          "sourceUrl": null,
+          "symbol": "AAPL",
+          "logoUrl": null,
+          "reportTime": "AMC",
+          "moveRatio": null,
+          "note": null,
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-02",
+      "events": [
+        {
+          "id": "compass-nfp",
+          "date": "2026-10-02",
+          "startsAt": "2026-10-02T12:30:00Z",
+          "allDay": false,
+          "title": "Employment Situation (Nonfarm Payrolls)",
+          "label": "Jobs",
+          "category": "JOBS",
+          "importance": "HIGH",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": 1.4,
+          "note": "The monthly jobs report: payrolls, unemployment and wages.",
+          "country": "US"
+        },
+        {
+          "id": "compass-factory",
+          "date": "2026-10-02",
+          "startsAt": "2026-10-02T14:00:00Z",
+          "allDay": false,
+          "title": "Factory Orders (M3)",
+          "label": "Orders",
+          "category": "GROWTH",
+          "importance": "MEDIUM",
+          "sourceUrl": null,
+          "symbol": null,
+          "logoUrl": null,
+          "reportTime": null,
+          "moveRatio": null,
+          "note": null,
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-03",
+      "events": []
+    },
+    {
+      "date": "2026-10-04",
+      "events": []
+    }
+  ]
+}

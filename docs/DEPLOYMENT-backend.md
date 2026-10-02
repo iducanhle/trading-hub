@@ -510,7 +510,7 @@ After each change: edit `.env` (or replace the file) on the VM, then `docker com
 | CI deploy key | Create a new pair (7.5), replace its line in the VM's `~/.ssh/authorized_keys` (`nano ~/.ssh/authorized_keys`), and update the `DEPLOY_SSH_KEY` secret. |
 
 ### 9.6 Check the scheduled jobs
-Schedules (Europe/Prague time): `calendar-refresh` daily 06:00, `eu-universe-refresh` Sunday 03:00, `prices-refresh` daily 23:30, `earnings-digest` daily 12:00.
+Schedules (Europe/Prague time): `calendar-refresh` daily 06:00, `market-events-refresh` daily 06:30, `eu-universe-refresh` Sunday 03:00, `prices-refresh` daily 23:30, `earnings-digest` daily 12:00.
 
 Firebase console → **Firestore Database** → **Data** → collection **`jobRuns`** → one document per job:
 - `lastStart`, `lastSuccess`, `running`, `trigger` (`schedule`, `startup` or `manual`)

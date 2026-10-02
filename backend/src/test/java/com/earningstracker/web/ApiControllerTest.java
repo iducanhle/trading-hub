@@ -2,6 +2,7 @@ package com.earningstracker.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -15,6 +16,7 @@ import java.util.List;
 
 import com.earningstracker.domain.HistoryCalculator;
 import com.earningstracker.jobs.JobRunner;
+import com.earningstracker.market.Importance;
 import com.earningstracker.market.Region;
 import com.earningstracker.notification.DigestService;
 import com.earningstracker.provider.ProviderException;
@@ -23,6 +25,7 @@ import com.earningstracker.security.AuthenticatedUser;
 import com.earningstracker.security.TokenVerifier;
 import com.earningstracker.service.CalendarService;
 import com.earningstracker.service.FollowedEarningsService;
+import com.earningstracker.service.MarketEventService;
 import com.earningstracker.service.PriceRange;
 import com.earningstracker.service.SearchService;
 import com.earningstracker.service.StockService;
@@ -55,6 +58,8 @@ class ApiControllerTest {
     private SearchService search;
     @MockitoBean
     private CalendarService calendar;
+    @MockitoBean
+    private MarketEventService marketEvents;
     @MockitoBean
     private FollowedEarningsService followed;
     @MockitoBean
@@ -144,6 +149,25 @@ class ApiControllerTest {
         assertThat(get("/api/calendar?from=2026-10-01&to=2026-11-11&followedOnly=true&region=EU")).hasStatusOk();
         verify(calendar).calendar(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 11), 0, CalendarService.RegionFilter.EU,
                 true, "uid-1");
+    }
+
+    @Test
+    void marketEventsChecksTheRangeAndPassesTheFilters() {
+        assertBadRequest("/api/market-events?from=2026-10-01&to=2026-11-15"); // 46 days
+        assertBadRequest("/api/market-events?from=2026-10-10&to=2026-10-01");
+        assertBadRequest("/api/market-events?to=2026-10-01");
+        assertBadRequest("/api/market-events?from=2026-10-01&to=2026-10-02&region=ASIA");
+        assertBadRequest("/api/market-events?from=2026-10-01&to=2026-10-02&minImportance=HUGE");
+
+        given(marketEvents.events(any(), any(), any(), any(), anyBoolean())).willReturn(
+                new Dtos.MarketEvents(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 11), List.of()));
+        assertThat(get("/api/market-events?from=2026-10-01&to=2026-11-11&minImportance=MEDIUM&region=OTHER&includeEarnings=false"))
+                .hasStatusOk();
+        verify(marketEvents).events(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 11), Importance.MEDIUM,
+                MarketEventService.EventRegion.OTHER, false);
+        assertThat(get("/api/market-events?from=2026-10-01&to=2026-10-02")).hasStatusOk();
+        verify(marketEvents).events(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 2), Importance.LOW,
+                MarketEventService.EventRegion.ALL, true);
     }
 
     @Test

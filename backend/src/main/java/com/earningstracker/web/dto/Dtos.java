@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.earningstracker.domain.EarningsResult;
+import com.earningstracker.market.EventCategory;
+import com.earningstracker.market.Importance;
 import com.earningstracker.market.Region;
 import com.earningstracker.market.ReportTime;
 
@@ -92,6 +94,22 @@ public final class Dtos {
     }
 
     public record Calendar(LocalDate from, LocalDate to, List<CalendarDay> days) {
+    }
+
+    /**
+     * One market-moving event: a macro release, a central-bank decision, a market-structure date or a mega-cap
+     * report. {@code startsAt} is null for all-day events; {@code date} is the day in the publisher's own time zone.
+     * Earnings events also carry {@code symbol}, {@code logoUrl} and {@code reportTime}.
+     */
+    public record MarketEvent(String id, LocalDate date, Instant startsAt, boolean allDay, String title, String label,
+            EventCategory category, String country, Importance importance, String note, Double moveRatio,
+            String sourceUrl, String symbol, String logoUrl, ReportTime reportTime) {
+    }
+
+    public record MarketEventDay(LocalDate date, List<MarketEvent> events) {
+    }
+
+    public record MarketEvents(LocalDate from, LocalDate to, List<MarketEventDay> days) {
     }
 
     public record FollowedEarnings(List<EarningsEvent> upcoming, List<SearchResult> noUpcomingDate) {

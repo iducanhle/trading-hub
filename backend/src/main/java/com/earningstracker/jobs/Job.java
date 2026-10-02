@@ -8,7 +8,10 @@ public interface Job {
 
     ZoneId ZONE = ZoneId.of("Europe/Prague");
 
-    /** {@code calendar-refresh}, {@code eu-universe-refresh}, {@code prices-refresh} or {@code earnings-digest}. */
+    /**
+     * {@code calendar-refresh}, {@code market-events-refresh}, {@code eu-universe-refresh}, {@code prices-refresh} or
+     * {@code earnings-digest}.
+     */
     String name();
 
     /** Does the work and returns counters for {@code jobRuns/{name}.stats}. */

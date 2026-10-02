@@ -1,4 +1,4 @@
-import { CalendarDay, EarningsEvent, RegionFilter, ReportTime } from '../../core/models/contract';
+import { EarningsEvent, RegionFilter, ReportTime } from '../../core/models/contract';
 import { addDays, addMonths, monthGrid, startOfMonth, startOfWeek } from '../../shared/utils/dates';
 
 export type CalendarView = 'week' | 'month';
@@ -57,7 +57,7 @@ export function filtersAreDefault(filters: CalendarFilters): boolean {
 }
 
 /** Week view: Monday–Friday always, Saturday and Sunday only when they have reports. */
-export function visibleWeekDays(days: CalendarDay[]): CalendarDay[] {
+export function visibleWeekDays<T extends { events: readonly unknown[] }>(days: T[]): T[] {
   return days.filter((d, i) => i < 5 || d.events.length > 0);
 }
 

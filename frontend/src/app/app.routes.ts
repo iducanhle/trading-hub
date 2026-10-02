@@ -64,6 +64,12 @@ export const routes: Routes = [
           import('./features/calendar/calendar-page').then((m) => m.CalendarPage),
       },
       {
+        path: 'events',
+        title: $localize`Events`,
+        loadComponent: () =>
+          import('./features/market-events/events-page').then((m) => m.EventsPage),
+      },
+      {
         path: 'settings',
         title: $localize`Settings`,
         loadComponent: () =>

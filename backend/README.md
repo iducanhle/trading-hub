@@ -60,7 +60,7 @@ Emulator tokens are not signature-checked, so emulator mode is refused under the
 
 ## Jobs
 
-The schedules (Europe/Prague) are `calendar-refresh` daily 06:00, `eu-universe-refresh` Sunday 03:00, `prices-refresh` daily 23:30 and `earnings-digest` daily 12:00. `calendar-refresh` also runs at startup when its last success is older than 24 h.
+The schedules (Europe/Prague) are `calendar-refresh` daily 06:00, `market-events-refresh` daily 06:30, `eu-universe-refresh` Sunday 03:00, `prices-refresh` daily 23:30 and `earnings-digest` daily 12:00. `calendar-refresh` also runs at startup when its last success is older than 24 h.
 
 Locally, `JOBS_ENABLED=false` turns off the schedules and the startup run, because a first `calendar-refresh` makes up to 1,500 Finnhub profile calls and takes about 28 minutes. Trigger jobs by hand instead:
 ```bash

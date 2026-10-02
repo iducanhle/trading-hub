@@ -113,6 +113,20 @@ type EarningsQuarter = {
   reaction: EarningsReaction | null;
 };
 
+type EventCategory = "CENTRAL_BANK" | "INFLATION" | "JOBS" | "GROWTH" | "TREASURY" | "MARKET_STRUCTURE" | "EARNINGS" | "POLITICS";
+type Importance = "LOW" | "MEDIUM" | "HIGH";
+
+type MarketEvent = {
+  id: string; date: string /* publisher's local day */;
+  startsAt: string | null /* UTC; null when allDay */; allDay: boolean;
+  title: string; label: string /* short, for tiles: "CPI", "FOMC" */;
+  category: EventCategory; country: "US" | "EU" | "GB" | "JP";
+  importance: Importance; note: string | null;
+  moveRatio: number | null /* S&P 500 median move on such days ÷ an ordinary day */;
+  sourceUrl: string | null;
+  symbol: string | null; logoUrl: string | null; reportTime: ReportTime | null; // EARNINGS events only
+};
+
 type RecommendationPeriod = { period: string /* YYYY-MM */; strongBuy: number; buy: number; hold: number; sell: number; strongSell: number };
 type NewsItem = { headline: string; source: string; url: string; publishedAt: string; imageUrl: string | null; summary: string | null };
 
@@ -218,9 +232,10 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/stocks/{symbol}/news?limit=10` | `NewsItem[]` | May be empty |
 | `GET /api/stocks/{symbol}/peers` | `SearchResult[]` | Max 8; may be empty |
 | `GET /api/calendar?from=&to=&minMarketCapUsd=0&region=ALL\|US\|EU&followedOnly=false` | `{ from, to, days: { date: string, events: EarningsEvent[] }[] }` | Every date in the range is present (possibly empty). Events are sorted by `marketCapUsd` desc, nulls last. `minMarketCapUsd > 0` excludes unknown caps. Max span 42 days. |
+| `GET /api/market-events?from=&to=&minImportance=LOW\|MEDIUM\|HIGH&region=ALL\|US\|EU\|OTHER&includeEarnings=true` | `{ from, to, days: { date: string, events: MarketEvent[] }[] }` | Every date in the range is present (possibly empty). Events with at least `minImportance` (default `LOW`), most important first, then all-day events, then by time. `region` filters by `country` (`OTHER` = not US or EU). `includeEarnings=false` leaves out the mega-cap reports. Max span 42 days. |
 | `GET /api/followed/earnings` | `{ upcoming: EarningsEvent[] /* date ≥ today, asc */, noUpcomingDate: SearchResult[] }` | Based on the caller's `users/{uid}/follows` |
 | `POST /api/notifications/test` | `202 { sentTo: string }` | |
-| `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`, `t212-sync` |
+| `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `market-events-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`, `t212-sync` |
 | `GET /api/t212/status` | `T212Status` | Works when not connected (`connected: false`) |
 | `PUT /api/t212/credentials` | `T212Status` | Body `{ apiKey: string, apiSecret: string \| null, environment: T212Environment }`. Validates with Trading 212, encrypts, stores, starts the first sync (`syncState: "RUNNING"`) |
 | `DELETE /api/t212/credentials` | `204` | Deletes the key **and** all synced data. Idempotent |
@@ -271,6 +286,11 @@ Behaviour the tables above leave open, as the backend implements it. No field na
   - `time` is what the source reported (`UNKNOWN` when not known). `timeAssumed: true` means the reaction was computed with the UNKNOWN rule.
 - **`GET /api/stocks/{symbol}/news`**: `limit` is 1–50, default 10.
 - **`GET /api/calendar`**: `from` and `to` are required and inclusive, at most 42 days (`to − from + 1 ≤ 42`). Events come from the daily calendar job, so a date it has not covered yet is empty.
+- **`GET /api/market-events`**: `from` and `to` are required and inclusive, at most 42 days. Same range rules as `/api/calendar`.
+  - Macro, central-bank and market-structure events come from the daily `market-events-refresh` job (US: the Compass Economic Calendar; ECB, Bank of England, Bank of Japan and US elections: a curated list in the backend). US macro dates reach about 13 months ahead, but the feed confirms release dates only a few months out, so far-future months show mostly FOMC, ECB, BoE, BoJ and market holidays.
+  - Reports of companies with a market cap of at least $200B are included from the earnings calendar (`category: "EARNINGS"`, `allDay: true`, `symbol`, `logoUrl`, `reportTime`; `importance` is `HIGH` from $500B, else `MEDIUM`).
+  - `date` is the day in the publisher's own time zone (US events: New York); `startsAt` is the exact instant, to be shown in the viewer's time zone. `title`, `label` and `note` are in English.
+  - There are no forecast or actual values. `moveRatio` is present for some US events only.
 - **`GET /api/followed/earnings`** uses stored data only. A followed stock whose earnings have never been loaded is listed in `noUpcomingDate` and loaded in the background, so it normally appears on the next request.
 - **`asOf` / `stale` on combined responses** (overview, prices, earnings): `asOf` is the oldest fetch time among the data used. `stale` is true if any of it was served from cache after a provider failure.
 - **`POST /api/notifications/test`** (no request body) sends the email before answering:
@@ -322,4 +342,5 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-09-27 | Errors: added `404 NOT_FOUND` (unknown endpoint), `405 METHOD_NOT_ALLOWED` and `500 INTERNAL_ERROR`, so every error response has a documented code. |
 | 2026-09-27 | Added "Implementation notes": defaults, limits, cursor paging, marker and quarter semantics, the inclusive 42-day calendar span. No field changes. |
 | 2026-09-27 | Implementation notes for `POST /api/notifications/test` (recipient, 7-day window, sample data, 429, 503) and `POST /api/admin/jobs/{jobName}/run` (background start, already-running behaviour, 400). No field changes. |
+| 2026-10-02 | Added `GET /api/market-events` with `MarketEvent`, `EventCategory` and `Importance` (additive; nothing existing changed), and the `market-events-refresh` job. |
 | 2026-10-02 | Trading 212 portfolio (additive): `/api/t212/**` endpoints, the `T212…` types, six `T212_…` error codes, the `t212-sync` job and the backend-only `t212Credentials` / `t212` collections. Differences from the feature prompt: `apiSecret` may be `null` for legacy keys, `T212_MISSING_PERMISSIONS` is new, `DELETE` answers 204, periods take a `tz`, and fees are reported separately from realized P/L (see the P/L definitions). |

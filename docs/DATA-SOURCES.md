@@ -80,6 +80,14 @@ The key also works as an `apikey` **header** (verified), so it never appears in 
 | `/earnings-calendar` | 1 row for a 7-day window: not usable on the free tier. |
 | legacy `/api/v3/...` | `403 Legacy Endpoint`: only for subscriptions from before 2025-08-31. |
 
+## Compass Economic Calendar (`https://compasseconomiccalendar.github.io/calendar.json`, no key)
+
+Market-moving US dates for the market-events calendar. Checked 2026-10-02: one 169 KB JSON file with `window.start`/`window.end` (2026-09-27 → 2027-10-28, 154 events) and `events[]`: `event_type`, `title`, `date_et`, `time_et`, `start_utc`, `all_day`, `market_impact` (low/medium/high), `note`, `source_url` and, for some, `typical_move.spx.ratio`. Rebuilt weekly from federalreserve.gov, FRED and TreasuryDirect. FOMC dates are confirmed to 2027-10, macro releases (CPI, jobs, GDP, PCE, ISM…) only to 2026-12-31, Treasury auctions 1–2 weeks ahead. No forecast or actual values. A one-person community project, so `market-events-refresh` fails the run (and keeps what is stored) when the feed is unavailable.
+
+Not available for free: Finnhub's economic calendar answers "You don't have access to this resource" (premium). The ForexFactory weekly JSON (`nfs.faireconomy.media/ff_calendar_thisweek.json`) is keyless and has forecast and previous values for US/EU/UK/JP, but it is an unofficial feed of a commercial site with unclear terms and covers one week only; it is not used. FMP lists an economic calendar endpoint, unverified on the free plan.
+
+Curated in `backend/src/main/resources/market-events.json` (checked against the official calendars on 2026-10-02): ECB monetary policy meetings (decision 14:15 CET), Bank of England MPC dates (12:00 UK) and Bank of Japan meetings (second day) up to the end of 2027, and the 2026 US midterm elections. Add the next year when the banks publish it.
+
 ## Trading 212 Public API (per-user brokerage data)
 
 Read from the official OpenAPI file (`https://docs.trading212.com/_bundle/api.yaml`, API `v0`, status **Beta**) and the help centre on **2026-10-02**. No call was made: there is no key here. Everything marked **UNVERIFIED** is checked against a demo account in phase 7 of [PROMPT-trading212.md](PROMPT-trading212.md).

@@ -97,6 +97,9 @@ app:
       base-url: https://financialmodelingprep.com/stable
       min-interval: 1s
       daily-limit: 240          # free tier: 250/day
+    compass:                    # US market-moving dates: static JSON, no key
+      base-url: https://compasseconomiccalendar.github.io
+      min-interval: 1s
     yahoo:
       query1-url: https://query1.finance.yahoo.com
       query2-url: https://query2.finance.yahoo.com

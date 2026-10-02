@@ -5,10 +5,13 @@ import { environment } from '../../../environments/environment';
 import {
   CalendarResponse,
   EarningsResponse,
+  EventRegionFilter,
   FollowedEarningsResponse,
   HealthResponse,
   HistoryPeriod,
   HistoryResponse,
+  Importance,
+  MarketEventsResponse,
   MeResponse,
   NewsItem,
   PriceRange,
@@ -36,6 +39,14 @@ export interface CalendarQuery {
   minMarketCapUsd: number;
   region: RegionFilter;
   followedOnly: boolean;
+}
+
+export interface MarketEventsQuery {
+  from: string;
+  to: string;
+  minImportance: Importance;
+  region: EventRegionFilter;
+  includeEarnings: boolean;
 }
 
 /** Canonical, URL-encoded symbol for a path segment (`sap.de` → `SAP.DE`, `BRK-B` stays as is). */
@@ -106,6 +117,10 @@ export class ApiService {
 
   calendar(query: CalendarQuery, options?: LoadOptions): Observable<CalendarResponse> {
     return this.get<CalendarResponse>('/calendar', { ...query }, options);
+  }
+
+  marketEvents(query: MarketEventsQuery, options?: LoadOptions): Observable<MarketEventsResponse> {
+    return this.get<MarketEventsResponse>('/market-events', { ...query }, options);
   }
 
   followedEarnings(options?: LoadOptions): Observable<FollowedEarningsResponse> {

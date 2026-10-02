@@ -206,6 +206,54 @@ export interface CalendarResponse {
   days: CalendarDay[];
 }
 
+export type EventCategory =
+  | 'CENTRAL_BANK'
+  | 'INFLATION'
+  | 'JOBS'
+  | 'GROWTH'
+  | 'TREASURY'
+  | 'MARKET_STRUCTURE'
+  | 'EARNINGS'
+  | 'POLITICS';
+export type Importance = 'LOW' | 'MEDIUM' | 'HIGH';
+/** `OTHER` is every country besides the US and the euro area. */
+export type EventRegionFilter = 'ALL' | 'US' | 'EU' | 'OTHER';
+
+export interface MarketEvent {
+  id: string;
+  /** The day in the publisher's own time zone. */
+  date: string;
+  /** UTC instant; null when `allDay`. */
+  startsAt: string | null;
+  allDay: boolean;
+  /** English. */
+  title: string;
+  /** Short, for tiles: "CPI", "FOMC". English. */
+  label: string;
+  category: EventCategory;
+  country: 'US' | 'EU' | 'GB' | 'JP';
+  importance: Importance;
+  note: string | null;
+  /** S&P 500 median move on such days ÷ an ordinary day. */
+  moveRatio: number | null;
+  sourceUrl: string | null;
+  /** EARNINGS events only. */
+  symbol: string | null;
+  logoUrl: string | null;
+  reportTime: ReportTime | null;
+}
+
+export interface MarketEventDay {
+  date: string;
+  events: MarketEvent[];
+}
+
+export interface MarketEventsResponse {
+  from: string;
+  to: string;
+  days: MarketEventDay[];
+}
+
 export interface FollowedEarningsResponse {
   /** date ≥ today, ascending. */
   upcoming: EarningsEvent[];
