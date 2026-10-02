@@ -41,15 +41,17 @@ public class T212PortfolioService {
     private final T212ConnectionService connection;
     private final T212DataStore store;
     private final T212LiveService liveService;
+    private final T212PieService pieService;
     private final ProfileService profiles;
     private final FxService fx;
     private final Clock clock;
 
     public T212PortfolioService(T212ConnectionService connection, T212DataStore store, T212LiveService liveService,
-            ProfileService profiles, FxService fx, Clock clock) {
+            T212PieService pieService, ProfileService profiles, FxService fx, Clock clock) {
         this.connection = connection;
         this.store = store;
         this.liveService = liveService;
+        this.pieService = pieService;
         this.profiles = profiles;
         this.fx = fx;
         this.clock = clock;
@@ -140,6 +142,54 @@ public class T212PortfolioService {
                 ctx.asOf(), ctx.stale());
     }
 
+    /**
+     * Open positions as Trading 212 lists them: each pie as one row with its instruments, and every position (or
+     * the part of it outside pies) as another, largest value first. Outside pies the values come from the live
+     * positions; inside a pie from the pie itself, falling back to the position's share where it has none.
+     */
+    public T212Dtos.HoldingList holdings(String uid) {
+        Context ctx = context(uid, true);
+        Map<String, T212Live.Position> live = ctx.positions() == null ? Map.of() : ctx.positions();
+        boolean anyInPies = live.values().stream().anyMatch(p -> p.quantityInPies() > QUANTITY_EPSILON);
+        List<T212PieService.Pie> pies = anyInPies ? pieService.pies(uid).orElse(null) : List.of();
+        Set<String> tickers = new java.util.HashSet<>(live.keySet());
+        if (pies != null) {
+            pies.forEach(pie -> pie.items().forEach(item -> tickers.add(item.ticker())));
+        }
+        Map<String, String> logos = logos(ctx, List.copyOf(tickers));
+
+        List<T212Dtos.Holding> items = new java.util.ArrayList<>();
+        for (T212Live.Position position : live.values()) {
+            double outside = position.quantity() - position.quantityInPies();
+            if (outside > QUANTITY_EPSILON) {
+                items.add(new T212Dtos.Holding("POSITION", null, share(ctx, position, outside, logos)));
+            }
+        }
+        if (pies != null) {
+            for (T212PieService.Pie pie : pies) {
+                List<T212Dtos.HoldingPosition> rows = pie.items().stream()
+                        .map(item -> pieItem(ctx, item, live.get(item.ticker()), logos)).sorted(BY_VALUE).toList();
+                T212PieService.Result r = pie.result();
+                Double value = r.value() != null ? round(r.value()) : sum(rows, T212Dtos.HoldingPosition::value);
+                Double pnl = r.pnl() != null ? round(r.pnl()) : sum(rows, T212Dtos.HoldingPosition::pnl);
+                Double pct = r.pnlCoef() != null ? round(r.pnlCoef() * 100) : percent(pnl, value);
+                items.add(new T212Dtos.Holding("PIE", new T212Dtos.Pie(pie.id(), pie.name(), value, pnl, pct, rows),
+                        null));
+            }
+        } else {
+            List<T212Dtos.HoldingPosition> rows = live.values().stream()
+                    .filter(p -> p.quantityInPies() > QUANTITY_EPSILON)
+                    .map(p -> share(ctx, p, p.quantityInPies(), logos)).sorted(BY_VALUE).toList();
+            Double value = sum(rows, T212Dtos.HoldingPosition::value);
+            Double pnl = sum(rows, T212Dtos.HoldingPosition::pnl);
+            items.add(new T212Dtos.Holding("PIE", new T212Dtos.Pie(null, null, value, pnl, percent(pnl, value), rows),
+                    null));
+        }
+        items.sort(Comparator.comparing(T212PortfolioService::holdingValue,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        return new T212Dtos.HoldingList(ctx.currency(), items, pies != null, ctx.asOf(), ctx.stale());
+    }
+
     public T212Dtos.InstrumentDetail instrument(String uid, String ticker) {
         Context ctx = context(uid, true);
         T212PortfolioEngine.Result result = T212PortfolioEngine.compute(ctx.data(), ctx.positions(),
@@ -210,6 +260,57 @@ public class T212PortfolioService {
     }
 
     // ---- mapping ----
+
+    private static final double QUANTITY_EPSILON = 1e-9;
+    private static final Comparator<T212Dtos.HoldingPosition> BY_VALUE = Comparator.comparing(
+            T212Dtos.HoldingPosition::value, Comparator.nullsLast(Comparator.reverseOrder()));
+
+    /** {@code quantity} of a live position, with its value and unrealized result taken pro rata. */
+    private static T212Dtos.HoldingPosition share(Context ctx, T212Live.Position position, double quantity,
+            Map<String, String> logos) {
+        double part = position.quantity() > 0 ? quantity / position.quantity() : 0;
+        Double value = position.value() == null ? null : round(position.value() * part);
+        Double pnl = position.unrealizedPnl() == null ? null : round(position.unrealizedPnl() * part);
+        Double pct = position.unrealizedPnl() != null && position.cost() != null && position.cost() > 0
+                ? round(position.unrealizedPnl() / position.cost() * 100) : null;
+        T212InstrumentInfo info = info(ctx, position.ticker());
+        return new T212Dtos.HoldingPosition(position.ticker(), info.symbol(), name(info), logos.get(position.ticker()),
+                quantity, value, pnl, pct);
+    }
+
+    private static T212Dtos.HoldingPosition pieItem(Context ctx, T212PieService.Item item, T212Live.Position live,
+            Map<String, String> logos) {
+        T212PieService.Result r = item.result();
+        T212Dtos.HoldingPosition fallback = live == null ? null : share(ctx, live, item.ownedQuantity(), logos);
+        Double value = r.value() != null ? round(r.value()) : fallback == null ? null : fallback.value();
+        Double pnl = r.pnl() != null ? round(r.pnl()) : fallback == null ? null : fallback.pnl();
+        Double pct = r.pnlCoef() != null ? round(r.pnlCoef() * 100) : fallback == null ? null : fallback.pnlPct();
+        T212InstrumentInfo info = info(ctx, item.ticker());
+        return new T212Dtos.HoldingPosition(item.ticker(), info.symbol(), name(info), logos.get(item.ticker()),
+                item.ownedQuantity(), value, pnl, pct);
+    }
+
+    private static Double holdingValue(T212Dtos.Holding holding) {
+        return holding.pie() != null ? holding.pie().value() : holding.position().value();
+    }
+
+    private static Double sum(List<T212Dtos.HoldingPosition> rows,
+            java.util.function.Function<T212Dtos.HoldingPosition, Double> field) {
+        return rows.stream().map(field).filter(Objects::nonNull).reduce(Double::sum).map(T212PortfolioService::round)
+                .orElse(null);
+    }
+
+    /** The result as a percentage of the cost (value − result); null when either is missing. */
+    private static Double percent(Double pnl, Double value) {
+        if (pnl == null || value == null || value - pnl <= 0) {
+            return null;
+        }
+        return round(pnl / (value - pnl) * 100);
+    }
+
+    private static Double round(Double value) {
+        return value == null ? null : round(value.doubleValue());
+    }
 
     private T212Dtos.Instrument instrument(Context ctx, InstrumentResult i, boolean allTime,
             Map<String, String> logos) {

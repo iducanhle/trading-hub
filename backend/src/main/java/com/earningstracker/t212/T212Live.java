@@ -16,11 +16,19 @@ public record T212Live(Account account, Map<String, Position> positions, Instant
 
     /**
      * One open position. {@code averagePrice} and {@code currentPrice} are in {@code priceCurrency} (pence
-     * converted to GBP); {@code value}, {@code cost} and {@code unrealizedPnl} in the account currency.
+     * converted to GBP); {@code value}, {@code cost} and {@code unrealizedPnl} in the account currency;
+     * {@code quantityInPies} is the part of {@code quantity} held inside pies.
      */
     public record Position(String ticker, String name, String isin, String currency, String priceCurrency,
             double quantity, Double averagePrice, Double currentPrice, Double value, Double cost,
-            Double unrealizedPnl) {
+            Double unrealizedPnl, double quantityInPies) {
+
+        public Position(String ticker, String name, String isin, String currency, String priceCurrency,
+                double quantity, Double averagePrice, Double currentPrice, Double value, Double cost,
+                Double unrealizedPnl) {
+            this(ticker, name, isin, currency, priceCurrency, quantity, averagePrice, currentPrice, value, cost,
+                    unrealizedPnl, 0);
+        }
     }
 
     public T212Live asStale() {

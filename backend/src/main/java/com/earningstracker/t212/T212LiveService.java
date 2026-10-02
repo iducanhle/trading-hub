@@ -125,7 +125,7 @@ public class T212LiveService {
                 currency, pence ? "GBP" : currency, quantity,
                 pence && average != null ? average / 100 : average, pence && current != null ? current / 100 : current,
                 Json.number(wallet.path("currentValue")), Json.number(wallet.path("totalCost")),
-                Json.number(wallet.path("unrealizedProfitLoss")));
+                Json.number(wallet.path("unrealizedProfitLoss")), zero(Json.number(node.path("quantityInPies"))));
     }
 
     private static double zero(Double value) {

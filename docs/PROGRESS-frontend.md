@@ -68,6 +68,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 - **2026-10-02 —** Default period is All (the only one with unrealized P/L and percentages). Periods end today and start the same day a month/3 months/a year back plus one day (`shiftMonths` clamps to month end; the shared `addMonths` returns the 1st and does not fit).
 - **2026-10-02 —** Buy/Sell and Open/Closed have their own i18n meaning, so Czech uses the nouns Nákup/Prodej (the analyst ratings keep the verbs Koupit/Prodat).
 - **2026-10-02 —** Server error messages are English; the connect form shows its own translated text per error code and only takes the list of missing permissions from the server's message.
+- **2026-10-03 — Open positions on the Overview,** grouped as in the Trading 212 app: a pie is one row and expands in place (a disclosure button with `aria-expanded`, not a modal); its instruments link to their detail like the other rows.
 
 ## Done
 

@@ -120,6 +120,16 @@ public class T212Client {
         return elements(get(credentials, "/api/v0/equity/metadata/instruments"), "instruments");
     }
 
+    /** {@code GET /equity/pies}: every pie with its value and result (deprecated by Trading 212; 1 per 30 s). */
+    public List<JsonNode> pies(T212Credentials credentials) {
+        return elements(get(credentials, "/api/v0/equity/pies"), "pies");
+    }
+
+    /** {@code GET /equity/pies/{id}}: a pie's name and instruments (deprecated by Trading 212; 1 per 5 s). */
+    public JsonNode pie(T212Credentials credentials, long id) {
+        return get(credentials, "/api/v0/equity/pies/" + id);
+    }
+
     /** One history page; {@code path} is {@link History#firstPage(int)} or a previous page's {@code nextPagePath}. */
     public Page historyPage(T212Credentials credentials, String path) {
         if (path == null || !path.startsWith(HISTORY_PREFIX)) {

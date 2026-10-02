@@ -7,6 +7,9 @@ import {
   T212DividendsResponse,
   T212Environment,
   T212Instrument,
+  T212Holding,
+  T212HoldingPosition,
+  T212HoldingsResponse,
   T212InstrumentDetail,
   T212InstrumentRef,
   T212InstrumentsResponse,
@@ -107,6 +110,8 @@ export class MockT212 {
     switch (resource) {
       case 'summary':
         return this.summary(period);
+      case 'holdings':
+        return this.holdings();
       case 'instruments':
         return id ? this.instrument(id) : this.instruments(period, params.get('status') ?? 'ALL');
       case 'trades':
@@ -284,6 +289,60 @@ export class MockT212 {
       tz: period.tz,
       accountCurrency: data.accountCurrency,
       items,
+      asOf: new Date().toISOString(),
+      stale: false,
+    };
+  }
+
+  /** One pie, "Tech": all of AAPL and half of NVDA; the other half of NVDA and VUSA are outside. */
+  private async holdings(): Promise<T212HoldingsResponse> {
+    const data = await this.fixture();
+    const inPie: Record<string, number> = { AAPL_US_EQ: 1, NVDA_US_EQ: 0.5 };
+    const row = (p: T212Fixture['positions'][number], part: number): T212HoldingPosition => {
+      const info = data.instruments.find((i) => i.t212Ticker === p.t212Ticker);
+      return {
+        t212Ticker: p.t212Ticker,
+        symbol: info?.symbol ?? null,
+        name: info?.name ?? p.t212Ticker,
+        logoUrl: info?.logoUrl ?? null,
+        quantity: p.quantity * part,
+        value: round(p.value * part),
+        pnl: round(p.unrealizedPnl * part),
+        pnlPct: round((p.unrealizedPnl / p.costBasis) * 100),
+      };
+    };
+    const pieRows = data.positions
+      .filter((p) => inPie[p.t212Ticker])
+      .map((p) => row(p, inPie[p.t212Ticker]))
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+    const value = round(pieRows.reduce((sum, r) => sum + (r.value ?? 0), 0));
+    const pnl = round(pieRows.reduce((sum, r) => sum + (r.pnl ?? 0), 0));
+    const items: T212Holding[] = [
+      {
+        kind: 'PIE',
+        pie: {
+          id: 1,
+          name: 'Tech',
+          value,
+          pnl,
+          pnlPct: round((pnl / (value - pnl)) * 100),
+          positions: pieRows,
+        },
+        position: null,
+      },
+      ...data.positions
+        .filter((p) => (inPie[p.t212Ticker] ?? 0) < 1)
+        .map((p): T212Holding => ({
+          kind: 'POSITION',
+          pie: null,
+          position: row(p, 1 - (inPie[p.t212Ticker] ?? 0)),
+        })),
+    ];
+    const valueOf = (h: T212Holding) => (h.pie ? h.pie.value : h.position.value) ?? 0;
+    return {
+      accountCurrency: data.accountCurrency,
+      items: items.sort((a, b) => valueOf(b) - valueOf(a)),
+      piesAvailable: true,
       asOf: new Date().toISOString(),
       stale: false,
     };

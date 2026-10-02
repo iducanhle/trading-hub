@@ -22,6 +22,7 @@ import {
   StockOverview,
   T212CredentialsRequest,
   T212DividendsResponse,
+  T212HoldingsResponse,
   T212InstrumentDetail,
   T212InstrumentsResponse,
   T212PositionStatus,
@@ -190,6 +191,10 @@ export class ApiService {
 
   t212Summary(query: T212PeriodQuery, options?: LoadOptions): Observable<T212Summary> {
     return this.get<T212Summary>('/t212/summary', present({ ...query }), options, TTL.t212);
+  }
+
+  t212Holdings(options?: LoadOptions): Observable<T212HoldingsResponse> {
+    return this.get<T212HoldingsResponse>('/t212/holdings', {}, options, TTL.t212);
   }
 
   t212Instruments(

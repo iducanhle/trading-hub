@@ -6,6 +6,7 @@ import com.earningstracker.security.AuthenticatedUser;
 import com.earningstracker.t212.T212ConnectionService;
 import com.earningstracker.t212.T212LiveService;
 import com.earningstracker.t212.T212Period;
+import com.earningstracker.t212.T212PieService;
 import com.earningstracker.t212.T212PortfolioService;
 import com.earningstracker.t212.T212PortfolioService.SideFilter;
 import com.earningstracker.t212.T212PortfolioService.StatusFilter;
@@ -37,13 +38,15 @@ public class T212Controller {
     private final T212ConnectionService connection;
     private final T212SyncService sync;
     private final T212LiveService live;
+    private final T212PieService pies;
     private final T212PortfolioService portfolio;
 
     public T212Controller(T212ConnectionService connection, T212SyncService sync, T212LiveService live,
-            T212PortfolioService portfolio) {
+            T212PieService pies, T212PortfolioService portfolio) {
         this.connection = connection;
         this.sync = sync;
         this.live = live;
+        this.pies = pies;
         this.portfolio = portfolio;
     }
 
@@ -57,6 +60,7 @@ public class T212Controller {
             @RequestBody T212Dtos.CredentialsRequest request) {
         connection.connect(user.uid(), request);
         live.forget(user.uid());
+        pies.forget(user.uid());
         return sync.start(user.uid());
     }
 
@@ -65,6 +69,7 @@ public class T212Controller {
     public void deleteCredentials(@AuthenticationPrincipal AuthenticatedUser user) {
         connection.disconnect(user.uid());
         live.forget(user.uid());
+        pies.forget(user.uid());
     }
 
     /** Starts an incremental sync; if one is running, answers with its status. */
@@ -89,6 +94,11 @@ public class T212Controller {
             @RequestParam(required = false) String tz,
             @RequestParam(defaultValue = "ALL") StatusFilter status) {
         return portfolio.instruments(user.uid(), T212Period.of(from, to, tz), status);
+    }
+
+    @GetMapping("/holdings")
+    public T212Dtos.HoldingList holdings(@AuthenticationPrincipal AuthenticatedUser user) {
+        return portfolio.holdings(user.uid());
     }
 
     @GetMapping("/instruments/{t212Ticker}")

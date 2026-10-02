@@ -82,7 +82,7 @@ class T212PortfolioServiceTest {
             default -> null;
         });
         portfolio = new T212PortfolioService(connection, data, new T212LiveService(client, connection, properties,
-                clock), profiles, fx, clock);
+                clock), new T212PieService(client, connection, clock), profiles, fx, clock);
 
         connection.connect(UID, new T212Dtos.CredentialsRequest(API_KEY, API_SECRET, T212Environment.DEMO));
         sync.runNow(UID).orElseThrow();
@@ -92,6 +92,86 @@ class T212PortfolioServiceTest {
     void stop() {
         executor.close();
         server.close();
+    }
+
+    private static final String PIE_POSITION = """
+            [{ "instrument": { "ticker": "AAPL_US_EQ", "name": "Apple", "currency": "USD" }, "quantity": 10,
+               "quantityInPies": 4, "averagePricePaid": 180.0, "currentPrice": 170.0,
+               "walletImpact": { "currentValue": 1564.0, "totalCost": 1656.0, "unrealizedProfitLoss": -92.0 } }]
+            """;
+
+    @Test
+    void holdingsListOpenPositionsWithTheirUnrealizedResult() {
+        T212Dtos.HoldingList h = portfolio.holdings(UID);
+
+        assertThat(h.accountCurrency()).isEqualTo("EUR");
+        assertThat(h.piesAvailable()).isTrue();
+        assertThat(h.items()).singleElement().satisfies(item -> {
+            assertThat(item.kind()).isEqualTo("POSITION");
+            assertThat(item.position().t212Ticker()).isEqualTo("AAPL_US_EQ");
+            assertThat(item.position().symbol()).isEqualTo("AAPL");
+            assertThat(item.position().logoUrl()).isEqualTo("https://logos.example/aapl.png");
+            assertThat(item.position().quantity()).isEqualTo(10);
+            assertThat(item.position().value()).isEqualTo(1564.0);
+            assertThat(item.position().pnl()).isEqualTo(-92.0);
+            assertThat(item.position().pnlPct()).isEqualTo(-5.56); // −92 ÷ 1,656
+        });
+        assertThat(routes.requests("/api/v0/equity/pies")).isEmpty();
+    }
+
+    @Test
+    void holdingsSplitAPositionBetweenAPieAndTheRest() {
+        routes.on("/api/v0/equity/positions", body(200, PIE_POSITION))
+                .on("/api/v0/equity/pies", body(200, """
+                        [{ "id": 7, "cash": 3.5, "result": { "priceAvgValue": 650.0, "priceAvgInvestedValue": 600.0,
+                           "priceAvgResult": 50.0, "priceAvgResultCoef": 0.08333 } }]
+                        """))
+                .on("/api/v0/equity/pies/7", body(200, """
+                        { "settings": { "id": 7, "name": "Tech" },
+                          "instruments": [{ "ticker": "AAPL_US_EQ", "ownedQuantity": 4,
+                            "result": { "priceAvgValue": 650.0, "priceAvgResult": 50.0,
+                                        "priceAvgResultCoef": 0.08333 } }] }
+                        """));
+
+        T212Dtos.HoldingList h = portfolio.holdings(UID);
+
+        assertThat(h.piesAvailable()).isTrue();
+        assertThat(h.items()).extracting(T212Dtos.Holding::kind).containsExactly("POSITION", "PIE");
+        T212Dtos.HoldingPosition outside = h.items().getFirst().position();
+        assertThat(outside.quantity()).isEqualTo(6);
+        assertThat(outside.value()).isEqualTo(938.4); // 6 of 10 shares
+        assertThat(outside.pnl()).isEqualTo(-55.2);
+        T212Dtos.Pie pie = h.items().get(1).pie();
+        assertThat(pie.id()).isEqualTo(7L);
+        assertThat(pie.name()).isEqualTo("Tech");
+        assertThat(pie.value()).isEqualTo(650.0);
+        assertThat(pie.pnl()).isEqualTo(50.0);
+        assertThat(pie.pnlPct()).isEqualTo(8.33);
+        assertThat(pie.positions()).singleElement().satisfies(p -> {
+            assertThat(p.name()).isEqualTo("Apple");
+            assertThat(p.quantity()).isEqualTo(4);
+            assertThat(p.value()).isEqualTo(650.0);
+        });
+
+        portfolio.holdings(UID);
+        assertThat(routes.requests("/api/v0/equity/pies/7")).hasSize(1); // reused, not fetched again
+    }
+
+    @Test
+    void holdingsGroupThePiePartWhenPiesCannotBeRead() {
+        routes.on("/api/v0/equity/positions", body(200, PIE_POSITION))
+                .on("/api/v0/equity/pies", body(403, "{}"));
+
+        T212Dtos.HoldingList h = portfolio.holdings(UID);
+
+        assertThat(h.piesAvailable()).isFalse();
+        T212Dtos.Pie pie = h.items().get(1).pie();
+        assertThat(pie.id()).isNull();
+        assertThat(pie.name()).isNull();
+        assertThat(pie.value()).isEqualTo(625.6); // 4 of 10 shares
+        assertThat(pie.pnl()).isEqualTo(-36.8);
+        assertThat(pie.positions()).singleElement().extracting(T212Dtos.HoldingPosition::quantity).isEqualTo(4.0);
+        assertThat(connection.status(UID).credentialsValid()).isTrue(); // a pie failure is not a bad key
     }
 
     @Test

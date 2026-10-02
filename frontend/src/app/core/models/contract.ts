@@ -471,6 +471,44 @@ export interface T212DividendsResponse extends T212PeriodEcho {
   stale: boolean;
 }
 
+/** An open position, the part of it outside pies, or one instrument of a pie. Money is as of now. */
+export interface T212HoldingPosition {
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  logoUrl: string | null;
+  quantity: number;
+  value: number | null;
+  /** Unrealized result. */
+  pnl: number | null;
+  pnlPct: number | null;
+}
+
+export interface T212Pie {
+  /** id and name are null when the pies could not be read and the pie positions are grouped. */
+  id: number | null;
+  name: string | null;
+  value: number | null;
+  pnl: number | null;
+  pnlPct: number | null;
+  /** Largest value first. */
+  positions: T212HoldingPosition[];
+}
+
+export type T212Holding =
+  | { kind: 'PIE'; pie: T212Pie; position: null }
+  | { kind: 'POSITION'; pie: null; position: T212HoldingPosition };
+
+export interface T212HoldingsResponse {
+  accountCurrency: string;
+  /** Largest value first. */
+  items: T212Holding[];
+  /** false when Trading 212's pie endpoints failed and the pie positions were grouped into one unnamed pie. */
+  piesAvailable: boolean;
+  asOf: string;
+  stale: boolean;
+}
+
 export interface T212TransactionsResponse extends T212PeriodEcho {
   accountCurrency: string;
   totals: { deposits: number; withdrawals: number; fees: number; interest: number };

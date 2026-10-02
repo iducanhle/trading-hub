@@ -12,14 +12,26 @@ import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
 import { PricePipe } from '../../shared/pipes/format.pipes';
 import { Pnl } from './pnl';
+import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioPeriod, displayTicker, periodQuery } from './portfolio-model';
 
 const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 
-/** Portfolio → Overview: account value, all-time profit/loss, best and worst stocks. */
+/** Portfolio → Overview: account value, all-time profit/loss, best and worst stocks, open positions. */
 @Component({
   selector: 'app-portfolio-overview',
-  imports: [RouterLink, ErrorState, Skeleton, StaleChip, StockLogo, TermInfo, Icon, PricePipe, Pnl],
+  imports: [
+    RouterLink,
+    ErrorState,
+    Skeleton,
+    StaleChip,
+    StockLogo,
+    TermInfo,
+    Icon,
+    PricePipe,
+    Pnl,
+    PortfolioHoldings,
+  ],
   template: `
     @if (data.error() && !data.hasValue()) {
       <app-error-state [error]="data.error()" (retry)="data.reload()" />
@@ -90,6 +102,8 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
           No trades or dividends yet.
         </p>
       }
+
+      <app-portfolio-holdings [version]="version()" />
     }
   `,
 })

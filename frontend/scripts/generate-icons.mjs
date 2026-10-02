@@ -50,6 +50,7 @@ const ICONS = [
   'notifications',
   'open_in_new',
   'payments',
+  'pie_chart',
   'receipt_long',
   'refresh',
   'savings',

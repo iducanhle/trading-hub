@@ -44,6 +44,23 @@ public final class T212Dtos {
             List<Instrument> items, Instant asOf, boolean stale) {
     }
 
+    /** An open position, or the part of it outside pies, or one instrument of a pie. */
+    public record HoldingPosition(String t212Ticker, String symbol, String name, String logoUrl, double quantity,
+            Double value, Double pnl, Double pnlPct) {
+    }
+
+    /** {@code id} and {@code name} are null when the pies could not be read and the positions were grouped. */
+    public record Pie(Long id, String name, Double value, Double pnl, Double pnlPct, List<HoldingPosition> positions) {
+    }
+
+    /** {@code kind} PIE carries {@code pie}, POSITION carries {@code position}. */
+    public record Holding(String kind, Pie pie, HoldingPosition position) {
+    }
+
+    public record HoldingList(String accountCurrency, List<Holding> items, boolean piesAvailable, Instant asOf,
+            boolean stale) {
+    }
+
     public record Trade(String id, Instant executedAt, String t212Ticker, String symbol, String name, String side,
             String kind, double quantity, Double price, String priceCurrency, double value, double fees, double taxes,
             Double fxRate, Double realizedPnl, String orderType) {

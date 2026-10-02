@@ -172,7 +172,7 @@ LIVE_T212=true ./mvnw test -Dtest=LiveT212Test
 
 The output lands in `backend/target/t212-probe/` (git-ignored, contains the account's data: keep it local); the key is never written or printed.
 
-**Not used:** order placing/cancelling (`/equity/orders/*`), pending orders, pies (deprecated), CSV exports (a fallback if the history turns out incomplete).
+**Not used:** order placing/cancelling (`/equity/orders/*`), pending orders, CSV exports. **Pies** (`GET /equity/pies`, `/equity/pies/{id}`, deprecated, `pies:read`) are used only for the open-positions list: name from `settings.name`, instruments with `ownedQuantity`, and `result { priceAvgValue, priceAvgInvestedValue, priceAvgResult, priceAvgResultCoef }` per pie and per instrument (a fallback if the history turns out incomplete).
 
 ## Resulting fallback chains
 

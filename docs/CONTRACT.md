@@ -215,6 +215,17 @@ type T212Dividend = {
   type: string;                        // Trading 212's dividend type, e.g. "ORDINARY"
 };
 
+type T212HoldingPosition = {         // money as of now
+  t212Ticker: string; symbol: string | null; name: string; logoUrl: string | null;
+  quantity: number; value: number | null; pnl: number | null /* unrealized */; pnlPct: number | null;
+};
+type T212Pie = {
+  id: number | null; name: string | null;   // both null when the pies could not be read (grouped fallback)
+  value: number | null; pnl: number | null; pnlPct: number | null;
+  positions: T212HoldingPosition[];         // largest value first
+};
+type T212Holding = { kind: "PIE"; pie: T212Pie; position: null } | { kind: "POSITION"; pie: null; position: T212HoldingPosition };
+
 type T212Transaction = { id: string; at: string; type: T212TransactionType; amount: number /* signed: − = money out */; currency: string };
 ```
 
@@ -241,6 +252,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `DELETE /api/t212/credentials` | `204` | Deletes the key **and** all synced data. Idempotent |
 | `POST /api/t212/sync` | `202 T212Status` | Incremental sync; if one is running, returns its status and starts nothing |
 | `GET /api/t212/summary?from=&to=&tz=` | `T212Summary` | |
+| `GET /api/t212/holdings` | `{ accountCurrency, items: T212Holding[] /* largest value first */, piesAvailable: boolean, asOf, stale }` | Open positions as Trading 212 lists them: each pie is one item |
 | `GET /api/t212/instruments?from=&to=&tz=&status=OPEN\|CLOSED\|ALL` | `{ from, to, tz, accountCurrency, items: T212Instrument[], asOf, stale }` | Sorted by `totalPnl` desc |
 | `GET /api/t212/instruments/{t212Ticker}` | `{ accountCurrency, instrument: T212Instrument /* all time */, trades: (T212Trade & { positionAfter: number })[], dividends: T212Dividend[], asOf, stale }` | Both lists newest first. 404 `NOT_FOUND` if the caller never held it |
 | `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker` |
@@ -329,6 +341,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
   - `totalPnl` = `realizedPnl` + `dividends` − `fees` (+ `unrealizedPnl` for all time). `interest`, deposits and withdrawals are not part of it.
   - `totalPnlPct` (all time only) = `totalPnl` ÷ the total value of all buys × 100.
 - **`GET /instruments`:** all time lists every instrument ever traded or held; a period lists the instruments with a trade or dividend in it. `status` (default `ALL`) filters by the current state. `bought`/`sold`/`realizedPnl`/`dividends`/`fees`/`tradeCount` are for the period; quantity, prices, value and unrealized P/L are as of now.
+- **`GET /holdings`:** a position partly in a pie appears twice: its pie part inside the pie, the rest as its own item (quantity, value and result pro rata). Pie values and results are Trading 212's own (pie average price); outside pies the result is the position's unrealized P/L, `pnlPct` = that ÷ its cost. Pies come from Trading 212's deprecated pie endpoints (`pies:read`), reused for 5 minutes; when they fail, `piesAvailable: false` and all pie parts form one pie with `id` and `name` `null`. No pies at all: only `POSITION` items.
 - **`{t212Ticker}` in paths** is case-sensitive (`SAPd_EQ`). `positionAfter` is the number of shares held right after that trade.
 - **`GET /trades`:** filled trades only (cancelled and rejected orders are not stored), including corporate-action fills (`kind`). `cursor` is opaque; pass `nextCursor` back with the same filters.
 - **`symbol`** is mapped from the Trading 212 ticker and instrument data; `null` when no supported exchange matches. `logoUrl` as for search results (stored profile, else `null`).
@@ -348,3 +361,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-02 | Trading 212 portfolio (additive): `/api/t212/**` endpoints, the `T212…` types, six `T212_…` error codes, the `t212-sync` job and the backend-only `t212Credentials` / `t212` collections. Differences from the feature prompt: `apiSecret` may be `null` for legacy keys, `T212_MISSING_PERMISSIONS` is new, `DELETE` answers 204, periods take a `tz`, and fees are reported separately from realized P/L (see the P/L definitions). |
 | 2026-10-02 | Trading 212 read endpoints implemented. Refinement: they never answer 503/429 because Trading 212 is down; live fields are `null` with `stale: true` instead (the 503/429 codes stay for connecting and for `PUT`). Notes on `asOf`, `best`/`worst` and `/transactions` totals. No field changes. |
 | 2026-10-02 | After checking a real account: transaction totals convert other currencies at today's rate; the realized-P/L note says how Trading 212 computes it. No field changes. |
+| 2026-10-03 | Added `GET /api/t212/holdings` with `T212Holding`, `T212Pie` and `T212HoldingPosition` (additive): open positions grouped by pie. |
