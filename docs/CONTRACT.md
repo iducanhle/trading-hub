@@ -85,7 +85,7 @@ type StockOverview = {
   asOf: string; stale: boolean;
 };
 
-type PriceBar = { date: string; open: number; high: number; low: number; close: number; volume: number };
+type PriceBar = { date: string; time: string | null /* 1D only: bar start (ISO) */; open: number; high: number; low: number; close: number; volume: number };
 type EarningsMarker = {
   date: string;                // reaction day (the bar where the move shows)
   reportDate: string; time: ReportTime;
@@ -236,7 +236,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/me` | `{ uid, email, allowed: true }` | 403 if not allowed |
 | `GET /api/search?q=&limit=10` | `SearchResult[]` | `q` must be ≥1 char; max 20 results; US + EU equities only |
 | `GET /api/stocks/{symbol}` | `StockOverview` | Used above the fold |
-| `GET /api/stocks/{symbol}/prices?range=1W\|1M\|6M\|1Y\|5Y` | `{ symbol, currency, range, bars: PriceBar[] /* oldest first */, baseClose: number \| null /* last close before the range */, earningsMarkers: EarningsMarker[], asOf, stale }` | Daily bars; markers include upcoming events within the range |
+| `GET /api/stocks/{symbol}/prices?range=1D\|1W\|1M\|2M\|3M\|6M\|1Y\|3Y\|5Y` | `{ symbol, currency, range, bars: PriceBar[] /* oldest first */, baseClose: number \| null /* last close before the range */, earningsMarkers: EarningsMarker[], asOf, stale }` | Daily bars (1D: 5-minute bars of the latest session); markers include upcoming events within the range |
 | `GET /api/stocks/{symbol}/history?period=DAILY\|WEEKLY\|MONTHLY&before=YYYY-MM-DD&limit=30` | `{ period, rows: HistoryRow[] /* newest first */, nextBefore: string \| null }` | `limit` max 100 |
 | `GET /api/stocks/{symbol}/earnings` | `{ upcoming: EarningsEvent \| null, quarters: EarningsQuarter[] /* newest first, max 12 */, stats: EarningsStats, asOf, stale }` | |
 | `GET /api/stocks/{symbol}/recommendations` | `RecommendationPeriod[]` | Newest first, max 6; may be empty |
@@ -286,6 +286,7 @@ Behaviour the tables above leave open, as the backend implements it. No field na
 - **`GET /api/search`**: `q` is 1–64 characters after trimming. US and EU results are interleaved, with exact symbol matches first (`sap` → `SAP.DE`, `SAP`, …). `logoUrl` is filled only for stocks whose profile is already cached.
 - **`GET /api/stocks/{symbol}/prices`**:
   - `range` defaults to `1Y`, counted back from the latest bar. Only completed sessions are returned.
+  - `1D` is the latest session (the running one while the exchange is open) in 5-minute bars with `time` set; `date` is the session day in the exchange's zone, `baseClose` the previous session's close, `earningsMarkers` empty. Not stored; reused for 2 minutes.
   - `earningsMarkers` holds the reported quarters whose reaction day falls within the range, plus the next upcoming report. That marker has `result: "UPCOMING"` and a `date` equal to its expected reaction day under the timing rule, with weekends skipped.
 - **`GET /api/stocks/{symbol}/history`**:
   - `period` defaults to `DAILY` and `limit` to 30 (1–100).
@@ -362,3 +363,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-02 | Trading 212 read endpoints implemented. Refinement: they never answer 503/429 because Trading 212 is down; live fields are `null` with `stale: true` instead (the 503/429 codes stay for connecting and for `PUT`). Notes on `asOf`, `best`/`worst` and `/transactions` totals. No field changes. |
 | 2026-10-02 | After checking a real account: transaction totals convert other currencies at today's rate; the realized-P/L note says how Trading 212 computes it. No field changes. |
 | 2026-10-03 | Added `GET /api/t212/holdings` with `T212Holding`, `T212Pie` and `T212HoldingPosition` (additive): open positions grouped by pie. |
+| 2026-10-03 | Prices: ranges `1D`, `2M`, `3M`, `3Y` (additive); `PriceBar.time` (null except for 1D). |
