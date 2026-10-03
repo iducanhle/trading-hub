@@ -154,6 +154,37 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
             </div>
           }
         </section>
+        @if (extremes().length) {
+          <section
+            class="app-card mt-3.5 grid grid-cols-2 gap-3.5"
+            aria-label="Best and worst"
+            i18n-aria-label
+          >
+            @for (row of extremes(); track row.label; let second = $odd) {
+              <button
+                type="button"
+                (click)="openPosition(row.item)"
+                class="flex min-w-0 flex-col gap-2 text-left"
+                [class]="second ? 'border-l border-outline-variant pl-3.5' : ''"
+              >
+                <span class="app-label">{{ row.label }}</span>
+                <span class="flex min-w-0 items-center gap-2.5">
+                  <app-stock-logo
+                    [symbol]="ticker(row.item)"
+                    [logoUrl]="row.item.logoUrl"
+                    [size]="36"
+                  />
+                  <span class="line-clamp-2 min-w-0 text-sm leading-tight font-medium">{{
+                    row.item.name
+                  }}</span>
+                </span>
+                <span class="text-[15px] font-semibold" [class]="tone(pnl(row.item))">{{
+                  pnl(row.item) | money: data.value().accountCurrency
+                }}</span>
+              </button>
+            }
+          </section>
+        }
         <div class="mt-5 flex justify-between px-1">
           <span class="app-label"
             ><ng-container i18n>Stocks</ng-container> · {{ items().length }}</span
@@ -304,6 +335,16 @@ export class PortfolioStocks {
       ? null
       : { value: this.total() - this.accountFees.value().totals.fees },
   );
+
+  /** Best and worst stock of the period by profit/loss, on the same basis as the rows; the whole list, not the search. */
+  protected readonly extremes = computed(() => {
+    if (!this.data.hasValue()) return [];
+    const ranked = [...this.data.value().items].sort((a, b) => this.pnl(b) - this.pnl(a));
+    const rows: { label: string; item: T212Instrument }[] = [];
+    if (ranked.length) rows.push({ label: $localize`Best`, item: ranked[0] });
+    if (ranked.length > 1) rows.push({ label: $localize`Worst`, item: ranked[ranked.length - 1] });
+    return rows;
+  });
 
   protected readonly labels = {
     empty: $localize`No stocks in this period`,
