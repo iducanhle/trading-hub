@@ -12,7 +12,7 @@ import {
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { ApiService, T212TradesQuery } from '../../core/api/api.service';
 import { T212Trade } from '../../core/models/contract';
@@ -33,6 +33,7 @@ import {
 import { toneClass } from '../../shared/utils/format';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import { PortfolioPeriod, displayTicker, groupTradesByDay, periodQuery } from './portfolio-model';
+import { PositionDialog, PositionDialogData } from './position-dialog';
 import {
   InstrumentOption,
   TradeFilters,
@@ -71,7 +72,6 @@ const EMPTY: ListState = {
 @Component({
   selector: 'app-portfolio-trades',
   imports: [
-    RouterLink,
     MatButton,
     EmptyState,
     ErrorState,
@@ -130,9 +130,10 @@ const EMPTY: ListState = {
             <ul>
               @for (t of day.items; track t.id) {
                 <li>
-                  <a
-                    [routerLink]="['/portfolio', t.t212Ticker]"
-                    class="-mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-[11px] hover:bg-surface-container-high"
+                  <button
+                    type="button"
+                    (click)="openPosition(t.t212Ticker)"
+                    class="w-[calc(100%+1rem)] text-left -mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-[11px] hover:bg-surface-container-high"
                   >
                     <span
                       class="flex size-10 shrink-0 items-center justify-center rounded-xl"
@@ -179,7 +180,7 @@ const EMPTY: ListState = {
                         >
                       }
                     </span>
-                  </a>
+                  </button>
                 </li>
               }
             </ul>
@@ -203,7 +204,17 @@ const EMPTY: ListState = {
 export class PortfolioTrades {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
+  private readonly dialog = inject(MatDialog);
   private readonly sheet = inject(MatBottomSheet);
+
+  protected openPosition(t212Ticker: string): void {
+    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      data: { t212Ticker },
+      width: 'calc(100vw - 32px)',
+      maxWidth: '32rem',
+      autoFocus: 'dialog',
+    });
+  }
 
   protected tone(value: number | null): string {
     return toneClass(value);

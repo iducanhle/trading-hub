@@ -27,7 +27,7 @@ export interface PositionDialogData {
 const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5Y'];
 
 /**
- * Opened from a position on the Overview or the Stocks tab: price chart with the average price paid and the current price,
+ * Opened from a position on the Overview, or a row on the Stocks, Trades or Dividends tab: price chart with the average price paid and the current price,
  * then the position and its profit/loss (all time). Links to the full position and the stock page.
  */
 @Component({

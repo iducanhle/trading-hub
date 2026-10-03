@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
 import { T212Service } from '../../core/services/t212.service';
 import { ErrorState } from '../../shared/components/error-state/error-state';
@@ -19,12 +19,12 @@ import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { transactionLabel } from './portfolio-labels';
 import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-model';
+import { PositionDialog, PositionDialogData } from './position-dialog';
 
 /** Portfolio → Dividends & cash: dividends with their total, or (switch) deposits, withdrawals, fees and interest. */
 @Component({
   selector: 'app-portfolio-cash',
   imports: [
-    RouterLink,
     ErrorState,
     Skeleton,
     StaleChip,
@@ -84,9 +84,10 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
             <ul class="app-card mt-3.5 py-2">
               @for (x of d.items; track x.id) {
                 <li>
-                  <a
-                    [routerLink]="['/portfolio', x.t212Ticker]"
-                    class="-mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-2.5 hover:bg-surface-container-high"
+                  <button
+                    type="button"
+                    (click)="openPosition(x.t212Ticker)"
+                    class="w-[calc(100%+1rem)] text-left -mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-2.5 hover:bg-surface-container-high"
                   >
                     <span
                       class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-high text-gain"
@@ -110,7 +111,7 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
                     <span class="shrink-0 text-[15px] font-semibold" [class]="tone(x.amount)">{{
                       x.amount | money: d.accountCurrency
                     }}</span>
-                  </a>
+                  </button>
                 </li>
               }
             </ul>
@@ -192,6 +193,7 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
 export class PortfolioCash {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
+  private readonly dialog = inject(MatDialog);
 
   readonly period = input.required<PortfolioPeriod>();
   readonly version = input(0);
@@ -213,6 +215,15 @@ export class PortfolioCash {
     params: () => this.params(),
     stream: ({ params }) => this.api.t212Transactions(params.query),
   });
+
+  protected openPosition(t212Ticker: string): void {
+    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      data: { t212Ticker },
+      width: 'calc(100vw - 32px)',
+      maxWidth: '32rem',
+      autoFocus: 'dialog',
+    });
+  }
 
   protected tone(value: number | null): string {
     return toneClass(value);
