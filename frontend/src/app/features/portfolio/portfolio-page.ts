@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -208,7 +208,8 @@ export class PortfolioPage {
   };
 
   constructor() {
-    void this.t212.load(true);
+    void this.t212.syncIfStale();
+    inject(DestroyRef).onDestroy(this.t212.watchLive());
   }
 
   protected setPeriod(period: PortfolioPeriod): void {

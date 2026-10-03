@@ -5,6 +5,10 @@ import { ApiService } from '../api/api.service';
 import { T212CredentialsRequest, T212Status } from '../models/contract';
 
 const POLL_MS = 3000;
+/** Matches the server's live-cache-ttl: asking more often would only get the same copy back. */
+const LIVE_POLL_MS = 60_000;
+/** Opening the portfolio starts a history sync when the last one is older than this. */
+const STALE_SYNC_MS = 15 * 60_000;
 
 /**
  * The caller's Trading 212 connection: status (polled while a sync runs), connect, disconnect and sync. When a
@@ -21,6 +25,8 @@ export class T212Service {
   readonly error = signal<unknown>(null);
   /** Bumped whenever the synced data may have changed. */
   readonly dataVersion = signal(0);
+  /** Bumped about once a minute while `watchLive` runs; live views refetch quietly (no skeleton). */
+  readonly liveTick = signal(0);
 
   readonly loaded = computed(() => this.status() !== null || this.error() !== null);
   readonly connected = computed(() => this.status()?.connected === true);
@@ -60,6 +66,44 @@ export class T212Service {
 
   async sync(): Promise<void> {
     this.apply(await firstValueFrom(this.api.t212Sync()));
+  }
+
+  /** Loads the status and starts a history sync if the last one is stale. Never throws; Sync now reports errors. */
+  async syncIfStale(maxAgeMs = STALE_SYNC_MS): Promise<void> {
+    await this.load(true);
+    const status = this.status();
+    if (!status?.connected || status.syncState === 'RUNNING' || status.credentialsValid === false) return;
+    const last = status.lastSyncAt ? Date.parse(status.lastSyncAt) : 0;
+    if (Date.now() - last < maxAgeMs) return;
+    try {
+      await this.sync();
+    } catch {
+      // The manual button surfaces errors; opening the page should not.
+    }
+  }
+
+  /**
+   * Bumps `liveTick` every minute while the tab is visible and connected, and right away when the tab becomes
+   * visible after a longer pause. Not while a sync runs or the key is rejected. Returns the stop function.
+   */
+  watchLive(): () => void {
+    let last = Date.now();
+    const tick = () => {
+      const status = this.status();
+      if (document.hidden || !status?.connected || status.credentialsValid === false) return;
+      if (status.syncState === 'RUNNING') return;
+      last = Date.now();
+      this.liveTick.update((v) => v + 1);
+    };
+    const onVisible = () => {
+      if (!document.hidden && Date.now() - last >= LIVE_POLL_MS) tick();
+    };
+    const timer = setInterval(tick, LIVE_POLL_MS);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }
 
   /** Sign-out: forget everything about the previous user. */

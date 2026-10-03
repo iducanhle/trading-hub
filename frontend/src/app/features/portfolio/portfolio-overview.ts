@@ -1,6 +1,7 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { T212InstrumentRef } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
@@ -121,6 +122,24 @@ export class PortfolioOverview {
     }),
     stream: ({ params }) => this.api.t212Summary(params.query),
   });
+
+  constructor() {
+    // Account value changes with prices: refetch quietly every minute, keep showing the old value on failure.
+    let seen = this.t212.liveTick();
+    effect(() => {
+      const tick = this.t212.liveTick();
+      if (tick === seen) return;
+      seen = tick;
+      untracked(() => {
+        firstValueFrom(this.api.t212Summary(periodQuery(ALL_TIME), { force: true })).then(
+          (value) => {
+            if (this.data.hasValue()) this.data.set(value);
+          },
+          () => undefined,
+        );
+      });
+    });
+  }
 
   protected readonly extremes = computed(() => {
     if (!this.data.hasValue()) return [];

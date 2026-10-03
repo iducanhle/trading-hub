@@ -1,5 +1,6 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
@@ -160,6 +161,24 @@ export class PortfolioHoldings {
     params: () => ({ version: this.version() + this.t212.dataVersion() }),
     stream: () => this.api.t212Holdings(),
   });
+
+  constructor() {
+    // Positions change with prices: refetch quietly every minute, keep showing the old value on failure.
+    let seen = this.t212.liveTick();
+    effect(() => {
+      const tick = this.t212.liveTick();
+      if (tick === seen) return;
+      seen = tick;
+      untracked(() => {
+        firstValueFrom(this.api.t212Holdings({ force: true })).then(
+          (value) => {
+            if (this.data.hasValue()) this.data.set(value);
+          },
+          () => undefined,
+        );
+      });
+    });
+  }
 
   protected key(h: T212Holding): string {
     return h.kind === 'PIE' ? `pie-${h.pie.id ?? 'grouped'}` : h.position.t212Ticker;
