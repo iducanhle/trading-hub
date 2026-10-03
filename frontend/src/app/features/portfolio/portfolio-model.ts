@@ -5,8 +5,18 @@ import { addDays, todayIso } from '../../shared/utils/dates';
 /** The device's IANA time zone; periods are whole days there. */
 export const DEVICE_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-export type PeriodPreset = '1M' | '3M' | 'YTD' | '1Y' | 'ALL' | 'CUSTOM';
-export const PERIOD_PRESETS: readonly PeriodPreset[] = ['1M', '3M', 'YTD', '1Y', 'ALL', 'CUSTOM'];
+export type PeriodPreset = '1D' | '1W' | '1M' | '3M' | '6M' | 'YTD' | '1Y' | 'ALL' | 'CUSTOM';
+export const PERIOD_PRESETS: readonly PeriodPreset[] = [
+  '1D',
+  '1W',
+  '1M',
+  '3M',
+  '6M',
+  'YTD',
+  '1Y',
+  'ALL',
+  'CUSTOM',
+];
 
 export interface PortfolioPeriod {
   preset: PeriodPreset;
@@ -36,10 +46,16 @@ export function presetRange(
   today: string = todayIso(),
 ): { from: string | null; to: string | null } {
   switch (preset) {
+    case '1D':
+      return { from: today, to: today };
+    case '1W':
+      return { from: addDays(today, -6), to: today };
     case '1M':
       return { from: addDays(shiftMonths(today, -1), 1), to: today };
     case '3M':
       return { from: addDays(shiftMonths(today, -3), 1), to: today };
+    case '6M':
+      return { from: addDays(shiftMonths(today, -6), 1), to: today };
     case 'YTD':
       return { from: `${today.slice(0, 4)}-01-01`, to: today };
     case '1Y':

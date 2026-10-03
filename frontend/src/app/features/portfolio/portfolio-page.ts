@@ -198,7 +198,7 @@ export class PortfolioPage {
     const side = this.query().get('side');
     return {
       side: side === 'BUY' || side === 'SELL' ? (side as T212Side) : null,
-      ticker: this.query().get('ticker') || null,
+      tickers: (this.query().get('ticker') ?? '').split(',').filter(Boolean),
     };
   });
 
@@ -217,7 +217,7 @@ export class PortfolioPage {
   }
 
   protected setTradeFilters(filters: TradeFilters): void {
-    this.navigate({ side: filters.side, ticker: filters.ticker });
+    this.navigate({ side: filters.side, ticker: filters.tickers.join(',') || null });
   }
 
   /** Starts a sync; the lists refresh when it finishes (T212Service.dataVersion). */

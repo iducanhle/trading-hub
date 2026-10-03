@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
-import { MatFormField, MatLabel, MatPrefix } from '@angular/material/form-field';
+import { MatFormField, MatPrefix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { MatOption, MatSelect } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { T212Instrument } from '../../core/models/contract';
@@ -17,6 +17,12 @@ import { Icon } from '../../shared/icon/icon';
 import { PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { Pnl } from './pnl';
+import {
+  DEFAULT_STOCKS_VIEW,
+  StocksFilterContext,
+  StocksFilterSheet,
+  StocksView,
+} from './stocks-filters';
 import { SORT_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
@@ -35,14 +41,10 @@ import {
   selector: 'app-portfolio-stocks',
   imports: [
     RouterLink,
-    MatButtonToggleGroup,
-    MatButtonToggle,
+    MatButton,
     MatFormField,
-    MatLabel,
     MatPrefix,
     MatInput,
-    MatSelect,
-    MatOption,
     EmptyState,
     ErrorState,
     Skeleton,
@@ -54,29 +56,22 @@ import {
     Pnl,
   ],
   template: `
-    <div class="mb-2 flex flex-wrap items-center gap-2">
-      <mat-button-toggle-group
-        hideSingleSelectionIndicator
-        aria-label="Profit and loss"
-        i18n-aria-label
-        [value]="unrealized()"
-        (change)="unrealized.set($event.value)"
-      >
-        <mat-button-toggle [value]="false" i18n="Profit/loss basis|Realized only"
-          >Without</mat-button-toggle
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+      <button matButton="outlined" type="button" (click)="openFilters()">
+        <app-icon matButtonIcon name="tune" [size]="18" />
+        <ng-container i18n>Filters</ng-container>
+      </button>
+      @for (chip of chips(); track chip.key) {
+        <button
+          type="button"
+          class="inline-flex min-h-8 items-center gap-1 rounded-full bg-secondary-container px-3 text-sm text-on-secondary-container"
+          [attr.aria-label]="chip.removeLabel"
+          (click)="resetPart(chip.key)"
         >
-        <mat-button-toggle [value]="true" i18n="Profit/loss basis|Includes unrealized"
-          >With unrealized</mat-button-toggle
-        >
-      </mat-button-toggle-group>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="sort-field ml-auto">
-        <mat-label i18n>Sort</mat-label>
-        <mat-select [value]="sort()" (selectionChange)="sort.set($event.value)">
-          @for (option of sortOptions; track option) {
-            <mat-option [value]="option">{{ sortLabels[option] }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+          {{ chip.label }}
+          <app-icon name="close" [size]="16" />
+        </button>
+      }
     </div>
     <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mb-3 w-full">
       <app-icon matPrefix name="search" class="mx-2" [size]="20" />
@@ -158,11 +153,6 @@ import {
       }
     }
   `,
-  styles: `
-    .sort-field {
-      width: 11rem;
-    }
-  `,
 })
 export class PortfolioStocks {
   private readonly api = inject(ApiService);
@@ -171,12 +161,51 @@ export class PortfolioStocks {
   readonly period = input.required<PortfolioPeriod>();
   readonly version = input(0);
 
-  protected readonly unrealized = persistedSignal<boolean>('portfolio.stocks.unrealized', false);
-  protected readonly sort = persistedSignal<StockSort>('portfolio.stocks.sort', 'pnl');
+  protected readonly unrealized = persistedSignal<boolean>(
+    'portfolio.stocks.unrealized',
+    DEFAULT_STOCKS_VIEW.unrealized,
+  );
+  protected readonly sort = persistedSignal<StockSort>(
+    'portfolio.stocks.sort',
+    DEFAULT_STOCKS_VIEW.sort,
+  );
   protected readonly search = signal('');
-  protected readonly sortOptions: StockSort[] = ['pnl', 'pnlPct', 'value', 'lastTrade', 'name'];
-  protected readonly sortLabels = SORT_LABELS;
   protected readonly allTime = computed(() => isAllTime(this.period()));
+  private readonly sheet = inject(MatBottomSheet);
+
+  /** A chip for each setting that differs from the default; removing it resets that setting. */
+  protected readonly chips = computed(() => {
+    const chips: { key: keyof StocksView; label: string; removeLabel: string }[] = [];
+    if (this.unrealized() !== DEFAULT_STOCKS_VIEW.unrealized) {
+      const label = $localize`:Profit/loss basis|Includes unrealized:With unrealized`;
+      chips.push({
+        key: 'unrealized',
+        label,
+        removeLabel: $localize`Remove filter ${label}:filter:`,
+      });
+    }
+    if (this.sort() !== DEFAULT_STOCKS_VIEW.sort) {
+      const label = SORT_LABELS[this.sort()];
+      chips.push({ key: 'sort', label, removeLabel: $localize`Remove filter ${label}:filter:` });
+    }
+    return chips;
+  });
+
+  protected openFilters(): void {
+    const context: StocksFilterContext = {
+      view: { unrealized: this.unrealized(), sort: this.sort() },
+      change: (view) => {
+        this.unrealized.set(view.unrealized);
+        this.sort.set(view.sort);
+      },
+    };
+    this.sheet.open(StocksFilterSheet, { data: context, ariaLabel: $localize`Filters` });
+  }
+
+  protected resetPart(key: keyof StocksView): void {
+    if (key === 'unrealized') this.unrealized.set(DEFAULT_STOCKS_VIEW.unrealized);
+    else this.sort.set(DEFAULT_STOCKS_VIEW.sort);
+  }
 
   protected readonly data = rxResource({
     params: () => ({

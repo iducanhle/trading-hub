@@ -2,8 +2,11 @@ import { T212Side, T212TradeKind, T212TransactionType } from '../../core/models/
 import { PeriodPreset, PortfolioTab, StockSort } from './portfolio-model';
 
 export const PRESET_LABELS: Record<PeriodPreset, string> = {
+  '1D': $localize`:Period of one day:1D`,
+  '1W': $localize`:Period of one week:1W`,
   '1M': $localize`:Period of one month:1M`,
   '3M': $localize`:Period of three months:3M`,
+  '6M': $localize`:Period of six months:6M`,
   YTD: $localize`:Period since 1 January:YTD`,
   '1Y': $localize`:Period of one year:1Y`,
   ALL: $localize`:Period without limits:All`,

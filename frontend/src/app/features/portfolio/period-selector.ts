@@ -10,7 +10,7 @@ import {
   presetRange,
 } from './portfolio-model';
 
-/** 1M · 3M · YTD · 1Y · All · Custom; Custom shows two date fields. Shared by all portfolio sub-tabs. */
+/** 1D · 1W · 1M · 3M · 6M · YTD · 1Y · All · Custom; Custom shows two date fields. Shared by all portfolio sub-tabs. */
 @Component({
   selector: 'app-period-selector',
   imports: [MatChipListbox, MatChipOption],

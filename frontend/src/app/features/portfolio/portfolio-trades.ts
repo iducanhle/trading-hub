@@ -31,7 +31,6 @@ import {
   InstrumentOption,
   TradeFilters,
   TradeFiltersContext,
-  TradesFilterControls,
   TradesFilterSheet,
 } from './trades-filters';
 
@@ -61,7 +60,7 @@ const EMPTY: ListState = {
 
 /**
  * Portfolio → Trades: filled trades, newest first, grouped by day and loaded 50 at a time as the list scrolls.
- * Filters (side, one stock) live in the URL; on phones they open in a bottom sheet.
+ * Filters (side, stocks) live in the URL and are edited in a bottom sheet that applies them on Done.
  */
 @Component({
   selector: 'app-portfolio-trades',
@@ -78,17 +77,13 @@ const EMPTY: ListState = {
     PricePipe,
     QuantityPipe,
     Pnl,
-    TradesFilterControls,
   ],
   template: `
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button matButton="outlined" type="button" class="lg:hidden!" (click)="openFilters()">
+      <button matButton="outlined" type="button" (click)="openFilters()">
         <app-icon matButtonIcon name="tune" [size]="18" />
         <ng-container i18n>Filters</ng-container>
       </button>
-      <div class="hidden lg:block">
-        <app-trades-filter-controls [context]="filterContext" />
-      </div>
       @for (chip of chips(); track chip.key) {
         <button
           type="button"
@@ -191,7 +186,7 @@ export class PortfolioTrades {
 
   readonly period = input.required<PortfolioPeriod>();
   readonly version = input(0);
-  readonly filters = input<TradeFilters>({ side: null, ticker: null });
+  readonly filters = input<TradeFilters>({ side: null, tickers: [] });
   readonly filtersChange = output<TradeFilters>();
 
   protected readonly sideLabels = SIDE_LABELS;
@@ -200,14 +195,17 @@ export class PortfolioTrades {
   private request?: Subscription;
   private readonly localVersion = signal(0);
 
-  /** Every instrument ever traded, for the stock filter. */
+  /** Instruments traded in the period, for the stock filter. */
   private readonly instrumentList = rxResource({
-    params: () => ({ version: this.t212.dataVersion() }),
-    stream: () => this.api.t212Instruments({ tz: periodQuery(this.period()).tz, status: 'ALL' }),
+    params: () => ({ query: periodQuery(this.period()), version: this.t212.dataVersion() }),
+    stream: ({ params }) => this.api.t212Instruments({ ...params.query, status: 'ALL' }),
   });
   protected readonly instruments = computed<InstrumentOption[]>(() =>
     this.instrumentList.hasValue()
-      ? [...this.instrumentList.value().items].sort((a, b) => a.name.localeCompare(b.name))
+      ? this.instrumentList
+          .value()
+          .items.filter((i) => i.tradeCount > 0)
+          .sort((a, b) => displayTicker(a).localeCompare(displayTicker(b)))
       : [],
   );
 
@@ -220,15 +218,15 @@ export class PortfolioTrades {
   private readonly query = computed<T212TradesQuery>(() => ({
     ...periodQuery(this.period()),
     side: this.filters().side,
-    ticker: this.filters().ticker,
+    ticker: this.filters().tickers.join(',') || null,
     limit: PAGE_SIZE,
   }));
 
   protected readonly days = computed(() => groupTradesByDay(this.state().items));
 
   protected readonly chips = computed(() => {
-    const { side, ticker } = this.filters();
-    const chips: { key: keyof TradeFilters; label: string; removeLabel: string }[] = [];
+    const { side, tickers } = this.filters();
+    const chips: { key: string; label: string; removeLabel: string }[] = [];
     if (side) {
       chips.push({
         key: 'side',
@@ -236,10 +234,10 @@ export class PortfolioTrades {
         removeLabel: $localize`Remove filter ${SIDE_LABELS[side]}:filter:`,
       });
     }
-    if (ticker) {
+    for (const ticker of tickers) {
       const option = this.instruments().find((i) => i.t212Ticker === ticker);
       const label = option ? displayTicker(option) : ticker;
-      chips.push({ key: 'ticker', label, removeLabel: $localize`Remove filter ${label}:filter:` });
+      chips.push({ key: ticker, label, removeLabel: $localize`Remove filter ${label}:filter:` });
     }
     return chips;
   });
@@ -275,12 +273,18 @@ export class PortfolioTrades {
     this.sheet.open(TradesFilterSheet, { data: this.filterContext, ariaLabel: $localize`Filters` });
   }
 
-  protected remove(key: keyof TradeFilters): void {
-    this.filtersChange.emit({ ...this.filters(), [key]: null });
+  /** Removes the side chip (`side`) or one stock chip (its t212Ticker). */
+  protected remove(key: string): void {
+    const filters = this.filters();
+    this.filtersChange.emit(
+      key === 'side'
+        ? { ...filters, side: null }
+        : { ...filters, tickers: filters.tickers.filter((t) => t !== key) },
+    );
   }
 
   protected clearFilters(): void {
-    this.filtersChange.emit({ side: null, ticker: null });
+    this.filtersChange.emit({ side: null, tickers: [] });
   }
 
   protected ticker(trade: T212Trade): string {

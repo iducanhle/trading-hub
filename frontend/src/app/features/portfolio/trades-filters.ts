@@ -1,18 +1,20 @@
-import { Component, Signal, computed, inject, input, linkedSignal } from '@angular/core';
-import { MatAutocomplete, MatAutocompleteTrigger, MatOption } from '@angular/material/autocomplete';
+import { Component, Signal, computed, inject, input, output, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { MatOption } from '@angular/material/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
+import { MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { T212Side } from '../../core/models/contract';
 import { displayTicker } from './portfolio-model';
 
 export interface TradeFilters {
   side: T212Side | null;
-  /** A t212Ticker. */
-  ticker: string | null;
+  /** t212Tickers; empty = all stocks. */
+  tickers: string[];
 }
+
+export const NO_TRADE_FILTERS: TradeFilters = { side: null, tickers: [] };
 
 export interface InstrumentOption {
   t212Ticker: string;
@@ -26,7 +28,7 @@ export interface TradeFiltersContext {
   change: (filters: TradeFilters) => void;
 }
 
-/** Side (all / buy / sell) and one instrument, picked with an autocomplete; changes apply at once. */
+/** Side (all / buy / sell) and any stocks traded in the period (multi-select). */
 @Component({
   selector: 'app-trades-filter-controls',
   imports: [
@@ -34,18 +36,17 @@ export interface TradeFiltersContext {
     MatButtonToggle,
     MatFormField,
     MatLabel,
-    MatInput,
-    MatAutocomplete,
-    MatAutocompleteTrigger,
+    MatSelect,
+    MatSelectTrigger,
     MatOption,
   ],
   template: `
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+    <div class="flex flex-col gap-3">
       <mat-button-toggle-group
         hideSingleSelectionIndicator
         aria-label="Trade side"
         i18n-aria-label
-        [value]="context().filters().side ?? 'ALL'"
+        [value]="filters().side ?? 'ALL'"
         (change)="setSide($event.value)"
       >
         <mat-button-toggle value="ALL" i18n="All trades">All</mat-button-toggle>
@@ -54,78 +55,66 @@ export interface TradeFiltersContext {
           >Sell</mat-button-toggle
         >
       </mat-button-toggle-group>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full lg:w-72">
-        <mat-label i18n>Stock</mat-label>
-        <input
-          matInput
-          type="text"
-          autocomplete="off"
-          [matAutocomplete]="auto"
-          [value]="query()"
-          (input)="query.set($any($event.target).value)"
-        />
-        <mat-autocomplete
-          #auto="matAutocomplete"
-          [displayWith]="display"
-          (optionSelected)="setTicker($event.option.value)"
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+        <mat-label i18n>Stocks</mat-label>
+        <mat-select
+          multiple
+          [value]="filters().tickers"
+          (selectionChange)="setTickers($event.value)"
         >
-          @for (option of matches(); track option.t212Ticker) {
-            <mat-option [value]="option">
+          <mat-select-trigger>{{ summary() }}</mat-select-trigger>
+          @for (option of options(); track option.t212Ticker) {
+            <mat-option [value]="option.t212Ticker">
               <span class="font-medium">{{ ticker(option) }}</span>
               <span class="ml-2 text-on-surface-variant">{{ option.name }}</span>
             </mat-option>
+          } @empty {
+            <mat-option disabled i18n>No trades in this period</mat-option>
           }
-        </mat-autocomplete>
+        </mat-select>
       </mat-form-field>
     </div>
   `,
 })
 export class TradesFilterControls {
-  readonly context = input.required<TradeFiltersContext>();
+  readonly filters = input.required<TradeFilters>();
+  readonly instruments = input.required<InstrumentOption[]>();
+  readonly filtersChange = output<TradeFilters>();
 
-  /** The text in the instrument field; follows the selected instrument. */
-  protected readonly query = linkedSignal(() => {
-    const ticker = this.context().filters().ticker;
-    const option = this.context()
-      .instruments()
-      .find((i) => i.t212Ticker === ticker);
-    return option ? this.display(option) : '';
-  });
-  protected readonly matches = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    return this.context()
-      .instruments()
-      .filter(
-        (i) =>
-          !q ||
-          i.name.toLowerCase().includes(q) ||
-          displayTicker(i).toLowerCase().includes(q) ||
-          i.t212Ticker.toLowerCase().includes(q),
-      )
-      .slice(0, 20);
+  /** Stocks traded in the period, plus any selected ones outside it so they can be unselected. */
+  protected readonly options = computed(() => {
+    const instruments = this.instruments();
+    const known = new Set(instruments.map((i) => i.t212Ticker));
+    const extra = this.filters()
+      .tickers.filter((t) => !known.has(t))
+      .map((t212Ticker) => ({ t212Ticker, symbol: null, name: '' }));
+    return [...instruments, ...extra];
   });
 
-  protected readonly display = (option: InstrumentOption | string | null): string =>
-    !option
-      ? ''
-      : typeof option === 'string'
-        ? option
-        : `${displayTicker(option)} · ${option.name}`;
+  protected readonly summary = computed(() => {
+    const options = this.options();
+    return this.filters()
+      .tickers.map((t) => {
+        const option = options.find((o) => o.t212Ticker === t);
+        return option ? displayTicker(option) : t;
+      })
+      .join(', ');
+  });
 
   protected ticker(option: InstrumentOption): string {
     return displayTicker(option);
   }
 
   protected setSide(value: T212Side | 'ALL'): void {
-    this.context().change({ ...this.context().filters(), side: value === 'ALL' ? null : value });
+    this.filtersChange.emit({ ...this.filters(), side: value === 'ALL' ? null : value });
   }
 
-  protected setTicker(option: InstrumentOption): void {
-    this.context().change({ ...this.context().filters(), ticker: option.t212Ticker });
+  protected setTickers(tickers: string[]): void {
+    this.filtersChange.emit({ ...this.filters(), tickers });
   }
 }
 
-/** Phone filters in a bottom sheet, like the events filters. */
+/** Trade filters in a bottom sheet; changes are a draft until Done (closing the sheet otherwise discards them). */
 @Component({
   selector: 'app-trades-filter-sheet',
   imports: [MatButton, TradesFilterControls],
@@ -136,19 +125,33 @@ export class TradesFilterControls {
         aria-hidden="true"
       ></div>
       <h2 class="mb-4 text-lg font-semibold" i18n>Filters</h2>
-      <app-trades-filter-controls [context]="context" />
+      <app-trades-filter-controls
+        [filters]="draft()"
+        [instruments]="context.instruments()"
+        (filtersChange)="draft.set($event)"
+      />
       <div class="mt-6 mb-4 flex justify-between gap-3">
-        <button matButton type="button" (click)="reset()" i18n>Reset</button>
-        <button matButton="filled" type="button" (click)="ref.dismiss()" i18n>Done</button>
+        <button matButton type="button" (click)="draft.set(empty)" i18n>Reset</button>
+        <button matButton="filled" type="button" (click)="done()" i18n>Done</button>
       </div>
     </div>
   `,
 })
 export class TradesFilterSheet {
   protected readonly context = inject<TradeFiltersContext>(MAT_BOTTOM_SHEET_DATA);
-  protected readonly ref = inject(MatBottomSheetRef<TradesFilterSheet>);
+  private readonly ref = inject(MatBottomSheetRef<TradesFilterSheet>);
 
-  protected reset(): void {
-    this.context.change({ side: null, ticker: null });
+  protected readonly empty = NO_TRADE_FILTERS;
+  protected readonly draft = signal<TradeFilters>(this.context.filters());
+
+  protected done(): void {
+    const draft = this.draft();
+    const current = this.context.filters();
+    const same =
+      draft.side === current.side &&
+      draft.tickers.length === current.tickers.length &&
+      draft.tickers.every((t) => current.tickers.includes(t));
+    if (!same) this.context.change(draft);
+    this.ref.dismiss();
   }
 }
