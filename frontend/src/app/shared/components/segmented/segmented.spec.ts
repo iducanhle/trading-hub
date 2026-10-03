@@ -25,7 +25,30 @@ async function setup() {
   return { fixture, radios };
 }
 
+@Component({
+  imports: [Segmented, Segment],
+  template: `
+    <app-segmented aria-label="Range" appearance="chips" [(value)]="range">
+      @for (r of ranges; track r) {
+        <app-segment [value]="r">{{ r }}</app-segment>
+      }
+    </app-segmented>
+  `,
+})
+class LoopHost {
+  readonly ranges = ['1M', '3M', '1Y'];
+  readonly range = signal('3M');
+}
+
 describe('Segmented', () => {
+  it('renders options created by @for', async () => {
+    const fixture = TestBed.createComponent(LoopHost);
+    await fixture.whenStable();
+    const radios = [...fixture.nativeElement.querySelectorAll('[role="radio"]')] as HTMLElement[];
+    expect(radios.map((r) => r.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+    expect(radios.map((r) => r.tabIndex)).toEqual([-1, 0, -1]);
+  });
+
   it('is a radio group with the bound value checked and the only tab stop', async () => {
     const { fixture, radios } = await setup();
     expect(fixture.nativeElement.querySelector('app-segmented').getAttribute('role')).toBe(

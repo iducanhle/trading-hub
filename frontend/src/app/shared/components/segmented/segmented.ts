@@ -43,7 +43,11 @@ import {
 })
 export class Segment {
   protected readonly group = inject(Segmented);
-  readonly value = input.required<unknown>();
+  /**
+   * Not `required`: the group reads every option's value, and options rendered by `@for` get their inputs one after
+   * another, so a sibling may not have its value yet (it reads as undefined until then).
+   */
+  readonly value = input<unknown>();
   readonly ariaLabel = input<string>('', { alias: 'aria-label' });
 
   private readonly button = viewChild.required<ElementRef<HTMLButtonElement>>('button');
