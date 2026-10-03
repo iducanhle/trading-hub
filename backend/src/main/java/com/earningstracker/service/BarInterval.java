@@ -6,10 +6,11 @@ import java.util.Optional;
 
 /**
  * Bar size of {@code GET /api/stocks/{symbol}/prices}. The intraday ones come straight from the intraday provider
- * (Yahoo keeps 5- to 30-minute bars for about 60 days and hourly ones for about two years); weekly bars are built
+ * (Yahoo keeps 1-minute bars for about a week, 5- to 30-minute bars for about 60 days and hourly ones for about two years); weekly bars are built
  * from the stored daily bars.
  */
 public enum BarInterval {
+    MIN1("1m", Duration.ofMinutes(1)),
     M5("5m", Duration.ofMinutes(5)),
     M15("15m", Duration.ofMinutes(15)),
     M30("30m", Duration.ofMinutes(30)),

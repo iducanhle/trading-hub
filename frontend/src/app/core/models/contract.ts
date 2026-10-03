@@ -159,7 +159,7 @@ export interface NewsItem {
 
 export type PriceRange = '1D' | '1W' | '1M' | '2M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
 /** Bar size of the price chart; each range allows only some (see CONTRACT.md). */
-export type PriceInterval = '5m' | '15m' | '30m' | '1h' | '1d' | '1wk';
+export type PriceInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '1d' | '1wk';
 export type HistoryPeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 export type RegionFilter = 'ALL' | Region;
 

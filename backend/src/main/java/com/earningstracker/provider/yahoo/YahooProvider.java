@@ -223,8 +223,10 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
     @Override
     public List<IntradayBar> intradayBars(String symbol, Duration interval, Period lookback) {
         String size = interval.toMinutes() + "m";
-        // A week's margin covers weekends and holidays; the caller cuts the range.
+        // A week's margin covers weekends and holidays; the caller cuts the range. Yahoo serves 1-minute bars
+        // for at most 8 days per request, so those take its last five sessions (enough for 1W).
         JsonNode result = chart(symbol, lookback.isZero() ? "range=1d&interval=" + size
+                : interval.toMinutes() == 1 ? "range=5d&interval=1m"
                 : "period1=" + clock.instant().atZone(ZoneOffset.UTC).minus(lookback).minusDays(7).toEpochSecond()
                         + "&period2=" + clock.instant().getEpochSecond() + "&interval=" + size);
         String currency = Json.text(result.path("meta").path("currency"));

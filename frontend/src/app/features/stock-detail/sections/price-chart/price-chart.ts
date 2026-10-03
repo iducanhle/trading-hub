@@ -78,8 +78,8 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'];
 
 /** The bar sizes each range offers, smallest first (the API's allowed intervals), and its default. */
 const INTERVALS: Record<PriceRange, PriceInterval[]> = {
-  '1D': ['5m', '15m', '30m', '1h'],
-  '1W': ['5m', '15m', '30m', '1h', '1d'],
+  '1D': ['1m', '5m', '15m', '30m', '1h'],
+  '1W': ['1m', '5m', '15m', '30m', '1h', '1d'],
   '1M': ['15m', '30m', '1h', '1d'],
   '2M': ['1h', '1d', '1wk'],
   '3M': ['1h', '1d', '1wk'],
@@ -91,6 +91,7 @@ const INTERVALS: Record<PriceRange, PriceInterval[]> = {
 const defaultInterval = (range: PriceRange): PriceInterval => (range === '1D' ? '5m' : '1d');
 
 const INTERVAL_LABELS: Record<PriceInterval, string> = {
+  '1m': $localize`:Chart bar size:1 min`,
   '5m': $localize`:Chart bar size:5 min`,
   '15m': $localize`:Chart bar size:15 min`,
   '30m': $localize`:Chart bar size:30 min`,

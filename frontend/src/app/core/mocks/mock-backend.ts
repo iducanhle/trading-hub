@@ -62,6 +62,7 @@ import {
 } from './mock-series';
 
 const INTERVAL_MINUTES: Record<PriceInterval, number> = {
+  '1m': 1,
   '5m': 5,
   '15m': 15,
   '30m': 30,

@@ -8,11 +8,14 @@ import java.util.Optional;
 /**
  * Chart ranges of {@code GET /api/stocks/{symbol}/prices}, back from the latest bar. {@link #D1} is the latest
  * session. Each range allows a few bar intervals, the default first: small enough to be worth showing, and within
- * the provider's intraday history (about 60 days of 5- to 30-minute bars, two years of hourly ones).
+ * the provider's intraday history (about a week of 1-minute bars, 60 days of 5- to 30-minute bars, two years
+ * of hourly ones).
  */
 public enum PriceRange {
-    D1("1D", Period.ZERO, BarInterval.M5, BarInterval.M15, BarInterval.M30, BarInterval.H1),
-    W1("1W", Period.ofDays(7), BarInterval.D1, BarInterval.M5, BarInterval.M15, BarInterval.M30, BarInterval.H1),
+    D1("1D", Period.ZERO, BarInterval.M5, BarInterval.MIN1,
+            BarInterval.M15, BarInterval.M30, BarInterval.H1),
+    W1("1W", Period.ofDays(7), BarInterval.D1, BarInterval.MIN1, BarInterval.M5,
+            BarInterval.M15, BarInterval.M30, BarInterval.H1),
     M1("1M", Period.ofMonths(1), BarInterval.D1, BarInterval.M15, BarInterval.M30, BarInterval.H1),
     M2("2M", Period.ofMonths(2), BarInterval.D1, BarInterval.H1, BarInterval.W1),
     M3("3M", Period.ofMonths(3), BarInterval.D1, BarInterval.H1, BarInterval.W1),
