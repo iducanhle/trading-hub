@@ -232,6 +232,11 @@ html.dark {
 .mat-mdc-form-field.mat-form-field-invalid .mdc-text-field--filled {
   box-shadow: inset 0 0 0 2px var(--mat-sys-error);
 }
+// Poppins' tall default line height makes the label box taller, so the floated label (moved up by its own height)
+// ends up touching the top edge. A tighter line height brings it back to about 8 px from the top.
+.mat-mdc-form-field .mdc-text-field--filled .mat-mdc-floating-label.mdc-floating-label {
+  line-height: 1.15;
+}
 
 // A switch as a settings row: the label on the left, the switch on the right (labelPosition="before").
 .mat-mdc-slide-toggle.app-switch-row {
