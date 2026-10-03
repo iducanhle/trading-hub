@@ -156,7 +156,7 @@ const EMPTY: ListState = {
                       />
                     </span>
                     <span class="min-w-0 flex-1">
-                      <span class="block truncate text-[15px] font-bold">{{ t.name }}</span>
+                      <span class="block truncate text-[15px] font-medium">{{ t.name }}</span>
                       <span
                         class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
                       >
@@ -168,12 +168,12 @@ const EMPTY: ListState = {
                       </span>
                     </span>
                     <span class="flex shrink-0 flex-col items-end text-right">
-                      <span class="text-[15px] font-bold">{{
+                      <span class="text-[15px] font-semibold">{{
                         t.value | price: state().currency
                       }}</span>
                       @if (t.realizedPnl !== null) {
                         <span
-                          class="mt-0.5 text-[12.5px] font-bold"
+                          class="mt-0.5 text-[12.5px] font-medium"
                           [class]="tone(t.realizedPnl)"
                           >{{ t.realizedPnl | money: state().currency }}</span
                         >

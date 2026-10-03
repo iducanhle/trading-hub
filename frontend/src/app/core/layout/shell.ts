@@ -199,7 +199,7 @@ export class Shell {
   protected readonly account = computed(() => {
     const s = this.summary.hasValue() ? this.summary.value() : undefined;
     if (!s || s.totalValue === null) return null;
-    const pct = s.totalPnlPct === null ? '' : ` (${formatPercent(s.totalPnlPct, 1)})`;
+    const pct = s.rateOfReturnPct === null ? '' : ` (${formatPercent(s.rateOfReturnPct, 1)})`;
     return {
       value: formatPrice(s.totalValue, s.accountCurrency),
       pnl: formatSignedMoney(s.totalPnl, s.accountCurrency) + pct,

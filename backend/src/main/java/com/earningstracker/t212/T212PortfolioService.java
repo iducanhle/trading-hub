@@ -114,6 +114,9 @@ public class T212PortfolioService {
         boolean includesUnrealized = period.allTime() && unrealized != null;
         double totalPnl = realized + dividends - fees + (includesUnrealized ? unrealized : 0);
         Double pct = period.allTime() && totalBought > 0 ? round(totalPnl / totalBought * 100) : null;
+        Double totalValue = account == null ? null : account.totalValue();
+        Double rateOfReturn = period.allTime() && totalValue != null
+                ? rateOfReturn(ctx.data().transactions().values(), ctx.currency(), totalValue) : null;
 
         Map<String, T212Dtos.InstrumentRef> refs = refs(ctx, instruments, period.allTime());
         List<T212Dtos.InstrumentRef> ranked = refs.values().stream()
@@ -122,11 +125,11 @@ public class T212PortfolioService {
         T212Dtos.InstrumentRef worst = ranked.size() < 2 ? null : ranked.getLast();
 
         return new T212Dtos.Summary(period.from(), period.to(), period.tz(), ctx.currency(),
-                account == null ? null : account.totalValue(), account == null ? null : account.cash(),
+                totalValue, account == null ? null : account.cash(),
                 account == null ? null : account.invested(), account == null ? null : account.currentValue(),
                 unrealized, round(realized), round(dividends), round(fees), round(interest), round(deposits),
                 round(withdrawals), round(deposits - withdrawals), trades, round(totalPnl), includesUnrealized, pct,
-                best, worst, connection.status(uid).syncState(), ctx.state().lastSyncAt(), ctx.asOf(), ctx.stale());
+                rateOfReturn, best, worst, connection.status(uid).syncState(), ctx.state().lastSyncAt(), ctx.asOf(), ctx.stale());
     }
 
     public T212Dtos.InstrumentList instruments(String uid, T212Period period, StatusFilter status) {
@@ -392,6 +395,23 @@ public class T212PortfolioService {
         Map<String, String> logos = new java.util.HashMap<>();
         symbols.forEach((ticker, symbol) -> logos.put(ticker, Logos.orFallback(symbol, stored.get(symbol))));
         return logos;
+    }
+
+    /** The money-weighted rate of return in percent, over every deposit and withdrawal; see {@link T212RateOfReturn}. */
+    private Double rateOfReturn(java.util.Collection<T212CashTransaction> transactions, String accountCurrency,
+            double totalValue) {
+        List<T212RateOfReturn.Flow> flows = new java.util.ArrayList<>();
+        for (T212CashTransaction t : transactions) {
+            if (!t.type().equals("DEPOSIT") && !t.type().equals("WITHDRAW")) {
+                continue;
+            }
+            Double amount = inAccountCurrency(t.amount(), t.currency(), accountCurrency);
+            if (amount != null) {
+                flows.add(new T212RateOfReturn.Flow(t.at(), amount));
+            }
+        }
+        Double rate = T212RateOfReturn.compute(flows, totalValue, clock.instant());
+        return rate == null ? null : round(rate * 100);
     }
 
     /** Deposits, withdrawals and fees as positive amounts, interest signed; all in the account currency. */

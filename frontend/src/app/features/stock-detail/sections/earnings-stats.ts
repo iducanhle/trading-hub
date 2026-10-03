@@ -36,13 +36,13 @@ export function beatRateText(stats: Stats): string | null {
             <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Beat rate</span><app-term-info term="beatRate" />
             </dt>
-            <dd class="text-right text-[15px] font-bold">{{ beatRate() ?? '—' }}</dd>
+            <dd class="text-right text-[15px] font-semibold">{{ beatRate() ?? '—' }}</dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-3">
             <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Current streak</span><app-term-info term="streak" />
             </dt>
-            <dd class="text-right text-[15px] font-bold">
+            <dd class="text-right text-[15px] font-semibold">
               @if (s.streak; as streak) {
                 <span
                   [class.text-gain]="streak.result === 'BEAT'"
@@ -58,7 +58,7 @@ export function beatRateText(stats: Stats): string | null {
             <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Avg. reaction (absolute)</span><app-term-info term="avgReaction" />
             </dt>
-            <dd class="text-right text-[15px] font-bold">{{ avgReaction() }}</dd>
+            <dd class="text-right text-[15px] font-semibold">{{ avgReaction() }}</dd>
           </div>
         </dl>
       } @else {

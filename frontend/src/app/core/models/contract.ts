@@ -347,6 +347,8 @@ export interface T212Summary extends T212PeriodEcho {
   includesUnrealized: boolean;
   /** All time only. */
   totalPnlPct: number | null;
+  /** All time only: money-weighted rate of return of deposits and withdrawals, as Trading 212 shows it. */
+  rateOfReturnPct: number | null;
   best: T212InstrumentRef | null;
   worst: T212InstrumentRef | null;
   syncState: T212SyncState;

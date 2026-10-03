@@ -95,7 +95,7 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
                       <app-icon name="savings" [size]="20" />
                     </span>
                     <span class="min-w-0 flex-1">
-                      <span class="block truncate text-[15px] font-bold">{{ x.name }}</span>
+                      <span class="block truncate text-[15px] font-medium">{{ x.name }}</span>
                       <span
                         class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
                       >
@@ -107,7 +107,7 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
                         }
                       </span>
                     </span>
-                    <span class="shrink-0 text-[15px] font-bold" [class]="tone(x.amount)">{{
+                    <span class="shrink-0 text-[15px] font-semibold" [class]="tone(x.amount)">{{
                       x.amount | money: d.accountCurrency
                     }}</span>
                   </a>
@@ -133,25 +133,25 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
           <dl class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
               <dt class="app-label text-[11px]" i18n>Deposits</dt>
-              <dd class="mt-1 text-[17px] font-bold">
+              <dd class="mt-1 text-[15px] font-semibold">
                 {{ t.totals.deposits | price: t.accountCurrency }}
               </dd>
             </div>
             <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
               <dt class="app-label text-[11px]" i18n>Withdrawals</dt>
-              <dd class="mt-1 text-[17px] font-bold">
+              <dd class="mt-1 text-[15px] font-semibold">
                 {{ t.totals.withdrawals | price: t.accountCurrency }}
               </dd>
             </div>
             <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
               <dt class="app-label text-[11px]" i18n>Account fees</dt>
-              <dd class="mt-1 text-[17px] font-bold">
+              <dd class="mt-1 text-[15px] font-semibold">
                 {{ t.totals.fees | price: t.accountCurrency }}
               </dd>
             </div>
             <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
               <dt class="app-label text-[11px]" i18n>Interest</dt>
-              <dd class="mt-1 text-[17px] font-bold">
+              <dd class="mt-1 text-[15px] font-semibold">
                 {{ t.totals.interest | price: t.accountCurrency }}
               </dd>
             </div>
@@ -171,13 +171,13 @@ import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-
                     <app-icon [name]="x.amount < 0 ? 'trending_down' : 'payments'" [size]="20" />
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-[15px] font-bold">{{ label(x.type) }}</span>
+                    <span class="block truncate text-[15px] font-medium">{{ label(x.type) }}</span>
                     <span
                       class="mt-0.5 block text-[12.5px] font-semibold text-on-surface-variant"
                       >{{ day(x.at) | appDate }}</span
                     >
                   </span>
-                  <span class="shrink-0 text-[15px] font-bold" [class]="tone(x.amount)">{{
+                  <span class="shrink-0 text-[15px] font-semibold" [class]="tone(x.amount)">{{
                     x.amount | money: x.currency
                   }}</span>
                 </li>

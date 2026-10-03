@@ -116,7 +116,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
               <span class="mt-2 flex items-center gap-3">
                 <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="40" />
                 <span class="min-w-0">
-                  <span class="block truncate text-lg font-bold">{{ n.event.symbol }}</span>
+                  <span class="block truncate text-base font-bold">{{ n.event.symbol }}</span>
                   <span
                     class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
                     >{{ n.event.name }}</span
@@ -124,7 +124,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                 </span>
               </span>
               <span
-                class="mt-3 block text-4xl leading-tight font-light tracking-[-.02em] text-primary"
+                class="mt-3 block text-[32px] leading-tight font-light tracking-[-.02em] text-primary"
                 >{{ n.event.date | relativeDay }}</span
               >
               <span class="mt-1 block text-[15px] font-semibold"

@@ -167,6 +167,7 @@ type T212Summary = {
   totalPnl: number;                    // realized + dividends − fees, plus unrealizedPnl only when includesUnrealized
   includesUnrealized: boolean;         // true only for all time
   totalPnlPct: number | null;          // all time only: totalPnl ÷ total bought value
+  rateOfReturnPct: number | null;      // all time only: money-weighted rate of return (see the P/L definitions)
   best: T212InstrumentRef | null; worst: T212InstrumentRef | null;   // by totalPnl in the period
   syncState: T212SyncState; lastSyncAt: string | null;
   asOf: string; stale: boolean;
@@ -342,6 +343,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
   - `unrealizedPnl` is always **as of now** and only counted in `totalPnl` for all time (`includesUnrealized: true`). There is no historical portfolio value.
   - `totalPnl` = `realizedPnl` + `dividends` − `fees` (+ `unrealizedPnl` for all time). `interest`, deposits and withdrawals are not part of it.
   - `totalPnlPct` (all time only) = `totalPnl` ÷ the total value of all buys × 100.
+  - `rateOfReturnPct` (all time only) = Trading 212's "Rate of return": the money-weighted rate of return (internal rate of return) of every `DEPOSIT` and `WITHDRAW` against `totalValue` now, as one rate over the time since the first deposit (not annualized). Trading 212 does not publish its exact formula, so it can differ from the app by about a percentage point. `null` without deposits or without a live `totalValue`.
 - **`GET /instruments`:** all time lists every instrument ever traded or held; a period lists the instruments with a trade or dividend in it. `status` (default `ALL`) filters by the current state. `bought`/`sold`/`realizedPnl`/`dividends`/`fees`/`tradeCount` are for the period; quantity, prices, value and unrealized P/L are as of now.
 - **`GET /holdings`:** a position partly in a pie appears twice: its pie part inside the pie, the rest as its own item (quantity, value and result pro rata). Pie values and results are Trading 212's own (pie average price); outside pies the result is the position's unrealized P/L, `pnlPct` = that ÷ its cost. Pies come from Trading 212's deprecated pie endpoints (`pies:read`), reused for 5 minutes; when they fail, `piesAvailable: false` and all pie parts form one pie with `id` and `name` `null`. No pies at all: only `POSITION` items.
 - **`{t212Ticker}` in paths** is case-sensitive (`SAPd_EQ`). `positionAfter` is the number of shares held right after that trade.
@@ -368,3 +370,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-03 | `GET /api/t212/trades`: `ticker` accepts several comma-separated tickers (max 50). Additive. |
 | 2026-10-03 | Prices: optional `interval` (`5m`, `15m`, `30m`, `1h`, `1d`, `1wk`), allowed per range, echoed in the response. Additive: without it nothing changes. |
 | 2026-10-03 | Prices: `interval=1m` for `1D` and `1W`. Additive. |
+| 2026-10-03 | `T212Summary.rateOfReturnPct`: money-weighted rate of return, all time only. Additive. |

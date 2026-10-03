@@ -67,21 +67,23 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
               <ng-container i18n>Total profit/loss</ng-container>
               <app-term-info term="totalPnl" />
             </p>
-            <p class="mt-0.5 text-[17px] font-semibold" [class]="tone(s.totalPnl)">
+            <p class="mt-0.5 text-[15px] font-semibold" [class]="tone(s.totalPnl)">
               {{ s.totalPnl | money: s.accountCurrency }}
             </p>
           </div>
-          @if (s.totalPnlPct !== null) {
+          @if (s.rateOfReturnPct !== null) {
             <div>
-              <p class="app-label" i18n="Total profit/loss as a percentage of all buys">Return</p>
-              <p class="mt-0.5 text-[17px] font-semibold" [class]="tone(s.totalPnlPct)">
-                {{ s.totalPnlPct | pct: 1 }}
+              <p class="app-label" i18n="Money-weighted return, as Trading 212 shows it">
+                Rate of return
+              </p>
+              <p class="mt-0.5 text-[15px] font-semibold" [class]="tone(s.rateOfReturnPct)">
+                {{ s.rateOfReturnPct | pct: 1 }}
               </p>
             </div>
           }
         </div>
         <p
-          class="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-extrabold"
+          class="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-semibold"
         >
           <span class="size-[9px] rounded-full bg-on-surface-variant" aria-hidden="true"></span>
           {{ s.netDeposits | price: s.accountCurrency }}
@@ -108,11 +110,11 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
                   [logoUrl]="row.item.logoUrl"
                   [size]="36"
                 />
-                <span class="line-clamp-2 min-w-0 text-sm leading-tight font-bold">{{
+                <span class="line-clamp-2 min-w-0 text-sm leading-tight font-medium">{{
                   row.item.name
                 }}</span>
               </span>
-              <span class="text-base font-bold" [class]="tone(row.item.totalPnl)">{{
+              <span class="text-[15px] font-semibold" [class]="tone(row.item.totalPnl)">{{
                 row.item.totalPnl | money: s.accountCurrency
               }}</span>
             </a>

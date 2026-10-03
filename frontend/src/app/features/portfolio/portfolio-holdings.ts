@@ -42,7 +42,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
       <div>
         <h2 class="app-label" i18n>Open positions</h2>
         @if (total() !== null) {
-          <p class="mt-0.5 text-lg font-bold">{{ total() | price: currency() }}</p>
+          <p class="mt-0.5 text-base font-semibold">{{ total() | price: currency() }}</p>
         }
       </div>
       <label
@@ -94,7 +94,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                     <app-icon name="pie_chart" />
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-base font-semibold">
+                    <span class="block truncate text-[15px] font-medium">
                       @if (pie.name) {
                         {{ pie.name }}
                       } @else {
@@ -104,12 +104,10 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                     <span
                       class="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold whitespace-nowrap text-on-surface-variant"
                     >
-                      <ng-container i18n
-                        >{pie.positions.length, plural,
-                          =1 {1 holding}
-                          other {{{pie.positions.length}} holdings}
-                        }</ng-container
-                      >
+                      <ng-container i18n>{pie.positions.length, plural,
+                        =1 {1 holding}
+                        other {{{pie.positions.length}} holdings}
+                      }</ng-container>
                       <app-icon
                         name="keyboard_arrow_down"
                         [size]="16"
@@ -166,7 +164,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
       >
         <app-stock-logo [symbol]="ticker(p)" [logoUrl]="p.logoUrl" [size]="48" />
         <span class="min-w-0 flex-1">
-          <span class="block truncate text-base font-semibold">{{ p.name }}</span>
+          <span class="block truncate text-[15px] font-medium">{{ p.name }}</span>
           <span
             class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant uppercase"
             >{{ p.quantity | qty }} {{ ticker(p) }}</span
@@ -181,8 +179,8 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
 
     <ng-template #amounts let-value="value" let-pnl="pnl" let-pct="pct" let-currency="currency">
       <span class="flex shrink-0 flex-col items-end text-right">
-        <span class="text-base font-semibold">{{ value | price: currency }}</span>
-        <span class="mt-0.5 text-[12.5px] font-bold" [class]="tone(pnl)"
+        <span class="text-[15px] font-semibold">{{ value | price: currency }}</span>
+        <span class="mt-0.5 text-[12.5px] font-medium" [class]="tone(pnl)"
           >{{ pnl | money: currency }} ({{ pct | pct }})</span
         >
       </span>

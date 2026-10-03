@@ -159,7 +159,7 @@ export interface InstrumentDialogData {
             <p class="app-label inline-flex items-center gap-1 text-[11px]">
               <ng-container i18n>Realized</ng-container><app-term-info term="realizedPnl" />
             </p>
-            <p class="mt-1 text-[17px] font-bold" [class]="tone(i.realizedPnl - i.fees)">
+            <p class="mt-1 text-[15px] font-semibold" [class]="tone(i.realizedPnl - i.fees)">
               {{ i.realizedPnl - i.fees | money: d.accountCurrency }}
             </p>
           </div>
@@ -168,7 +168,7 @@ export interface InstrumentDialogData {
               <ng-container i18n>Unrealized · as of now</ng-container
               ><app-term-info term="unrealizedPnl" />
             </p>
-            <p class="mt-1 text-[17px] font-bold" [class]="tone(i.unrealizedPnl)">
+            <p class="mt-1 text-[15px] font-semibold" [class]="tone(i.unrealizedPnl)">
               {{ i.unrealizedPnl | money: d.accountCurrency }}
             </p>
           </div>
@@ -238,7 +238,7 @@ export interface InstrumentDialogData {
           </a>
         }
 
-        <h2 class="mt-7 mb-3 px-1 text-xl font-bold" i18n>Trades and dividends</h2>
+        <h2 class="mt-7 mb-3 px-1 text-lg font-bold" i18n>Trades and dividends</h2>
         @if (timeline().length > 0) {
           <app-instrument-filters
             class="mb-3.5 block"
@@ -271,7 +271,7 @@ export interface InstrumentDialogData {
                 @if (item.kind === 'trade') {
                   @let t = item.trade;
                   <span class="min-w-0 flex-1">
-                    <span class="block text-[15px] font-bold">
+                    <span class="block text-[15px] font-medium">
                       {{ t.kind === 'TRADE' ? sideLabels[t.side] : kindLabels[t.kind] }}
                       {{ t.quantity | qty }}
                       @if (t.price !== null) {
@@ -285,26 +285,28 @@ export interface InstrumentDialogData {
                   </span>
                   <span class="flex shrink-0 flex-col items-end text-right">
                     @if (t.value > 0) {
-                      <span class="text-[15px] font-bold">{{
+                      <span class="text-[15px] font-semibold">{{
                         t.value | price: d.accountCurrency
                       }}</span>
                     }
                     @if (t.realizedPnl !== null) {
-                      <span class="mt-0.5 text-[12.5px] font-bold" [class]="tone(t.realizedPnl)">{{
-                        t.realizedPnl | money: d.accountCurrency
-                      }}</span>
+                      <span
+                        class="mt-0.5 text-[12.5px] font-medium"
+                        [class]="tone(t.realizedPnl)"
+                        >{{ t.realizedPnl | money: d.accountCurrency }}</span
+                      >
                     }
                   </span>
                 } @else {
                   @let v = item.dividend;
                   <span class="min-w-0 flex-1">
-                    <span class="block text-[15px] font-bold" i18n>Dividend</span>
+                    <span class="block text-[15px] font-medium" i18n>Dividend</span>
                     <span class="mt-0.5 block text-[12.5px] font-semibold text-on-surface-variant">
                       {{ day(v.paidAt) | appDate }} · {{ v.quantity | qty }}
                       <ng-container i18n>shares</ng-container>
                     </span>
                   </span>
-                  <span class="shrink-0 text-[15px] font-bold" [class]="tone(v.amount)">{{
+                  <span class="shrink-0 text-[15px] font-semibold" [class]="tone(v.amount)">{{
                     v.amount | money: d.accountCurrency
                   }}</span>
                 }

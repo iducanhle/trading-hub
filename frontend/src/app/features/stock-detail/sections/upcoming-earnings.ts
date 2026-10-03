@@ -38,7 +38,7 @@ import { fiscalLabel } from '../../../shared/utils/format';
               >{{ e.date | relativeDay }}</span
             >
           </div>
-          <p class="mt-2 text-[26px] font-semibold">{{ e.date | appDate: 'long' }}</p>
+          <p class="mt-2 text-[22px] font-semibold">{{ e.date | appDate: 'long' }}</p>
           <p class="mt-0.5 text-sm font-semibold text-on-surface-variant">
             {{ e.time | reportTime }} <app-term-info term="reportTime" />
             @if (fiscal(e); as label) {
@@ -50,13 +50,15 @@ import { fiscalLabel } from '../../../shared/utils/format';
               <dt class="app-label inline-flex items-center gap-1 text-[11px]">
                 <span i18n>EPS estimate</span><app-term-info term="epsEstimate" />
               </dt>
-              <dd class="mt-1 text-lg font-bold">{{ e.epsEstimate | price: e.currency }}</dd>
+              <dd class="mt-1 text-base font-semibold">{{ e.epsEstimate | price: e.currency }}</dd>
             </div>
             <div class="rounded-[14px] bg-surface-container-high px-3.5 py-3">
               <dt class="app-label inline-flex items-center gap-1 text-[11px]">
                 <span i18n>Revenue estimate</span><app-term-info term="revenueEstimate" />
               </dt>
-              <dd class="mt-1 text-lg font-bold">{{ e.revenueEstimate | compact: e.currency }}</dd>
+              <dd class="mt-1 text-base font-semibold">
+                {{ e.revenueEstimate | compact: e.currency }}
+              </dd>
             </div>
           </dl>
         </div>

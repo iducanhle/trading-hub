@@ -53,6 +53,32 @@ export interface T212Fixture {
   transactions: T212Transaction[];
 }
 
+/** Money-weighted rate of return over the whole time since the first deposit, in percent (as the backend). */
+function rateOfReturn(
+  flows: readonly { at: string; amount: number }[],
+  value: number,
+): number | null {
+  const now = Date.now();
+  const sorted = flows.filter((f) => f.amount !== 0 && Date.parse(f.at) <= now);
+  if (!sorted.length || value <= 0) return null;
+  const start = Math.min(...sorted.map((f) => Date.parse(f.at)));
+  const span = now - start;
+  if (span <= 0) return null;
+  const gap = (rate: number) =>
+    sorted.reduce((s, f) => s + f.amount * (1 + rate) ** ((now - Date.parse(f.at)) / span), 0) -
+    value;
+  let low = -0.9999;
+  let high = 1;
+  while (gap(high) < 0 && high < 1e6) high *= 10;
+  if (gap(low) > 0 || gap(high) < 0) return null;
+  for (let i = 0; i < 200; i++) {
+    const mid = (low + high) / 2;
+    if (gap(mid) < 0) low = mid;
+    else high = mid;
+  }
+  return round(((low + high) / 2) * 100);
+}
+
 export class MockT212Error extends Error {
   constructor(
     readonly status: number,
@@ -268,6 +294,13 @@ export class MockT212 {
       totalPnl: round(total),
       includesUnrealized: allTime,
       totalPnlPct: allTime && bought > 0 ? round((total / bought) * 100) : null,
+      rateOfReturnPct:
+        allTime && data.account.totalValue !== null
+          ? rateOfReturn(
+              data.transactions.filter((t) => t.type === 'DEPOSIT' || t.type === 'WITHDRAW'),
+              data.account.totalValue,
+            )
+          : null,
       best: refs[0] ?? null,
       worst: refs.length > 1 ? refs[refs.length - 1] : null,
       syncState: status.syncState,

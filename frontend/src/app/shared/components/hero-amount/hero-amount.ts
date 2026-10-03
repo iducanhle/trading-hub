@@ -2,22 +2,22 @@ import { Component, booleanAttribute, computed, input } from '@angular/core';
 import { splitMoney, toneClass } from '../../utils/format';
 
 /**
- * The large figure at the top of a page (account value, price, total profit/loss): a light 48–50 px number with
+ * The large figure at the top of a page (account value, price, total profit/loss): a light 40 px number with
  * the currency symbol set small and bold beside it. `signed` adds + or − and colours it as a gain or a loss.
  */
 @Component({
   selector: 'app-hero-amount',
   template: `
     @if (parts().symbolFirst) {
-      <span class="text-[22px] font-bold">{{ parts().symbol }}</span>
+      <span class="text-lg font-bold">{{ parts().symbol }}</span>
     }
     <span
       class="font-light tracking-[-.02em]"
-      [class]="size() === 'md' ? 'text-[42px]' : 'text-5xl'"
+      [class]="size() === 'md' ? 'text-[34px]' : 'text-[40px]'"
       >{{ parts().amount }}</span
     >
     @if (!parts().symbolFirst && parts().symbol) {
-      <span class="text-[22px] font-bold">{{ parts().symbol }}</span>
+      <span class="text-lg font-bold">{{ parts().symbol }}</span>
     }
   `,
   host: {

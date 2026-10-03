@@ -132,7 +132,7 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
           </p>
           <app-pnl
             strong
-            class="mt-1 text-2xl"
+            class="mt-1 text-xl"
             [value]="i.totalPnl"
             [currency]="d.accountCurrency"
             [pct]="i.totalPnlPct"

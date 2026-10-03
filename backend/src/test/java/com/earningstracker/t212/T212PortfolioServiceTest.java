@@ -190,6 +190,7 @@ class T212PortfolioServiceTest {
         assertThat(s.includesUnrealized()).isTrue();
         assertThat(s.totalPnl()).isEqualTo(484.25); // 90.50 + 2.10 − 8.35 + 400
         assertThat(s.totalPnlPct()).isEqualTo(15.85); // ÷ 3,056 bought
+        assertThat(s.rateOfReturnPct()).isEqualTo(113.99); // 5,000 in March, 200 out in August, 10,450.25 now
         assertThat(s.deposits()).isEqualTo(5000);
         assertThat(s.withdrawals()).isEqualTo(200);
         assertThat(s.netDeposits()).isEqualTo(4800);
@@ -217,6 +218,7 @@ class T212PortfolioServiceTest {
         assertThat(s.includesUnrealized()).isFalse();
         assertThat(s.totalPnl()).isEqualTo(89.15);
         assertThat(s.totalPnlPct()).isNull();
+        assertThat(s.rateOfReturnPct()).isNull();
         assertThat(s.best().t212Ticker()).isEqualTo("AAPL_US_EQ");
         assertThat(s.worst()).isNull(); // only one instrument in the period
     }

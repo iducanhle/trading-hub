@@ -125,7 +125,7 @@ import {
               >
                 <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="48" />
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-base font-semibold">{{ item.name }}</span>
+                  <span class="block truncate text-[15px] font-medium">{{ item.name }}</span>
                   <span class="mt-0.5 flex min-w-0 items-center gap-1.5">
                     @if (item.status === 'OPEN') {
                       <span
@@ -150,11 +150,11 @@ import {
                   </span>
                 </span>
                 <span class="flex max-w-[45%] shrink-0 flex-col items-end text-right">
-                  <span class="text-base font-bold" [class]="tone(pnl(item))">{{
+                  <span class="text-[15px] font-semibold" [class]="tone(pnl(item))">{{
                     pnl(item) | money: data.value().accountCurrency
                   }}</span>
                   @if (allTime()) {
-                    <span class="mt-0.5 text-[12.5px] font-bold" [class]="tone(pnl(item))">{{
+                    <span class="mt-0.5 text-[12.5px] font-medium" [class]="tone(pnl(item))">{{
                       pct(item) | pct
                     }}</span>
                   }

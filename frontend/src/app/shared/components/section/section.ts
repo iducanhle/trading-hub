@@ -17,7 +17,7 @@ let nextId = 0;
           <button
             type="button"
             [id]="headingId"
-            class="flex min-h-12 w-full items-center gap-2 rounded-2xl px-5 text-left text-xl font-bold hover:bg-surface-container"
+            class="flex min-h-12 w-full items-center gap-2 rounded-2xl px-5 text-left text-lg font-bold hover:bg-surface-container"
             [attr.aria-expanded]="expanded()"
             [attr.aria-controls]="contentId"
             (click)="expanded.set(!expanded())"
@@ -32,7 +32,7 @@ let nextId = 0;
           </button>
         </h2>
       } @else {
-        <h2 [id]="headingId" class="flex min-h-12 items-center gap-2 px-5 text-xl font-bold">
+        <h2 [id]="headingId" class="flex min-h-12 items-center gap-2 px-5 text-lg font-bold">
           <span class="flex-1">{{ title() }}</span>
           <ng-content select="[sectionMeta]" />
         </h2>

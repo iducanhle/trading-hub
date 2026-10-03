@@ -60,7 +60,7 @@ import { StockContext } from '../stock-context';
             <li class="app-card text-sm">
               <div class="flex items-start justify-between gap-2">
                 <div>
-                  <p class="text-lg font-bold">{{ label(q) }}</p>
+                  <p class="text-base font-bold">{{ label(q) }}</p>
                   <p class="mt-0.5 text-[13px] font-semibold text-on-surface-variant">
                     {{ q.date | appDate: 'medium' }} · {{ q.time | reportTime }}
                     @if (q.timeAssumed) {

@@ -107,7 +107,7 @@ export function recommendationConsensus(p: RecommendationPeriod) {
           <div class="app-card">
             @if (consensus(); as c) {
               <p class="flex flex-wrap items-baseline gap-x-2.5">
-                <span class="text-[26px] font-bold" [class]="c.tone">{{ c.label }}</span>
+                <span class="text-[22px] font-bold" [class]="c.tone">{{ c.label }}</span>
                 <span class="text-sm font-semibold text-on-surface-variant" i18n
                   >{{ c.count }} of {{ c.total }} analysts · {{ c.month }}</span
                 >
