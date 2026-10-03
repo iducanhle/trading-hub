@@ -10,6 +10,8 @@ import {
   T212Holding,
   T212HoldingPosition,
   T212HoldingsResponse,
+  T212AllocationItem,
+  T212AllocationResponse,
   T212InstrumentDetail,
   T212InstrumentRef,
   T212InstrumentsResponse,
@@ -138,6 +140,8 @@ export class MockT212 {
         return this.summary(period);
       case 'holdings':
         return this.holdings();
+      case 'allocation':
+        return this.allocation();
       case 'instruments':
         return id ? this.instrument(id) : this.instruments(period, params.get('status') ?? 'ALL');
       case 'trades':
@@ -376,6 +380,34 @@ export class MockT212 {
       accountCurrency: data.accountCurrency,
       items: items.sort((a, b) => valueOf(b) - valueOf(a)),
       piesAvailable: true,
+      asOf: new Date().toISOString(),
+      stale: false,
+    };
+  }
+
+  /** Every position once; today's change is a stable made-up number per ticker (null when unmapped). */
+  private async allocation(): Promise<T212AllocationResponse> {
+    const data = await this.fixture();
+    const total = data.positions.reduce((sum, p) => sum + p.value, 0);
+    const items = data.positions
+      .map((p): T212AllocationItem => {
+        const info = data.instruments.find((i) => i.t212Ticker === p.t212Ticker);
+        const seed = [...p.t212Ticker].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000, 7);
+        return {
+          t212Ticker: p.t212Ticker,
+          symbol: info?.symbol ?? null,
+          name: info?.name ?? p.t212Ticker,
+          logoUrl: info?.logoUrl ?? null,
+          value: round(p.value),
+          weightPct: round((p.value / total) * 100),
+          dayChangePct: info?.symbol ? round(seed / 100 - 5) : null,
+        };
+      })
+      .sort((a, b) => b.value - a.value);
+    return {
+      accountCurrency: data.accountCurrency,
+      total: round(total),
+      items,
       asOf: new Date().toISOString(),
       stale: false,
     };

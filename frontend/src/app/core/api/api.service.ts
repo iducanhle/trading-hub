@@ -24,6 +24,7 @@ import {
   T212CredentialsRequest,
   T212DividendsResponse,
   T212HoldingsResponse,
+  T212AllocationResponse,
   T212InstrumentDetail,
   T212InstrumentsResponse,
   T212PositionStatus,
@@ -206,6 +207,10 @@ export class ApiService {
 
   t212Holdings(options?: LoadOptions): Observable<T212HoldingsResponse> {
     return this.get<T212HoldingsResponse>('/t212/holdings', {}, options, TTL.t212);
+  }
+
+  t212Allocation(options?: LoadOptions): Observable<T212AllocationResponse> {
+    return this.get<T212AllocationResponse>('/t212/allocation', {}, options, TTL.t212);
   }
 
   t212Instruments(

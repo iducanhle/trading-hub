@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import com.earningstracker.fx.FxService;
 import com.earningstracker.market.Logos;
 import com.earningstracker.service.ProfileService;
+import com.earningstracker.service.QuoteService;
 import com.earningstracker.t212.T212PortfolioEngine.FillResult;
 import com.earningstracker.t212.T212PortfolioEngine.InstrumentResult;
 import com.earningstracker.web.dto.T212Dtos;
@@ -43,16 +44,18 @@ public class T212PortfolioService {
     private final T212LiveService liveService;
     private final T212PieService pieService;
     private final ProfileService profiles;
+    private final QuoteService quotes;
     private final FxService fx;
     private final Clock clock;
 
     public T212PortfolioService(T212ConnectionService connection, T212DataStore store, T212LiveService liveService,
-            T212PieService pieService, ProfileService profiles, FxService fx, Clock clock) {
+            T212PieService pieService, ProfileService profiles, QuoteService quotes, FxService fx, Clock clock) {
         this.connection = connection;
         this.store = store;
         this.liveService = liveService;
         this.pieService = pieService;
         this.profiles = profiles;
+        this.quotes = quotes;
         this.fx = fx;
         this.clock = clock;
     }
@@ -191,6 +194,51 @@ public class T212PortfolioService {
         items.sort(Comparator.comparing(T212PortfolioService::holdingValue,
                 Comparator.nullsLast(Comparator.reverseOrder())));
         return new T212Dtos.HoldingList(ctx.currency(), items, pies != null, ctx.asOf(), ctx.stale());
+    }
+
+    /** How many of the largest positions get today's price change (one quote each, cached for 60 s). */
+    static final int QUOTED_POSITIONS = 24;
+
+    /**
+     * Open positions as shares of their total value, largest first, each instrument once (inside and outside pies
+     * together). The largest {@link #QUOTED_POSITIONS} carry today's price change from the quote of their mapped
+     * symbol; the others, unmapped ones and failed quotes have none.
+     */
+    public T212Dtos.Allocation allocation(String uid) {
+        Context ctx = context(uid, true);
+        Map<String, T212Live.Position> live = ctx.positions() == null ? Map.of() : ctx.positions();
+        List<T212Live.Position> held = live.values().stream()
+                .filter(p -> p.value() != null && p.value() > 0)
+                .sorted(Comparator.comparingDouble(T212Live.Position::value).reversed()).toList();
+        double total = held.stream().mapToDouble(T212Live.Position::value).sum();
+        Map<String, String> logos = logos(ctx, held.stream().map(T212Live.Position::ticker).toList());
+        List<String> quoted = held.stream().limit(QUOTED_POSITIONS).map(p -> info(ctx, p.ticker()).symbol())
+                .filter(Objects::nonNull).distinct().toList();
+        Map<String, Double> changes = dayChanges(quoted);
+        List<T212Dtos.AllocationItem> items = held.stream().map(p -> {
+            T212InstrumentInfo info = info(ctx, p.ticker());
+            return new T212Dtos.AllocationItem(p.ticker(), info.symbol(), name(info), logos.get(p.ticker()),
+                    round(p.value()), round(p.value() / total * 100),
+                    info.symbol() == null ? null : changes.get(info.symbol()));
+        }).toList();
+        return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
+    }
+
+    /** Today's price change in percent by symbol, quotes fetched in parallel; a failed quote is left out. */
+    private Map<String, Double> dayChanges(List<String> symbols) {
+        Map<String, Double> changes = new java.util.concurrent.ConcurrentHashMap<>();
+        try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+            for (String symbol : symbols) {
+                executor.submit(() -> {
+                    try {
+                        changes.put(symbol, round(quotes.quote(symbol).value().changePercent()));
+                    } catch (RuntimeException e) {
+                        // no change for this one
+                    }
+                });
+            }
+        }
+        return changes;
     }
 
     public T212Dtos.InstrumentDetail instrument(String uid, String ticker) {

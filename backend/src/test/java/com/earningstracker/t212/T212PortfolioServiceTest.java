@@ -28,7 +28,10 @@ import com.earningstracker.provider.t212.T212Environment;
 import com.earningstracker.provider.t212.T212TestSupport;
 import com.earningstracker.provider.t212.T212TestSupport.MutableClock;
 import com.earningstracker.provider.t212.T212TestSupport.RecordingSleeper;
+import com.earningstracker.cache.TieredCache.Cached;
+import com.earningstracker.market.Quote;
 import com.earningstracker.service.ProfileService;
+import com.earningstracker.service.QuoteService;
 import com.earningstracker.web.dto.T212Dtos;
 import com.earningstracker.web.error.ApiException;
 import com.earningstracker.web.error.ErrorCode;
@@ -53,6 +56,7 @@ class T212PortfolioServiceTest {
     private T212ConnectionService connection;
     private T212PortfolioService portfolio;
     private T212SyncService sync;
+    private final QuoteService quotes = mock(QuoteService.class);
 
     @BeforeEach
     void start() throws Exception {
@@ -76,6 +80,8 @@ class T212PortfolioServiceTest {
         sync = new T212SyncService(client, connection, states, data, tracker, executor, clock);
         ProfileService profiles = mock(ProfileService.class);
         given(profiles.logos(any())).willReturn(Map.of("AAPL", "https://logos.example/aapl.png"));
+        given(quotes.quote("AAPL")).willReturn(new Cached<>(
+                Quote.of("AAPL", 170.0, 172.0, "USD", clock.instant()), clock.instant(), false));
         FxService fx = mock(FxService.class);
         given(fx.toUsd(any(), any())).willAnswer(call -> switch ((String) call.getArgument(1)) {
             case "EUR" -> (Double) call.getArgument(0) * 1.10;
@@ -83,7 +89,7 @@ class T212PortfolioServiceTest {
             default -> null;
         });
         portfolio = new T212PortfolioService(connection, data, new T212LiveService(client, connection, properties,
-                clock), new T212PieService(client, connection, clock), profiles, fx, clock);
+                clock), new T212PieService(client, connection, clock), profiles, quotes, fx, clock);
 
         connection.connect(UID, new T212Dtos.CredentialsRequest(API_KEY, API_SECRET, T212Environment.DEMO));
         sync.runNow(UID).orElseThrow();
@@ -118,6 +124,26 @@ class T212PortfolioServiceTest {
             assertThat(item.position().pnlPct()).isEqualTo(-5.56); // −92 ÷ 1,656
         });
         assertThat(routes.requests("/api/v0/equity/pies")).isEmpty();
+    }
+
+    @Test
+    void allocationGivesSharesAndTodaysChange() {
+        T212Dtos.Allocation a = portfolio.allocation(UID);
+
+        assertThat(a.total()).isEqualTo(1564.0);
+        assertThat(a.items()).singleElement().satisfies(item -> {
+            assertThat(item.t212Ticker()).isEqualTo("AAPL_US_EQ");
+            assertThat(item.value()).isEqualTo(1564.0);
+            assertThat(item.weightPct()).isEqualTo(100.0);
+            assertThat(item.dayChangePct()).isEqualTo(-1.16); // 170 after 172
+        });
+    }
+
+    @Test
+    void allocationWithoutAQuoteHasNoChange() {
+        given(quotes.quote("AAPL")).willThrow(new IllegalStateException("down"));
+
+        assertThat(portfolio.allocation(UID).items().getFirst().dayChangePct()).isNull();
     }
 
     @Test

@@ -494,6 +494,28 @@ export interface T212HoldingPosition {
   pnlPct: number | null;
 }
 
+/** One instrument held now, inside and outside pies together. */
+export interface T212AllocationItem {
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  logoUrl: string | null;
+  value: number;
+  /** Share of all open positions' value, in percent. */
+  weightPct: number;
+  /** Today's price change in percent; null beyond the 24 largest, unmapped or without a quote. */
+  dayChangePct: number | null;
+}
+
+export interface T212AllocationResponse {
+  accountCurrency: string;
+  total: number;
+  /** Largest value first. */
+  items: T212AllocationItem[];
+  asOf: string;
+  stale: boolean;
+}
+
 export interface T212Pie {
   /** id and name are null when the pies could not be read and the pie positions are grouped. */
   id: number | null;

@@ -563,6 +563,13 @@
     "7911416166208830577": "Nápověda",
     "5851560788527570644": "Oznámení",
     "1726363342938046830": "O aplikaci",
-    "3208980041287937682": "Připojeno"
+    "3208980041287937682": "Připojeno",
+    "87317198471702614": "Rozložení portfolia",
+    "8543615964997113131": " Podíl každé pozice v portfoliu a dnešní změna ceny. ",
+    "4974800325921905713": "Zobrazit všechny pozice",
+    "3517550046701184661": "Zobrazit méně",
+    "3874137787806029269": "Zobrazit vše",
+    "7639729404648007717": "{$ticker}, {$share} portfolia",
+    "6338535621337465554": "{$ticker}, {$share} portfolia, dnes {$change}"
   }
 }

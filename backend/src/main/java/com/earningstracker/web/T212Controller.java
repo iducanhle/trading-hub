@@ -105,6 +105,11 @@ public class T212Controller {
         return portfolio.holdings(user.uid());
     }
 
+    @GetMapping("/allocation")
+    public T212Dtos.Allocation allocation(@AuthenticationPrincipal AuthenticatedUser user) {
+        return portfolio.allocation(user.uid());
+    }
+
     @GetMapping("/instruments/{t212Ticker}")
     public T212Dtos.InstrumentDetail instrument(@AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable String t212Ticker) {

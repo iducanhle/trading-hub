@@ -14,6 +14,7 @@ import { Icon } from '../../shared/icon/icon';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { PercentPipe, PricePipe, SignedMoneyPipe } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
+import { PortfolioAllocation } from './portfolio-allocation';
 import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioPeriod, displayTicker, periodQuery } from './portfolio-model';
 
@@ -35,6 +36,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
     SignedMoneyPipe,
     HeroAmount,
     PortfolioHoldings,
+    PortfolioAllocation,
   ],
   template: `
     @if (data.error() && !data.hasValue()) {
@@ -125,6 +127,8 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
           No trades or dividends yet.
         </p>
       }
+
+      <app-portfolio-allocation class="mt-3.5 block" [version]="version()" />
 
       <app-portfolio-holdings
         class="mt-3.5 block"
