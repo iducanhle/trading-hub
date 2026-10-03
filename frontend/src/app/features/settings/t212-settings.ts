@@ -38,11 +38,27 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
     Icon,
     DateTimePipe,
   ],
+  styles: `
+    .danger-text {
+      --mat-button-text-label-text-color: var(--mat-sys-error);
+    }
+  `,
   template: `
-    <section aria-labelledby="t212-title" class="rounded-3xl bg-surface-container-low p-4">
-      <h2 id="t212-title" class="mb-3 text-sm font-semibold text-on-surface-variant">
-        Trading 212
-      </h2>
+    <section aria-labelledby="t212-title" class="app-card">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h2 id="t212-title" class="app-label">Trading 212</h2>
+        @if (status()?.connected) {
+          <span
+            class="rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-[.04em] uppercase"
+            [class]="
+              status()!.credentialsValid === false
+                ? 'bg-error-container text-on-error-container'
+                : 'bg-gain-container text-gain'
+            "
+            >● <ng-container i18n="Trading 212 connection status">Connected</ng-container></span
+          >
+        }
+      </div>
 
       @if (!t212.loaded()) {
         <div class="space-y-3" aria-hidden="true">
@@ -70,43 +86,51 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             </div>
           </div>
         }
-        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt class="text-on-surface-variant" i18n>Account</dt>
-          <dd>
-            @if (s.environment === 'DEMO') {
-              <ng-container i18n="Trading 212 paper-trading account"
-                >Demo (paper trading)</ng-container
-              >
-            } @else {
-              <ng-container i18n="Trading 212 real-money account">Live</ng-container>
-            }
-            @if (s.accountCurrency) {
-              · {{ s.accountCurrency }}
-            }
-          </dd>
-          <dt class="text-on-surface-variant" i18n>API key</dt>
-          <dd class="font-mono">•••• {{ s.keyHint || '' }}</dd>
-          <dt class="text-on-surface-variant" i18n>Last sync</dt>
-          <dd>
-            @if (s.syncState === 'RUNNING') {
-              <span class="inline-flex items-center gap-1.5" role="status">
-                <app-icon name="sync" [size]="16" class="animate-spin" />
-                <ng-container i18n>Syncing…</ng-container>
-              </span>
-            } @else if (s.lastSyncAt) {
-              {{ s.lastSyncAt | dateTime }}
-            } @else {
-              <ng-container i18n>Not yet</ng-container>
-            }
-          </dd>
+        <dl class="divide-y divide-outline-variant text-[15px] font-semibold">
+          <div class="flex items-baseline justify-between gap-3 py-2.5">
+            <dt class="app-label" i18n>Account</dt>
+            <dd class="text-right">
+              @if (s.environment === 'DEMO') {
+                <ng-container i18n="Trading 212 paper-trading account"
+                  >Demo (paper trading)</ng-container
+                >
+              } @else {
+                <ng-container i18n="Trading 212 real-money account">Live</ng-container>
+              }
+              @if (s.accountCurrency) {
+                · {{ s.accountCurrency }}
+              }
+            </dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 py-2.5">
+            <dt class="app-label" i18n>API key</dt>
+            <dd class="text-right">•••• {{ s.keyHint || '' }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 py-2.5">
+            <dt class="app-label" i18n>Last sync</dt>
+            <dd class="text-right">
+              @if (s.syncState === 'RUNNING') {
+                <span class="inline-flex items-center gap-1.5" role="status">
+                  <app-icon name="sync" [size]="16" class="animate-spin" />
+                  <ng-container i18n>Syncing…</ng-container>
+                </span>
+              } @else if (s.lastSyncAt) {
+                {{ s.lastSyncAt | dateTime }}
+              } @else {
+                <ng-container i18n>Not yet</ng-container>
+              }
+            </dd>
+          </div>
           @if (s.syncState === 'FAILED' && s.credentialsValid !== false) {
-            <dt class="text-on-surface-variant" i18n>Last attempt</dt>
-            <dd class="text-error">{{ s.lastError?.message }}</dd>
+            <div class="flex items-baseline justify-between gap-3 py-2.5">
+              <dt class="app-label" i18n>Last attempt</dt>
+              <dd class="text-right text-error">{{ s.lastError?.message }}</dd>
+            </div>
           }
         </dl>
-        <div class="mt-4 flex flex-wrap gap-2">
+        <div class="mt-3 flex flex-wrap gap-2">
           <button
-            matButton="tonal"
+            matButton="filled"
             type="button"
             [disabled]="t212.syncing() || busy() || s.credentialsValid === false"
             (click)="syncNow()"
@@ -114,11 +138,17 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             <app-icon matButtonIcon name="sync" [size]="18" />
             <ng-container i18n>Sync now</ng-container>
           </button>
-          <button matButton="outlined" type="button" [disabled]="busy()" (click)="startReplace()">
+          <button matButton="tonal" type="button" [disabled]="busy()" (click)="startReplace()">
             <app-icon matButtonIcon name="key" [size]="18" />
             <ng-container i18n>Replace key</ng-container>
           </button>
-          <button matButton type="button" [disabled]="busy()" (click)="disconnect()">
+          <button
+            matButton
+            type="button"
+            class="danger-text"
+            [disabled]="busy()"
+            (click)="disconnect()"
+          >
             <app-icon matButtonIcon name="link_off" [size]="18" />
             <ng-container i18n>Disconnect</ng-container>
           </button>

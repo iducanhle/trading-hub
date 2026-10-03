@@ -11,7 +11,7 @@
 | 2 – Search + Stock detail | Done |
 | 3 – Followed + Calendar + Settings | Done |
 | 4 – Polish + deployment | Done |
-| Redesign ([DESIGN-TOKENS.md](DESIGN-TOKENS.md)) | In progress: 2 of 4 |
+| Redesign ([DESIGN-TOKENS.md](DESIGN-TOKENS.md)) | Done (2026-10-03) |
 
 ## Trading 212 feature
 
@@ -150,15 +150,18 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 
 ## In progress
 
+Nothing. The **redesign** is done; what follows is its record.
+
 **Redesign** after the "Tradiqo Redesign" canvas (tokens and component notes in [DESIGN-TOKENS.md](DESIGN-TOKENS.md)). Steps:
 1. ~~Foundations~~ (done 2026-10-03): the design tokens mapped onto `--mat-sys-*` (`mat.theme-overrides`) plus `--app-*` for gain/loss, sheet, scrim and the analyst scale; Material component overrides (pill buttons, 44 px icon buttons, borderless toggles, filter chips, switch, sheets, dialogs, menus, no shadows); Manrope self-hosted (`@fontsource-variable/manrope`); Lucide icons; dark-theme glow (`app-glow` utility on `<body>` and the drawer); the burger menu at every width (the navigation rail is gone).
 2. ~~Shared components~~ (done 2026-10-03): `app-segmented` / `app-segment` (a radio group; `track` and `chips` appearances, `inset` on cards and sheets, `stretch`) replaces every `mat-button-toggle`, the three hand-made range selectors and the portfolio period chips; `app-sheet` (handle, 22 px title, 52 px footer buttons marked `sheetActions`) wraps every bottom sheet; the top bar is transparent until the page scrolls, with an uppercase 22 px / 800 title on section pages; stock-page sections have 20 px / 700 headings and no dividers; the drawer has the account value card (Trading 212 connected), the followed count, Settings and the signed-in user at the bottom (`app-user-avatar`); form fields are `fill` on card2 with 14 px corners and a focus ring.
-3. Screens one by one: ~~Portfolio~~ (done 2026-10-03) → ~~Stock detail~~ (done 2026-10-03) → ~~Followed~~ and Search (done 2026-10-03) → ~~Calendar~~ and ~~Events~~ (done 2026-10-03) → Settings.
+3. Screens one by one: ~~Portfolio~~ (done 2026-10-03) → ~~Stock detail~~ (done 2026-10-03) → ~~Followed~~ and Search (done 2026-10-03) → ~~Calendar~~ and ~~Events~~ (done 2026-10-03) → ~~Settings~~ (done 2026-10-03).
    - Shared pieces added for the screens: `app-label` and `app-card` utilities, `app-hero-amount` (light 48 px number, small bold currency; `splitMoney`), `app-filter-button` (46 px, accent dot when active); stock logos are rounded squares (14 px corners at 48 px) everywhere.
    - Portfolio: chip tabs (the Dividends & cash tab is now "Dividends", with a Dividends / Cash switch inside), account value hero with total profit/loss, return and net deposits, best/worst card, open positions card with a search; Stocks with search + filter button and status pills; Trades grouped by day in cards with buy/sell arrow tiles; position detail with the hero total, realized/unrealized tiles, a key-value table and the timeline in a card.
    - Stock detail: header pill (ticker · price, a dot for the day's direction) with the follow star; name, hero price, change and tag pills; the chart (area with the accent gradient, 20 px ringed "E" markers) with the range chips, change + Measure and the toggles below it; tabs Overview · Results · Analysts · News (`?tab=`, switched with `Location.replaceState` so the title stays); upcoming earnings card, bordered key-stats table with the 52-week bar, performance tiles, analyst consensus headline (majority of buy / hold / sell in the newest month) over rounded bars.
    - Followed: "Next earnings" card with a ring counting the days, a search-looking link to Search, groups with 48 px logos. Search: filled 50 px field, results with a region pill and a follow star, recent searches in a card.
    - Calendar and Events (shared layout): a 7-day strip (today on the accent, a dot for days with reports) that scrolls to the day's card; days as cards with 50 px tiles; the month grid as cards with narrow 32 px weekend columns on phones; uppercase filter labels; day sheets with 44 px logos. The Events page title is now "Events" (as in the menu), because "Tržní události" in capitals does not fit at 375 px.
+   - Settings: account card (52 px avatar, sign-out icon button), cards with uppercase labels, switches as rows (label left, switch right: `app-switch-row`), Trading 212 card with a Connected pill, key-value rows, Sync (filled), Replace key (tonal) and Disconnect (red text).
    - Not built: the canvas's account value chart over time. Trading 212 data has no value history (only the current summary), so drawing one would invent data.
 4. New features from the design: none left. Chart "Measure" and best/worst stocks already existed; check the canvas again after step 3.
 

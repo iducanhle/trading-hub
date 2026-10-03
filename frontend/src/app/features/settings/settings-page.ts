@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
@@ -19,7 +19,9 @@ import { APP_VERSION } from '../../core/version';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
+import { UserAvatar } from '../../shared/components/user-avatar/user-avatar';
 import { Icon } from '../../shared/icon/icon';
+import { providerLabel } from '../../shared/utils/user';
 import { T212Settings } from './t212-settings';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
@@ -32,6 +34,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
   imports: [
     ReactiveFormsModule,
     MatButton,
+    MatIconButton,
     Segmented,
     Segment,
     MatSlideToggle,
@@ -46,50 +49,35 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
     ErrorState,
     Skeleton,
     Icon,
+    UserAvatar,
     T212Settings,
   ],
   template: `
     <app-page-header title="Settings" i18n-title />
-    <div class="mx-auto max-w-2xl space-y-4 px-4 pt-2 pb-10">
-      <section aria-labelledby="account-title" class="rounded-3xl bg-surface-container-low p-4">
-        <h2 id="account-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
-          Account
-        </h2>
-        <div class="flex items-center gap-3">
-          @if (user()?.photoUrl && !avatarFailed()) {
-            <img
-              [src]="user()!.photoUrl"
-              alt=""
-              width="48"
-              height="48"
-              referrerpolicy="no-referrer"
-              class="size-12 rounded-full"
-              (error)="avatarFailed.set(true)"
-            />
-          } @else {
-            <span
-              class="flex size-12 items-center justify-center rounded-full bg-primary-container text-lg font-semibold text-on-primary-container"
-              aria-hidden="true"
-              >{{ initials() }}</span
-            >
-          }
-          <div class="min-w-0 flex-1">
-            <p class="truncate font-medium">{{ user()?.displayName || user()?.email }}</p>
-            <p class="truncate text-sm text-on-surface-variant">
-              {{ user()?.email }} · {{ provider() }}
-            </p>
-          </div>
+    <div class="mx-auto max-w-2xl space-y-3.5 px-4 pt-2 pb-10">
+      <section aria-labelledby="account-title" class="app-card flex items-center gap-3.5">
+        <h2 id="account-title" class="sr-only" i18n>Account</h2>
+        <app-user-avatar [user]="user()" [size]="52" />
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-[17px] font-bold">{{ user()?.displayName || user()?.email }}</p>
+          <p class="truncate text-[13px] font-semibold text-on-surface-variant">
+            {{ user()?.email }} · {{ provider() }}
+          </p>
         </div>
-        <button matButton="outlined" type="button" class="mt-4" (click)="signOut()">
-          <app-icon matButtonIcon name="logout" [size]="18" />
-          <ng-container i18n>Sign out</ng-container>
+        <button
+          matIconButton
+          type="button"
+          class="text-on-surface-variant"
+          aria-label="Sign out"
+          i18n-aria-label
+          (click)="signOut()"
+        >
+          <app-icon name="logout" />
         </button>
       </section>
 
-      <section aria-labelledby="appearance-title" class="rounded-3xl bg-surface-container-low p-4">
-        <h2 id="appearance-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
-          Appearance
-        </h2>
+      <section aria-labelledby="appearance-title" class="app-card">
+        <h2 id="appearance-title" class="app-label mb-3" i18n>Appearance</h2>
         <app-segmented
           aria-labelledby="appearance-title"
           inset
@@ -109,10 +97,8 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
         </app-segmented>
       </section>
 
-      <section aria-labelledby="language-title" class="rounded-3xl bg-surface-container-low p-4">
-        <h2 id="language-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
-          Language
-        </h2>
+      <section aria-labelledby="language-title" class="app-card">
+        <h2 id="language-title" class="app-label mb-3" i18n>Language</h2>
         <app-segmented
           aria-labelledby="language-title"
           inset
@@ -124,38 +110,29 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
           <app-segment value="en" lang="en">English</app-segment>
           <app-segment value="cs" lang="cs">Čeština</app-segment>
         </app-segmented>
-        <p class="mt-2 text-xs text-on-surface-variant" i18n>
+        <p class="mt-2.5 text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
           The app reloads in the chosen language.
         </p>
       </section>
 
-      <section aria-labelledby="help-title" class="rounded-3xl bg-surface-container-low p-4">
-        <h2 id="help-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
-          Help
-        </h2>
+      <section aria-labelledby="help-title" class="app-card">
+        <h2 id="help-title" class="app-label mb-2" i18n>Help</h2>
         <mat-slide-toggle
+          class="app-switch-row"
+          labelPosition="before"
           [checked]="settings().termHints"
           [disabled]="!settingsService.loaded()"
           (change)="save({ termHints: $event.checked })"
         >
           <ng-container i18n>Show term explanations</ng-container>
         </mat-slide-toggle>
-        <p class="mt-2 text-xs text-on-surface-variant" i18n>
+        <p class="mt-1 text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
           An ⓘ button next to terms such as EPS or P/E explains them in plain words.
         </p>
       </section>
 
-      <section
-        aria-labelledby="notifications-title"
-        class="rounded-3xl bg-surface-container-low p-4"
-      >
-        <h2
-          id="notifications-title"
-          class="mb-3 text-sm font-semibold text-on-surface-variant"
-          i18n
-        >
-          Notifications
-        </h2>
+      <section aria-labelledby="notifications-title" class="app-card">
+        <h2 id="notifications-title" class="app-label mb-2" i18n>Notifications</h2>
         @if (settingsService.error()) {
           <app-error-state
             compact
@@ -171,7 +148,8 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
           </div>
         } @else {
           <mat-slide-toggle
-            class="mb-4"
+            class="app-switch-row mb-3"
+            labelPosition="before"
             [checked]="settings().notificationsEnabled"
             (change)="save({ notificationsEnabled: $event.checked })"
           >
@@ -209,7 +187,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
               <mat-error i18n>Enter a valid email address.</mat-error>
             </mat-form-field>
           </div>
-          <p class="mt-2 text-sm text-on-surface-variant" i18n>
+          <p class="mt-2 text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
             Sent daily at 12:00 (Prague time) when a followed stock reports within this window.
           </p>
           <button
@@ -231,24 +209,19 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 
       <app-t212-settings id="trading212" class="block scroll-mt-20" />
 
-      <section
-        aria-labelledby="about-title"
-        class="rounded-3xl bg-surface-container-low p-4 text-sm"
-      >
-        <h2 id="about-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
-          About
-        </h2>
-        <dl class="space-y-3">
+      <section aria-labelledby="about-title" class="app-card text-sm font-semibold">
+        <h2 id="about-title" class="app-label mb-3" i18n>About</h2>
+        <dl class="space-y-3 leading-relaxed">
           <div>
-            <dt class="text-xs text-on-surface-variant" i18n>Version</dt>
+            <dt class="app-label text-[11px]" i18n>Version</dt>
             <dd>Earnings Tracker {{ version }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-on-surface-variant" i18n>Data sources</dt>
+            <dt class="app-label text-[11px]" i18n>Data sources</dt>
             <dd i18n>Finnhub, Twelve Data, Yahoo Finance and Financial Modeling Prep.</dd>
           </div>
           <div>
-            <dt class="text-xs text-on-surface-variant" i18n>Charts</dt>
+            <dt class="app-label text-[11px]" i18n>Charts</dt>
             <dd>
               <a
                 href="https://www.tradingview.com/"
@@ -261,12 +234,12 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             </dd>
           </div>
           <div>
-            <dt class="text-xs text-on-surface-variant" i18n>Icons</dt>
+            <dt class="app-label text-[11px]" i18n>Icons</dt>
             <dd i18n>Lucide (ISC).</dd>
           </div>
         </dl>
         <p
-          class="mt-4 rounded-2xl bg-surface-container-high p-3 text-xs text-on-surface-variant"
+          class="mt-4 rounded-2xl bg-surface-container-high p-3 text-xs font-semibold text-on-surface-variant"
           i18n
         >
           Data may be delayed; not investment advice.
@@ -288,29 +261,13 @@ export class SettingsPage {
   protected readonly dayOptions = [1, 2, 3, 4, 5, 6, 7];
   protected readonly user = this.auth.user;
   protected readonly settings = this.settingsService.settings;
-  protected readonly avatarFailed = signal(false);
   protected readonly sending = signal(false);
   protected readonly email = new FormControl('', {
     nonNullable: true,
     validators: [Validators.email],
   });
 
-  protected readonly initials = computed(() => {
-    const u = this.user();
-    const source = u?.displayName || u?.email || '?';
-    return source
-      .split(/[\s@.]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]!.toUpperCase())
-      .join('');
-  });
-  protected readonly provider = computed(() => {
-    const providers = this.user()?.providers ?? [];
-    if (providers.includes('google.com')) return 'Google';
-    if (providers.includes('password')) return $localize`Email and password`;
-    return $localize`Signed in`;
-  });
+  protected readonly provider = computed(() => providerLabel(this.user()));
 
   constructor() {
     // Show the stored address (also when it changes on another device), unless the user is editing it.
