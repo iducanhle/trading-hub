@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { T212InstrumentRef } from '../../core/models/contract';
@@ -17,6 +17,7 @@ import { toneClass } from '../../shared/utils/format';
 import { PortfolioAllocation } from './portfolio-allocation';
 import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioPeriod, displayTicker, periodQuery } from './portfolio-model';
+import { PositionDialog, PositionDialogData } from './position-dialog';
 
 const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 
@@ -24,7 +25,6 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 @Component({
   selector: 'app-portfolio-overview',
   imports: [
-    RouterLink,
     ErrorState,
     Skeleton,
     StaleChip,
@@ -100,9 +100,10 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
           i18n-aria-label
         >
           @for (row of extremes(); track row.label; let second = $odd) {
-            <a
-              [routerLink]="['/portfolio', row.item.t212Ticker]"
-              class="flex min-w-0 flex-col gap-2"
+            <button
+              type="button"
+              (click)="openPosition(row.item.t212Ticker)"
+              class="flex min-w-0 text-left flex-col gap-2"
               [class]="second ? 'border-l border-outline-variant pl-3.5' : ''"
             >
               <span class="app-label">{{ row.label }}</span>
@@ -119,7 +120,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
               <span class="text-[15px] font-semibold" [class]="tone(row.item.totalPnl)">{{
                 row.item.totalPnl | money: s.accountCurrency
               }}</span>
-            </a>
+            </button>
           }
         </section>
       } @else if (!t212.syncing()) {
@@ -142,6 +143,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 export class PortfolioOverview {
   private readonly api = inject(ApiService);
   protected readonly t212 = inject(T212Service);
+  private readonly dialog = inject(MatDialog);
 
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
@@ -180,6 +182,15 @@ export class PortfolioOverview {
     if (worst) rows.push({ label: $localize`Worst`, item: worst });
     return rows;
   });
+
+  protected openPosition(t212Ticker: string): void {
+    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      data: { t212Ticker },
+      width: 'calc(100vw - 32px)',
+      maxWidth: '32rem',
+      autoFocus: 'dialog',
+    });
+  }
 
   protected tone(value: number | null): string {
     return toneClass(value);
