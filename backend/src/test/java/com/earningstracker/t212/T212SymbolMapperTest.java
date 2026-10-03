@@ -13,6 +13,7 @@ class T212SymbolMapperTest {
             "AAPL_US_EQ, USD, AAPL",
             "BRK_B_US_EQ, USD, BRK-B",
             "NVDA_US_EQ, , NVDA",
+            "SNDK1_US_EQ, USD, SNDK",
             "SAPd_EQ, EUR, SAP.DE",
             "AZNl_EQ, GBX, AZN.L",
             "AZNl_EQ, GBP, AZN.L",

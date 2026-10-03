@@ -38,7 +38,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 
 - Phase 3:
   - `T212Normalizer`: filled orders → `T212Fill` (positive quantity and value + `side`, pence → GBP, fees vs taxes, charges in the instrument currency converted with the rate implied by the fill itself, realized P/L on sells only, corporate actions with their direction from the quantity sign); dividends; transactions (signed: withdrawals and fees negative). Unfilled orders are skipped.
-  - `T212SymbolMapper` (`_US_EQ`, exchange letters d/l/p/a/z/m/e/s, currency cross-check, else null).
+  - `T212SymbolMapper` (`_US_EQ`, exchange letters d/l/p/a/z/m/e/s, currency cross-check, else null). A reused US ticker gets a digit from Trading 212 (`SNDK1_US_EQ` is today's SanDisk), so one trailing digit after letters is dropped.
   - `T212DataStore` (month/year buckets, instruments document, Caffeine cache 6 h after last use) and `T212UserData` snapshots.
   - `T212SyncService`: full sync until each history was read to the end once (`completeHistories` in `t212/{uid}`), then incremental; one per user (`T212SyncTracker`); saves after each history under the user's lock and only while the account is unchanged; disconnect or an account change cancels it; 401/403 mark the key invalid; other failures → `FAILED` with the error, and unsaved items are dropped from memory so the next sync saves them. Instrument metadata is fetched only when an instrument has no currency.
   - `PUT /credentials` starts the first sync; `POST /api/t212/sync` (202); `t212-sync` job (every `app.t212.sync-interval`, first 15 min after startup; skips rejected keys). Status reports a sync stored as running but not running in this process (restart) as `FAILED` "interrupted".

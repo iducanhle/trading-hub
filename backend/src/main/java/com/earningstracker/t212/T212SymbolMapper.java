@@ -10,7 +10,7 @@ import com.earningstracker.market.Symbols;
 /**
  * Trading 212 tickers to the app's canonical symbols: {@code AAPL_US_EQ} → {@code AAPL}, {@code BRK_B_US_EQ} →
  * {@code BRK-B}, {@code SAPd_EQ} → {@code SAP.DE}, {@code AZNl_EQ} → {@code AZN.L}, {@code RBI_AT_EQ} →
- * {@code RBI.VI}.
+ * {@code RBI.VI}, {@code SNDK1_US_EQ} → {@code SNDK}.
  *
  * <p>Checked against a real account's 214 tickers (docs/DATA-SOURCES.md): {@code d} Xetra, {@code l} LSE,
  * {@code p} Paris, {@code a} Amsterdam, {@code m} Milan and {@code s} SIX are seen; {@code e} (Madrid) follows the
@@ -22,6 +22,8 @@ import com.earningstracker.market.Symbols;
 public final class T212SymbolMapper {
 
     private static final Pattern US = Pattern.compile("([A-Z0-9][A-Z0-9_]*)_US_EQ");
+    /** Trading 212 adds a digit to a reused US ticker: {@code SNDK1_US_EQ} is today's SanDisk, {@code SNDK}. */
+    private static final Pattern REUSED = Pattern.compile("^([A-Z]+)\\d$");
     private static final Pattern COUNTRY = Pattern.compile("([A-Z0-9][A-Z0-9_]*)_([A-Z]{2})_EQ");
     private static final Pattern LETTER = Pattern.compile("([A-Z0-9][A-Z0-9_]*?)([a-z])_EQ");
     private static final Map<String, Exchange> LETTERS = Map.of(
@@ -50,7 +52,8 @@ public final class T212SymbolMapper {
             if (currency != null && !"USD".equalsIgnoreCase(currency)) {
                 return null;
             }
-            return Symbols.normalize(us.group(1).replace('_', '-')).filter(s -> s.indexOf('.') < 0).orElse(null);
+            String base = REUSED.matcher(us.group(1)).replaceFirst("$1");
+            return Symbols.normalize(base.replace('_', '-')).filter(s -> s.indexOf('.') < 0).orElse(null);
         }
         Matcher country = COUNTRY.matcher(t212Ticker);
         if (country.matches()) {
