@@ -12,7 +12,6 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
-import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import {
@@ -61,7 +60,6 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
     SignedMoneyPipe,
     PercentPipe,
     FilterButton,
-    HeroAmount,
     TermInfo,
     Segmented,
     Segment,
@@ -134,30 +132,25 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
           [text]="data.value().items.length ? undefined : labels.emptyText"
         />
       } @else {
-        <section class="mt-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 px-1">
-          <div>
+        <section
+          class="app-card mt-5 grid gap-3.5"
+          [class]="totalAfterFees() ? 'grid-cols-2' : 'grid-cols-1'"
+        >
+          <div class="flex min-w-0 flex-col gap-2">
             <h2 class="app-label" i18n>Total profit/loss</h2>
-            <app-hero-amount
-              class="mt-1"
-              size="md"
-              signed
-              [value]="total()"
-              [currency]="data.value().accountCurrency"
-            />
+            <span class="text-[15px] font-semibold" [class]="tone(total())">{{
+              total() | money: data.value().accountCurrency
+            }}</span>
           </div>
           @if (totalAfterFees(); as afterFees) {
-            <div>
-              <h2 class="app-label flex items-center gap-1">
-                <ng-container i18n>Including account fees</ng-container
-                ><app-term-info term="accountFees" />
+            <div class="flex min-w-0 flex-col gap-2 border-l border-outline-variant pl-3.5">
+              <h2 class="app-label">
+                <ng-container i18n>Including account fees</ng-container>
+                <app-term-info class="ml-0.5 inline-flex align-middle" term="accountFees" />
               </h2>
-              <app-hero-amount
-                class="mt-1"
-                size="md"
-                signed
-                [value]="afterFees.value"
-                [currency]="data.value().accountCurrency"
-              />
+              <span class="text-[15px] font-semibold" [class]="tone(afterFees.value)">{{
+                afterFees.value | money: data.value().accountCurrency
+              }}</span>
             </div>
           }
         </section>
