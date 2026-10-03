@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatDialog } from '@angular/material/dialog';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { T212Instrument } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
@@ -38,12 +38,15 @@ import {
   periodQuery,
   sortInstruments,
 } from './portfolio-model';
+import { PositionDialog, PositionDialogData } from './position-dialog';
 
-/** Portfolio → Stocks: every instrument of the period with its profit/loss; filter, search, sort. */
+/**
+ * Portfolio → Stocks: every instrument of the period with its profit/loss; filter, search, sort.
+ * Tapping a stock opens its chart and profit/loss in a dialog.
+ */
 @Component({
   selector: 'app-portfolio-stocks',
   imports: [
-    RouterLink,
     EmptyState,
     ErrorState,
     Skeleton,
@@ -119,9 +122,10 @@ import {
         <ul class="mt-1" aria-label="Stocks" i18n-aria-label>
           @for (item of items(); track item.t212Ticker) {
             <li>
-              <a
-                [routerLink]="['/portfolio', item.t212Ticker]"
-                class="flex items-center gap-3.5 rounded-2xl px-1 py-3 hover:bg-surface-container"
+              <button
+                type="button"
+                class="flex w-full items-center gap-3.5 rounded-2xl px-1 py-3 text-left hover:bg-surface-container"
+                (click)="openPosition(item)"
               >
                 <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="48" />
                 <span class="min-w-0 flex-1">
@@ -159,7 +163,7 @@ import {
                     }}</span>
                   }
                 </span>
-              </a>
+              </button>
             </li>
           }
         </ul>
@@ -185,6 +189,7 @@ export class PortfolioStocks {
   protected readonly search = signal('');
   protected readonly allTime = computed(() => isAllTime(this.period()));
   private readonly sheet = inject(MatBottomSheet);
+  private readonly dialog = inject(MatDialog);
 
   protected tone(value: number | null): string {
     return toneClass(value);
@@ -217,6 +222,15 @@ export class PortfolioStocks {
       },
     };
     this.sheet.open(StocksFilterSheet, { data: context, ariaLabel: $localize`Filters` });
+  }
+
+  protected openPosition(item: T212Instrument): void {
+    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      data: { t212Ticker: item.t212Ticker },
+      width: 'calc(100vw - 32px)',
+      maxWidth: '32rem',
+      autoFocus: 'dialog',
+    });
   }
 
   protected resetPart(key: keyof StocksView): void {
