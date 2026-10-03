@@ -121,6 +121,12 @@ import { dayIn, displayTicker } from './portfolio-model';
             </div>
             <div>
               <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+                <ng-container i18n>FX fees</ng-container><app-term-info term="fxFees" />
+              </dt>
+              <dd><app-pnl [value]="-fxFees()" [currency]="d.accountCurrency" /></dd>
+            </div>
+            <div>
+              <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
                 <ng-container i18n>Unrealized · as of now</ng-container
                 ><app-term-info term="unrealizedPnl" />
               </dt>
@@ -272,6 +278,16 @@ export class InstrumentPage {
   );
   protected readonly title = computed(() =>
     this.data.hasValue() ? this.data.value().instrument.name : this.ticker(),
+  );
+
+  /**
+   * Fees on all trades, taxes excluded. Trading 212 charges no commission, so in practice this is the currency
+   * conversion fee (docs/DATA-SOURCES.md). Already included in Realized.
+   */
+  protected readonly fxFees = computed(() =>
+    this.data.hasValue()
+      ? Math.round(this.data.value().trades.reduce((sum, t) => sum + t.fees, 0) * 100) / 100
+      : 0,
   );
 
   /** Trades and dividends together, newest first. */

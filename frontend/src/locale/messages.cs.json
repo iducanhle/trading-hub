@@ -1,6 +1,10 @@
 {
   "locale": "cs",
   "translations": {
+    "6138112390862801056": "Poplatky za směnu měn",
+    "160141394273957006": "Trading 212 si účtuje 0,15 % pokaždé, když převádí vaše peníze do měny akcie: při každém nákupu a znovu při každém prodeji.",
+    "4207118595145340322": "Při častém obchodování se to sčítá: poplatek se platí z celé částky každého obchodu, ať vyděláte, nebo proděláte. V realizovaném zisku je už odečtený.",
+    "577617479532846189": "Nakoupíte za 100 000 Kč a později prodáte za 100 000 Kč: zaplatíte dvakrát 150 Kč, celkem 300 Kč.",
     "5207635742003539443": "Přihlásit se",
     "5907476126990913307": "Vytvořit účet",
     "1636934520301910285": "Obnovit heslo",

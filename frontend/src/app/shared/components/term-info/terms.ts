@@ -24,7 +24,8 @@ export type TermId =
   | 'averageCost'
   | 'realizedPnl'
   | 'unrealizedPnl'
-  | 'totalPnl';
+  | 'totalPnl'
+  | 'fxFees';
 
 export interface Term {
   title: string;
@@ -186,6 +187,14 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees and taxes are already deducted.`,
     ],
     example: $localize`:Term example:Average cost $110, you sell 5 shares at $130: realized profit is 5 × $20 = $100.`,
+  },
+  fxFees: {
+    title: $localize`:Term title:FX fees`,
+    body: [
+      $localize`:Term text:Trading 212 charges 0.15% each time it converts your money into the stock's currency: on every buy and again on every sell.`,
+      $localize`:Term text:Frequent trading adds up: the fee is paid on the whole amount of each trade, win or lose. It is already deducted in Realized.`,
+    ],
+    example: $localize`:Term example:You buy for 100,000 CZK and later sell for 100,000 CZK: you pay 150 CZK twice, 300 CZK in total.`,
   },
   unrealizedPnl: {
     title: $localize`:Term title:Unrealized profit/loss`,
