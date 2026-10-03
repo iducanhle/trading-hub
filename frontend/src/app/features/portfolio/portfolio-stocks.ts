@@ -145,7 +145,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
           @if (totalAfterFees(); as afterFees) {
             <div class="flex min-w-0 flex-col gap-2 border-l border-outline-variant pl-3.5">
               <h2 class="app-label">
-                <ng-container i18n>Including account fees</ng-container>
+                <ng-container i18n>Including fees</ng-container>
                 <app-term-info class="ml-0.5 inline-flex align-middle" term="accountFees" />
               </h2>
               <span class="text-[15px] font-semibold" [class]="tone(afterFees.value)">{{
