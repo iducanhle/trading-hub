@@ -11,13 +11,13 @@ let nextId = 0;
   selector: 'app-section',
   imports: [Icon],
   template: `
-    <section class="border-t border-outline-variant py-1" [attr.aria-labelledby]="headingId">
+    <section class="pt-5" [attr.aria-labelledby]="headingId">
       @if (collapsible()) {
         <h2 class="m-0">
           <button
             type="button"
             [id]="headingId"
-            class="flex min-h-12 w-full items-center gap-2 rounded-xl px-4 text-left text-base font-semibold hover:bg-surface-container-high"
+            class="flex min-h-12 w-full items-center gap-2 rounded-2xl px-5 text-left text-xl font-bold hover:bg-surface-container"
             [attr.aria-expanded]="expanded()"
             [attr.aria-controls]="contentId"
             (click)="expanded.set(!expanded())"
@@ -32,13 +32,13 @@ let nextId = 0;
           </button>
         </h2>
       } @else {
-        <h2 [id]="headingId" class="flex min-h-12 items-center gap-2 px-4 text-base font-semibold">
+        <h2 [id]="headingId" class="flex min-h-12 items-center gap-2 px-5 text-xl font-bold">
           <span class="flex-1">{{ title() }}</span>
           <ng-content select="[sectionMeta]" />
         </h2>
       }
       @if (expanded() || !collapsible()) {
-        <div [id]="contentId" class="px-4 pb-4">
+        <div [id]="contentId" class="px-4 pt-1 pb-2">
           <ng-content />
         </div>
       }

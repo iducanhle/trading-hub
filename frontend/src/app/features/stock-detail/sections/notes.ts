@@ -63,7 +63,7 @@ type Status = 'loading' | 'load-error' | 'idle' | 'editing' | 'saving' | 'saved'
           </button>
         </div>
       } @else {
-        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-form-field appearance="fill" class="w-full" subscriptSizing="dynamic">
           <mat-label i18n>Notes on {{ ctx.symbol() }}</mat-label>
           <textarea
             matInput

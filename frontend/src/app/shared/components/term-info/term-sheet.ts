@@ -3,38 +3,34 @@ import { MatButton } from '@angular/material/button';
 import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
+import { Sheet } from '../sheet/sheet';
 import { TERMS, TermId } from './terms';
 
 /** The explanation of one term, opened by TermInfo as a bottom sheet (phones) or a dialog (desktop). */
 @Component({
   selector: 'app-term-sheet',
-  imports: [MatButton, RouterLink],
+  imports: [MatButton, RouterLink, Sheet],
   template: `
-    <div class="px-5 pt-2 pb-safe lg:p-6">
-      <div
-        class="mx-auto mb-3 h-1 w-8 rounded-full bg-outline-variant lg:hidden"
-        aria-hidden="true"
-      ></div>
-      <h2 class="mb-3 text-lg font-semibold">{{ term().title }}</h2>
-      <div class="space-y-3 text-sm leading-relaxed">
+    <app-sheet class="lg:p-4" [title]="term().title">
+      <div class="space-y-3 text-[15px] leading-relaxed">
         @for (paragraph of term().body; track $index) {
           <p>{{ paragraph }}</p>
         }
         @if (term().example; as example) {
-          <p class="rounded-xl bg-surface-container-high px-3 py-2 tabular-nums">
+          <p class="rounded-2xl bg-surface-container px-4 py-3">
             <span class="font-medium" i18n="A worked example follows">Example:</span>
             {{ example }}
           </p>
         }
       </div>
-      <div class="mt-5 flex justify-end">
-        <button matButton="filled" type="button" (click)="close()" i18n>Got it</button>
-      </div>
-      <p class="mt-4 mb-4 text-center text-xs text-on-surface-variant lg:mb-0" i18n>
+      <p class="mt-5 text-center text-xs text-on-surface-variant" i18n>
         You can turn off these explanations in
         <a routerLink="/settings" class="text-primary underline" (click)="close()">Settings</a>.
       </p>
-    </div>
+      <button sheetActions matButton="filled" type="button" (click)="close()">
+        <ng-container i18n>Got it</ng-container>
+      </button>
+    </app-sheet>
   `,
 })
 export class TermSheet {

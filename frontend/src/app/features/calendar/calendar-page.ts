@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { CalendarQuery } from '../../core/api/api.service';
 import { CalendarDay } from '../../core/models/contract';
 import { FollowsService } from '../../core/services/follows.service';
@@ -29,6 +28,7 @@ import { FilterControls } from './filter-controls';
 import { FilterSheet } from './filter-sheet';
 import { MonthView } from './month-view';
 import { WeekView } from './week-view';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 /**
  * `/calendar`: earnings reports by week (phones) or month (desktop), with previous / next / today navigation,
@@ -40,8 +40,8 @@ import { WeekView } from './week-view';
   imports: [
     MatButton,
     MatIconButton,
-    MatButtonToggleGroup,
-    MatButtonToggle,
+    Segmented,
+    Segment,
     Icon,
     PageHeader,
     PullToRefresh,
@@ -111,17 +111,16 @@ import { WeekView } from './week-view';
           >
             <app-icon name="chevron_right" />
           </button>
-          <mat-button-toggle-group
+          <app-segmented
             class="ml-auto"
-            hideSingleSelectionIndicator
             aria-label="Calendar view"
             i18n-aria-label
             [value]="view()"
-            (change)="view.set($event.value)"
+            (valueChange)="view.set($event)"
           >
-            <mat-button-toggle value="week" i18n>Week</mat-button-toggle>
-            <mat-button-toggle value="month" i18n>Month</mat-button-toggle>
-          </mat-button-toggle-group>
+            <app-segment value="week" i18n>Week</app-segment>
+            <app-segment value="month" i18n>Month</app-segment>
+          </app-segmented>
         </div>
         <div class="mx-auto hidden max-w-6xl px-4 pb-3 lg:block">
           <app-filter-controls [filters]="filters" [inline]="true" />

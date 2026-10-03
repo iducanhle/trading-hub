@@ -11,7 +11,7 @@
 | 2 – Search + Stock detail | Done |
 | 3 – Followed + Calendar + Settings | Done |
 | 4 – Polish + deployment | Done |
-| Redesign ([DESIGN-TOKENS.md](DESIGN-TOKENS.md)) | In progress: 1 of 4 |
+| Redesign ([DESIGN-TOKENS.md](DESIGN-TOKENS.md)) | In progress: 2 of 4 |
 
 ## Trading 212 feature
 
@@ -152,9 +152,9 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 
 **Redesign** after the "Tradiqo Redesign" canvas (tokens and component notes in [DESIGN-TOKENS.md](DESIGN-TOKENS.md)). Steps:
 1. ~~Foundations~~ (done 2026-10-03): the design tokens mapped onto `--mat-sys-*` (`mat.theme-overrides`) plus `--app-*` for gain/loss, sheet, scrim and the analyst scale; Material component overrides (pill buttons, 44 px icon buttons, borderless toggles, filter chips, switch, sheets, dialogs, menus, no shadows); Manrope self-hosted (`@fontsource-variable/manrope`); Lucide icons; dark-theme glow (`app-glow` utility on `<body>` and the drawer); the burger menu at every width (the navigation rail is gone).
-2. Shared components: `app-segmented` (replaces `mat-button-toggle` and the three hand-made range selectors in the price chart, performance history and position dialog), top bar (22 px / 800 uppercase title, transparent until scrolled so the glow shows), card, bottom-sheet header and footer, drawer (account value card, signed-in user at the bottom), form fields (try overrides on Settings first).
+2. ~~Shared components~~ (done 2026-10-03): `app-segmented` / `app-segment` (a radio group; `track` and `chips` appearances, `inset` on cards and sheets, `stretch`) replaces every `mat-button-toggle`, the three hand-made range selectors and the portfolio period chips; `app-sheet` (handle, 22 px title, 52 px footer buttons marked `sheetActions`) wraps every bottom sheet; the top bar is transparent until the page scrolls, with an uppercase 22 px / 800 title on section pages; stock-page sections have 20 px / 700 headings and no dividers; the drawer has the account value card (Trading 212 connected), the followed count, Settings and the signed-in user at the bottom (`app-user-avatar`); form fields are `fill` on card2 with 14 px corners and a focus ring.
 3. Screens one by one: Portfolio → Stock detail → Followed → Calendar → Events → Settings.
-4. New features from the design: chart "Measure", best/worst positions.
+4. New features from the design: none left. Chart "Measure" and best/worst stocks already existed; check the canvas again after step 3.
 
 ## Next
 

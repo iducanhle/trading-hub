@@ -73,7 +73,7 @@ import {
         </button>
       }
     </div>
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mb-3 w-full">
+    <mat-form-field appearance="fill" subscriptSizing="dynamic" class="mb-3 w-full">
       <app-icon matPrefix name="search" class="mx-2" [size]="20" />
       <input
         matInput

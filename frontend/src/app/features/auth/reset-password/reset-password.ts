@@ -60,7 +60,7 @@ import { AuthCard } from '../auth-card';
           </p>
         }
         <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="fill">
             <mat-label i18n>Email</mat-label>
             <input
               matInput

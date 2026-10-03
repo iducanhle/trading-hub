@@ -78,7 +78,7 @@ import { GoogleLogo } from '../google-logo';
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label i18n>Email</mat-label>
           <input
             matInput
@@ -93,7 +93,7 @@ import { GoogleLogo } from '../google-logo';
             <mat-error i18n>Email is required.</mat-error>
           }
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label i18n>Password</mat-label>
           <input
             matInput

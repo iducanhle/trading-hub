@@ -18,6 +18,7 @@ import { Pnl } from './pnl';
 import { displayTicker } from './portfolio-model';
 import { PositionChart } from './position-chart';
 import { majorCurrency } from '../stock-detail/sections/price-chart/position-lines';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 export interface PositionDialogData {
   t212Ticker: string;
@@ -32,6 +33,8 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
 @Component({
   selector: 'app-position-dialog',
   imports: [
+    Segmented,
+    Segment,
     RouterLink,
     MatButton,
     MatIconButton,
@@ -94,26 +97,17 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
                 </p>
               }
               <div class="mt-2 flex flex-wrap items-center gap-2">
-                <div
-                  class="flex max-w-full overflow-x-auto rounded-full bg-surface-container-high p-1"
-                  role="group"
+                <app-segmented
+                  appearance="chips"
                   aria-label="Chart range"
                   i18n-aria-label
+                  [value]="range()"
+                  (valueChange)="range.set($event)"
                 >
                   @for (r of ranges; track r) {
-                    <button
-                      type="button"
-                      class="h-8 min-w-8 shrink-0 rounded-full px-1 text-sm font-medium"
-                      [class.bg-surface]="range() === r"
-                      [class.shadow-sm]="range() === r"
-                      [class.text-on-surface-variant]="range() !== r"
-                      [attr.aria-pressed]="range() === r"
-                      (click)="range.set(r)"
-                    >
-                      {{ rangeLabels[r] }}
-                    </button>
+                    <app-segment [value]="r">{{ rangeLabels[r] }}</app-segment>
                   }
-                </div>
+                </app-segmented>
                 @if (p.stale) {
                   <app-stale-chip [asOf]="p.asOf" />
                 }

@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
@@ -22,6 +21,7 @@ import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
 import { T212Settings } from './t212-settings';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 /**
  * `/settings`: account, theme, the email digest (stored in `users/{uid}.settings`), a test email, Trading 212, and
@@ -32,8 +32,8 @@ import { T212Settings } from './t212-settings';
   imports: [
     ReactiveFormsModule,
     MatButton,
-    MatButtonToggleGroup,
-    MatButtonToggle,
+    Segmented,
+    Segment,
     MatSlideToggle,
     MatFormField,
     MatLabel,
@@ -90,49 +90,40 @@ import { T212Settings } from './t212-settings';
         <h2 id="appearance-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
           Appearance
         </h2>
-        <mat-button-toggle-group
-          hideSingleSelectionIndicator
+        <app-segmented
           aria-labelledby="appearance-title"
-          class="w-full sm:w-auto"
+          inset
+          stretch
           [value]="theme.preference()"
-          (change)="setTheme($event.value)"
+          (valueChange)="setTheme($event)"
         >
-          <mat-button-toggle value="light" class="flex-1"
-            ><app-icon name="light_mode" [size]="18" class="mr-1.5 align-middle" /><ng-container
-              i18n="Light theme"
-              >Light</ng-container
-            ></mat-button-toggle
+          <app-segment value="light"
+            ><ng-container i18n="Light theme">Light</ng-container></app-segment
           >
-          <mat-button-toggle value="dark" class="flex-1"
-            ><app-icon name="dark_mode" [size]="18" class="mr-1.5 align-middle" /><ng-container
-              i18n="Dark theme"
-              >Dark</ng-container
-            ></mat-button-toggle
+          <app-segment value="dark"
+            ><ng-container i18n="Dark theme">Dark</ng-container></app-segment
           >
-          <mat-button-toggle value="system" class="flex-1"
-            ><app-icon name="contrast" [size]="18" class="mr-1.5 align-middle" /><ng-container
-              i18n="Theme follows the device"
-              >System</ng-container
-            ></mat-button-toggle
+          <app-segment value="system"
+            ><ng-container i18n="Theme follows the device">System</ng-container></app-segment
           >
-        </mat-button-toggle-group>
+        </app-segmented>
       </section>
 
       <section aria-labelledby="language-title" class="rounded-3xl bg-surface-container-low p-4">
         <h2 id="language-title" class="mb-3 text-sm font-semibold text-on-surface-variant" i18n>
           Language
         </h2>
-        <mat-button-toggle-group
-          hideSingleSelectionIndicator
+        <app-segmented
           aria-labelledby="language-title"
-          class="w-full sm:w-auto"
+          inset
+          stretch
           [value]="language"
-          (change)="setLanguage($event.value)"
+          (valueChange)="setLanguage($event)"
         >
           <!-- Each language is named in itself, so it can be found whatever the current one. -->
-          <mat-button-toggle value="en" class="flex-1" lang="en">English</mat-button-toggle>
-          <mat-button-toggle value="cs" class="flex-1" lang="cs">Čeština</mat-button-toggle>
-        </mat-button-toggle-group>
+          <app-segment value="en" lang="en">English</app-segment>
+          <app-segment value="cs" lang="cs">Čeština</app-segment>
+        </app-segmented>
         <p class="mt-2 text-xs text-on-surface-variant" i18n>
           The app reloads in the chosen language.
         </p>
@@ -187,7 +178,7 @@ import { T212Settings } from './t212-settings';
             <ng-container i18n>Email digest</ng-container>
           </mat-slide-toggle>
           <div class="flex flex-col gap-1">
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="fill">
               <mat-label i18n>Notify me</mat-label>
               <mat-select
                 [value]="settings().notifyDaysBefore"
@@ -202,7 +193,7 @@ import { T212Settings } from './t212-settings';
                 }
               </mat-select>
             </mat-form-field>
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="fill">
               <mat-label i18n>Notification email (optional)</mat-label>
               <input
                 matInput

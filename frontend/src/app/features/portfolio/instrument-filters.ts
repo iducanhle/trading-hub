@@ -1,10 +1,10 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { T212DetailTrade, T212Dividend, T212Side } from '../../core/models/contract';
 import { Icon } from '../../shared/icon/icon';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 export type TimelineItem =
   | { kind: 'trade'; at: string; trade: T212DetailTrade }
@@ -64,33 +64,21 @@ export function applyView(items: readonly TimelineItem[], view: TimelineView): T
 /** Controls of the instrument page: all / buy / sell, and a sort dropdown (date by default) with its direction. */
 @Component({
   selector: 'app-instrument-filters',
-  imports: [
-    MatButtonToggleGroup,
-    MatButtonToggle,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-    MatIconButton,
-    Icon,
-  ],
+  imports: [Segmented, Segment, MatFormField, MatLabel, MatSelect, MatOption, MatIconButton, Icon],
   template: `
     <div class="flex flex-wrap items-center gap-3">
-      <mat-button-toggle-group
-        hideSingleSelectionIndicator
+      <app-segmented
         aria-label="Trade side"
         i18n-aria-label
-        [value]="view().side ?? 'ALL'"
-        (change)="update({ side: $event.value === 'ALL' ? null : $event.value })"
+        [value]="side()"
+        (valueChange)="update({ side: $event === 'ALL' ? null : $event })"
       >
-        <mat-button-toggle value="ALL" i18n="All trades">All</mat-button-toggle>
-        <mat-button-toggle value="BUY" i18n="Trade direction|Kind of trade">Buy</mat-button-toggle>
-        <mat-button-toggle value="SELL" i18n="Trade direction|Kind of trade"
-          >Sell</mat-button-toggle
-        >
-      </mat-button-toggle-group>
+        <app-segment value="ALL" i18n="All trades">All</app-segment>
+        <app-segment value="BUY" i18n="Trade direction|Kind of trade">Buy</app-segment>
+        <app-segment value="SELL" i18n="Trade direction|Kind of trade">Sell</app-segment>
+      </app-segmented>
       <div class="ml-auto flex items-center gap-1">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="sort-field">
+        <mat-form-field appearance="fill" subscriptSizing="dynamic" class="sort-field">
           <mat-label i18n>Sort</mat-label>
           <mat-select [value]="view().sort" (selectionChange)="update({ sort: $event.value })">
             @for (key of keys; track key) {
@@ -118,6 +106,8 @@ export function applyView(items: readonly TimelineItem[], view: TimelineView): T
 export class InstrumentFilters {
   readonly view = input.required<TimelineView>();
   readonly viewChange = output<TimelineView>();
+
+  protected readonly side = computed<T212Side | 'ALL'>(() => this.view().side ?? 'ALL');
 
   protected readonly keys = SORT_KEYS;
   protected readonly labels = TIMELINE_SORT_LABELS;

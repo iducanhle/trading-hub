@@ -12,7 +12,6 @@ import {
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatIconButton } from '@angular/material/button';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import {
   CandlestickSeries,
   ColorType,
@@ -72,6 +71,7 @@ import {
   majorCurrency,
   withPositionPrices,
 } from './position-lines';
+import { Segment, Segmented } from '../../../../shared/components/segmented/segmented';
 
 const RANGES: PriceRange[] = ['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'];
 
@@ -100,8 +100,8 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
   selector: 'app-price-chart',
   imports: [
     TermInfo,
-    MatButtonToggleGroup,
-    MatButtonToggle,
+    Segmented,
+    Segment,
     MatIconButton,
     Icon,
     Change,
@@ -121,53 +121,30 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
     <section class="border-t border-outline-variant pt-3 pb-2" aria-labelledby="price-chart-title">
       <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
       <div class="flex flex-wrap items-center justify-between gap-2 px-4">
-        <div
-          class="flex max-w-full overflow-x-auto rounded-full bg-surface-container-high p-1"
-          role="group"
+        <app-segmented
+          appearance="chips"
           aria-label="Chart range"
           i18n-aria-label
+          [value]="range()"
+          (valueChange)="setRange($event)"
         >
           @for (r of ranges; track r) {
-            <button
-              type="button"
-              class="h-9 min-w-9 shrink-0 rounded-full px-1.5 text-sm font-medium transition-colors"
-              [class.bg-surface]="range() === r"
-              [class.text-on-surface]="range() === r"
-              [class.shadow-sm]="range() === r"
-              [class.text-on-surface-variant]="range() !== r"
-              [attr.aria-pressed]="range() === r"
-              (click)="setRange(r)"
-            >
-              {{ rangeLabels[r] }}
-            </button>
+            <app-segment [value]="r">{{ rangeLabels[r] }}</app-segment>
           }
-        </div>
-        <mat-button-toggle-group
-          hideSingleSelectionIndicator
+        </app-segmented>
+        <app-segmented
           aria-label="Chart type"
           i18n-aria-label
           [value]="type()"
-          (change)="setType($event.value)"
+          (valueChange)="setType($event)"
         >
-          <mat-button-toggle
-            value="line"
-            aria-label="Line"
-            i18n-aria-label="Line chart"
-            title="Line"
-            i18n-title="Line chart"
-          >
+          <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
             <app-icon name="show_chart" [size]="20" class="align-middle" />
-          </mat-button-toggle>
-          <mat-button-toggle
-            value="candles"
-            aria-label="Candles"
-            i18n-aria-label="Candlestick chart"
-            title="Candles"
-            i18n-title="Candlestick chart"
-          >
+          </app-segment>
+          <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
             <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
-          </mat-button-toggle>
-        </mat-button-toggle-group>
+          </app-segment>
+        </app-segmented>
         @if (type() === 'candles') {
           <app-term-info term="candles" class="-ml-1" />
         }

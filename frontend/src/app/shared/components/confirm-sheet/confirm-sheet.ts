@@ -6,6 +6,7 @@ import {
   MatBottomSheetRef,
 } from '@angular/material/bottom-sheet';
 import { firstValueFrom } from 'rxjs';
+import { Sheet } from '../sheet/sheet';
 
 export interface ConfirmOptions {
   title: string;
@@ -18,27 +19,23 @@ export interface ConfirmOptions {
 /** A yes/no question in a bottom sheet; dismissing it (swipe, backdrop, Escape) counts as no. */
 @Component({
   selector: 'app-confirm-sheet',
-  imports: [MatButton],
+  imports: [MatButton, Sheet],
   template: `
-    <div class="px-4 pb-safe">
-      <div
-        class="mx-auto mt-1 mb-3 h-1 w-8 rounded-full bg-outline-variant"
-        aria-hidden="true"
-      ></div>
-      <h2 class="mb-2 text-lg font-semibold">{{ data.title }}</h2>
-      <p class="text-sm text-on-surface-variant">{{ data.message }}</p>
-      <div class="mt-6 mb-4 flex justify-end gap-3">
-        <button matButton type="button" (click)="ref.dismiss(false)" i18n>Cancel</button>
-        <button
-          matButton="filled"
-          type="button"
-          [class.danger]="data.danger"
-          (click)="ref.dismiss(true)"
-        >
-          {{ data.confirm }}
-        </button>
-      </div>
-    </div>
+    <app-sheet [title]="data.title">
+      <p class="text-[15px] text-on-surface-variant">{{ data.message }}</p>
+      <button sheetActions matButton="tonal" type="button" (click)="ref.dismiss(false)">
+        <ng-container i18n>Cancel</ng-container>
+      </button>
+      <button
+        sheetActions
+        matButton="filled"
+        type="button"
+        [class.danger]="data.danger"
+        (click)="ref.dismiss(true)"
+      >
+        {{ data.confirm }}
+      </button>
+    </app-sheet>
   `,
   styles: `
     .danger {

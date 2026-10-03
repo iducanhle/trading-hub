@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { SORT_LABELS } from './portfolio-labels';
 import { StockSort } from './portfolio-model';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { Sheet } from '../../shared/components/sheet/sheet';
 
 export interface StocksView {
   /** Profit/loss includes unrealized. */
@@ -25,38 +26,24 @@ export interface StocksFilterContext {
 /** Profit/loss basis and sort of the Stocks tab in a bottom sheet; a draft until Done. */
 @Component({
   selector: 'app-stocks-filter-sheet',
-  imports: [
-    MatButton,
-    MatButtonToggleGroup,
-    MatButtonToggle,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-  ],
+  imports: [Sheet, MatButton, Segmented, Segment, MatFormField, MatLabel, MatSelect, MatOption],
   template: `
-    <div class="px-4 pb-safe">
-      <div
-        class="mx-auto mt-1 mb-3 h-1 w-8 rounded-full bg-outline-variant"
-        aria-hidden="true"
-      ></div>
-      <h2 class="mb-4 text-lg font-semibold" i18n>Filters</h2>
+    <app-sheet title="Filters" i18n-title>
       <div class="flex flex-col gap-3">
-        <mat-button-toggle-group
-          hideSingleSelectionIndicator
+        <app-segmented
           aria-label="Profit and loss"
           i18n-aria-label
+          inset
+          stretch
           [value]="draft().unrealized"
-          (change)="patch({ unrealized: $event.value })"
+          (valueChange)="patch({ unrealized: $event })"
         >
-          <mat-button-toggle [value]="false" i18n="Profit/loss basis|Realized only"
-            >Without</mat-button-toggle
+          <app-segment [value]="false" i18n="Profit/loss basis|Realized only">Without</app-segment>
+          <app-segment [value]="true" i18n="Profit/loss basis|Includes unrealized"
+            >With unrealized</app-segment
           >
-          <mat-button-toggle [value]="true" i18n="Profit/loss basis|Includes unrealized"
-            >With unrealized</mat-button-toggle
-          >
-        </mat-button-toggle-group>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+        </app-segmented>
+        <mat-form-field appearance="fill" subscriptSizing="dynamic" class="w-full">
           <mat-label i18n>Sort</mat-label>
           <mat-select [value]="draft().sort" (selectionChange)="patch({ sort: $event.value })">
             @for (option of sorts; track option) {
@@ -65,11 +52,13 @@ export interface StocksFilterContext {
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="mt-6 mb-4 flex justify-between gap-3">
-        <button matButton type="button" (click)="draft.set(defaults)" i18n>Reset</button>
-        <button matButton="filled" type="button" (click)="done()" i18n>Done</button>
-      </div>
-    </div>
+      <button sheetActions matButton="tonal" type="button" (click)="draft.set(defaults)">
+        <ng-container i18n>Reset</ng-container>
+      </button>
+      <button sheetActions matButton="filled" type="button" (click)="done()">
+        <ng-container i18n>Done</ng-container>
+      </button>
+    </app-sheet>
   `,
 })
 export class StocksFilterSheet {

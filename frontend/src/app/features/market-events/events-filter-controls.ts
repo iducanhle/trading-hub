@@ -1,16 +1,16 @@
 import { Component, WritableSignal, computed, input } from '@angular/core';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatChipListbox, MatChipListboxChange, MatChipOption } from '@angular/material/chips';
 import { EventRegionFilter, Importance } from '../../core/models/contract';
 import { EventFilters, IMPORTANCE_OPTIONS } from './events-model';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 let nextId = 0;
 
 /** Importance, region and earnings filters: stacked in the phone's bottom sheet, one row on desktop. */
 @Component({
   selector: 'app-events-filter-controls',
-  imports: [MatChipListbox, MatChipOption, MatButtonToggleGroup, MatButtonToggle, MatSlideToggle],
+  imports: [MatChipListbox, MatChipOption, Segmented, Segment, MatSlideToggle],
   template: `
     <div
       [class]="
@@ -45,19 +45,18 @@ let nextId = 0;
         >
           Region
         </p>
-        <mat-button-toggle-group
+        <app-segmented
           [attr.aria-labelledby]="id + '-region'"
-          hideSingleSelectionIndicator
+          [inset]="!inline()"
+          [stretch]="!inline()"
           [value]="value().region"
-          (change)="setRegion($event.value)"
+          (valueChange)="setRegion($event)"
         >
-          <mat-button-toggle value="ALL" i18n="Region filter: every country">All</mat-button-toggle>
-          <mat-button-toggle value="US">US</mat-button-toggle>
-          <mat-button-toggle value="EU">EU</mat-button-toggle>
-          <mat-button-toggle value="OTHER" i18n="Region filter: neither US nor EU"
-            >Other</mat-button-toggle
-          >
-        </mat-button-toggle-group>
+          <app-segment value="ALL" i18n="Region filter: every country">All</app-segment>
+          <app-segment value="US">US</app-segment>
+          <app-segment value="EU">EU</app-segment>
+          <app-segment value="OTHER" i18n="Region filter: neither US nor EU">Other</app-segment>
+        </app-segmented>
       </div>
       <mat-slide-toggle
         [checked]="value().includeEarnings"

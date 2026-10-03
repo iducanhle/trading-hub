@@ -58,7 +58,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         </p>
       }
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1" novalidate>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label i18n>Email</mat-label>
           <input
             matInput
@@ -69,13 +69,13 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
           />
           <mat-error i18n>Enter a valid email address.</mat-error>
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label i18n>Password</mat-label>
           <input matInput type="password" formControlName="password" autocomplete="new-password" />
           <mat-hint i18n>At least 8 characters</mat-hint>
           <mat-error i18n>Use at least 8 characters.</mat-error>
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label i18n>Confirm password</mat-label>
           <input matInput type="password" formControlName="confirm" autocomplete="new-password" />
           <mat-error i18n>Confirm your password.</mat-error>

@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { MatChipListbox, MatChipListboxChange, MatChipOption } from '@angular/material/chips';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { todayIso } from '../../shared/utils/dates';
 import { PRESET_LABELS } from './portfolio-labels';
 import {
@@ -13,29 +13,26 @@ import {
 /** 1D · 1W · 1M · 3M · 6M · YTD · 1Y · All · Custom; Custom shows two date fields. Shared by all portfolio sub-tabs. */
 @Component({
   selector: 'app-period-selector',
-  imports: [MatChipListbox, MatChipOption],
+  imports: [Segmented, Segment],
   template: `
-    <mat-chip-listbox
+    <app-segmented
+      appearance="chips"
       aria-label="Period"
       i18n-aria-label
-      hideSingleSelectionIndicator
-      class="period-chips"
       [value]="period().preset"
-      (change)="choose($event)"
+      (valueChange)="choose($event)"
     >
       @for (preset of presets; track preset) {
-        <mat-chip-option [value]="preset" [selectable]="period().preset !== preset">{{
-          labels[preset]
-        }}</mat-chip-option>
+        <app-segment [value]="preset">{{ labels[preset] }}</app-segment>
       }
-    </mat-chip-listbox>
+    </app-segmented>
     @if (period().preset === 'CUSTOM') {
       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
         <label class="flex items-center gap-2">
           <span class="text-on-surface-variant" i18n="Start of a date range">From</span>
           <input
             type="date"
-            class="rounded-lg border border-outline-variant bg-surface px-2 py-1"
+            class="h-10 rounded-xl bg-surface-container px-3 font-semibold"
             [value]="period().from ?? ''"
             [max]="period().to ?? today"
             (change)="setDay('from', $event)"
@@ -45,7 +42,7 @@ import {
           <span class="text-on-surface-variant" i18n="End of a date range">To</span>
           <input
             type="date"
-            class="rounded-lg border border-outline-variant bg-surface px-2 py-1"
+            class="h-10 rounded-xl bg-surface-container px-3 font-semibold"
             [value]="period().to ?? ''"
             [min]="period().from ?? ''"
             [max]="today"
@@ -53,11 +50,6 @@ import {
           />
         </label>
       </div>
-    }
-  `,
-  styles: `
-    .period-chips {
-      --mdc-chip-container-height: 32px;
     }
   `,
 })
@@ -69,9 +61,8 @@ export class PeriodSelector {
   protected readonly labels = PRESET_LABELS;
   protected readonly today = todayIso();
 
-  protected choose(event: MatChipListboxChange): void {
-    const preset = event.value as PeriodPreset | undefined;
-    if (!preset || preset === this.period().preset) return;
+  protected choose(preset: PeriodPreset): void {
+    if (preset === this.period().preset) return;
     if (preset === 'CUSTOM') {
       this.periodChange.emit(addCustomDefaults(this.period(), this.today));
     } else {

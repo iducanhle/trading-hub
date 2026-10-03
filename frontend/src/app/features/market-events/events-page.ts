@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MarketEventsQuery } from '../../core/api/api.service';
 import { MarketEventDay } from '../../core/models/contract';
 import { FollowsService } from '../../core/services/follows.service';
@@ -23,6 +22,7 @@ import { EventsFilterSheet } from './events-filter-sheet';
 import { EventsMonthView } from './events-month-view';
 import { DEFAULT_EVENT_FILTERS, EventFilters, eventFiltersAreDefault } from './events-model';
 import { EventsWeekView } from './events-week-view';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 /**
  * `/events`: the events that tend to move the market (central banks, inflation, jobs, growth, Treasury, expiries,
@@ -34,8 +34,8 @@ import { EventsWeekView } from './events-week-view';
   imports: [
     MatButton,
     MatIconButton,
-    MatButtonToggleGroup,
-    MatButtonToggle,
+    Segmented,
+    Segment,
     Icon,
     PageHeader,
     PullToRefresh,
@@ -105,17 +105,16 @@ import { EventsWeekView } from './events-week-view';
           >
             <app-icon name="chevron_right" />
           </button>
-          <mat-button-toggle-group
+          <app-segmented
             class="ml-auto"
-            hideSingleSelectionIndicator
             aria-label="Calendar view"
             i18n-aria-label
             [value]="view()"
-            (change)="view.set($event.value)"
+            (valueChange)="view.set($event)"
           >
-            <mat-button-toggle value="week" i18n>Week</mat-button-toggle>
-            <mat-button-toggle value="month" i18n>Month</mat-button-toggle>
-          </mat-button-toggle-group>
+            <app-segment value="week" i18n>Week</app-segment>
+            <app-segment value="month" i18n>Month</app-segment>
+          </app-segmented>
         </div>
         <div class="mx-auto hidden max-w-6xl px-4 pb-3 lg:block">
           <app-events-filter-controls [filters]="filters" [inline]="true" />

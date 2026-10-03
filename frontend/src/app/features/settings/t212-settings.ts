@@ -2,7 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { errorMessage, toApiError } from '../../core/api/api-error';
@@ -14,6 +13,7 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
 import { DateTimePipe } from '../../shared/pipes/format.pipes';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 /**
  * Settings → Trading 212: connect with an API key (sent once to the backend, stored there encrypted, never kept
@@ -25,8 +25,8 @@ import { DateTimePipe } from '../../shared/pipes/format.pipes';
     ReactiveFormsModule,
     MatButton,
     MatIconButton,
-    MatButtonToggleGroup,
-    MatButtonToggle,
+    Segmented,
+    Segment,
     MatFormField,
     MatLabel,
     MatInput,
@@ -152,22 +152,21 @@ import { DateTimePipe } from '../../shared/pipes/format.pipes';
         </ol>
 
         <form class="mt-4 flex flex-col gap-1" (submit)="$event.preventDefault(); connect()">
-          <mat-button-toggle-group
-            hideSingleSelectionIndicator
+          <app-segmented
             aria-label="Account type"
             i18n-aria-label
-            class="mb-3 w-full sm:w-auto"
+            class="mb-3"
+            inset
+            stretch
             [value]="environment()"
-            (change)="environment.set($event.value)"
+            (valueChange)="environment.set($event)"
           >
-            <mat-button-toggle value="LIVE" class="flex-1" i18n="Trading 212 real-money account"
-              >Live</mat-button-toggle
+            <app-segment value="LIVE" i18n="Trading 212 real-money account">Live</app-segment>
+            <app-segment value="DEMO" i18n="Trading 212 paper-trading account"
+              >Demo (paper trading)</app-segment
             >
-            <mat-button-toggle value="DEMO" class="flex-1" i18n="Trading 212 paper-trading account"
-              >Demo (paper trading)</mat-button-toggle
-            >
-          </mat-button-toggle-group>
-          <mat-form-field appearance="outline">
+          </app-segmented>
+          <mat-form-field appearance="fill">
             <mat-label i18n>API key</mat-label>
             <input
               matInput
@@ -189,7 +188,7 @@ import { DateTimePipe } from '../../shared/pipes/format.pipes';
             </button>
             <mat-error i18n>Enter the API key.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="fill">
             <mat-label i18n>API secret</mat-label>
             <input
               matInput

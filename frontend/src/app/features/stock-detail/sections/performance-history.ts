@@ -14,6 +14,7 @@ import { formatDate, formatDateRange } from '../../../shared/utils/dates';
 import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { StockContext } from '../stock-context';
 import { HistoryCalendar } from './history-calendar';
+import { Segment, Segmented } from '../../../shared/components/segmented/segmented';
 
 type HistoryView = HistoryPeriod | 'CALENDAR';
 
@@ -45,6 +46,8 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
 @Component({
   selector: 'app-performance-history',
   imports: [
+    Segmented,
+    Segment,
     MatButton,
     Section,
     HistoryCalendar,
@@ -57,35 +60,20 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
   ],
   template: `
     <app-section title="Performance history" i18n-title [(expanded)]="expanded">
-      <div
-        class="mb-2 flex rounded-full bg-surface-container-high p-1"
-        role="tablist"
+      <app-segmented
+        class="mb-3"
+        stretch
         aria-label="Period"
         i18n-aria-label
+        [value]="view()"
+        (valueChange)="view.set($event)"
       >
         @for (p of periods; track p.value) {
-          <button
-            type="button"
-            role="tab"
-            class="h-9 flex-1 rounded-full text-sm font-medium transition-colors"
-            [class.bg-surface]="view() === p.value"
-            [class.shadow-sm]="view() === p.value"
-            [class.text-on-surface-variant]="view() !== p.value"
-            [attr.aria-selected]="view() === p.value"
-            (click)="view.set(p.value)"
-          >
-            {{ p.label }}
-          </button>
+          <app-segment [value]="p.value">{{ p.label }}</app-segment>
         }
-      </div>
+      </app-segmented>
 
-      <div
-        appSwipe
-        (swipeLeft)="shift(1)"
-        (swipeRight)="shift(-1)"
-        role="tabpanel"
-        class="min-h-40"
-      >
+      <div appSwipe (swipeLeft)="shift(1)" (swipeRight)="shift(-1)" class="min-h-40">
         @if (view() === 'CALENDAR') {
           <app-history-calendar [currency]="currency()" />
         } @else if (error() && !rows().length) {

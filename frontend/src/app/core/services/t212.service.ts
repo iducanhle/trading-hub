@@ -72,7 +72,8 @@ export class T212Service {
   async syncIfStale(maxAgeMs = STALE_SYNC_MS): Promise<void> {
     await this.load(true);
     const status = this.status();
-    if (!status?.connected || status.syncState === 'RUNNING' || status.credentialsValid === false) return;
+    if (!status?.connected || status.syncState === 'RUNNING' || status.credentialsValid === false)
+      return;
     const last = status.lastSyncAt ? Date.parse(status.lastSyncAt) : 0;
     if (Date.now() - last < maxAgeMs) return;
     try {

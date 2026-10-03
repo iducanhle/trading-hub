@@ -3,24 +3,22 @@ import { MatButton } from '@angular/material/button';
 import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { CalendarFilters, DEFAULT_FILTERS } from './calendar-model';
 import { FilterControls } from './filter-controls';
+import { Sheet } from '../../shared/components/sheet/sheet';
 
 /** Phone filters in a bottom sheet; changes apply at once. */
 @Component({
   selector: 'app-filter-sheet',
-  imports: [MatButton, FilterControls],
+  imports: [Sheet, MatButton, FilterControls],
   template: `
-    <div class="px-4 pb-safe">
-      <div
-        class="mx-auto mt-1 mb-3 h-1 w-8 rounded-full bg-outline-variant"
-        aria-hidden="true"
-      ></div>
-      <h2 class="mb-4 text-lg font-semibold" i18n>Filters</h2>
+    <app-sheet title="Filters" i18n-title>
       <app-filter-controls [filters]="filters" />
-      <div class="mt-6 mb-4 flex justify-between gap-3">
-        <button matButton type="button" (click)="reset()" i18n>Reset</button>
-        <button matButton="filled" type="button" (click)="ref.dismiss()" i18n>Done</button>
-      </div>
-    </div>
+      <button sheetActions matButton="tonal" type="button" (click)="reset()">
+        <ng-container i18n>Reset</ng-container>
+      </button>
+      <button sheetActions matButton="filled" type="button" (click)="ref.dismiss()">
+        <ng-container i18n>Done</ng-container>
+      </button>
+    </app-sheet>
   `,
 })
 export class FilterSheet {

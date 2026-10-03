@@ -10,6 +10,7 @@ import {
   ReportTimePipe,
 } from '../../shared/pipes/format.pipes';
 import { groupByTime, reportCount } from './calendar-model';
+import { Sheet } from '../../shared/components/sheet/sheet';
 
 export interface DaySheetData {
   day: CalendarDay;
@@ -19,24 +20,18 @@ export interface DaySheetData {
 /** Bottom sheet with every report of a day, grouped by report time. */
 @Component({
   selector: 'app-day-sheet',
-  imports: [StockLogo, AppDatePipe, CompactPipe, PricePipe, ReportTimePipe],
+  imports: [Sheet, StockLogo, AppDatePipe, CompactPipe, PricePipe, ReportTimePipe],
   template: `
-    <div class="pb-safe">
-      <div
-        class="mx-auto mt-1 mb-3 h-1 w-8 rounded-full bg-outline-variant"
-        aria-hidden="true"
-      ></div>
-      <div class="flex items-baseline justify-between gap-3 px-4 pb-2">
-        <h2 class="text-lg font-semibold">{{ data.day.date | appDate: 'long' }}</h2>
-        <span class="shrink-0 text-sm text-on-surface-variant">{{ count() }}</span>
+    <app-sheet>
+      <div class="flex items-baseline justify-between gap-3 pb-2">
+        <h2 class="text-[22px] leading-tight font-bold">{{ data.day.date | appDate: 'long' }}</h2>
+        <span class="shrink-0 text-sm font-semibold text-on-surface-variant">{{ count() }}</span>
       </div>
       @for (group of groups(); track group.time) {
-        <h3
-          class="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide text-on-surface-variant uppercase"
-        >
+        <h3 class="pt-4 pb-1 text-xs font-bold tracking-[.05em] text-on-surface-variant uppercase">
           {{ group.time | reportTime }}
         </h3>
-        <ul>
+        <ul class="-mx-4">
           @for (e of group.events; track e.symbol) {
             <li>
               <button
@@ -63,9 +58,9 @@ export interface DaySheetData {
           }
         </ul>
       } @empty {
-        <p class="px-4 py-6 text-sm text-on-surface-variant" i18n>No reports on this day.</p>
+        <p class="py-6 text-sm text-on-surface-variant" i18n>No reports on this day.</p>
       }
-    </div>
+    </app-sheet>
   `,
 })
 export class DaySheet {

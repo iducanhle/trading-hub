@@ -14,6 +14,7 @@ import {
   importanceLabel,
   notableMove,
 } from './events-model';
+import { Sheet } from '../../shared/components/sheet/sheet';
 
 export interface EventsDaySheetData {
   day: MarketEventDay;
@@ -23,18 +24,14 @@ export interface EventsDaySheetData {
 /** Bottom sheet with every event of a day: all-day ones first, then by time in the device's time zone. */
 @Component({
   selector: 'app-events-day-sheet',
-  imports: [NgTemplateOutlet, EventBadge, AppDatePipe, ReportTimePipe],
+  imports: [Sheet, NgTemplateOutlet, EventBadge, AppDatePipe, ReportTimePipe],
   template: `
-    <div class="pb-safe">
-      <div
-        class="mx-auto mt-1 mb-3 h-1 w-8 rounded-full bg-outline-variant"
-        aria-hidden="true"
-      ></div>
-      <div class="flex items-baseline justify-between gap-3 px-4 pb-2">
-        <h2 class="text-lg font-semibold">{{ data.day.date | appDate: 'long' }}</h2>
-        <span class="shrink-0 text-sm text-on-surface-variant">{{ count() }}</span>
+    <app-sheet>
+      <div class="flex items-baseline justify-between gap-3 pb-2">
+        <h2 class="text-[22px] leading-tight font-bold">{{ data.day.date | appDate: 'long' }}</h2>
+        <span class="shrink-0 text-sm font-semibold text-on-surface-variant">{{ count() }}</span>
       </div>
-      <ul>
+      <ul class="-mx-4">
         @for (e of events(); track e.id) {
           <li>
             @if (e.symbol) {
@@ -55,7 +52,7 @@ export interface EventsDaySheetData {
           <li class="px-4 py-6 text-sm text-on-surface-variant" i18n>No events on this day.</li>
         }
       </ul>
-    </div>
+    </app-sheet>
 
     <ng-template #row let-e>
       <app-event-badge [event]="e" [size]="36" [followed]="data.followed.has(e.symbol ?? '')" />

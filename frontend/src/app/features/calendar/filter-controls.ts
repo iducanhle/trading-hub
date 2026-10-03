@@ -1,16 +1,16 @@
 import { Component, WritableSignal, computed, input } from '@angular/core';
-import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatChipListbox, MatChipListboxChange, MatChipOption } from '@angular/material/chips';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { RegionFilter } from '../../core/models/contract';
 import { CAP_OPTIONS, CalendarFilters } from './calendar-model';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 
 let nextId = 0;
 
 /** Market cap, region and followed-only filters: stacked in the phone's bottom sheet, one row on desktop. */
 @Component({
   selector: 'app-filter-controls',
-  imports: [MatChipListbox, MatChipOption, MatButtonToggleGroup, MatButtonToggle, MatSlideToggle],
+  imports: [MatChipListbox, MatChipOption, Segmented, Segment, MatSlideToggle],
   template: `
     <div
       [class]="
@@ -45,16 +45,17 @@ let nextId = 0;
         >
           Region
         </p>
-        <mat-button-toggle-group
+        <app-segmented
           [attr.aria-labelledby]="id + '-region'"
-          hideSingleSelectionIndicator
+          [inset]="!inline()"
+          [stretch]="!inline()"
           [value]="value().region"
-          (change)="setRegion($event.value)"
+          (valueChange)="setRegion($event)"
         >
-          <mat-button-toggle value="ALL" i18n="Region filter: US and EU">All</mat-button-toggle>
-          <mat-button-toggle value="US">US</mat-button-toggle>
-          <mat-button-toggle value="EU">EU</mat-button-toggle>
-        </mat-button-toggle-group>
+          <app-segment value="ALL" i18n="Region filter: US and EU">All</app-segment>
+          <app-segment value="US">US</app-segment>
+          <app-segment value="EU">EU</app-segment>
+        </app-segmented>
       </div>
       <mat-slide-toggle [checked]="value().followedOnly" (change)="setFollowedOnly($event.checked)">
         <ng-container i18n>Followed only</ng-container>
