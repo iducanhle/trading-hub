@@ -40,7 +40,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
     PercentPipe,
   ],
   template: `
-    <div class="app-card pb-1.5">
+    <div class="app-card" [class.pb-1.5]="open()">
       <h2 class="m-0">
         <button
           type="button"
