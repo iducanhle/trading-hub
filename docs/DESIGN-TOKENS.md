@@ -40,7 +40,7 @@ Charts:
 
 ## Typography
 
-Font **Onest**, weights 100–900, self-hosted from `@fontsource-variable/onest` (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
+Font **Outfit**, weights 100–900, self-hosted from `@fontsource-variable/outfit` (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
 
 | Role | Size / weight | Note |
 |---|---|---|

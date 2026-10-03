@@ -54,7 +54,7 @@ Backend (run in `backend/`; `./mvnw` in Bash, `mvnw.cmd` in PowerShell):
   and the Material snack bar load lazily, so don't import them eagerly. `inject()` goes before the first `await` in guards.
 - Design: `docs/DESIGN-TOKENS.md` (redesign in progress, see PROGRESS-frontend). Material is themed only through tokens and
   `mat.*-overrides` in `material-theme.scss`; Tailwind is for layout around it, not for restyling Material components.
-  Theme = `light-dark()` tokens (`--mat-sys-*`, `--app-*`). Font Onest (self-hosted), no shadows. Single-choice
+  Theme = `light-dark()` tokens (`--mat-sys-*`, `--app-*`). Font Outfit (self-hosted), no shadows. Single-choice
   controls are `app-segmented` (not `mat-button-toggle`); bottom-sheet content goes in `app-sheet`; labels and cards use
   the `app-label` / `app-card` utilities; big figures use `app-hero-amount`.
 - Backend: provider API keys go only in headers, never in URLs or exception messages. A Finnhub `403` means "try the
