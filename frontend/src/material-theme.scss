@@ -33,7 +33,7 @@ html {
   // Visible focus rings for keyboard users on every Material component.
   @include mat.strong-focus-indicators();
 
-  // Tonal surfaces instead of shadows, and full-width snackbars above the bottom tab bar on phones.
+  // Tonal surfaces instead of shadows, and full-width snackbars on phones.
   @include mat.snack-bar-overrides(
     (
       container-shape: 12px,

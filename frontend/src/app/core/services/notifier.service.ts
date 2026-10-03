@@ -7,7 +7,7 @@ import type {
 
 /**
  * Snackbars, with Material's snack bar (and its overlay) loaded on first use instead of in the initial bundle.
- * They sit above the bottom tab bar on phones.
+ * They are full width on phones.
  */
 @Injectable({ providedIn: 'root' })
 export class NotifierService {

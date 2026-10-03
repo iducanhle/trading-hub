@@ -1,9 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatIconButton } from '@angular/material/button';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { Icon } from '../../shared/icon/icon';
 import { IconName } from '../../shared/icon/icon-paths';
+import { MenuService } from '../services/menu.service';
 import { OnlineService } from '../services/online.service';
 import { SessionService } from '../services/session.service';
 
@@ -15,12 +17,13 @@ interface Tab {
 }
 
 /**
- * The signed-in app: a bottom tab bar on phones (above the home indicator), a navigation rail from `lg` up,
+ * The signed-in app: a burger menu drawer on phones (opened from the page headers), a navigation rail from `lg` up,
  * and an offline banner. Starting it starts the user's live data (settings, follows).
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, Icon],
+  imports: [RouterOutlet, RouterLink, MatIconButton, Icon],
+  host: { '(document:keydown.escape)': 'menu.hide()' },
   template: `
     <button
       type="button"
@@ -39,32 +42,26 @@ interface Tab {
       </div>
     }
 
-    <main
-      #main
-      tabindex="-1"
-      class="min-h-dvh outline-none pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-24"
-    >
+    <main #main tabindex="-1" class="min-h-dvh outline-none lg:pl-24">
       <router-outlet />
     </main>
 
     <nav
       aria-label="Main"
       i18n-aria-label="Main navigation"
-      class="fixed inset-x-0 bottom-0 z-30 border-t border-outline-variant bg-surface-container pb-safe lg:inset-y-0 lg:right-auto lg:w-24 lg:border-t-0 lg:border-r lg:pt-safe lg:pb-0"
+      class="fixed inset-y-0 left-0 z-30 hidden w-24 border-r border-outline-variant bg-surface-container pt-safe lg:block"
     >
-      <ul
-        class="mx-auto flex h-(--app-bottom-nav-height) max-w-md items-stretch justify-around lg:h-full lg:max-w-none lg:flex-col lg:justify-start lg:gap-2 lg:pt-4"
-      >
-        <li class="hidden lg:mb-4 lg:flex lg:justify-center" aria-hidden="true">
+      <ul class="flex h-full flex-col justify-start gap-2 pt-4">
+        <li class="mb-4 flex justify-center" aria-hidden="true">
           <img src="icons/icon.svg" alt="" width="40" height="40" class="rounded-xl" />
         </li>
         @for (tab of tabs; track tab.path) {
           @let active = activeTab() === tab.path;
-          <li class="flex flex-1 lg:flex-none">
+          <li class="flex">
             <a
               [routerLink]="tab.path"
               [attr.aria-current]="active ? 'page' : null"
-              class="flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium lg:py-2"
+              class="flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium"
               [class.text-on-surface]="active"
               [class.text-on-surface-variant]="!active"
             >
@@ -81,6 +78,58 @@ interface Tab {
         }
       </ul>
     </nav>
+
+    @if (menu.open()) {
+      <div class="fixed inset-0 z-50 lg:hidden">
+        <button
+          type="button"
+          tabindex="-1"
+          aria-hidden="true"
+          class="absolute inset-0 bg-scrim/32"
+          (click)="menu.hide()"
+        ></button>
+        <nav
+          role="dialog"
+          aria-modal="true"
+          aria-label="Main"
+          i18n-aria-label="Main navigation"
+          class="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-surface-container pt-safe pb-safe shadow-xl"
+        >
+          <div class="flex h-14 items-center gap-2 pr-2 pl-4">
+            <img src="icons/icon.svg" alt="" width="32" height="32" class="rounded-lg" />
+            <span class="flex-1 text-lg font-semibold tracking-tight">Tradiqo</span>
+            <button
+              #closeButton
+              matIconButton
+              type="button"
+              aria-label="Close menu"
+              i18n-aria-label
+              (click)="menu.hide()"
+            >
+              <app-icon name="close" />
+            </button>
+          </div>
+          <ul class="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+            @for (tab of tabs; track tab.path) {
+              @let active = activeTab() === tab.path;
+              <li>
+                <a
+                  [routerLink]="tab.path"
+                  [attr.aria-current]="active ? 'page' : null"
+                  class="flex h-14 items-center gap-3 rounded-full px-4 text-sm font-medium"
+                  [class.bg-secondary-container]="active"
+                  [class.text-on-secondary-container]="active"
+                  [class.text-on-surface-variant]="!active"
+                >
+                  <app-icon [name]="active ? tab.activeIcon : tab.icon" />
+                  {{ tab.label }}
+                </a>
+              </li>
+            }
+          </ul>
+        </nav>
+      </div>
+    }
   `,
 })
 export class Shell {
@@ -92,7 +141,9 @@ export class Shell {
     ),
     { initialValue: this.router.url },
   );
+  private readonly closeButton = viewChild<ElementRef<HTMLElement>>('closeButton');
 
+  protected readonly menu = inject(MenuService);
   protected readonly online = inject(OnlineService).online;
   protected readonly tabs: Tab[] = [
     { path: '/search', label: $localize`Search`, icon: 'search', activeIcon: 'search' },
@@ -130,5 +181,11 @@ export class Shell {
 
   constructor() {
     inject(SessionService).start();
+    // Navigating closes the drawer; opening it moves focus inside.
+    effect(() => {
+      this.url();
+      this.menu.hide();
+    });
+    effect(() => this.closeButton()?.nativeElement.focus());
   }
 }

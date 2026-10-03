@@ -44,6 +44,7 @@ const ICONS = [
   'link_off',
   'lock',
   'logout',
+  'menu',
   'mail',
   'mark_email_read',
   'more_vert',

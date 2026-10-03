@@ -1,10 +1,9 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { T212DetailTrade, T212Dividend } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
@@ -15,13 +14,16 @@ import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
 import { AppDatePipe, PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
+import {
+  DEFAULT_VIEW,
+  InstrumentFilters,
+  TimelineItem,
+  TimelineView,
+  applyView,
+} from './instrument-filters';
 import { Pnl } from './pnl';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import { dayIn, displayTicker } from './portfolio-model';
-
-type TimelineItem =
-  | { kind: 'trade'; at: string; trade: T212DetailTrade }
-  | { kind: 'dividend'; at: string; dividend: T212Dividend };
 
 /**
  * `/portfolio/:t212Ticker`: one instrument over all time: position, average cost, profit/loss, and every trade and
@@ -40,6 +42,7 @@ type TimelineItem =
     StockLogo,
     TermInfo,
     Icon,
+    InstrumentFilters,
     AppDatePipe,
     PricePipe,
     QuantityPipe,
@@ -170,14 +173,25 @@ type TimelineItem =
         </div>
 
         <h2 class="mt-6 mb-2 text-base font-semibold" i18n>Trades and dividends</h2>
+        @if (timeline().length > 0) {
+          <app-instrument-filters
+            class="mb-3 block"
+            [view]="view()"
+            (viewChange)="view.set($event)"
+          />
+        }
         @if (timeline().length === 0) {
           <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant" i18n>
             No trades or dividends synced yet.
           </p>
+        } @else if (visible().length === 0) {
+          <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant" i18n>
+            No trades or dividends match the filter.
+          </p>
         } @else {
           <ol class="relative ml-3 border-l border-outline-variant">
             @for (
-              item of timeline();
+              item of visible();
               track item.kind + (item.kind === 'trade' ? item.trade.id : item.dividend.id)
             ) {
               <li class="relative py-2 pl-5">
@@ -243,6 +257,7 @@ export class InstrumentPage {
   /** Route parameter. */
   readonly t212Ticker = input.required<string>();
 
+  protected readonly view = signal<TimelineView>(DEFAULT_VIEW);
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly kindLabels = KIND_LABELS;
   protected readonly data = rxResource({
@@ -272,6 +287,9 @@ export class InstrumentPage {
       })),
     ].sort((a, b) => b.at.localeCompare(a.at));
   });
+
+  /** The timeline after the side filter, in the chosen order. */
+  protected readonly visible = computed(() => applyView(this.timeline(), this.view()));
 
   constructor() {
     void this.t212.load();

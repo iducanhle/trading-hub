@@ -7,6 +7,9 @@
     "7119731027798418259": "Ověřte svůj e-mail",
     "5376287016044032856": "Bez přístupu",
     "4580988005648117665": "Hledat",
+    "6533918067030990396": "Částka",
+    "2005818722469409502": "Otevřít menu",
+    "1556270137829928334": "Zavřít menu",
     "8284733680660698405": "Sledované",
     "3825802286872185103": "Kalendář",
     "4930506384627295710": "Nastavení",
@@ -509,7 +512,7 @@
     "929533666167273139": "V tomto období filtrům neodpovídá žádný obchod.",
     "4498755631821405093": "Objeví se tu obchody z tohoto období.",
     "8456692311557678359": "Směr obchodu",
-    "4613338085351943838": "Akcie",
+    "5270359975616584389": "V tomto období žádné obchody",
     "2568466604019268670": "V aplikaci Trading 212: ☰ → Nastavení → API (Beta) → Vygenerovat API klíč.",
     "6913689579900735276": "Kolik jste v průměru zaplatili za jednu akcii z těch, které teď držíte. Každý nákup ji posune, prodej ji nemění.",
     "4832072980451513612": "Takto ji počítá Trading 212 a vůči ní se měří zisk z prodejů.",
@@ -543,6 +546,11 @@
     "8463680427170906537": "Průměrná a aktuální cena",
     "359411959731333284": "1D",
     "6675204538846266344": "2M",
-    "3079229011211800338": "3R"
+    "3079229011211800338": "3R",
+    "3973931101896534797": "Datum",
+    "1197290586037443662": "Výše zisku",
+    "3706981769444978112": "Sestupně, klepnutím vzestupně",
+    "4419561910413872093": "Vzestupně, klepnutím sestupně",
+    "2822400116909189117": "Filtru neodpovídají žádné obchody ani dividendy."
   }
 }

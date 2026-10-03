@@ -59,7 +59,6 @@
     --app-rec-hold: light-dark(#d4a72c, #e5c663);
     --app-rec-sell: light-dark(#e07b39, #f2a36f);
     --app-rec-strong-sell: light-dark(#b3261e, #ff8a80);
-    --app-bottom-nav-height: 4rem;
   }
 
   html {
@@ -122,9 +121,9 @@
   margin-left: -4px;
 }
 
-/* Snackbars sit above the bottom tab bar on phones. */
+/* Snackbars keep clear of the home indicator on phones. */
 .app-snackbar-offset {
-  margin-bottom: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom) + 8px) !important;
+  margin-bottom: calc(env(safe-area-inset-bottom) + 8px) !important;
 }
 @media (min-width: 64rem) {
   .app-snackbar-offset {
