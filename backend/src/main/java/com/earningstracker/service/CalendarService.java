@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.earningstracker.cache.DocumentStore;
+import com.earningstracker.market.Logos;
 import com.earningstracker.market.Region;
 import com.earningstracker.web.dto.Dtos;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -129,6 +130,19 @@ public class CalendarService {
 
     private List<Dtos.EarningsEvent> events(Map<String, Object> doc) {
         Object events = doc.get("events");
-        return events == null ? List.of() : jsonMapper.convertValue(events, eventsType);
+        if (events == null) {
+            return List.of();
+        }
+        List<Dtos.EarningsEvent> parsed = jsonMapper.convertValue(events, eventsType);
+        return parsed.stream().map(CalendarService::withCleanLogo).toList();
+    }
+
+    /** Stored days still carry logos from the retired ticker-based fallback. */
+    private static Dtos.EarningsEvent withCleanLogo(Dtos.EarningsEvent e) {
+        String logo = Logos.clean(e.logoUrl());
+        return java.util.Objects.equals(logo, e.logoUrl()) ? e
+                : new Dtos.EarningsEvent(e.symbol(), e.name(), e.exchange(), e.region(), logo, e.date(), e.time(),
+                        e.fiscalQuarter(), e.fiscalYear(), e.currency(), e.epsEstimate(), e.epsActual(),
+                        e.revenueEstimate(), e.revenueActual(), e.marketCapUsd());
     }
 }

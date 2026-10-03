@@ -61,7 +61,7 @@ public class FollowedEarningsService {
                 String currency = profile.map(StockProfile::currency)
                         .orElseGet(() -> Symbols.euExchange(symbol).map(e -> e.currency()).orElse("USD"));
                 noUpcoming.add(new Dtos.SearchResult(symbol, follow.name(), exchange, follow.region(), currency,
-                        Logos.orFallback(symbol, logo)));
+                        Logos.clean(logo)));
             }
         }
         upcoming.sort(Comparator.comparing(Dtos.EarningsEvent::date).thenComparing(Dtos.EarningsEvent::marketCapUsd,

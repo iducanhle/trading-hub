@@ -14,7 +14,7 @@
       "name": "Apple",
       "isin": "US0378331005",
       "currency": "USD",
-      "logoUrl": "https://financialmodelingprep.com/image-stock/AAPL.png"
+      "logoUrl": null
     },
     {
       "t212Ticker": "MSFT_US_EQ",
@@ -22,7 +22,7 @@
       "name": "Microsoft",
       "isin": "US5949181045",
       "currency": "USD",
-      "logoUrl": "https://financialmodelingprep.com/image-stock/MSFT.png"
+      "logoUrl": null
     },
     {
       "t212Ticker": "SAPd_EQ",
@@ -30,7 +30,7 @@
       "name": "SAP",
       "isin": "DE0007164600",
       "currency": "EUR",
-      "logoUrl": "https://financialmodelingprep.com/image-stock/SAP.DE.png"
+      "logoUrl": null
     },
     {
       "t212Ticker": "NVDA_US_EQ",
@@ -38,7 +38,7 @@
       "name": "NVIDIA",
       "isin": "US67066G1040",
       "currency": "USD",
-      "logoUrl": "https://financialmodelingprep.com/image-stock/NVDA.png"
+      "logoUrl": null
     },
     {
       "t212Ticker": "VUSAl_EQ",

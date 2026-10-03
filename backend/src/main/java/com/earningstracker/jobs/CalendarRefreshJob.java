@@ -249,7 +249,7 @@ public class CalendarRefreshJob implements Job {
     private static Dtos.EarningsEvent event(String symbol, String name, String exchange, StockProfile profile,
             EarningsReport report) {
         return new Dtos.EarningsEvent(symbol, name, exchange, Symbols.region(symbol),
-                Logos.orFallback(symbol, profile == null ? null : profile.logoUrl()), report.date(), report.time(), report.fiscalQuarter(),
+                Logos.clean(profile == null ? null : profile.logoUrl()), report.date(), report.time(), report.fiscalQuarter(),
                 report.fiscalYear(), report.currency(), report.epsEstimate(), report.epsActual(),
                 report.revenueEstimate(), report.revenueActual(), profile == null ? null : profile.marketCapUsd());
     }

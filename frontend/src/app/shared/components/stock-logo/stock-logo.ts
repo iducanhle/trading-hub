@@ -3,7 +3,8 @@ import { Icon } from '../../icon/icon';
 import { symbolColor, symbolInitials } from '../../utils/symbols';
 
 /**
- * A stock's logo at a fixed size (no layout shift), as a rounded square (14 px corners at 48 px). Without a logo, or
+ * A stock's logo at a fixed size (no layout shift), as a rounded square (14 px corners at 48 px) with no background or
+ * border, only a barely visible shadow so a white logo does not vanish on the light theme. Without a logo, or
  * when it fails to load or is too small to look sharp (16 px favicons), the ticker's initials on a colour derived from the symbol. Decorative: the symbol is always shown next to it.
  */
 /** Below this natural width a logo is upscaled into a blur (Google returns 16 px favicons when it has nothing better). */
@@ -21,7 +22,7 @@ const MIN_SHARP_PX = 32;
         ></span>
       }
       <img
-        class="size-full bg-white object-contain p-[12%] ring-1 ring-outline-variant ring-inset transition-opacity duration-200"
+        class="size-full object-contain shadow-[0_0_3px_rgb(0_0_0/0.18)] transition-opacity duration-200"
         [class.opacity-0]="!loaded()"
         [style.border-radius.px]="radius()"
         [src]="logoUrl()"
@@ -85,7 +86,7 @@ export class StockLogo {
     Math.round(this.size() * (this.size() < 32 ? 0.45 : 0.36)),
   );
 
-  /** Until it loads, a neutral tile instead of a stark white square; tiny favicons fall back to initials. */
+  /** Until it loads, a neutral tile; tiny favicons fall back to initials. */
   protected onLoad(event: Event): void {
     const img = event.target as HTMLImageElement;
     if (img.naturalWidth > 0 && img.naturalWidth < MIN_SHARP_PX) this.failed.set(true);

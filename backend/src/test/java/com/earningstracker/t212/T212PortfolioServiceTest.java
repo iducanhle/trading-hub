@@ -272,7 +272,7 @@ class T212PortfolioServiceTest {
         T212Dtos.Instrument azn = list.items().get(2);
         assertThat(azn.symbol()).isEqualTo("AZN.L");
         assertThat(azn.instrumentCurrency()).isEqualTo("GBP");
-        assertThat(azn.logoUrl()).isEqualTo("https://financialmodelingprep.com/image-stock/AZN.L.png");
+        assertThat(azn.logoUrl()).as("no stored profile, so the web app shows initials").isNull();
         assertThat(azn.status()).isEqualTo("CLOSED"); // not among the live positions
         assertThat(azn.averageCost()).isNull();
 

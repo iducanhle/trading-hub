@@ -216,8 +216,7 @@ class StockServiceTest {
         f.provider.listings.put("SIE.DE", new SymbolMatch("SIE.DE", "Siemens AG", Exchange.XETRA, "EUR"));
 
         assertThat(f.stocks.peers(SAP)).containsExactly(
-                new Dtos.SearchResult("SIE.DE", "Siemens AG", "XETRA", Region.EU, "EUR",
-                        "https://financialmodelingprep.com/image-stock/SIE.DE.png"));
+                new Dtos.SearchResult("SIE.DE", "Siemens AG", "XETRA", Region.EU, "EUR", null));
     }
 
     @Test

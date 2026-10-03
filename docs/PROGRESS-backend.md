@@ -47,7 +47,7 @@ Spec: [PROMPT-trading212.md](PROMPT-trading212.md) (phases in §9). API: the Tra
 - Phase 4:
   - `T212LiveService`: account summary + positions per user, 60 s cache (one fetch shared by concurrent requests), last good copy served as stale, no calls with a rejected key; pence prices → GBP.
   - `T212PortfolioEngine` (pure): average cost over the whole history, Trading 212's realized result preferred, splits change quantity only, corporate actions with a value count as trades, period selection by `T212Period` (days in an IANA zone), position after each fill, open/closed from live positions (history when unknown).
-  - `T212PortfolioService` + controller: `/summary`, `/instruments`, `/instruments/{t212Ticker}`, `/trades` (opaque cursor), `/dividends`, `/transactions`; logos from stored profiles with the ticker fallback, only for mapped symbols.
+  - `T212PortfolioService` + controller: `/summary`, `/instruments`, `/instruments/{t212Ticker}`, `/trades` (opaque cursor), `/dividends`, `/transactions`; logos from stored profiles only (no ticker fallback), only for mapped symbols.
   - Tests: engine (partial sells, T212 realized preferred, close + re-buy, fractional, fees/taxes, split, dividends, period vs. cost history, time zone, live open/unrealized), service over the synced fixtures (all-time and period summaries, instruments, detail timeline, trade paging and filters, dividends/transactions totals, Trading 212 down with and without a cached copy, 409), controller (409 on every read, parameter validation, 404). Backend 232 tests pass.
 
 **In progress:** nothing.

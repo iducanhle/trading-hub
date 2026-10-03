@@ -430,7 +430,7 @@ public class T212PortfolioService {
         return info.name() != null ? info.name() : info.ticker();
     }
 
-    /** Logo URLs by ticker, for instruments with a mapped symbol (stored profile, else the ticker fallback). */
+    /** Logo URLs by ticker, for instruments with a mapped symbol (stored profile logos only). */
     private Map<String, String> logos(Context ctx, List<String> tickers) {
         Map<String, String> symbols = new java.util.HashMap<>();
         for (String ticker : tickers) {
@@ -441,7 +441,12 @@ public class T212PortfolioService {
         }
         Map<String, String> stored = symbols.isEmpty() ? Map.of() : profiles.logos(symbols.values());
         Map<String, String> logos = new java.util.HashMap<>();
-        symbols.forEach((ticker, symbol) -> logos.put(ticker, Logos.orFallback(symbol, stored.get(symbol))));
+        symbols.forEach((ticker, symbol) -> {
+            String logo = Logos.clean(stored.get(symbol));
+            if (logo != null) {
+                logos.put(ticker, logo);
+            }
+        });
         return logos;
     }
 
