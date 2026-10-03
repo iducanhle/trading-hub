@@ -550,6 +550,13 @@ export class PriceChart {
       this.createChart();
       this.ready.set(true);
     });
+    // Tell the page header which range is shown, so its change line follows the chart.
+    effect(() => {
+      // The response's own range: while another one loads, the previous data is still shown.
+      const gain = this.rangeGain();
+      const range = this.data()?.range;
+      this.ctx.chartRange.set(gain && range ? { range, fromPrice: gain.from.price } : null);
+    });
     effect(() => {
       const data = this.data();
       const type = this.type();
@@ -629,7 +636,7 @@ export class PriceChart {
         locale: NUMBER_LOCALE,
         priceFormatter: (price: number) => priceFormat.format(price),
       },
-      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.08, bottom: 0.24 } },
+      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.08, bottom: 0.08 } },
       timeScale: {
         borderVisible: false,
         fixLeftEdge: true,
@@ -655,6 +662,8 @@ export class PriceChart {
       this.selected.set(marker?.data ?? null);
     });
     this.volume = chart.addSeries(HistogramSeries, {
+      // Hidden: the bars cluttered the chart; the data stays for the crosshair legend's volume.
+      visible: false,
       priceFormat: { type: 'volume' },
       priceScaleId: 'volume',
       lastValueVisible: false,

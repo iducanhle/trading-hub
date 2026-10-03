@@ -120,7 +120,7 @@
 /* The design's small uppercase label above a value ("HODNOTA ÚČTU", "ODHAD EPS"). */
 @utility app-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);

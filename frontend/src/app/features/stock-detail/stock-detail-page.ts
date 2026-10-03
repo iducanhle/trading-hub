@@ -19,7 +19,7 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
 import { PricePipe, SignedNumberPipe, PercentPipe } from '../../shared/pipes/format.pipes';
-import { toneClass } from '../../shared/utils/format';
+import { PERIOD_LABELS, toneClass } from '../../shared/utils/format';
 import { EarningsHistory } from './sections/earnings-history';
 import { EarningsStats } from './sections/earnings-stats';
 import { KeyStats } from './sections/key-stats';
@@ -159,7 +159,10 @@ const TABS: { id: StockTab; label: string }[] = [
                   <p class="truncate text-[17px] font-semibold">{{ s.name }}</p>
                   <app-hero-amount class="mt-1" [value]="s.quote.price" [currency]="s.currency" />
                   <p class="mt-1 text-[15px] font-semibold" [class]="changeClass()">
-                    {{ s.quote.change | signed }} ({{ s.quote.changePercent | pct }})
+                    {{ change().amount | signed }} ({{ change().percent | pct }})
+                    @if (change().label; as label) {
+                      <span class="ml-1 text-on-surface-variant">{{ label }}</span>
+                    }
                   </p>
                 } @else {
                   <app-skeleton class="h-5 w-40" />
@@ -326,7 +329,24 @@ export class StockDetailPage {
         }
       : null;
   });
-  protected readonly changeClass = computed(() => toneClass(this.stock()?.quote.change));
+  /**
+   * The change under the price: over the chart's selected range (from the close before it to the live price),
+   * or the day's change until the chart has data.
+   */
+  protected readonly change = computed(() => {
+    const quote = this.stock()?.quote;
+    const chart = this.ctx.chartRange();
+    if (quote?.price != null && chart && chart.range !== '1D' && chart.fromPrice) {
+      const amount = quote.price - chart.fromPrice;
+      return {
+        amount,
+        percent: (amount / chart.fromPrice) * 100,
+        label: PERIOD_LABELS[chart.range],
+      };
+    }
+    return { amount: quote?.change ?? null, percent: quote?.changePercent ?? null, label: null };
+  });
+  protected readonly changeClass = computed(() => toneClass(this.change().amount));
   /** The header pill's dot: the day's direction. */
   protected readonly dotClass = computed(() => {
     const change = this.stock()?.quote.change;
