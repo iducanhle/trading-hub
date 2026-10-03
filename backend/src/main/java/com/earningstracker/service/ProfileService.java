@@ -3,6 +3,7 @@ package com.earningstracker.service;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -51,10 +52,22 @@ public class ProfileService {
 
     public ProfileService(TieredCache cache, ProviderRouter router, FxService fx, Clock clock) {
         this.cache = cache;
-        this.policy = cache.policy("symbols", StockProfile.class, FRESH_FOR, true);
+        this.policy = cache.policy("symbols", StockProfile.class, ProfileService::isFresh, FRESH_FOR.multipliedBy(2),
+                true);
         this.router = router;
         this.fx = fx;
         this.clock = clock;
+    }
+
+    /**
+     * Fresh for {@link #FRESH_FOR}. A US profile in another currency is never fresh: it came from an ADR's home
+     * listing (Finnhub resolved SKHY to 000660.KS in KRW) before that was rejected, so it is loaded again.
+     */
+    static boolean isFresh(StockProfile profile, Instant fetchedAt, Instant now) {
+        if (Symbols.region(profile.symbol()) == Region.US && !"USD".equals(profile.currency())) {
+            return false;
+        }
+        return fetchedAt.plus(FRESH_FOR).isAfter(now);
     }
 
     public Cached<StockProfile> profile(String symbol) {

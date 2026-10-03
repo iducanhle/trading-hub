@@ -143,6 +143,12 @@ public class FinnhubProvider implements SymbolSearchProvider, QuoteProvider, Pro
         if (name == null) {
             throw notFound(symbol);
         }
+        // An ADR can resolve to the home listing (SKHY → 000660.KS, in KRW): its currency, market cap and metrics
+        // are not the US line's, so the next provider answers instead.
+        String resolved = Json.text(profile.path("ticker"));
+        if (resolved != null && !resolved.equalsIgnoreCase(finnhubSymbol)) {
+            throw new ProviderException(ID, Kind.NOT_FOUND, symbol + " resolves to another listing (" + resolved + ")");
+        }
         Exchange exchange = exchangeOf(symbol, Json.text(profile.path("exchange")));
         if (exchange == null) {
             throw new ProviderException(ID, Kind.NOT_FOUND, symbol + " is not listed on NYSE, NASDAQ or NYSE American");

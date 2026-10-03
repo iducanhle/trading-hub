@@ -119,6 +119,17 @@ class FinnhubProviderTest {
     }
 
     @Test
+    void anAdrResolvedToItsHomeListingIsNotFound() {
+        routes.on("/stock/profile2", body(200, """
+                {"ticker":"000660.KS","name":"SK Hynix Inc","currency":"KRW",
+                 "exchange":"KOREA EXCHANGE (STOCK MARKET)","marketCapitalization":150000000}
+                """));
+
+        assertThatThrownBy(() -> provider.profile("SKHY"))
+                .isInstanceOfSatisfying(ProviderException.class, e -> assertThat(e.kind()).isEqualTo(Kind.NOT_FOUND));
+    }
+
+    @Test
     void profileSurvivesMissingMetrics() {
         routes.on("/stock/metric", body(500, "down"));
 

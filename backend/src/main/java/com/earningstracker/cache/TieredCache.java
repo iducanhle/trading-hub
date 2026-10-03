@@ -76,6 +76,11 @@ public class TieredCache {
                 persistent);
     }
 
+    public <T> Policy<T> policy(String name, Class<T> type, Freshness<T> freshness, Duration retainFor,
+            boolean persistent) {
+        return policy(name, jsonMapper.constructType(type), freshness, retainFor, persistent);
+    }
+
     public <T> Policy<T> policy(String name, JavaType type, Freshness<T> freshness, Duration retainFor,
             boolean persistent) {
         return new Policy<>(name, type, freshness, persistent, retainFor, 10_000);
