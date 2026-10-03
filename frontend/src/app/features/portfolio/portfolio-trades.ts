@@ -24,9 +24,6 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
-import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
-import { TermInfo } from '../../shared/components/term-info/term-info';
-import { Pnl } from './pnl';
 import {
   AppDatePipe,
   PricePipe,
@@ -87,43 +84,8 @@ const EMPTY: ListState = {
     QuantityPipe,
     SignedMoneyPipe,
     FilterButton,
-    HeroAmount,
-    TermInfo,
-    Pnl,
   ],
   template: `
-    <section class="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 px-1">
-      <div aria-labelledby="trades-total-title">
-        <h2 id="trades-total-title" class="app-label" i18n>Total realized profit/loss</h2>
-        @if (totals(); as total) {
-          <app-hero-amount
-            class="mt-1"
-            size="md"
-            signed
-            [value]="total.realized"
-            [currency]="total.currency"
-          />
-        } @else {
-          <app-skeleton class="mt-2 block h-12 w-48" aria-hidden="true" />
-        }
-      </div>
-      <div class="pb-1">
-        <h2 class="app-label flex items-center gap-1">
-          <ng-container i18n>Unrealized · as of now</ng-container
-          ><app-term-info term="unrealizedPnl" />
-        </h2>
-        @if (totals(); as total) {
-          <app-pnl
-            strong
-            class="mt-1 text-xl tabular-nums"
-            [value]="total.unrealized"
-            [currency]="total.currency"
-          />
-        } @else {
-          <app-skeleton class="mt-1 block h-7 w-28" aria-hidden="true" />
-        }
-      </div>
-    </section>
     <div class="mb-3 flex flex-wrap items-center gap-2">
       <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
       @for (chip of chips(); track chip.key) {
@@ -282,22 +244,6 @@ export class PortfolioTrades {
           .sort((a, b) => displayTicker(a).localeCompare(displayTicker(b)))
       : [],
   );
-
-  /**
-   * Realized profit/loss after fees of the period and unrealized profit/loss as of now, for the stocks in the
-   * filter (all when none).
-   */
-  protected readonly totals = computed(() => {
-    if (!this.instrumentList.hasValue()) return null;
-    const { items, accountCurrency } = this.instrumentList.value();
-    const tickers = this.filters().tickers;
-    const selected = items.filter((i) => !tickers.length || tickers.includes(i.t212Ticker));
-    return {
-      realized: selected.reduce((sum, i) => sum + i.realizedPnl - i.fees, 0),
-      unrealized: selected.reduce((sum, i) => sum + (i.unrealizedPnl ?? 0), 0),
-      currency: accountCurrency,
-    };
-  });
 
   protected readonly filterContext: TradeFiltersContext = {
     filters: this.filters,
