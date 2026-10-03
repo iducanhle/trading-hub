@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.earningstracker.domain.HistoryCalculator;
 import com.earningstracker.market.Symbols;
+import com.earningstracker.service.BarInterval;
 import com.earningstracker.service.PriceRange;
 import com.earningstracker.service.SearchService;
 import com.earningstracker.service.StockService;
@@ -50,10 +51,16 @@ public class StockController {
     }
 
     @GetMapping("/stocks/{symbol}/prices")
-    public Dtos.Prices prices(@PathVariable String symbol, @RequestParam(defaultValue = "1Y") String range) {
+    public Dtos.Prices prices(@PathVariable String symbol, @RequestParam(defaultValue = "1Y") String range,
+            @RequestParam(required = false) String interval) {
         PriceRange priceRange = PriceRange.parse(range)
                 .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST, "range must be 1D, 1W, 1M, 2M, 3M, 6M, 1Y, 3Y or 5Y"));
-        return stocks.prices(symbol(symbol), priceRange);
+        BarInterval barInterval = interval == null ? priceRange.defaultInterval()
+                : BarInterval.parse(interval).filter(priceRange.intervals()::contains)
+                        .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST, "interval must be one of "
+                                + priceRange.intervals().stream().map(BarInterval::label).toList()
+                                + " for range " + priceRange.label()));
+        return stocks.prices(symbol(symbol), priceRange, barInterval);
     }
 
     @GetMapping("/stocks/{symbol}/history")

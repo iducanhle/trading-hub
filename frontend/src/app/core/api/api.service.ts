@@ -14,6 +14,7 @@ import {
   MarketEventsResponse,
   MeResponse,
   NewsItem,
+  PriceInterval,
   PriceRange,
   PricesResponse,
   RecommendationPeriod,
@@ -114,8 +115,18 @@ export class ApiService {
     return this.get<StockOverview>(`/stocks/${encodeSymbol(symbol)}`, {}, options, TTL.overview);
   }
 
-  prices(symbol: string, range: PriceRange, options?: LoadOptions): Observable<PricesResponse> {
-    return this.get<PricesResponse>(`/stocks/${encodeSymbol(symbol)}/prices`, { range }, options);
+  /** Without `interval`, the range's default (5-minute bars for 1D, daily bars otherwise). */
+  prices(
+    symbol: string,
+    range: PriceRange,
+    interval?: PriceInterval,
+    options?: LoadOptions,
+  ): Observable<PricesResponse> {
+    return this.get<PricesResponse>(
+      `/stocks/${encodeSymbol(symbol)}/prices`,
+      present({ range, interval }),
+      options,
+    );
   }
 
   history(

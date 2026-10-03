@@ -145,3 +145,50 @@ export function aggregateHistory(
   }
   return rows.reverse();
 }
+
+/**
+ * Intraday bars of `minutes` for each daily bar: a 6.5-hour session from 13:30 UTC that walks from the day's open to
+ * its close inside its low and high (seeded per symbol and day).
+ */
+export function intradayBars(symbol: string, days: PriceBar[], minutes: number): PriceBar[] {
+  const count = Math.ceil(390 / minutes);
+  return days.flatMap((day) => {
+    const next = random(hashString(`${symbol}|${day.date}|${minutes}`));
+    const start = Date.parse(`${day.date}T13:30:00Z`);
+    const bars: PriceBar[] = [];
+    let price = day.open;
+    for (let i = 0; i < count; i++) {
+      const open = price;
+      const target = day.open + ((day.close - day.open) * (i + 1)) / count;
+      const noise = (next() - 0.5) * (day.high - day.low) * 0.3;
+      price = i === count - 1 ? day.close : Math.min(day.high, Math.max(day.low, target + noise));
+      bars.push({
+        date: day.date,
+        time: new Date(start + i * minutes * 60_000).toISOString(),
+        open: round2(open),
+        high: round2(Math.min(day.high, Math.max(open, price) * 1.001)),
+        low: round2(Math.max(day.low, Math.min(open, price) * 0.999)),
+        close: round2(price),
+        volume: Math.round(day.volume / count),
+      });
+    }
+    return bars;
+  });
+}
+
+/** One bar per calendar week, dated by the week's last session, like the API's `1wk` bars. */
+export function weeklyBars(days: PriceBar[]): PriceBar[] {
+  const weeks = new Map<string, PriceBar[]>();
+  for (const day of days) {
+    const key = startOfWeek(day.date);
+    weeks.set(key, [...(weeks.get(key) ?? []), day]);
+  }
+  return [...weeks.values()].map((week) => ({
+    date: week[week.length - 1].date,
+    open: week[0].open,
+    high: Math.max(...week.map((d) => d.high)),
+    low: Math.min(...week.map((d) => d.low)),
+    close: week[week.length - 1].close,
+    volume: week.reduce((sum, d) => sum + d.volume, 0),
+  }));
+}

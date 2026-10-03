@@ -33,6 +33,7 @@ import { ApiService } from '../../../../core/api/api.service';
 import {
   EarningsMarker,
   PriceBar,
+  PriceInterval,
   PriceRange,
   PricesResponse,
 } from '../../../../core/models/contract';
@@ -74,6 +75,29 @@ import {
 import { Segment, Segmented } from '../../../../shared/components/segmented/segmented';
 
 const RANGES: PriceRange[] = ['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'];
+
+/** The bar sizes each range offers, smallest first (the API's allowed intervals), and its default. */
+const INTERVALS: Record<PriceRange, PriceInterval[]> = {
+  '1D': ['5m', '15m', '30m', '1h'],
+  '1W': ['5m', '15m', '30m', '1h', '1d'],
+  '1M': ['15m', '30m', '1h', '1d'],
+  '2M': ['1h', '1d', '1wk'],
+  '3M': ['1h', '1d', '1wk'],
+  '6M': ['1h', '1d', '1wk'],
+  '1Y': ['1h', '1d', '1wk'],
+  '3Y': ['1d', '1wk'],
+  '5Y': ['1d', '1wk'],
+};
+const defaultInterval = (range: PriceRange): PriceInterval => (range === '1D' ? '5m' : '1d');
+
+const INTERVAL_LABELS: Record<PriceInterval, string> = {
+  '5m': $localize`:Chart bar size:5 min`,
+  '15m': $localize`:Chart bar size:15 min`,
+  '30m': $localize`:Chart bar size:30 min`,
+  '1h': $localize`:Chart bar size:1 h`,
+  '1d': $localize`:Chart bar size:Day`,
+  '1wk': $localize`:Chart bar size:Week`,
+};
 
 interface LegendBar extends PriceBar {
   /** Percent change from the previous close. */
@@ -236,6 +260,19 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
           }
         </app-segmented>
       </div>
+      <div class="px-2.5 pt-1.5">
+        <app-segmented
+          appearance="chips"
+          aria-label="Bar size"
+          i18n-aria-label="Chart bar size selector"
+          [value]="interval()"
+          (valueChange)="setInterval($event)"
+        >
+          @for (i of intervals(); track i) {
+            <app-segment [value]="i">{{ intervalLabels[i] }}</app-segment>
+          }
+        </app-segmented>
+      </div>
 
       <!-- The range's change, or in measure mode the change from A to B. -->
       <div class="flex min-h-14 items-center gap-2 px-5 pt-1 text-sm font-semibold">
@@ -372,15 +409,23 @@ export class PriceChart {
   protected readonly ranges = RANGES;
   protected readonly rangeLabels = PERIOD_LABELS;
   protected readonly range = signal<PriceRange>('6M');
+  protected readonly intervalLabels = INTERVAL_LABELS;
+  protected readonly intervals = computed(() => INTERVALS[this.range()]);
+  protected readonly interval = signal<PriceInterval>(defaultInterval('6M'));
   protected readonly type = persistedSignal<ChartType>('et.chartType', 'line');
 
   protected readonly prices = rxResource({
     params: () =>
       this.ctx.symbol()
-        ? { symbol: this.ctx.symbol(), range: this.range(), version: this.ctx.version() }
+        ? {
+            symbol: this.ctx.symbol(),
+            range: this.range(),
+            interval: this.interval(),
+            version: this.ctx.version(),
+          }
         : undefined,
     stream: ({ params }) =>
-      this.api.prices(params.symbol, params.range, { force: params.version > 0 }),
+      this.api.prices(params.symbol, params.range, params.interval, { force: params.version > 0 }),
   });
   /** For the marker card; the same cached request the earnings sections use. */
   private readonly earnings = this.ctx.resource((symbol, options) =>
@@ -411,7 +456,8 @@ export class PriceChart {
   protected readonly showTrades = persistedSignal('et.chartTrades', true);
   protected readonly showEarnings = persistedSignal('et.chartEarnings', true);
   protected readonly showLines = persistedSignal('et.chartPositionLines', true);
-  protected readonly intraday = computed(() => this.range() === '1D');
+  /** Bars shorter than a day: no measuring, earnings or trade markers (they mark days). */
+  protected readonly intraday = computed(() => !['1d', '1wk'].includes(this.interval()));
 
   /** Average cost and current price of an open Trading 212 position, when in the chart's currency. */
   protected readonly positionPrices = computed<PositionPrices | null>(() => {
@@ -529,10 +575,21 @@ export class PriceChart {
   }
 
   protected setRange(range: PriceRange): void {
+    // Keep the bar size when the new range offers it.
+    if (!INTERVALS[range].includes(this.interval())) this.interval.set(defaultInterval(range));
     this.range.set(range);
+    this.resetSelection();
+  }
+
+  protected setInterval(interval: PriceInterval): void {
+    this.interval.set(interval);
+    this.resetSelection();
+  }
+
+  private resetSelection(): void {
     this.selected.set(null);
     this.points.set([]);
-    if (range === '1D') this.measuring.set(false);
+    if (this.intraday()) this.measuring.set(false);
   }
 
   protected clock(time: string): string {
@@ -555,7 +612,8 @@ export class PriceChart {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        fontFamily: "'App Numerals', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+        fontFamily:
+          "'App Numerals', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
         fontSize: 11,
         // Required by the Lightweight Charts licence: keep the TradingView attribution.
         attributionLogo: true,
@@ -661,7 +719,8 @@ export class PriceChart {
 
     const bars = data?.bars ?? [];
     const markers = this.showEarnings() ? (data?.earningsMarkers ?? []) : [];
-    const future = futureSessions(bars, markers);
+    // Blank sessions are days; weekly bars do not stretch the axis.
+    const future = data?.interval === '1wk' ? [] : futureSessions(bars, markers);
     chart.applyOptions({
       timeScale: { timeVisible: bars.some((b) => b.time), secondsVisible: false },
     });

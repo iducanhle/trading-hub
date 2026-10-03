@@ -43,6 +43,7 @@ import {
   MarketEventsResponse,
   NewsItem,
   PriceBar,
+  PriceInterval,
   PriceRange,
   PricesResponse,
   RecommendationPeriod,
@@ -54,9 +55,20 @@ import {
   aggregateHistory,
   generateBars,
   hashString,
+  intradayBars,
   lastCompletedSession,
   reactionDay,
+  weeklyBars,
 } from './mock-series';
+
+const INTERVAL_MINUTES: Record<PriceInterval, number> = {
+  '5m': 5,
+  '15m': 15,
+  '30m': 30,
+  '1h': 60,
+  '1d': 390,
+  '1wk': 390,
+};
 
 /** The fixtures in src/assets/mocks describe the week of Monday 28 Sep 2026. */
 const FIXTURE_WEEK = '2026-09-28';
@@ -164,7 +176,11 @@ export class MockBackend {
         case undefined:
           return this.overview(symbol);
         case 'prices':
-          return this.prices(symbol, (params.get('range') as PriceRange | null) ?? '1Y');
+          return this.prices(
+            symbol,
+            (params.get('range') as PriceRange | null) ?? '1Y',
+            params.get('interval') as PriceInterval | null,
+          );
         case 'history':
           return this.history(symbol, params);
         case 'earnings':
@@ -302,18 +318,25 @@ export class MockBackend {
     return cached;
   }
 
-  /** 1D: a 6.5-hour session of 5-minute bars ending now, walking from the last close (seeded per symbol). */
-  private intraday(symbol: string, currency: string, all: PriceBar[]): PricesResponse {
+  /** 1D: a 6.5-hour session of `minutes` bars ending now, walking from the last close (seeded per symbol). */
+  private intraday(
+    symbol: string,
+    currency: string,
+    all: PriceBar[],
+    interval: PriceInterval,
+  ): PricesResponse {
+    const minutes = INTERVAL_MINUTES[interval];
+    const count = Math.ceil(390 / minutes);
     const last = all[all.length - 1];
     const bars: PriceBar[] = [];
     let price = last?.close ?? 100;
     let seed = [...symbol].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
-    const start = Date.now() - 78 * 5 * 60_000;
-    for (let i = 0; i < 78; i++) {
+    const start = Date.now() - count * minutes * 60_000;
+    for (let i = 0; i < count; i++) {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       const open = price;
       price = Math.max(0.01, price * (1 + (seed / 2 ** 32 - 0.5) * 0.004));
-      const time = new Date(start + i * 5 * 60_000);
+      const time = new Date(start + i * minutes * 60_000);
       bars.push({
         date: time.toISOString().slice(0, 10),
         time: time.toISOString(),
@@ -328,6 +351,7 @@ export class MockBackend {
       symbol,
       currency,
       range: '1D',
+      interval,
       bars,
       baseClose: last?.close ?? null,
       earningsMarkers: [],
@@ -336,14 +360,19 @@ export class MockBackend {
     };
   }
 
-  private async prices(symbol: string, range: PriceRange): Promise<PricesResponse> {
+  private async prices(
+    symbol: string,
+    range: PriceRange,
+    requested: PriceInterval | null,
+  ): Promise<PricesResponse> {
+    const interval = requested ?? (range === '1D' ? '5m' : '1d');
     const [overview, earnings, all] = await Promise.all([
       this.overview(symbol),
       this.earnings(symbol),
       this.bars(symbol),
     ]);
     const end = lastCompletedSession(this.today);
-    if (range === '1D') return this.intraday(symbol, overview.currency, all);
+    if (range === '1D') return this.intraday(symbol, overview.currency, all, interval);
     const from = {
       '1W': addDays(end, -7),
       '1M': addMonths(end, -1).slice(0, 8) + end.slice(8),
@@ -378,9 +407,16 @@ export class MockBackend {
       symbol,
       currency: overview.currency,
       range,
-      bars,
+      interval,
+      bars:
+        interval === '1wk'
+          ? weeklyBars(bars)
+          : interval === '1d'
+            ? bars
+            : intradayBars(symbol, bars, INTERVAL_MINUTES[interval]),
       baseClose: before.length ? before[before.length - 1].close : null,
-      earningsMarkers: markers,
+      // Markers mark days; intraday bars have none, like the API.
+      earningsMarkers: interval === '1d' || interval === '1wk' ? markers : [],
       asOf: new Date().toISOString(),
       stale: false,
     };

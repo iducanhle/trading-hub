@@ -47,7 +47,7 @@ public final class Dtos {
             boolean stale) {
     }
 
-    /** {@code time} is the bar's start for 1D (5-minute bars), null for daily bars. */
+    /** {@code time} is the start of an intraday bar, null for daily and weekly bars. */
     public record PriceBar(LocalDate date, Instant time, double open, double high, double low, double close, long volume) {
     }
 
@@ -57,8 +57,8 @@ public final class Dtos {
     }
 
     /** {@code baseClose}: the last close before the range, what the range's change is measured from (null if none). */
-    public record Prices(String symbol, String currency, String range, List<PriceBar> bars, Double baseClose,
-            List<EarningsMarker> earningsMarkers, Instant asOf, boolean stale) {
+    public record Prices(String symbol, String currency, String range, String interval, List<PriceBar> bars,
+            Double baseClose, List<EarningsMarker> earningsMarkers, Instant asOf, boolean stale) {
     }
 
     public record HistoryRow(LocalDate periodStart, LocalDate periodEnd, double close, Double changePercent,

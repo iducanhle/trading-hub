@@ -1,6 +1,7 @@
 package com.earningstracker.service;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -99,8 +100,13 @@ public class StockService {
     }
 
     public Dtos.Prices prices(String symbol, PriceRange range) {
-        if (range.intraday()) {
-            return intradayPrices(symbol);
+        return prices(symbol, range, range.defaultInterval());
+    }
+
+    /** {@code interval} must be one of {@code range.intervals()}. */
+    public Dtos.Prices prices(String symbol, PriceRange range, BarInterval interval) {
+        if (interval.intraday()) {
+            return intradayPrices(symbol, range, interval);
         }
         CompletableFuture<Cached<List<EarningsReport>>> reportsF = async(() -> earnings.reports(symbol));
         StockProfile profile = profiles.profile(symbol).value();
@@ -126,34 +132,48 @@ public class StockService {
         // Same base as the performance summary: the last close on or before the range's start date.
         Double baseClose = all.stream().filter(bar -> !bar.date().isAfter(from)).reduce((a, b) -> b)
                 .map(PriceBar::close).orElse(null);
-        return new Dtos.Prices(symbol, profile.currency(), range.label(),
-                all.stream().filter(bar -> bar.date().isAfter(from))
+        List<PriceBar> inRange = all.stream().filter(bar -> bar.date().isAfter(from)).toList();
+        return new Dtos.Prices(symbol, profile.currency(), range.label(), interval.label(),
+                (interval == BarInterval.W1 ? weekly(inRange) : inRange).stream()
                         .map(b -> new Dtos.PriceBar(b.date(), null, b.open(), b.high(), b.low(), b.close(),
                                 b.volume()))
                         .toList(),
                 baseClose, markers, asOf(bars, reports), stale(bars, reports));
     }
 
+    /** One bar per calendar week (Monday to Sunday), dated by the week's last session. */
+    static List<PriceBar> weekly(List<PriceBar> daily) {
+        Map<LocalDate, List<PriceBar>> weeks = daily.stream().collect(Collectors.groupingBy(
+                b -> b.date().with(DayOfWeek.MONDAY), java.util.TreeMap::new, Collectors.toList()));
+        return weeks.values().stream().map(week -> new PriceBar(week.getLast().date(), week.getFirst().open(),
+                week.stream().mapToDouble(PriceBar::high).max().orElseThrow(),
+                week.stream().mapToDouble(PriceBar::low).min().orElseThrow(), week.getLast().close(),
+                week.stream().mapToLong(PriceBar::volume).sum())).toList();
+    }
+
     /**
-     * The latest session in 5-minute bars. {@code baseClose} is the close of the last completed session before
-     * it, so the change is today's change; no earnings markers (they mark days).
+     * Intraday bars: the latest session for 1D, otherwise the range's sessions. {@code baseClose} is the last daily
+     * close before them, so 1D shows today's change; no earnings markers (they mark days).
      */
-    private Dtos.Prices intradayPrices(String symbol) {
+    private Dtos.Prices intradayPrices(String symbol, PriceRange range, BarInterval interval) {
         StockProfile profile = profiles.profile(symbol).value();
         CompletableFuture<Cached<List<PriceBar>>> dailyF = async(() -> prices.bars(symbol));
-        Cached<List<IntradayBar>> bars = intraday.bars(symbol);
+        Cached<List<IntradayBar>> bars = intraday.bars(symbol, interval, range);
         Cached<List<PriceBar>> daily = optional(dailyF, "prices", symbol);
         ZoneId zone = Symbols.sessionExchange(symbol).zone();
         LocalDate session = bars.value().isEmpty() ? today(symbol)
                 : bars.value().getLast().time().atZone(zone).toLocalDate();
-        Double baseClose = daily == null ? null : daily.value().stream().filter(b -> b.date().isBefore(session))
+        LocalDate from = range.intraday() ? session.minusDays(1) : session.minus(range.span());
+        Double baseClose = daily == null ? null : daily.value().stream().filter(b -> !b.date().isAfter(from))
                 .reduce((a, b) -> b).map(PriceBar::close).orElse(null);
         List<Dtos.PriceBar> out = bars.value().stream()
                 .map(b -> new Dtos.PriceBar(b.time().atZone(zone).toLocalDate(), b.time(), b.open(), b.high(),
                         b.low(), b.close(), b.volume()))
+                .filter(b -> b.date().isAfter(from))
                 .toList();
-        return new Dtos.Prices(symbol, profile.currency(), PriceRange.D1.label(), out, baseClose, List.of(),
-                daily == null ? asOf(bars) : asOf(bars, daily), daily == null ? stale(bars) : stale(bars, daily));
+        return new Dtos.Prices(symbol, profile.currency(), range.label(), interval.label(), out, baseClose,
+                List.of(), daily == null ? asOf(bars) : asOf(bars, daily),
+                daily == null ? stale(bars) : stale(bars, daily));
     }
 
     public Dtos.History history(String symbol, HistoryCalculator.Period period, LocalDate before, int limit) {

@@ -91,7 +91,7 @@ public class ServiceFixture {
     public final StockExtrasService extras = new StockExtrasService(cache, router, ProviderTestSupport.JSON);
     public final ViewTracker views = new ViewTracker(store, executor, clock);
     public final FollowService follows = new FollowService(store, cache, ProviderTestSupport.JSON);
-    /** 5-minute bars the fake intraday provider answers with, by symbol. */
+    /** Intraday bars the fake intraday provider answers with, by symbol. */
     public final Map<String, List<IntradayBar>> intradayBars = new java.util.concurrent.ConcurrentHashMap<>();
     public final IntradayService intraday = new IntradayService(List.of(new IntradayProvider() {
         @Override
@@ -100,7 +100,7 @@ public class ServiceFixture {
         }
 
         @Override
-        public List<IntradayBar> intradayBars(String symbol) {
+        public List<IntradayBar> intradayBars(String symbol, java.time.Duration interval, java.time.Period lookback) {
             return intradayBars.getOrDefault(symbol, List.of());
         }
     }), clock);

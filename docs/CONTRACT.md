@@ -236,7 +236,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/me` | `{ uid, email, allowed: true }` | 403 if not allowed |
 | `GET /api/search?q=&limit=10` | `SearchResult[]` | `q` must be ≥1 char; max 20 results; US + EU equities only |
 | `GET /api/stocks/{symbol}` | `StockOverview` | Used above the fold |
-| `GET /api/stocks/{symbol}/prices?range=1D\|1W\|1M\|2M\|3M\|6M\|1Y\|3Y\|5Y` | `{ symbol, currency, range, bars: PriceBar[] /* oldest first */, baseClose: number \| null /* last close before the range */, earningsMarkers: EarningsMarker[], asOf, stale }` | Daily bars (1D: 5-minute bars of the latest session); markers include upcoming events within the range |
+| `GET /api/stocks/{symbol}/prices?range=1D\|1W\|1M\|2M\|3M\|6M\|1Y\|3Y\|5Y&interval=5m\|15m\|30m\|1h\|1d\|1wk` | `{ symbol, currency, range, interval, bars: PriceBar[] /* oldest first */, baseClose: number \| null /* last close before the range */, earningsMarkers: EarningsMarker[], asOf, stale }` | Daily bars (1D: 5-minute bars of the latest session); markers include upcoming events within the range |
 | `GET /api/stocks/{symbol}/history?period=DAILY\|WEEKLY\|MONTHLY&before=YYYY-MM-DD&limit=30` | `{ period, rows: HistoryRow[] /* newest first */, nextBefore: string \| null }` | `limit` max 100 |
 | `GET /api/stocks/{symbol}/earnings` | `{ upcoming: EarningsEvent \| null, quarters: EarningsQuarter[] /* newest first, max 12 */, stats: EarningsStats, asOf, stale }` | |
 | `GET /api/stocks/{symbol}/recommendations` | `RecommendationPeriod[]` | Newest first, max 6; may be empty |
@@ -287,6 +287,7 @@ Behaviour the tables above leave open, as the backend implements it. No field na
 - **`GET /api/stocks/{symbol}/prices`**:
   - `range` defaults to `1Y`, counted back from the latest bar. Only completed sessions are returned.
   - `1D` is the latest session (the running one while the exchange is open) in 5-minute bars with `time` set; `date` is the session day in the exchange's zone, `baseClose` the previous session's close, `earningsMarkers` empty. Not stored; reused for 2 minutes.
+  - `interval` is optional. Each range allows only some (the first is the default; any other value is 400): `1D`: 5m, 15m, 30m, 1h · `1W`: 1d, 5m, 15m, 30m, 1h · `1M`: 1d, 15m, 30m, 1h · `2M` to `1Y`: 1d, 1h, 1wk · `3Y`, `5Y`: 1d, 1wk. Intraday intervals over a longer range work like `1D` (`time` set, `earningsMarkers` empty, `baseClose` the last daily close before the range). A `1wk` bar covers a calendar week and is dated by its last session; markers keep their reaction day.
   - `earningsMarkers` holds the reported quarters whose reaction day falls within the range, plus the next upcoming report. That marker has `result: "UPCOMING"` and a `date` equal to its expected reaction day under the timing rule, with weekends skipped.
 - **`GET /api/stocks/{symbol}/history`**:
   - `period` defaults to `DAILY` and `limit` to 30 (1–100).
@@ -365,3 +366,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-03 | Added `GET /api/t212/holdings` with `T212Holding`, `T212Pie` and `T212HoldingPosition` (additive): open positions grouped by pie. |
 | 2026-10-03 | Prices: ranges `1D`, `2M`, `3M`, `3Y` (additive); `PriceBar.time` (null except for 1D). |
 | 2026-10-03 | `GET /api/t212/trades`: `ticker` accepts several comma-separated tickers (max 50). Additive. |
+| 2026-10-03 | Prices: optional `interval` (`5m`, `15m`, `30m`, `1h`, `1d`, `1wk`), allowed per range, echoed in the response. Additive: without it nothing changes. |

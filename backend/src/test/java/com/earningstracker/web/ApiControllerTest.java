@@ -26,6 +26,7 @@ import com.earningstracker.security.TokenVerifier;
 import com.earningstracker.service.CalendarService;
 import com.earningstracker.service.FollowedEarningsService;
 import com.earningstracker.service.MarketEventService;
+import com.earningstracker.service.BarInterval;
 import com.earningstracker.service.PriceRange;
 import com.earningstracker.service.SearchService;
 import com.earningstracker.service.StockService;
@@ -125,6 +126,8 @@ class ApiControllerTest {
         assertBadRequest("/api/stocks/AAPL/news?limit=0");
         assertThat(mvc.get().uri("/api/search").param("q", " ").header(HttpHeaders.AUTHORIZATION, "Bearer t"))
                 .hasStatus(HttpStatus.BAD_REQUEST); // MockMvc would encode a literal %20 in the template
+        assertBadRequest("/api/stocks/AAPL/prices?range=5Y&interval=5m");
+        assertBadRequest("/api/stocks/AAPL/prices?range=1D&interval=1d");
         assertBadRequest("/api/search?q=sap&limit=21");
         assertBadRequest("/api/search");
     }
@@ -133,12 +136,12 @@ class ApiControllerTest {
     void passesValidParametersThrough() {
         given(stocks.history(eq("AAPL"), eq(HistoryCalculator.Period.WEEKLY), eq(LocalDate.of(2026, 9, 1)), eq(5)))
                 .willReturn(new Dtos.History("WEEKLY", List.of(), null));
-        given(stocks.prices(eq("AAPL"), eq(PriceRange.W1))).willReturn(
-                new Dtos.Prices("AAPL", "USD", "1W", List.of(), null, List.of(), null, false));
+        given(stocks.prices(eq("AAPL"), eq(PriceRange.W1), eq(BarInterval.H1))).willReturn(
+                new Dtos.Prices("AAPL", "USD", "1W", "1h", List.of(), null, List.of(), null, false));
 
         assertThat(get("/api/stocks/AAPL/history?period=WEEKLY&before=2026-09-01&limit=5")).hasStatusOk()
                 .bodyJson().isLenientlyEqualTo("{\"period\":\"WEEKLY\",\"rows\":[],\"nextBefore\":null}");
-        assertThat(get("/api/stocks/AAPL/prices?range=1W")).hasStatusOk()
+        assertThat(get("/api/stocks/AAPL/prices?range=1W&interval=1h")).hasStatusOk()
                 .bodyJson().extractingPath("$.range").isEqualTo("1W");
     }
 

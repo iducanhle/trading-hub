@@ -134,6 +134,39 @@ class StockServiceTest {
     }
 
     @Test
+    void aWeekInHourlyBarsKeepsTheRangesSessionsAndMeasuresFromTheCloseBefore() {
+        f.intradayBars.put(SAP, List.of(
+                new IntradayBar(Instant.parse("2026-09-17T07:00:00Z"), 190, 191, 189, 190.5, 500), // before 1W
+                new IntradayBar(Instant.parse("2026-09-21T07:00:00Z"), 200, 201, 199, 200.5, 1000),
+                new IntradayBar(Instant.parse("2026-09-25T15:00:00Z"), 200.5, 202, 200, 201.5, 800)));
+
+        Dtos.Prices week = f.stocks.prices(SAP, PriceRange.W1, BarInterval.H1);
+
+        assertThat(week.interval()).isEqualTo("1h");
+        assertThat(week.bars()).extracting(Dtos.PriceBar::date)
+                .containsExactly(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 25));
+        double sep18 = f.provider.bars.get(SAP).stream().filter(b -> b.date().equals(LocalDate.of(2026, 9, 18)))
+                .findFirst().orElseThrow().close();
+        assertThat(week.baseClose()).isEqualTo(sep18);
+        assertThat(week.earningsMarkers()).isEmpty();
+    }
+
+    @Test
+    void weeklyBarsSpanEachCalendarWeekAndAreDatedByItsLastSession() {
+        List<PriceBar> weeks = StockService.weekly(List.of(
+                new PriceBar(LocalDate.of(2026, 9, 17), 10, 12, 9, 11, 100),
+                new PriceBar(LocalDate.of(2026, 9, 18), 11, 13, 10, 12, 200),
+                new PriceBar(LocalDate.of(2026, 9, 21), 12, 15, 8, 14, 300)));
+
+        assertThat(weeks).containsExactly(
+                new PriceBar(LocalDate.of(2026, 9, 18), 10, 13, 9, 12, 300),
+                new PriceBar(LocalDate.of(2026, 9, 21), 12, 15, 8, 14, 300));
+        Dtos.Prices year = f.stocks.prices(SAP, PriceRange.Y1, BarInterval.W1);
+        assertThat(year.bars()).hasSizeBetween(52, 54);
+        assertThat(year.bars().getLast().date()).isEqualTo(LocalDate.of(2026, 9, 25));
+    }
+
+    @Test
     void earningsListReportedQuartersWithResultsAndReactions() {
         Dtos.Earnings earnings = f.stocks.earnings(SAP);
 

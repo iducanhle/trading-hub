@@ -85,7 +85,10 @@ export interface StockOverview {
 
 export interface PriceBar {
   date: string;
-  /** Start of the bar (ISO) for 1D's 5-minute bars; null or absent for daily bars. */
+  /**
+   * Start of an intraday bar (ISO); null or absent for daily and weekly bars (a weekly bar is dated by its last
+   * session).
+   */
   time?: string | null;
   open: number;
   high: number;
@@ -155,6 +158,8 @@ export interface NewsItem {
 // ─── Endpoint responses ──────────────────────────────────────────────────────────────────────────
 
 export type PriceRange = '1D' | '1W' | '1M' | '2M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
+/** Bar size of the price chart; each range allows only some (see CONTRACT.md). */
+export type PriceInterval = '5m' | '15m' | '30m' | '1h' | '1d' | '1wk';
 export type HistoryPeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 export type RegionFilter = 'ALL' | Region;
 
@@ -172,6 +177,7 @@ export interface PricesResponse {
   symbol: string;
   currency: string;
   range: PriceRange;
+  interval: PriceInterval;
   /** Oldest first. */
   bars: PriceBar[];
   /** The last close before the range: the range's change is measured from it. Null without older data. */

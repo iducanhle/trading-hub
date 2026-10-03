@@ -80,6 +80,12 @@ describe('chart data', () => {
     expect(placeMarkers(week, [marker('2026-09-29', 'UPCOMING')], 'line', colors, [])).toEqual([]);
   });
 
+  it('hangs a marker on the weekly bar of its week', () => {
+    const weeks = [bar('2026-09-18', 90), bar('2026-09-25', 95)];
+    const placed = placeMarkers(weeks, [marker('2026-09-22', 'BEAT')], 'line', colors, []);
+    expect(placed.map((m) => [m.time, m.price])).toEqual([['2026-09-25', 95]]);
+  });
+
   it('adds alpha to rgb colours', () => {
     expect(withAlpha('rgb(1, 2, 3)', 0.5)).toBe('rgba(1, 2, 3, 0.5)');
     expect(withAlpha('#fff', 0.5)).toBe('#fff');

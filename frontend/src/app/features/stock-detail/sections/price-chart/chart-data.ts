@@ -25,7 +25,10 @@ export function futureSessions(bars: PriceBar[], markers: EarningsMarker[]): str
   return days.length <= Math.max(5, Math.round(bars.length / 4)) ? days : [];
 }
 
-/** Where each earnings marker hangs, and in which colour. */
+/**
+ * Where each earnings marker hangs (on its day, or else the first bar after it: weekly bars are dated by their
+ * last session), and in which colour.
+ */
 export function placeMarkers(
   bars: PriceBar[],
   markers: EarningsMarker[],
@@ -33,15 +36,25 @@ export function placeMarkers(
   colors: ChartColors,
   future: string[],
 ): ChartMarker[] {
-  const byDate = new Map(bars.map((b) => [b.date, b]));
+  const firstDate = bars[0]?.date ?? '';
+  const lastDate = bars.at(-1)?.date ?? '';
   const lastClose = bars.at(-1)?.close;
   const placed: ChartMarker[] = [];
   for (const marker of markers) {
-    const bar = byDate.get(marker.date);
+    const bar =
+      marker.date >= firstDate && marker.date <= lastDate
+        ? bars.find((b) => b.date >= marker.date)
+        : undefined;
     if (marker.result === 'UPCOMING') {
       const price = bar ? (type === 'candles' ? bar.low : bar.close) : lastClose;
       if (price == null || (!bar && !future.includes(marker.date))) continue;
-      placed.push({ time: marker.date, price, color: colors.line, hollow: true, data: marker });
+      placed.push({
+        time: bar?.date ?? marker.date,
+        price,
+        color: colors.line,
+        hollow: true,
+        data: marker,
+      });
       continue;
     }
     if (!bar) continue;
@@ -52,7 +65,7 @@ export function placeMarkers(
           ? colors.loss
           : colors.neutral;
     placed.push({
-      time: marker.date,
+      time: bar.date,
       price: type === 'candles' ? bar.low : bar.close,
       color,
       hollow: false,

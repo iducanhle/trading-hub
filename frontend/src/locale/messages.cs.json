@@ -1,6 +1,11 @@
 {
   "locale": "cs",
   "translations": {
+    "2713101833642569360": "5 min",
+    "2606064544645452505": "15 min",
+    "408782219711721542": "30 min",
+    "7324241450799564337": "1 hod",
+    "1601140382533177752": "Velikost svíčky",
     "6138112390862801056": "Poplatky za směnu měn",
     "160141394273957006": "Trading 212 si účtuje 0,15 % pokaždé, když převádí vaše peníze do měny akcie: při každém nákupu a znovu při každém prodeji.",
     "4207118595145340322": "Při častém obchodování se to sčítá: poplatek se platí z celé částky každého obchodu, ať vyděláte, nebo proděláte. V realizovaném zisku je už odečtený.",

@@ -7,8 +7,10 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -219,8 +221,12 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
     }
 
     @Override
-    public List<IntradayBar> intradayBars(String symbol) {
-        JsonNode result = chart(symbol, "range=1d&interval=5m");
+    public List<IntradayBar> intradayBars(String symbol, Duration interval, Period lookback) {
+        String size = interval.toMinutes() + "m";
+        // A week's margin covers weekends and holidays; the caller cuts the range.
+        JsonNode result = chart(symbol, lookback.isZero() ? "range=1d&interval=" + size
+                : "period1=" + clock.instant().atZone(ZoneOffset.UTC).minus(lookback).minusDays(7).toEpochSecond()
+                        + "&period2=" + clock.instant().getEpochSecond() + "&interval=" + size);
         String currency = Json.text(result.path("meta").path("currency"));
         JsonNode quote = result.path("indicators").path("quote").path(0);
         JsonNode timestamps = result.path("timestamp");

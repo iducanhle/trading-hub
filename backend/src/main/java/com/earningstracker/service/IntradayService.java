@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * 5-minute bars of the latest session for the 1D chart. Kept in memory only (they change every few minutes and
+ * Intraday bars for the chart: the latest session (1D) or a longer range, in the chosen interval. Kept in memory only (they change every few minutes and
  * are cheap to fetch again): reused for {@link #TTL}, and when every provider fails the last good copy is served
  * as stale. Providers are tried in order.
  */
@@ -39,8 +39,9 @@ public class IntradayService {
                 .ticker(() -> clock.instant().toEpochMilli() * 1_000_000).build();
     }
 
-    public Cached<List<IntradayBar>> bars(String symbol) {
-        Cached<List<IntradayBar>> cached = fresh.getIfPresent(symbol);
+    public Cached<List<IntradayBar>> bars(String symbol, BarInterval interval, PriceRange range) {
+        String key = symbol + "|" + range.label() + "|" + interval.label();
+        Cached<List<IntradayBar>> cached = fresh.getIfPresent(key);
         if (cached != null) {
             return cached;
         }
@@ -50,16 +51,17 @@ public class IntradayService {
                 continue;
             }
             try {
-                Cached<List<IntradayBar>> bars = new Cached<>(provider.intradayBars(symbol), clock.instant(), false);
-                fresh.put(symbol, bars);
-                lastGood.put(symbol, bars);
+                Cached<List<IntradayBar>> bars = new Cached<>(
+                        provider.intradayBars(symbol, interval.length(), range.span()), clock.instant(), false);
+                fresh.put(key, bars);
+                lastGood.put(key, bars);
                 return bars;
             } catch (ProviderException e) {
                 log.info("{} intraday bars of {} unavailable: {}", provider.id(), symbol, e.getMessage());
                 last = e;
             }
         }
-        Cached<List<IntradayBar>> previous = lastGood.get(symbol);
+        Cached<List<IntradayBar>> previous = lastGood.get(key);
         if (previous != null) {
             return new Cached<>(previous.value(), previous.fetchedAt(), true);
         }
