@@ -17,12 +17,14 @@ import {
   SignedMoneyPipe,
 } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
+import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { displayTicker } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
 
 /**
  * Open positions as Trading 212 lists them, largest value first. A pie is one row; tapping it expands its
- * instruments in place. Tapping a position opens its chart and profit/loss in a dialog.
+ * instruments in place. Tapping a position opens its chart and profit/loss in a dialog. The card collapses to
+ * its title and total; the choice is remembered.
  */
 @Component({
   selector: 'app-portfolio-holdings',
@@ -39,120 +41,153 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
   ],
   template: `
     <div class="app-card pb-1.5">
-      <div>
-        <h2 class="app-label" i18n>Open positions</h2>
-        @if (total() !== null) {
-          <p class="mt-0.5 text-base font-semibold">{{ total() | price: currency() }}</p>
-        }
-      </div>
-      <label
-        class="mt-3.5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
-      >
-        <app-icon name="search" [size]="20" />
-        <input
-          type="search"
-          class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
-          placeholder="Search the portfolio"
-          i18n-placeholder
-          aria-label="Search the portfolio"
-          i18n-aria-label
-          [value]="search()"
-          (input)="search.set($any($event.target).value)"
-        />
-      </label>
-      @if (data.error() && !data.hasValue()) {
-        <app-error-state [error]="data.error()" (retry)="data.reload()" />
-      } @else if (!data.hasValue()) {
-        <div class="space-y-3 py-3" aria-hidden="true">
-          @for (i of [1, 2, 3, 4]; track i) {
-            <app-skeleton shape="card" class="block h-12" />
+      <h2 class="m-0">
+        <button
+          type="button"
+          class="-m-2 flex w-[calc(100%+16px)] items-center gap-2 rounded-2xl p-2 text-left hover:bg-surface-container-high"
+          [attr.aria-expanded]="open()"
+          aria-controls="holdings-content"
+          (click)="open.set(!open())"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="app-label block" i18n>Open positions</span>
+            @if (total() !== null) {
+              <span class="mt-0.5 block text-base font-semibold">{{
+                total() | price: currency()
+              }}</span>
+            }
+          </span>
+          <app-icon
+            name="keyboard_arrow_down"
+            class="text-on-surface-variant transition-transform duration-200"
+            [class.rotate-180]="open()"
+          />
+        </button>
+      </h2>
+      @if (open()) {
+        <div id="holdings-content">
+          <label
+            class="mt-3.5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
+          >
+            <app-icon name="search" [size]="20" />
+            <input
+              type="search"
+              class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
+              placeholder="Search the portfolio"
+              i18n-placeholder
+              aria-label="Search the portfolio"
+              i18n-aria-label
+              [value]="search()"
+              (input)="search.set($any($event.target).value)"
+            />
+          </label>
+          @if (data.error() && !data.hasValue()) {
+            <app-error-state [error]="data.error()" (retry)="data.reload()" />
+          } @else if (!data.hasValue()) {
+            <div class="space-y-3 py-3" aria-hidden="true">
+              @for (i of [1, 2, 3, 4]; track i) {
+                <app-skeleton shape="card" class="block h-12" />
+              }
+            </div>
+          } @else {
+            @let d = data.value();
+            @if (!d.items.length) {
+              <p class="py-4 text-center text-sm text-on-surface-variant" i18n>
+                No open positions.
+              </p>
+            } @else if (!items().length) {
+              <p class="py-4 text-center text-sm text-on-surface-variant" i18n>
+                No matching stocks.
+              </p>
+            }
+            <ul class="mt-1">
+              @for (h of items(); track key(h)) {
+                <li>
+                  @if (h.kind === 'PIE') {
+                    @let pie = h.pie;
+                    @let open = expanded().has(key(h)) || !!search();
+                    <button
+                      type="button"
+                      class="-mx-2 flex w-[calc(100%+16px)] items-center gap-3.5 rounded-2xl px-2 py-3.5 text-left hover:bg-surface-container-high"
+                      [attr.aria-expanded]="open"
+                      [attr.aria-controls]="'pie-' + key(h)"
+                      (click)="toggle(key(h))"
+                    >
+                      <span
+                        class="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-primary-container text-primary"
+                      >
+                        <app-icon name="pie_chart" />
+                      </span>
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate text-[15px] font-medium">
+                          @if (pie.name) {
+                            {{ pie.name }}
+                          } @else {
+                            <ng-container i18n="Trading 212 pie without a known name"
+                              >Pie</ng-container
+                            >
+                          }
+                        </span>
+                        <span
+                          class="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold whitespace-nowrap text-on-surface-variant"
+                        >
+                          <ng-container i18n>{pie.positions.length, plural,
+                            =1 {1 holding}
+                            other {{{pie.positions.length}} holdings}
+                          }</ng-container>
+                          <app-icon
+                            name="keyboard_arrow_down"
+                            [size]="16"
+                            [strokeWidth]="2.2"
+                            class="transition-transform"
+                            [class.rotate-180]="open"
+                          />
+                        </span>
+                      </span>
+                      <ng-container
+                        [ngTemplateOutlet]="amounts"
+                        [ngTemplateOutletContext]="{
+                          value: pie.value,
+                          pnl: pie.pnl,
+                          pct: pie.pnlPct,
+                          currency: d.accountCurrency,
+                        }"
+                      />
+                    </button>
+                    @if (open) {
+                      <ul [id]="'pie-' + key(h)" class="ml-6 border-l border-outline-variant pl-3">
+                        @for (p of pie.positions; track p.t212Ticker) {
+                          <li>
+                            <ng-container
+                              [ngTemplateOutlet]="row"
+                              [ngTemplateOutletContext]="{
+                                $implicit: p,
+                                currency: d.accountCurrency,
+                              }"
+                            />
+                          </li>
+                        }
+                      </ul>
+                    }
+                  } @else {
+                    <ng-container
+                      [ngTemplateOutlet]="row"
+                      [ngTemplateOutletContext]="{
+                        $implicit: h.position,
+                        currency: d.accountCurrency,
+                      }"
+                    />
+                  }
+                </li>
+              }
+            </ul>
+            @if (!d.piesAvailable) {
+              <p class="mt-2 mb-3 text-xs text-on-surface-variant" i18n>
+                Trading 212 did not return the pies, so everything held in pies is shown as one pie.
+              </p>
+            }
           }
         </div>
-      } @else {
-        @let d = data.value();
-        @if (!d.items.length) {
-          <p class="py-4 text-center text-sm text-on-surface-variant" i18n>No open positions.</p>
-        } @else if (!items().length) {
-          <p class="py-4 text-center text-sm text-on-surface-variant" i18n>No matching stocks.</p>
-        }
-        <ul class="mt-1">
-          @for (h of items(); track key(h)) {
-            <li>
-              @if (h.kind === 'PIE') {
-                @let pie = h.pie;
-                @let open = expanded().has(key(h)) || !!search();
-                <button
-                  type="button"
-                  class="-mx-2 flex w-[calc(100%+16px)] items-center gap-3.5 rounded-2xl px-2 py-3.5 text-left hover:bg-surface-container-high"
-                  [attr.aria-expanded]="open"
-                  [attr.aria-controls]="'pie-' + key(h)"
-                  (click)="toggle(key(h))"
-                >
-                  <span
-                    class="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-primary-container text-primary"
-                  >
-                    <app-icon name="pie_chart" />
-                  </span>
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate text-[15px] font-medium">
-                      @if (pie.name) {
-                        {{ pie.name }}
-                      } @else {
-                        <ng-container i18n="Trading 212 pie without a known name">Pie</ng-container>
-                      }
-                    </span>
-                    <span
-                      class="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold whitespace-nowrap text-on-surface-variant"
-                    >
-                      <ng-container i18n>{pie.positions.length, plural,
-                        =1 {1 holding}
-                        other {{{pie.positions.length}} holdings}
-                      }</ng-container>
-                      <app-icon
-                        name="keyboard_arrow_down"
-                        [size]="16"
-                        [strokeWidth]="2.2"
-                        class="transition-transform"
-                        [class.rotate-180]="open"
-                      />
-                    </span>
-                  </span>
-                  <ng-container
-                    [ngTemplateOutlet]="amounts"
-                    [ngTemplateOutletContext]="{
-                      value: pie.value,
-                      pnl: pie.pnl,
-                      pct: pie.pnlPct,
-                      currency: d.accountCurrency,
-                    }"
-                  />
-                </button>
-                @if (open) {
-                  <ul [id]="'pie-' + key(h)" class="ml-6 border-l border-outline-variant pl-3">
-                    @for (p of pie.positions; track p.t212Ticker) {
-                      <li>
-                        <ng-container
-                          [ngTemplateOutlet]="row"
-                          [ngTemplateOutletContext]="{ $implicit: p, currency: d.accountCurrency }"
-                        />
-                      </li>
-                    }
-                  </ul>
-                }
-              } @else {
-                <ng-container
-                  [ngTemplateOutlet]="row"
-                  [ngTemplateOutletContext]="{ $implicit: h.position, currency: d.accountCurrency }"
-                />
-              }
-            </li>
-          }
-        </ul>
-        @if (!d.piesAvailable) {
-          <p class="mt-2 mb-3 text-xs text-on-surface-variant" i18n>
-            Trading 212 did not return the pies, so everything held in pies is shown as one pie.
-          </p>
-        }
       }
     </div>
 
@@ -196,6 +231,7 @@ export class PortfolioHoldings {
   readonly version = input(0);
   /** Value of all open positions, shown in the card's heading. */
   readonly total = input<number | null>(null);
+  protected readonly open = persistedSignal('portfolio.holdings.expanded', true);
   readonly currency = input<string | null>(null);
 
   protected readonly search = signal('');

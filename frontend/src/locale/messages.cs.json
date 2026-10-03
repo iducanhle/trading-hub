@@ -522,7 +522,7 @@
     "6673271017427862858": "Nejlepší a nejhorší",
     "1997842718553188724": " Zatím žádné obchody ani dividendy. ",
     "8627593725608560867": "Otevřené pozice",
-    "4677822868923977140": "Žádné otevřené pozice.",
+    "1793878102185142170": " Žádné otevřené pozice. ",
     "6730902161366554510": "Koláč",
     "382373333658224385": "{VAR_PLURAL, plural, =1 {1 pozice} =2 {2 pozice} =3 {3 pozice} =4 {4 pozice} other {{INTERPOLATION} pozic}}",
     "7233935681618361413": " Trading 212 nevrátil koláče, takže vše, co máte v koláčích, je zobrazené jako jeden koláč. ",
@@ -545,7 +545,7 @@
     "6285325615148390577": "Dividendy celkem",
     "7453513904174943": "Vklady, výběry a poplatky",
     "1171404766209504100": "Hledat v portfoliu",
-    "8145704115014610296": "Žádné odpovídající akcie.",
+    "7340366407747174053": " Žádné odpovídající akcie. ",
     "9145922231398235963": "Míra výnosu",
     "2676717228803691384": "čisté vklady",
     "7753230920383356927": "{$INTERPOLATION} z {$INTERPOLATION_1} analytiků · {$INTERPOLATION_2}",
@@ -567,8 +567,7 @@
     "87317198471702614": "Rozložení portfolia",
     "8543615964997113131": " Podíl každé pozice v portfoliu a dnešní změna ceny. ",
     "4974800325921905713": "Zobrazit všechny pozice",
-    "3517550046701184661": "Zobrazit méně",
-    "3874137787806029269": "Zobrazit vše",
+    "6784526257461257591": "Všechny pozice",
     "7639729404648007717": "{$ticker}, {$share} portfolia",
     "6338535621337465554": "{$ticker}, {$share} portfolia, dnes {$change}"
   }
