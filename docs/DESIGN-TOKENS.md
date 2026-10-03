@@ -40,7 +40,7 @@ Charts:
 
 ## Typography
 
-Font **Outfit**, weights 100–900, self-hosted from `@fontsource-variable/outfit` (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
+Font **Poppins**, weights 400–800 (static files), self-hosted from `@fontsource/poppins` (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
 
 | Role | Size / weight | Note |
 |---|---|---|

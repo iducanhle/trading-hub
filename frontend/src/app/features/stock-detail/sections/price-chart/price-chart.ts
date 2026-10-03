@@ -555,7 +555,7 @@ export class PriceChart {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        fontFamily: "'Outfit Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+        fontFamily: "'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
         fontSize: 11,
         // Required by the Lightweight Charts licence: keep the TradingView attribution.
         attributionLogo: true,
