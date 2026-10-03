@@ -64,6 +64,7 @@ const ICONS = {
   straighten: 'ruler',
   swap_vert: 'arrow-up-down',
   sync: 'refresh-cw',
+  timer: 'timer',
   trending_down: 'trending-down',
   trending_up: 'trending-up',
   star: 'star',

@@ -90,14 +90,15 @@ const INTERVALS: Record<PriceRange, PriceInterval[]> = {
 };
 const defaultInterval = (range: PriceRange): PriceInterval => (range === '1D' ? '5m' : '1d');
 
+/** Compact bar-size codes, the same in every language (like the trading apps show them). */
 const INTERVAL_LABELS: Record<PriceInterval, string> = {
-  '1m': $localize`:Chart bar size:1 min`,
-  '5m': $localize`:Chart bar size:5 min`,
-  '15m': $localize`:Chart bar size:15 min`,
-  '30m': $localize`:Chart bar size:30 min`,
-  '1h': $localize`:Chart bar size:1 h`,
-  '1d': $localize`:Chart bar size:Day`,
-  '1wk': $localize`:Chart bar size:Week`,
+  '1m': '1m',
+  '5m': '5m',
+  '15m': '15m',
+  '30m': '30m',
+  '1h': '1h',
+  '1d': '1d',
+  '1wk': '1w',
 };
 
 interface LegendBar extends PriceBar {
@@ -264,13 +265,18 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
       <div class="px-2.5 pt-1.5">
         <app-segmented
           appearance="chips"
+          stretch
           aria-label="Bar size"
           i18n-aria-label="Chart bar size selector"
           [value]="interval()"
           (valueChange)="setInterval($event)"
         >
           @for (i of intervals(); track i) {
-            <app-segment [value]="i">{{ intervalLabels[i] }}</app-segment>
+            <app-segment [value]="i"
+              ><span class="inline-flex items-center gap-0.5 whitespace-nowrap"
+                ><app-icon name="timer" [size]="12" />{{ intervalLabels[i] }}</span
+              ></app-segment
+            >
           }
         </app-segmented>
       </div>
