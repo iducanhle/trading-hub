@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
@@ -33,15 +34,22 @@ import {
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import { dayIn, displayTicker } from './portfolio-model';
 
+export interface InstrumentDialogData {
+  t212Ticker: string;
+}
+
 /**
  * `/portfolio/:t212Ticker`: one instrument over all time: position, average cost, profit/loss, and every trade and
  * dividend with the number of shares held after it. Links to the stock page when the symbol is known.
+ * Also opens as a dialog (from the stock page) with `InstrumentDialogData`; then it has a close button instead of
+ * the page header and no link back to the stock page.
  */
 @Component({
   selector: 'app-instrument-page',
   imports: [
     RouterLink,
     MatButton,
+    MatIconButton,
     EmptyState,
     ErrorState,
     PageHeader,
@@ -59,13 +67,25 @@ import { dayIn, displayTicker } from './portfolio-model';
     HeroAmount,
   ],
   template: `
-    <app-page-header
-      [title]="title()"
-      [back]="true"
-      backFallback="/portfolio"
-      maxWidth="max-w-3xl"
-    />
-    <div class="mx-auto max-w-3xl px-4 pt-2 pb-10">
+    @if (dialogRef) {
+      <div class="flex items-center gap-3 px-4 pt-3">
+        <h2 class="min-w-0 flex-1 truncate text-lg font-bold">{{ title() }}</h2>
+        <button matIconButton type="button" aria-label="Close" i18n-aria-label (click)="close()">
+          <app-icon name="close" />
+        </button>
+      </div>
+    } @else {
+      <app-page-header
+        [title]="title()"
+        [back]="true"
+        backFallback="/portfolio"
+        maxWidth="max-w-3xl"
+      />
+    }
+    <div
+      class="w-full px-4 pt-2"
+      [class]="dialogRef ? 'max-h-[80dvh] overflow-y-auto pb-6' : 'mx-auto max-w-3xl pb-10'"
+    >
       @if (data.error() && !data.hasValue()) {
         @if (notFound()) {
           <app-empty-state
@@ -211,7 +231,7 @@ import { dayIn, displayTicker } from './portfolio-model';
             <dd class="text-right text-[15px] font-semibold">{{ day(i.lastTradeAt) | appDate }}</dd>
           </div>
         </dl>
-        @if (i.symbol) {
+        @if (i.symbol && !dialogRef) {
           <a matButton="tonal" class="mt-3.5 w-full" [routerLink]="['/stock', i.symbol]">
             <app-icon matButtonIcon name="show_chart" [size]="20" />
             <ng-container i18n>Open stock detail</ng-container>
@@ -300,21 +320,29 @@ export class InstrumentPage {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
 
-  /** Route parameter. */
-  readonly t212Ticker = input.required<string>();
+  protected readonly dialogRef = inject(MatDialogRef, { optional: true });
+  private readonly dialogData = inject<InstrumentDialogData | null>(MAT_DIALOG_DATA, {
+    optional: true,
+  });
+
+  /** Route parameter (unset in the dialog, which gets the ticker from its data). */
+  readonly t212Ticker = input<string>();
+  private readonly tickerParam = computed(
+    () => this.t212Ticker() ?? this.dialogData?.t212Ticker ?? '',
+  );
 
   protected readonly view = signal<TimelineView>(DEFAULT_VIEW);
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly kindLabels = KIND_LABELS;
   protected readonly data = rxResource({
-    params: () => ({ ticker: this.t212Ticker(), version: this.t212.dataVersion() }),
+    params: () => ({ ticker: this.tickerParam(), version: this.t212.dataVersion() }),
     stream: ({ params }) => this.api.t212Instrument(params.ticker),
   });
   protected readonly notFound = computed(() => isApiError(this.data.error(), 'NOT_FOUND'));
   protected readonly ticker = computed(() =>
     this.data.hasValue()
       ? displayTicker(this.data.value().instrument)
-      : displayTicker({ symbol: null, t212Ticker: this.t212Ticker() }),
+      : displayTicker({ symbol: null, t212Ticker: this.tickerParam() }),
   );
   protected readonly title = computed(() =>
     this.data.hasValue() ? this.data.value().instrument.name : this.ticker(),
@@ -349,6 +377,10 @@ export class InstrumentPage {
 
   constructor() {
     void this.t212.load();
+  }
+
+  protected close(): void {
+    this.dialogRef?.close();
   }
 
   protected day(iso: string | null): string | null {

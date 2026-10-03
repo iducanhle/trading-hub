@@ -39,7 +39,6 @@ import {
 } from '../../../../core/models/contract';
 import { T212Service } from '../../../../core/services/t212.service';
 import { ThemeService } from '../../../../core/services/theme.service';
-import { TermInfo } from '../../../../shared/components/term-info/term-info';
 import { Change } from '../../../../shared/components/change/change';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { ResultBadge } from '../../../../shared/components/result-badge/result-badge';
@@ -125,7 +124,6 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
 @Component({
   selector: 'app-price-chart',
   imports: [
-    TermInfo,
     Segmented,
     Segment,
     MatIconButton,
@@ -146,26 +144,58 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
   template: `
     <section class="pt-2 pb-2" aria-labelledby="price-chart-title">
       <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
-      <div
-        class="flex min-h-7 flex-wrap items-center gap-x-3 px-4 pt-1 text-xs tabular-nums text-on-surface-variant"
-      >
-        @if (legend(); as bar) {
-          <span class="font-medium text-on-surface">{{
-            bar.time ? clock(bar.time) : (bar.date | appDate: 'medium')
-          }}</span>
-          @if (type() === 'candles') {
-            <span>O {{ bar.open | num }}</span>
-            <span>H {{ bar.high | num }}</span>
-            <span>L {{ bar.low | num }}</span>
-            <span class="text-on-surface">C {{ bar.close | num }}</span>
-          } @else {
-            <span class="text-sm font-medium text-on-surface">{{
-              bar.close | price: currency()
-            }}</span>
+      <!-- The range's change, or in measure mode the change from A to B; the hovered bar on the right. -->
+      <div class="flex min-h-10 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 pt-1">
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-x-2 text-sm font-semibold"
+          aria-live="polite"
+        >
+          @if (measuring()) {
+            @if (measurement(); as m) {
+              <span class="text-on-surface-variant"
+                >{{ m.from.date | appDate: 'dayMonth' }} →
+                {{ m.to.date | appDate: 'dayMonth' }}</span
+              >
+              <app-change pill [value]="m.percent" />
+              <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
+                m.amount | signed
+              }}</span>
+              <span class="text-on-surface-variant" i18n>{m.days, plural,
+                =1 {1 day}
+                other {{{ m.days }} days}
+              }</span>
+            } @else if (points().length) {
+              <span class="text-on-surface-variant" i18n>Now tap the end point</span>
+            } @else {
+              <span class="text-on-surface-variant" i18n>Tap the start point</span>
+            }
+          } @else if (rangeGain(); as g) {
+            <span class="app-label">{{ rangeLabels[range()] }}</span>
+            <app-change pill [value]="g.percent" />
+            <span [class]="g.amount >= 0 ? 'text-gain' : 'text-loss'">{{ g.amount | signed }}</span>
           }
-          <app-change [value]="bar.change" />
-          <span i18n="Trading volume">Vol {{ bar.volume | compact }}</span>
-        }
+        </div>
+        <div
+          class="ml-auto flex flex-wrap items-center justify-end gap-x-3 text-xs tabular-nums text-on-surface-variant"
+        >
+          @if (legend(); as bar) {
+            <span class="font-medium text-on-surface">{{
+              bar.time ? clock(bar.time) : (bar.date | appDate: 'medium')
+            }}</span>
+            @if (type() === 'candles') {
+              <span>O {{ bar.open | num }}</span>
+              <span>H {{ bar.high | num }}</span>
+              <span>L {{ bar.low | num }}</span>
+              <span class="text-on-surface">C {{ bar.close | num }}</span>
+            } @else {
+              <span class="text-sm font-medium text-on-surface">{{
+                bar.close | price: currency()
+              }}</span>
+            }
+            <app-change [value]="bar.change" />
+            <span i18n="Trading volume">Vol {{ bar.volume | compact }}</span>
+          }
+        </div>
       </div>
 
       <div class="relative h-72 touch-pan-y sm:h-80 lg:h-96">
@@ -281,32 +311,20 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         </app-segmented>
       </div>
 
-      <!-- The range's change, or in measure mode the change from A to B. -->
-      <div class="flex min-h-14 items-center gap-2 px-5 pt-1 text-sm font-semibold">
-        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2" aria-live="polite">
-          @if (measuring()) {
-            @if (measurement(); as m) {
-              <span class="text-on-surface-variant"
-                >{{ m.from.date | appDate: 'dayMonth' }} →
-                {{ m.to.date | appDate: 'dayMonth' }}</span
-              >
-              <app-change pill [value]="m.percent" />
-              <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
-                m.amount | signed
-              }}</span>
-              <span class="text-on-surface-variant" i18n>{m.days, plural,
-                =1 {1 day}
-                other {{{ m.days }} days}
-              }</span>
-            } @else if (points().length) {
-              <span class="text-on-surface-variant" i18n>Now tap the end point</span>
-            } @else {
-              <span class="text-on-surface-variant" i18n>Tap the start point</span>
-            }
-          } @else if (rangeGain(); as g) {
-            <span class="app-label">{{ rangeLabels[range()] }}</span>
-            <app-change pill [value]="g.percent" />
-            <span [class]="g.amount >= 0 ? 'text-gain' : 'text-loss'">{{ g.amount | signed }}</span>
+      <!-- Buy/sell marker legend next to the measure tool. -->
+      <div class="flex min-h-14 items-center gap-2 px-5 pt-1">
+        <div
+          class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 text-xs text-on-surface-variant"
+        >
+          @if (hasTrades() && showTrades()) {
+            <span class="inline-flex items-center gap-1" aria-hidden="true"
+              ><span class="text-primary">▲</span>
+              <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
+            >
+            <span class="inline-flex items-center gap-1" aria-hidden="true"
+              ><span class="text-on-surface">▼</span>
+              <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
+            >
           }
         </div>
         <button
@@ -336,12 +354,12 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         @if (positionPrices()) {
           <button
             type="button"
-            class="flex h-9 items-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] font-bold text-on-surface"
-            [class.bg-secondary-container]="showLines()"
+            class="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold ring-1 ring-inset transition-colors"
+            [class]="showLines() ? toggleOn : toggleOff"
             [attr.aria-pressed]="showLines()"
             (click)="showLines.set(!showLines())"
           >
-            <app-icon name="straighten" [size]="16" />
+            <app-icon [name]="showLines() ? 'check' : 'straighten'" [size]="16" />
             <ng-container i18n="Chart toggle: average cost and current price lines"
               >Average and current price</ng-container
             >
@@ -349,35 +367,25 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         }
         <button
           type="button"
-          class="flex h-9 items-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] font-bold text-on-surface"
-          [class.bg-secondary-container]="showEarnings()"
+          class="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold ring-1 ring-inset transition-colors"
+          [class]="showEarnings() ? toggleOn : toggleOff"
           [attr.aria-pressed]="showEarnings()"
           (click)="showEarnings.set(!showEarnings())"
         >
-          <app-icon name="event" [size]="16" />
+          <app-icon [name]="showEarnings() ? 'check' : 'event'" [size]="16" />
           <ng-container i18n="Chart toggle: earnings markers">Earnings</ng-container>
         </button>
         @if (hasTrades()) {
           <button
             type="button"
-            class="flex h-9 items-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] font-bold text-on-surface"
-            [class.bg-secondary-container]="showTrades()"
+            class="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold ring-1 ring-inset transition-colors"
+            [class]="showTrades() ? toggleOn : toggleOff"
             [attr.aria-pressed]="showTrades()"
             (click)="showTrades.set(!showTrades())"
           >
-            <app-icon name="account_balance_wallet" [size]="16" />
+            <app-icon [name]="showTrades() ? 'check' : 'account_balance_wallet'" [size]="16" />
             <ng-container i18n>My trades</ng-container>
           </button>
-          @if (showTrades()) {
-            <span class="inline-flex items-center gap-1" aria-hidden="true"
-              ><span class="text-primary">▲</span>
-              <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
-            >
-            <span class="inline-flex items-center gap-1" aria-hidden="true"
-              ><span class="text-on-surface">▼</span>
-              <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
-            >
-          }
         }
         <span class="ml-auto flex items-center gap-1">
           <app-segmented
@@ -393,9 +401,6 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
               <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
             </app-segment>
           </app-segmented>
-          @if (type() === 'candles') {
-            <app-term-info term="candles" class="-ml-1" />
-          }
         </span>
       </div>
 
@@ -461,6 +466,9 @@ export class PriceChart {
   );
   protected readonly hasTrades = computed(() => this.trades().some((t) => t.kind === 'TRADE'));
   protected readonly showTrades = persistedSignal('et.chartTrades', true);
+  // Overlay toggle chips: on = green tint, outline and a checkmark; off = plain surface.
+  protected readonly toggleOn = 'bg-gain-container text-gain ring-gain/50';
+  protected readonly toggleOff = 'bg-surface-container text-on-surface ring-transparent';
   protected readonly showEarnings = persistedSignal('et.chartEarnings', true);
   protected readonly showLines = persistedSignal('et.chartPositionLines', true);
   /** Bars shorter than a day: no measuring, earnings or trade markers (they mark days). */
@@ -549,13 +557,6 @@ export class PriceChart {
     afterNextRender(() => {
       this.createChart();
       this.ready.set(true);
-    });
-    // Tell the page header which range is shown, so its change line follows the chart.
-    effect(() => {
-      // The response's own range: while another one loads, the previous data is still shown.
-      const gain = this.rangeGain();
-      const range = this.data()?.range;
-      this.ctx.chartRange.set(gain && range ? { range, fromPrice: gain.from.price } : null);
     });
     effect(() => {
       const data = this.data();

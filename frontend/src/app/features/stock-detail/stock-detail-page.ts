@@ -18,8 +18,7 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
-import { PricePipe, SignedNumberPipe, PercentPipe } from '../../shared/pipes/format.pipes';
-import { PERIOD_LABELS, toneClass } from '../../shared/utils/format';
+import { PricePipe } from '../../shared/pipes/format.pipes';
 import { EarningsHistory } from './sections/earnings-history';
 import { EarningsStats } from './sections/earnings-stats';
 import { KeyStats } from './sections/key-stats';
@@ -66,8 +65,6 @@ const TABS: { id: StockTab; label: string }[] = [
     EmptyState,
     ErrorState,
     PricePipe,
-    SignedNumberPipe,
-    PercentPipe,
     KeyStats,
     PerformanceSummary,
     YourPosition,
@@ -153,25 +150,20 @@ const TABS: { id: StockTab; label: string }[] = [
           </div>
         } @else {
           <section class="px-5 pt-5" aria-label="Price" i18n-aria-label>
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                @if (stock(); as s) {
-                  <p class="truncate text-[17px] font-semibold">{{ s.name }}</p>
-                  <app-hero-amount class="mt-1" [value]="s.quote.price" [currency]="s.currency" />
-                  <p class="mt-1 text-[15px] font-semibold" [class]="changeClass()">
-                    {{ change().amount | signed }} ({{ change().percent | pct }})
-                    @if (change().label; as label) {
-                      <span class="ml-1 text-on-surface-variant">{{ label }}</span>
-                    }
-                  </p>
-                } @else {
-                  <app-skeleton class="h-5 w-40" />
-                  <app-skeleton class="mt-3 h-12 w-48" />
-                  <app-skeleton class="mt-2 h-4 w-32" />
-                }
-              </div>
-              <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="60" />
+            <!-- The change sits right below, above the chart (it follows the chart's range). -->
+            <div class="flex min-w-0 items-center gap-2">
+              <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="24" />
+              @if (stock(); as s) {
+                <p class="truncate text-[17px] font-semibold">{{ s.name }}</p>
+              } @else {
+                <app-skeleton class="h-5 w-40" />
+              }
             </div>
+            @if (stock(); as s) {
+              <app-hero-amount class="mt-1" [value]="s.quote.price" [currency]="s.currency" />
+            } @else {
+              <app-skeleton class="mt-3 h-12 w-48" />
+            }
             <div class="mt-3.5 flex flex-wrap gap-1.5">
               @if (stock(); as s) {
                 <span class="app-label rounded-lg bg-surface-container px-2.5 py-1.5 text-[11px]"
@@ -272,10 +264,12 @@ const TABS: { id: StockTab; label: string }[] = [
                 } @placeholder {
                   <div class="h-14"></div>
                 }
-                @defer (on viewport; prefetch on idle) {
-                  <app-notes />
-                } @placeholder {
-                  <div class="h-14"></div>
+                @if (showNotes) {
+                  @defer (on viewport; prefetch on idle) {
+                    <app-notes />
+                  } @placeholder {
+                    <div class="h-14"></div>
+                  }
                 }
               }
             }
@@ -286,6 +280,8 @@ const TABS: { id: StockTab; label: string }[] = [
   `,
 })
 export class StockDetailPage {
+  /** Personal notes are hidden for now; flip to bring the section back. */
+  protected readonly showNotes = false;
   protected readonly ctx = inject(StockContext);
   protected readonly navigation = inject(NavigationService);
   private readonly api = inject(ApiService);
@@ -329,24 +325,6 @@ export class StockDetailPage {
         }
       : null;
   });
-  /**
-   * The change under the price: over the chart's selected range (from the close before it to the live price),
-   * or the day's change until the chart has data.
-   */
-  protected readonly change = computed(() => {
-    const quote = this.stock()?.quote;
-    const chart = this.ctx.chartRange();
-    if (quote?.price != null && chart && chart.range !== '1D' && chart.fromPrice) {
-      const amount = quote.price - chart.fromPrice;
-      return {
-        amount,
-        percent: (amount / chart.fromPrice) * 100,
-        label: PERIOD_LABELS[chart.range],
-      };
-    }
-    return { amount: quote?.change ?? null, percent: quote?.changePercent ?? null, label: null };
-  });
-  protected readonly changeClass = computed(() => toneClass(this.change().amount));
   /** The header pill's dot: the day's direction. */
   protected readonly dotClass = computed(() => {
     const change = this.stock()?.quote.change;

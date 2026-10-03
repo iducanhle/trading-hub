@@ -2,7 +2,6 @@ import { Injectable, ResourceRef, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { LoadOptions } from '../../core/api/api.service';
-import { PriceRange } from '../../core/models/contract';
 
 /**
  * State shared by the stock page and its sections: the symbol, and a refresh counter bumped by pull-to-refresh.
@@ -14,17 +13,11 @@ export class StockContext {
   readonly symbol = signal('');
   /** 0 = use cached responses; bumped by a refresh so every section reloads from the server. */
   readonly version = signal(0);
-  /**
-   * The price chart's selected range and the price it starts from (the close before it), so the page header shows
-   * the change over that range instead of only the day's. Null until the chart has data.
-   */
-  readonly chartRange = signal<{ range: PriceRange; fromPrice: number } | null>(null);
 
   setSymbol(symbol: string): void {
     const canonical = symbol.trim().toUpperCase();
     if (canonical === this.symbol()) return;
     this.symbol.set(canonical);
-    this.chartRange.set(null);
     this.version.set(0);
   }
 

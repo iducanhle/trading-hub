@@ -1,11 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { ApiService } from '../../../core/api/api.service';
 import { T212Service } from '../../../core/services/t212.service';
 import { Icon } from '../../../shared/icon/icon';
 import { PricePipe, QuantityPipe } from '../../../shared/pipes/format.pipes';
+import { InstrumentDialogData, InstrumentPage } from '../../portfolio/instrument-page';
 import { Pnl } from '../../portfolio/pnl';
 import { DEVICE_TZ } from '../../portfolio/portfolio-model';
 import { StockContext } from '../stock-context';
@@ -13,16 +14,18 @@ import { StockContext } from '../stock-context';
 /**
  * "Your position": shares, average cost and total profit/loss when the user's Trading 212 account holds or held
  * this stock. Nothing at all otherwise (not connected, never traded, or Trading 212 not set up on the server).
+ * Tapping it opens the whole position (trades and dividends) in a dialog.
  */
 @Component({
   selector: 'app-your-position',
-  imports: [RouterLink, Icon, PricePipe, QuantityPipe, Pnl],
+  imports: [Icon, PricePipe, QuantityPipe, Pnl],
   template: `
     @if (position(); as p) {
-      <a
-        [routerLink]="['/portfolio', p.t212Ticker]"
-        class="app-card mx-4 mt-3.5 flex items-center gap-3.5 hover:bg-surface-container-high"
+      <button
+        type="button"
+        class="app-card mx-4 mt-3.5 flex w-[calc(100%-2rem)] items-center gap-3.5 text-left hover:bg-surface-container-high"
         aria-labelledby="your-position-title"
+        (click)="open(p.t212Ticker)"
       >
         <span
           class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
@@ -59,7 +62,7 @@ import { StockContext } from '../stock-context';
           </p>
         </div>
         <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
-      </a>
+      </button>
     }
   `,
 })
@@ -67,6 +70,7 @@ export class YourPosition {
   private readonly ctx = inject(StockContext);
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
+  private readonly dialog = inject(MatDialog);
 
   private readonly instruments = rxResource({
     params: () => ({
@@ -85,6 +89,15 @@ export class YourPosition {
   protected readonly currency = computed(() =>
     this.instruments.hasValue() ? (this.instruments.value()?.accountCurrency ?? null) : null,
   );
+
+  protected open(t212Ticker: string): void {
+    this.dialog.open<InstrumentPage, InstrumentDialogData>(InstrumentPage, {
+      data: { t212Ticker },
+      width: 'calc(100vw - 32px)',
+      maxWidth: '48rem',
+      autoFocus: 'dialog',
+    });
+  }
 
   constructor() {
     // Errors (e.g. T212_NOT_CONFIGURED) only mean there is no card.

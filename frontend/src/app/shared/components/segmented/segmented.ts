@@ -22,8 +22,9 @@ import {
       #button
       type="button"
       role="radio"
-      class="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full text-center text-[13px] leading-tight font-bold transition-colors"
+      class="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full text-center text-[13px] leading-tight transition-colors"
       [class]="
+        (group.appearance() === 'chips' ? 'font-medium ' : 'font-bold ') +
         (group.stretch() ? 'px-2 py-1 ' : 'px-3 whitespace-nowrap ') +
         (selected() ? group.selectedClass() : 'text-on-surface-variant hover:text-on-surface')
       "

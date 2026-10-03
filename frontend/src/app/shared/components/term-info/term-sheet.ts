@@ -1,5 +1,4 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatButton } from '@angular/material/button';
 import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
@@ -9,7 +8,7 @@ import { TERMS, TermId } from './terms';
 /** The explanation of one term, opened by TermInfo as a bottom sheet (phones) or a dialog (desktop). */
 @Component({
   selector: 'app-term-sheet',
-  imports: [MatButton, RouterLink, Sheet],
+  imports: [RouterLink, Sheet],
   template: `
     <app-sheet class="lg:p-4" [title]="term().title">
       <div class="space-y-3 text-[15px] leading-relaxed">
@@ -27,9 +26,6 @@ import { TERMS, TermId } from './terms';
         You can turn off these explanations in
         <a routerLink="/settings" class="text-primary underline" (click)="close()">Settings</a>.
       </p>
-      <button sheetActions matButton="filled" type="button" (click)="close()">
-        <ng-container i18n>Got it</ng-container>
-      </button>
     </app-sheet>
   `,
 })

@@ -216,12 +216,6 @@ export class Shell {
       activeIcon: 'calendar_month',
     },
     {
-      path: '/events',
-      label: $localize`Events`,
-      icon: 'bolt',
-      activeIcon: 'bolt-fill',
-    },
-    {
       path: '/portfolio',
       label: $localize`:Bottom navigation tab:Portfolio`,
       icon: 'account_balance_wallet',
