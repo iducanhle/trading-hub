@@ -1,14 +1,11 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { Component, effect, inject, input, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
-import { T212InstrumentRef } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
-import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
@@ -16,19 +13,17 @@ import { PercentPipe, PricePipe, SignedMoneyPipe } from '../../shared/pipes/form
 import { toneClass } from '../../shared/utils/format';
 import { PortfolioAllocation } from './portfolio-allocation';
 import { PortfolioHoldings } from './portfolio-holdings';
-import { PortfolioPeriod, displayTicker, periodQuery } from './portfolio-model';
-import { PositionDialog, PositionDialogData } from './position-dialog';
+import { PortfolioPeriod, periodQuery } from './portfolio-model';
 
 const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 
-/** Portfolio → Overview: account value, all-time profit/loss, best and worst stocks, open positions. */
+/** Portfolio → Overview: account value, all-time profit/loss, open positions. */
 @Component({
   selector: 'app-portfolio-overview',
   imports: [
     ErrorState,
     Skeleton,
     StaleChip,
-    StockLogo,
     TermInfo,
     Icon,
     PricePipe,
@@ -93,37 +88,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
         </p>
       </section>
 
-      @if (extremes().length) {
-        <section
-          class="app-card mt-5 grid grid-cols-2 gap-3.5"
-          aria-label="Best and worst"
-          i18n-aria-label
-        >
-          @for (row of extremes(); track row.label; let second = $odd) {
-            <button
-              type="button"
-              (click)="openPosition(row.item.t212Ticker)"
-              class="flex min-w-0 text-left flex-col gap-2"
-              [class]="second ? 'border-l border-outline-variant pl-3.5' : ''"
-            >
-              <span class="app-label">{{ row.label }}</span>
-              <span class="flex min-w-0 items-center gap-2.5">
-                <app-stock-logo
-                  [symbol]="ticker(row.item)"
-                  [logoUrl]="row.item.logoUrl"
-                  [size]="36"
-                />
-                <span class="line-clamp-2 min-w-0 text-sm leading-tight font-medium">{{
-                  row.item.name
-                }}</span>
-              </span>
-              <span class="text-[15px] font-semibold" [class]="tone(row.item.totalPnl)">{{
-                row.item.totalPnl | money: s.accountCurrency
-              }}</span>
-            </button>
-          }
-        </section>
-      } @else if (!t212.syncing()) {
+      @if (!s.best && !t212.syncing()) {
         <p class="mt-6 text-center text-sm text-on-surface-variant" i18n>
           No trades or dividends yet.
         </p>
@@ -143,7 +108,6 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 export class PortfolioOverview {
   private readonly api = inject(ApiService);
   protected readonly t212 = inject(T212Service);
-  private readonly dialog = inject(MatDialog);
 
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
@@ -174,29 +138,7 @@ export class PortfolioOverview {
     });
   }
 
-  protected readonly extremes = computed(() => {
-    if (!this.data.hasValue()) return [];
-    const { best, worst } = this.data.value();
-    const rows: { label: string; item: T212InstrumentRef }[] = [];
-    if (best) rows.push({ label: $localize`Best`, item: best });
-    if (worst) rows.push({ label: $localize`Worst`, item: worst });
-    return rows;
-  });
-
-  protected openPosition(t212Ticker: string): void {
-    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
-    });
-  }
-
   protected tone(value: number | null): string {
     return toneClass(value);
-  }
-
-  protected ticker(item: T212InstrumentRef): string {
-    return displayTicker(item);
   }
 }
