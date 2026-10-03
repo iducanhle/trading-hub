@@ -25,7 +25,8 @@ import { userInitials } from '../../utils/user';
     }
   `,
   host: {
-    class: 'inline-block shrink-0',
+    // The tint shows while the photo loads, so the slot is never an empty gap.
+    class: 'inline-block shrink-0 rounded-full bg-surface-container-highest',
     '[style.width.px]': 'size()',
     '[style.height.px]': 'size()',
     'aria-hidden': 'true',

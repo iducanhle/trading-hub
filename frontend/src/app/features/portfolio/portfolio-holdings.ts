@@ -102,7 +102,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                       }
                     </span>
                     <span
-                      class="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold text-on-surface-variant"
+                      class="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold whitespace-nowrap text-on-surface-variant"
                     >
                       <ng-container i18n
                         >{pie.positions.length, plural,

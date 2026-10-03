@@ -116,7 +116,7 @@ export class Segmented<T = unknown> {
   /** Classes of the chosen option. */
   readonly selectedClass = computed(() =>
     this.appearance() === 'track' && this.inset()
-      ? 'bg-surface text-on-surface'
+      ? 'bg-surface-container-highest text-on-surface'
       : 'bg-surface-container-high text-on-surface',
   );
 

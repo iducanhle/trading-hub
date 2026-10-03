@@ -12,7 +12,7 @@ import { Component, input } from '@angular/core';
             alt=""
             width="56"
             height="56"
-            class="mb-4 rounded-2xl shadow-sm"
+            class="mb-4 rounded-2xl"
           />
           <h1 class="text-2xl font-semibold tracking-tight">{{ title() }}</h1>
           @if (subtitle()) {

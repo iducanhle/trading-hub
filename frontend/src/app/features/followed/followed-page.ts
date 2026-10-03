@@ -113,46 +113,32 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
               class="-mx-2 block rounded-[22px] px-2 py-1 hover:bg-surface-container"
             >
               <span class="app-label block" i18n>Next earnings</span>
-              <span class="mt-1.5 flex items-center gap-3.5">
-                <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="48" />
-                <span
-                  class="min-w-0 truncate text-5xl leading-[1.05] font-light tracking-[-.02em]"
-                  >{{ n.event.symbol }}</span
-                >
-              </span>
-              <span class="mt-3.5 flex flex-wrap gap-x-8 gap-y-2">
-                <span>
-                  <span class="app-label block" i18n>Date</span>
-                  <span class="mt-0.5 block text-[17px] font-semibold">{{
-                    n.event.date | appDate: 'day'
-                  }}</span>
-                </span>
-                <span>
-                  <span class="app-label block" i18n>Time</span>
-                  <span class="mt-0.5 block text-[17px] font-semibold">{{
-                    n.event.time | reportTime
-                  }}</span>
+              <span class="mt-2 flex items-center gap-3">
+                <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="40" />
+                <span class="min-w-0">
+                  <span class="block truncate text-lg font-bold">{{ n.event.symbol }}</span>
+                  <span
+                    class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
+                    >{{ n.event.name }}</span
+                  >
                 </span>
               </span>
               <span
-                class="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-extrabold"
+                class="mt-3 block text-4xl leading-tight font-light tracking-[-.02em] text-primary"
+                >{{ n.event.date | relativeDay }}</span
               >
-                <span class="size-[9px] rounded-full bg-primary" aria-hidden="true"></span>
-                {{ n.event.date | relativeDay }}
-              </span>
+              <span class="mt-1 block text-[15px] font-semibold"
+                >{{ n.event.date | appDate: 'day' }} · {{ n.event.time | reportTime }}</span
+              >
             </a>
           }
-          <div class="app-card mt-5">
-            <h2 class="app-label" i18n>Followed stocks</h2>
-            <p class="mt-0.5 text-lg font-bold">{{ count() }}</p>
-            <a
-              routerLink="/search"
-              class="mt-3.5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-[15px] text-on-surface-variant hover:text-on-surface"
-            >
-              <app-icon name="search" [size]="20" />
-              <ng-container i18n>Add a stock to follow</ng-container>
-            </a>
-          </div>
+          <a
+            routerLink="/search"
+            class="mt-5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-[15px] text-on-surface-variant hover:text-on-surface"
+          >
+            <app-icon name="search" [size]="20" />
+            <ng-container i18n>Add a stock to follow</ng-container>
+          </a>
           @for (group of view()!.groups; track group.title) {
             <section class="app-card mt-3.5 pb-1.5" [attr.aria-label]="group.title">
               <h2 class="app-label">{{ group.title }} · {{ group.events.length }}</h2>
@@ -281,11 +267,6 @@ export class FollowedPage {
   });
 
   protected readonly refreshing = computed(() => this.data.isLoading() && this.fetches() > 0);
-  /** How many followed stocks the page lists. */
-  protected readonly count = computed(() => {
-    const v = this.view();
-    return v ? v.groups.reduce((sum, g) => sum + g.events.length, 0) + v.noDate.length : 0;
-  });
   /** The soonest report among the followed stocks, with the days left until it. */
   protected readonly next = computed(() => {
     const event = this.view()?.groups[0]?.events[0];

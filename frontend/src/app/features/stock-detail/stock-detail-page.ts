@@ -201,7 +201,7 @@ const TABS: { id: StockTab; label: string }[] = [
             role="tablist"
             aria-label="Stock sections"
             i18n-aria-label
-            class="no-scrollbar mt-3 flex gap-6 overflow-x-auto border-b border-outline-variant px-5"
+            class="no-scrollbar sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 mt-3 flex gap-6 overflow-x-auto border-b border-outline-variant bg-surface/90 px-5 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
           >
             @for (t of tabs; track t.id) {
               <button

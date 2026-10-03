@@ -194,7 +194,7 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
 
         @if (selected(); as marker) {
           <div
-            class="absolute top-2 right-2 left-2 z-10 rounded-2xl bg-surface-container-highest p-3 text-sm shadow-lg sm:left-auto sm:w-72"
+            class="absolute top-2 right-2 left-2 z-10 rounded-2xl bg-surface-container-highest p-3 text-sm ring-1 ring-outline-variant sm:left-auto sm:w-72"
             role="dialog"
             aria-label="Earnings details"
             i18n-aria-label
@@ -262,10 +262,10 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
           }
         </app-segmented>
       </div>
-      <div class="px-2.5 pt-1.5">
+      <!-- Not stretched: three options spread over the width read as giant pills next to the range row. -->
+      <div class="flex justify-center px-2.5 pt-1.5">
         <app-segmented
           appearance="chips"
-          stretch
           aria-label="Bar size"
           i18n-aria-label="Chart bar size selector"
           [value]="interval()"

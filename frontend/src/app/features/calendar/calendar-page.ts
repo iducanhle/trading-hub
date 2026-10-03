@@ -57,9 +57,10 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="refresh()">
       <app-page-header title="Calendar" i18n-title maxWidth="max-w-6xl">
         <div actions class="flex items-center">
-          <button matButton type="button" (click)="goToday()" [disabled]="showsToday()" i18n>
-            Today
-          </button>
+          <!-- Only when another week or month is shown: a dead, greyed-out button read as broken. -->
+          @if (!showsToday()) {
+            <button matButton type="button" (click)="goToday()" i18n>Today</button>
+          }
           <button
             matIconButton
             type="button"
@@ -112,7 +113,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             <app-icon name="chevron_right" />
           </button>
           <app-segmented
-            class="ml-auto"
+            class="mr-2 ml-auto"
             aria-label="Calendar view"
             i18n-aria-label
             [value]="view()"
@@ -131,13 +132,19 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
         @if (data.error() && !days()) {
           <div class="p-4"><app-error-state [error]="data.error()" (retry)="data.reload()" /></div>
         } @else if (!days()) {
-          <div class="space-y-4 p-4" aria-hidden="true">
-            @for (i of [1, 2, 3, 4, 5]; track i) {
-              <div class="space-y-2">
-                <app-skeleton class="h-5 w-32" />
+          <!-- Mirrors the week view: the day strip, then a card per day with logo tiles. -->
+          <div class="space-y-3 p-4" aria-hidden="true">
+            <div class="flex justify-between pb-1">
+              @for (d of [1, 2, 3, 4, 5, 6, 7]; track d) {
+                <app-skeleton class="h-14 w-10 rounded-2xl" />
+              }
+            </div>
+            @for (i of [1, 2, 3, 4]; track i) {
+              <div class="app-card space-y-3">
+                <app-skeleton class="h-5 w-28" />
                 <div class="flex gap-3">
-                  @for (j of [1, 2, 3, 4]; track j) {
-                    <app-skeleton shape="circle" class="size-10" />
+                  @for (j of [1, 2, 3]; track j) {
+                    <app-skeleton class="size-12 rounded-[14px]" />
                   }
                 </div>
               </div>

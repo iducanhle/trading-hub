@@ -27,7 +27,7 @@ const MAX_PULL = 110;
       aria-hidden="true"
     >
       <div
-        class="mt-2 flex size-10 items-center justify-center rounded-full bg-surface-container-highest text-primary shadow-md"
+        class="mt-2 flex size-10 items-center justify-center rounded-full bg-surface-container-highest text-primary ring-1 ring-outline-variant"
         [class.transition-all]="!dragging()"
         [class.duration-200]="!dragging()"
         [style.opacity]="visible() ? 1 : 0"
