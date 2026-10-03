@@ -183,7 +183,7 @@ export const TERMS: Record<TermId, Term> = {
     title: $localize`:Term title:Realized profit/loss`,
     body: [
       $localize`:Term text:Money you actually made or lost by selling: the sale price minus the average cost of the shares sold.`,
-      $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees are shown separately.`,
+      $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees and taxes are already deducted.`,
     ],
     example: $localize`:Term example:Average cost $110, you sell 5 shares at $130: realized profit is 5 × $20 = $100.`,
   },

@@ -155,15 +155,11 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
               <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
                 <ng-container i18n>Realized</ng-container><app-term-info term="realizedPnl" />
               </dt>
-              <dd><app-pnl [value]="i.realizedPnl" [currency]="d.accountCurrency" /></dd>
+              <dd><app-pnl [value]="i.realizedPnl - i.fees" [currency]="d.accountCurrency" /></dd>
             </div>
             <div>
               <dt class="text-xs text-on-surface-variant" i18n>Dividends</dt>
               <dd><app-pnl [value]="i.dividends" [currency]="d.accountCurrency" /></dd>
-            </div>
-            <div>
-              <dt class="text-xs text-on-surface-variant" i18n>Fees and taxes</dt>
-              <dd><app-pnl [value]="-i.fees" [currency]="d.accountCurrency" /></dd>
             </div>
             <div>
               <dt class="text-xs text-on-surface-variant" i18n>Shares held</dt>
