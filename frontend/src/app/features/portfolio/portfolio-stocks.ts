@@ -14,7 +14,7 @@ import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { TermInfo } from '../../shared/components/term-info/term-info';
-import { Pnl } from './pnl';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import {
   PercentPipe,
   PricePipe,
@@ -63,7 +63,8 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
     FilterButton,
     HeroAmount,
     TermInfo,
-    Pnl,
+    Segmented,
+    Segment,
   ],
   template: `
     <div class="flex items-center gap-2.5">
@@ -91,7 +92,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
             type="button"
             class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
             [attr.aria-label]="chip.removeLabel"
-            (click)="resetPart(chip.key)"
+            (click)="resetSort()"
           >
             {{ chip.label }}
             <app-icon name="close" [size]="16" />
@@ -99,6 +100,20 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
         }
       </div>
     }
+
+    <app-segmented
+      class="mt-3"
+      aria-label="Profit and loss"
+      i18n-aria-label
+      stretch
+      [value]="unrealized()"
+      (valueChange)="unrealized.set($event)"
+    >
+      <app-segment [value]="false" i18n="Profit/loss basis|Realized only">Without</app-segment>
+      <app-segment [value]="true" i18n="Profit/loss basis|Includes unrealized"
+        >With unrealized</app-segment
+      >
+    </app-segmented>
 
     @if (data.error() && !data.hasValue()) {
       <app-error-state [error]="data.error()" (retry)="data.reload()" />
@@ -131,14 +146,15 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
             />
           </div>
           @if (totalAfterFees(); as afterFees) {
-            <div class="pb-1">
+            <div>
               <h2 class="app-label flex items-center gap-1">
                 <ng-container i18n>Including account fees</ng-container
                 ><app-term-info term="accountFees" />
               </h2>
-              <app-pnl
-                strong
-                class="mt-1 text-xl tabular-nums"
+              <app-hero-amount
+                class="mt-1"
+                size="md"
+                signed
                 [value]="afterFees.value"
                 [currency]="data.value().accountCurrency"
               />
@@ -210,10 +226,7 @@ export class PortfolioStocks {
   readonly period = input.required<PortfolioPeriod>();
   readonly version = input(0);
 
-  protected readonly unrealized = persistedSignal<boolean>(
-    'portfolio.stocks.unrealized',
-    DEFAULT_STOCKS_VIEW.unrealized,
-  );
+  protected readonly unrealized = persistedSignal<boolean>('portfolio.stocks.unrealized', false);
   protected readonly sort = persistedSignal<StockSort>(
     'portfolio.stocks.sort',
     DEFAULT_STOCKS_VIEW.sort,
@@ -230,14 +243,6 @@ export class PortfolioStocks {
   /** A chip for each setting that differs from the default; removing it resets that setting. */
   protected readonly chips = computed(() => {
     const chips: { key: keyof StocksView; label: string; removeLabel: string }[] = [];
-    if (this.unrealized() !== DEFAULT_STOCKS_VIEW.unrealized) {
-      const label = $localize`:Profit/loss basis|Includes unrealized:With unrealized`;
-      chips.push({
-        key: 'unrealized',
-        label,
-        removeLabel: $localize`Remove filter ${label}:filter:`,
-      });
-    }
     if (this.sort() !== DEFAULT_STOCKS_VIEW.sort) {
       const label = SORT_LABELS[this.sort()];
       chips.push({ key: 'sort', label, removeLabel: $localize`Remove filter ${label}:filter:` });
@@ -247,9 +252,8 @@ export class PortfolioStocks {
 
   protected openFilters(): void {
     const context: StocksFilterContext = {
-      view: { unrealized: this.unrealized(), sort: this.sort() },
+      view: { sort: this.sort() },
       change: (view) => {
-        this.unrealized.set(view.unrealized);
         this.sort.set(view.sort);
       },
     };
@@ -265,9 +269,8 @@ export class PortfolioStocks {
     });
   }
 
-  protected resetPart(key: keyof StocksView): void {
-    if (key === 'unrealized') this.unrealized.set(DEFAULT_STOCKS_VIEW.unrealized);
-    else this.sort.set(DEFAULT_STOCKS_VIEW.sort);
+  protected resetSort(): void {
+    this.sort.set(DEFAULT_STOCKS_VIEW.sort);
   }
 
   protected readonly data = rxResource({

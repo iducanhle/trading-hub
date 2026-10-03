@@ -5,16 +5,13 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { SORT_LABELS } from './portfolio-labels';
 import { StockSort } from './portfolio-model';
-import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { Sheet } from '../../shared/components/sheet/sheet';
 
 export interface StocksView {
-  /** Profit/loss includes unrealized. */
-  unrealized: boolean;
   sort: StockSort;
 }
 
-export const DEFAULT_STOCKS_VIEW: StocksView = { unrealized: false, sort: 'pnl' };
+export const DEFAULT_STOCKS_VIEW: StocksView = { sort: 'pnl' };
 
 export const STOCK_SORTS: readonly StockSort[] = ['pnl', 'pnlPct', 'value', 'lastTrade', 'name'];
 
@@ -23,26 +20,13 @@ export interface StocksFilterContext {
   change: (view: StocksView) => void;
 }
 
-/** Profit/loss basis and sort of the Stocks tab in a bottom sheet; a draft until Done. */
+/** Sort of the Stocks tab in a bottom sheet; a draft until Done. */
 @Component({
   selector: 'app-stocks-filter-sheet',
-  imports: [Sheet, MatButton, Segmented, Segment, MatFormField, MatLabel, MatSelect, MatOption],
+  imports: [Sheet, MatButton, MatFormField, MatLabel, MatSelect, MatOption],
   template: `
     <app-sheet title="Filters" i18n-title>
       <div class="flex flex-col gap-3">
-        <app-segmented
-          aria-label="Profit and loss"
-          i18n-aria-label
-          inset
-          stretch
-          [value]="draft().unrealized"
-          (valueChange)="patch({ unrealized: $event })"
-        >
-          <app-segment [value]="false" i18n="Profit/loss basis|Realized only">Without</app-segment>
-          <app-segment [value]="true" i18n="Profit/loss basis|Includes unrealized"
-            >With unrealized</app-segment
-          >
-        </app-segmented>
         <mat-form-field appearance="fill" subscriptSizing="dynamic" class="w-full">
           <mat-label i18n>Sort</mat-label>
           <mat-select [value]="draft().sort" (selectionChange)="patch({ sort: $event.value })">
