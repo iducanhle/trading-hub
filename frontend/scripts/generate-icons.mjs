@@ -18,6 +18,8 @@ const ICONS = {
   account_circle: 'circle-user-round',
   add: 'plus',
   arrow_back: 'chevron-left',
+  arrow_down: 'arrow-down',
+  arrow_up: 'arrow-up',
   bar_chart: 'chart-column',
   block: 'ban',
   bolt: 'zap',

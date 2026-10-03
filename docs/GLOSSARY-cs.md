@@ -66,6 +66,10 @@ Event titles and notes (for example "Consumer Price Index (CPI)") come from the 
 | Shares (count) | ks | "30 ks" |
 | Stock split / Corporate action | Split akcií / Korporátní akce | |
 | Deposits / Withdrawals / Interest | Vklady / Výběry / Úroky | |
+| Account value | Hodnota účtu | Trading 212 total value, as of now |
+| Net deposits | Čisté vklady | Deposits − withdrawals |
+| Return (%) | Míra výnosu | Total profit/loss ÷ everything bought |
+| Cash (tab) | Hotovost | Deposits, withdrawals, fees, interest |
 | Live / Demo (account) | Ostrý / Demo (cvičný účet) | Trading 212 environments |
 | API key / API secret | API klíč / Tajný klíč (API secret) | |
 | Sync | Synchronizace / Synchronizovat | |

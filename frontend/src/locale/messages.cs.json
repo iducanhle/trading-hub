@@ -459,10 +459,8 @@
     "8414056624968292778": "ks",
     "5203279511751768967": "Od",
     "1640609344969975994": "Do",
-    "3448462145758383019": "Celkem",
     "2756185151635891453": " V tomto období žádné dividendy. ",
     "3291319611146578639": "na akcii",
-    "2029747175126936281": " Vklady, výběry a poplatky ",
     "2127810861310406212": "Vklady",
     "707619768121669363": "Výběry",
     "7478553622334255151": "Poplatky účtu",
@@ -473,7 +471,6 @@
     "2614607010577950577": "Přehled",
     "2732382861635368484": "Akcie",
     "791057726187265933": "Obchody",
-    "2975216288833945785": "Dividendy a hotovost",
     "636472685680251931": "Zisk/ztráta",
     "5545276635991534787": "Zisk/ztráta %",
     "6555318547274416232": "Hodnota",
@@ -490,7 +487,6 @@
     "3557080263190099574": "Úrok z hotovosti",
     "5655285967214777787": "Úrok z půjčování akcií",
     "8999687648309620064": "Probíhá první synchronizace. Historie se tu objevuje průběžně.",
-    "5636269064834199982": "Celková hodnota · nyní",
     "1649035832083209812": "Nejlepší",
     "5614367840516299633": "Nejhorší",
     "1493319162734299625": "Části portfolia",
@@ -556,6 +552,14 @@
     "3706981769444978112": "Sestupně, klepnutím vzestupně",
     "4419561910413872093": "Vzestupně, klepnutím sestupně",
     "2822400116909189117": "Filtru neodpovídají žádné obchody ani dividendy.",
-    "2067193239005162362": "Hodnota účtu"
+    "2067193239005162362": "Hodnota účtu",
+    "5344294347583414505": "Dividendy nebo hotovost",
+    "787798817533231355": "Hotovost",
+    "6285325615148390577": "Dividendy celkem",
+    "7453513904174943": "Vklady, výběry a poplatky",
+    "1171404766209504100": "Hledat v portfoliu",
+    "8145704115014610296": "Žádné odpovídající akcie.",
+    "7286475218857509962": "Míra výnosu",
+    "2676717228803691384": "čisté vklady"
   }
 }

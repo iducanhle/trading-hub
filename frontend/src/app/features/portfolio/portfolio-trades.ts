@@ -23,8 +23,14 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
-import { AppDatePipe, PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
-import { Pnl } from './pnl';
+import { FilterButton } from '../../shared/components/filter-button/filter-button';
+import {
+  AppDatePipe,
+  PricePipe,
+  QuantityPipe,
+  SignedMoneyPipe,
+} from '../../shared/pipes/format.pipes';
+import { toneClass } from '../../shared/utils/format';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import { PortfolioPeriod, displayTicker, groupTradesByDay, periodQuery } from './portfolio-model';
 import {
@@ -76,18 +82,16 @@ const EMPTY: ListState = {
     AppDatePipe,
     PricePipe,
     QuantityPipe,
-    Pnl,
+    SignedMoneyPipe,
+    FilterButton,
   ],
   template: `
     <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button matButton="outlined" type="button" (click)="openFilters()">
-        <app-icon matButtonIcon name="tune" [size]="18" />
-        <ng-container i18n>Filters</ng-container>
-      </button>
+      <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
       @for (chip of chips(); track chip.key) {
         <button
           type="button"
-          class="inline-flex min-h-8 items-center gap-1 rounded-full bg-secondary-container px-3 text-sm text-on-secondary-container"
+          class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
           [attr.aria-label]="chip.removeLabel"
           (click)="remove(chip.key)"
         >
@@ -100,9 +104,9 @@ const EMPTY: ListState = {
     @if (state().error && !state().loaded) {
       <app-error-state [error]="state().error" (retry)="reload()" />
     } @else if (!state().loaded) {
-      <div class="space-y-2" aria-hidden="true">
-        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-          <app-skeleton shape="card" class="h-14" />
+      <div class="space-y-3" aria-hidden="true">
+        @for (i of [1, 2]; track i) {
+          <app-skeleton shape="card" class="block h-56 rounded-[22px]" />
         }
       </div>
     } @else {
@@ -119,50 +123,67 @@ const EMPTY: ListState = {
         </app-empty-state>
       } @else {
         @for (day of days(); track day.date) {
-          <h3 class="sticky-day mt-4 mb-1 px-2 text-xs font-semibold text-on-surface-variant">
-            {{ day.date | appDate: 'long' }}
-          </h3>
-          <ul>
-            @for (t of day.items; track t.id) {
-              <li>
-                <a
-                  [routerLink]="['/portfolio', t.t212Ticker]"
-                  class="flex min-h-14 items-center gap-3 rounded-2xl px-2 py-2 hover:bg-surface-container-high"
-                >
-                  <span
-                    class="w-12 shrink-0 rounded-md py-0.5 text-center text-[11px] font-semibold"
-                    [class]="
-                      t.kind !== 'TRADE'
-                        ? 'bg-surface-container-highest text-on-surface-variant'
-                        : t.side === 'BUY'
-                          ? 'bg-primary-container text-on-primary-container'
-                          : 'bg-inverse-surface text-inverse-on-surface'
-                    "
-                    >{{ t.kind === 'TRADE' ? sideLabels[t.side] : kindLabels[t.kind] }}</span
+          <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
+            <h3 class="app-label">
+              {{ day.date | appDate: 'long' }}
+            </h3>
+            <ul>
+              @for (t of day.items; track t.id) {
+                <li>
+                  <a
+                    [routerLink]="['/portfolio', t.t212Ticker]"
+                    class="-mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-[11px] hover:bg-surface-container-high"
                   >
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate font-medium">{{ t.name }}</span>
-                    <span class="block truncate text-xs text-on-surface-variant">
-                      {{ ticker(t) }} · {{ t.quantity | qty }}
-                      @if (t.price !== null) {
-                        × {{ t.price | price: t.priceCurrency }}
+                    <span
+                      class="flex size-10 shrink-0 items-center justify-center rounded-xl"
+                      [class]="
+                        t.kind === 'TRADE' && t.side === 'BUY'
+                          ? 'bg-primary-container text-primary'
+                          : 'bg-surface-container-high text-on-surface'
+                      "
+                      aria-hidden="true"
+                    >
+                      <app-icon
+                        [name]="
+                          t.kind !== 'TRADE'
+                            ? 'swap_vert'
+                            : t.side === 'BUY'
+                              ? 'arrow_down'
+                              : 'arrow_up'
+                        "
+                        [size]="20"
+                        [strokeWidth]="2"
+                      />
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate text-[15px] font-bold">{{ t.name }}</span>
+                      <span
+                        class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
+                      >
+                        {{ t.kind === 'TRADE' ? sideLabels[t.side] : kindLabels[t.kind] }} ·
+                        {{ ticker(t) }} · {{ t.quantity | qty }}
+                        @if (t.price !== null) {
+                          × {{ t.price | price: t.priceCurrency }}
+                        }
+                      </span>
+                    </span>
+                    <span class="flex shrink-0 flex-col items-end text-right">
+                      <span class="text-[15px] font-bold">{{
+                        t.value | price: state().currency
+                      }}</span>
+                      @if (t.realizedPnl !== null) {
+                        <span
+                          class="mt-0.5 text-[12.5px] font-bold"
+                          [class]="tone(t.realizedPnl)"
+                          >{{ t.realizedPnl | money: state().currency }}</span
+                        >
                       }
                     </span>
-                  </span>
-                  <span class="flex flex-col items-end text-sm">
-                    <span class="tabular-nums">{{ t.value | price: state().currency }}</span>
-                    @if (t.realizedPnl !== null) {
-                      <app-pnl
-                        class="text-xs"
-                        [value]="t.realizedPnl"
-                        [currency]="state().currency"
-                      />
-                    }
-                  </span>
-                </a>
-              </li>
-            }
-          </ul>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
         }
         @if (state().next) {
           <div appInView (inView)="loadMore()" class="flex justify-center py-4">
@@ -183,6 +204,10 @@ export class PortfolioTrades {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
   private readonly sheet = inject(MatBottomSheet);
+
+  protected tone(value: number | null): string {
+    return toneClass(value);
+  }
 
   readonly period = input.required<PortfolioPeriod>();
   readonly version = input(0);

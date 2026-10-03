@@ -62,14 +62,14 @@ import { TradeFilters } from './trades-filters';
               [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
               (click)="sync()"
             >
-              <app-icon name="sync" [class.animate-spin]="t212.syncing()" />
+              <app-icon name="refresh" [class.animate-spin]="t212.syncing()" />
             </button>
           </div>
         }
         @if (t212.connected()) {
           <div class="mx-auto max-w-3xl px-4 pb-2">
             <nav
-              class="-mx-1 flex gap-1 overflow-x-auto px-1"
+              class="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1"
               aria-label="Portfolio sections"
               i18n-aria-label
             >
@@ -80,11 +80,11 @@ import { TradeFilters } from './trades-filters';
                   queryParamsHandling="merge"
                   replaceUrl
                   [attr.aria-current]="tab() === t ? 'page' : null"
-                  class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap"
+                  class="shrink-0 rounded-full px-3 py-[9px] text-[13px] font-bold whitespace-nowrap"
                   [class]="
                     tab() === t
-                      ? 'bg-secondary-container text-on-secondary-container'
-                      : 'text-on-surface-variant hover:bg-surface-container-high'
+                      ? 'bg-surface-container-high text-on-surface'
+                      : 'text-on-surface-variant hover:text-on-surface'
                   "
                   >{{ tabLabels[t] }}</a
                 >

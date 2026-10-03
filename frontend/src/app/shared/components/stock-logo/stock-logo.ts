@@ -3,8 +3,8 @@ import { Icon } from '../../icon/icon';
 import { symbolColor, symbolInitials } from '../../utils/symbols';
 
 /**
- * A stock's logo at a fixed size (no layout shift). Without a logo, or when it fails to load, a circle with the
- * ticker's initials in a colour derived from the symbol. Decorative: the symbol is always shown next to it.
+ * A stock's logo at a fixed size (no layout shift), as a rounded square (14 px corners at 48 px). Without a logo, or
+ * when it fails to load, the ticker's initials on a colour derived from the symbol. Decorative: the symbol is always shown next to it.
  */
 @Component({
   selector: 'app-stock-logo',
@@ -12,7 +12,8 @@ import { symbolColor, symbolInitials } from '../../utils/symbols';
   template: `
     @if (logoUrl() && !failed()) {
       <img
-        class="size-full rounded-full bg-white object-contain p-[10%] ring-1 ring-outline-variant"
+        class="size-full bg-white object-contain p-[12%] ring-1 ring-outline-variant ring-inset"
+        [style.border-radius.px]="radius()"
         [src]="logoUrl()"
         [width]="size()"
         [height]="size()"
@@ -24,8 +25,9 @@ import { symbolColor, symbolInitials } from '../../utils/symbols';
       />
     } @else {
       <span
-        class="flex size-full items-center justify-center rounded-full font-semibold tracking-tight text-white select-none"
+        class="flex size-full items-center justify-center font-extrabold tracking-tight text-white select-none"
         [style.background]="color()"
+        [style.border-radius.px]="radius()"
         [style.font-size.px]="fontSize()"
         >{{ initials() }}</span
       >
@@ -39,7 +41,10 @@ import { symbolColor, symbolInitials } from '../../utils/symbols';
         </span>
       } @else {
         <!-- Too small for a star: a ring in the accent colour. -->
-        <span class="absolute -inset-0.5 rounded-full ring-2 ring-primary"></span>
+        <span
+          class="absolute -inset-0.5 ring-2 ring-primary"
+          [style.border-radius.px]="radius() + 2"
+        ></span>
       }
     }
   `,
@@ -63,6 +68,7 @@ export class StockLogo {
   protected readonly initials = computed(() =>
     symbolInitials(this.symbol(), this.size() < 32 ? 1 : 2),
   );
+  protected readonly radius = computed(() => Math.round(this.size() * 0.29));
   protected readonly fontSize = computed(() =>
     Math.round(this.size() * (this.size() < 32 ? 0.45 : 0.36)),
   );

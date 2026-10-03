@@ -11,8 +11,9 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
-import { PricePipe } from '../../shared/pipes/format.pipes';
-import { Pnl } from './pnl';
+import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
+import { PercentPipe, PricePipe, SignedMoneyPipe } from '../../shared/pipes/format.pipes';
+import { toneClass } from '../../shared/utils/format';
 import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioPeriod, displayTicker, periodQuery } from './portfolio-model';
 
@@ -30,7 +31,9 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
     TermInfo,
     Icon,
     PricePipe,
-    Pnl,
+    PercentPipe,
+    SignedMoneyPipe,
+    HeroAmount,
     PortfolioHoldings,
   ],
   template: `
@@ -55,56 +58,78 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
         </p>
       }
 
-      <div class="rounded-3xl bg-primary-container p-4 text-on-primary-container">
-        <p class="text-xs" i18n>Total value · as of now</p>
-        <p class="mt-1 text-3xl font-semibold tabular-nums">
-          {{ s.totalValue | price: s.accountCurrency }}
+      <section aria-labelledby="account-value">
+        <p id="account-value" class="app-label" i18n>Account value</p>
+        <app-hero-amount class="mt-1" [value]="s.totalValue" [currency]="s.accountCurrency" />
+        <div class="mt-3.5 flex flex-wrap gap-x-8 gap-y-2">
+          <div>
+            <p class="app-label inline-flex items-center gap-1">
+              <ng-container i18n>Total profit/loss</ng-container>
+              <app-term-info term="totalPnl" />
+            </p>
+            <p class="mt-0.5 text-[17px] font-semibold" [class]="tone(s.totalPnl)">
+              {{ s.totalPnl | money: s.accountCurrency }}
+            </p>
+          </div>
+          @if (s.totalPnlPct !== null) {
+            <div>
+              <p class="app-label" i18n="Total profit/loss as a percentage of all buys">Return</p>
+              <p class="mt-0.5 text-[17px] font-semibold" [class]="tone(s.totalPnlPct)">
+                {{ s.totalPnlPct | pct: 1 }}
+              </p>
+            </div>
+          }
+        </div>
+        <p
+          class="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-extrabold"
+        >
+          <span class="size-[9px] rounded-full bg-on-surface-variant" aria-hidden="true"></span>
+          {{ s.netDeposits | price: s.accountCurrency }}
+          <span class="app-label text-[11.5px]" i18n>net deposits</span>
         </p>
-        <p class="mt-2 flex flex-wrap items-baseline gap-x-2 text-sm">
-          <span class="inline-flex items-center gap-1">
-            <ng-container i18n>Total profit/loss</ng-container>
-            <app-term-info term="totalPnl" />
-          </span>
-          <app-pnl
-            strong
-            class="bg-surface/80 rounded-full px-2"
-            [value]="s.totalPnl"
-            [currency]="s.accountCurrency"
-            [pct]="s.totalPnlPct"
-          />
-        </p>
-      </div>
+      </section>
 
       @if (extremes().length) {
-        <h2 class="mt-6 mb-2 text-sm font-semibold text-on-surface-variant" i18n>Best and worst</h2>
-        <ul class="space-y-1">
-          @for (row of extremes(); track row.label) {
-            <li>
-              <a
-                [routerLink]="['/portfolio', row.item.t212Ticker]"
-                class="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-container-high"
-              >
+        <section
+          class="app-card mt-5 grid grid-cols-2 gap-3.5"
+          aria-label="Best and worst"
+          i18n-aria-label
+        >
+          @for (row of extremes(); track row.label; let second = $odd) {
+            <a
+              [routerLink]="['/portfolio', row.item.t212Ticker]"
+              class="flex min-w-0 flex-col gap-2"
+              [class]="second ? 'border-l border-outline-variant pl-3.5' : ''"
+            >
+              <span class="app-label">{{ row.label }}</span>
+              <span class="flex min-w-0 items-center gap-2.5">
                 <app-stock-logo
                   [symbol]="ticker(row.item)"
                   [logoUrl]="row.item.logoUrl"
                   [size]="36"
                 />
-                <span class="min-w-0 flex-1">
-                  <span class="block text-xs text-on-surface-variant">{{ row.label }}</span>
-                  <span class="block truncate font-medium">{{ row.item.name }}</span>
-                </span>
-                <app-pnl strong [value]="row.item.totalPnl" [currency]="s.accountCurrency" />
-              </a>
-            </li>
+                <span class="line-clamp-2 min-w-0 text-sm leading-tight font-bold">{{
+                  row.item.name
+                }}</span>
+              </span>
+              <span class="text-base font-bold" [class]="tone(row.item.totalPnl)">{{
+                row.item.totalPnl | money: s.accountCurrency
+              }}</span>
+            </a>
           }
-        </ul>
+        </section>
       } @else if (!t212.syncing()) {
         <p class="mt-6 text-center text-sm text-on-surface-variant" i18n>
           No trades or dividends yet.
         </p>
       }
 
-      <app-portfolio-holdings [version]="version()" />
+      <app-portfolio-holdings
+        class="mt-3.5 block"
+        [version]="version()"
+        [total]="s.currentValue"
+        [currency]="s.accountCurrency"
+      />
     }
   `,
 })
@@ -149,6 +174,10 @@ export class PortfolioOverview {
     if (worst) rows.push({ label: $localize`Worst`, item: worst });
     return rows;
   });
+
+  protected tone(value: number | null): string {
+    return toneClass(value);
+  }
 
   protected ticker(item: T212InstrumentRef): string {
     return displayTicker(item);

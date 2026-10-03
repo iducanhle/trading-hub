@@ -55,7 +55,8 @@ Backend (run in `backend/`; `./mvnw` in Bash, `mvnw.cmd` in PowerShell):
 - Design: `docs/DESIGN-TOKENS.md` (redesign in progress, see PROGRESS-frontend). Material is themed only through tokens and
   `mat.*-overrides` in `material-theme.scss`; Tailwind is for layout around it, not for restyling Material components.
   Theme = `light-dark()` tokens (`--mat-sys-*`, `--app-*`). Font Manrope (self-hosted), no shadows. Single-choice
-  controls are `app-segmented` (not `mat-button-toggle`); bottom-sheet content goes in `app-sheet`.
+  controls are `app-segmented` (not `mat-button-toggle`); bottom-sheet content goes in `app-sheet`; labels and cards use
+  the `app-label` / `app-card` utilities; big figures use `app-hero-amount`.
 - Backend: provider API keys go only in headers, never in URLs or exception messages. A Finnhub `403` means "try the
   next provider", not "not found". Request paths for followed stocks never call providers (stored data only).
 - New mock data must match the contract shape. Mock dates shift by whole weeks to the current week at runtime.

@@ -73,6 +73,37 @@ export function formatPrice(
   return withMinus(format.format(value));
 }
 
+/**
+ * An amount split into the number and the currency symbol, for the large hero figures where the symbol is set
+ * smaller: `{ amount: '1 389 886,23', symbol: 'Kč', symbolFirst: false }`, `{ amount: '1,719.99', symbol: '$', … }`.
+ * `signed` adds + or −. Without a value the amount is `—` and there is no symbol.
+ */
+export function splitMoney(
+  value: number | null | undefined,
+  currency?: string | null,
+  options: { signed?: boolean } = {},
+  locale = NUMBER_LOCALE,
+): { amount: string; symbol: string; symbolFirst: boolean } {
+  if (!isNumber(value)) return { amount: DASH, symbol: '', symbolFirst: false };
+  const parts = numberFormat(locale, {
+    ...currencyOptions(currency),
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    signDisplay: options.signed ? 'exceptZero' : 'auto',
+  }).formatToParts(value);
+  const symbolIndex = parts.findIndex((p) => p.type === 'currency');
+  const firstDigit = parts.findIndex((p) => p.type === 'integer');
+  const amount = parts
+    .filter((p) => p.type !== 'currency' && p.type !== 'literal')
+    .map((p) => p.value)
+    .join('');
+  return {
+    amount: withMinus(amount),
+    symbol: symbolIndex >= 0 ? parts[symbolIndex]!.value : '',
+    symbolFirst: symbolIndex >= 0 && symbolIndex < firstDigit,
+  };
+}
+
 /** A signed amount without a currency symbol, for day changes: `+2.31`, `−0.85`. */
 export function formatSignedNumber(
   value: number | null | undefined,

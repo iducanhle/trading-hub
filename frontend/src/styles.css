@@ -106,6 +106,22 @@
   }
 }
 
+/* The design's small uppercase label above a value ("HODNOTA ÚČTU", "ODHAD EPS"). */
+@utility app-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* A card: card colour, 22 px corners, 18 px padding (no shadow; depth comes from the surface levels). */
+@utility app-card {
+  border-radius: 22px;
+  background: var(--mat-sys-surface-container);
+  padding: 18px;
+}
+
 /* Safe-area padding for notches and home indicators (index.html sets viewport-fit=cover). */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);

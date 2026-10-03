@@ -1,0 +1,30 @@
+import { Component, booleanAttribute, computed, input, output } from '@angular/core';
+import { Icon } from '../../icon/icon';
+
+/** The 46 px "Filters" button next to a search field; a dot in the accent colour marks active filters. */
+@Component({
+  selector: 'app-filter-button',
+  imports: [Icon],
+  template: `
+    <button
+      type="button"
+      class="relative flex size-[46px] items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+      [attr.aria-label]="label()"
+      (click)="pressed.emit()"
+    >
+      <app-icon name="tune" />
+      @if (active()) {
+        <span class="absolute top-[9px] right-[9px] size-2 rounded-full bg-primary"></span>
+      }
+    </button>
+  `,
+  host: { class: 'shrink-0' },
+})
+export class FilterButton {
+  readonly active = input(false, { transform: booleanAttribute });
+  readonly pressed = output<void>();
+
+  protected readonly label = computed(() =>
+    this.active() ? $localize`Filters (active)` : $localize`Filters`,
+  );
+}

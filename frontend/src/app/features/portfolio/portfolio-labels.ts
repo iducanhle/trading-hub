@@ -17,7 +17,7 @@ export const TAB_LABELS: Record<PortfolioTab, string> = {
   overview: $localize`:Portfolio sub-tab:Overview`,
   stocks: $localize`:Portfolio sub-tab:Stocks`,
   trades: $localize`:Portfolio sub-tab:Trades`,
-  cash: $localize`:Portfolio sub-tab:Dividends & cash`,
+  cash: $localize`:Portfolio sub-tab:Dividends`,
 };
 
 export const SORT_LABELS: Record<StockSort, string> = {

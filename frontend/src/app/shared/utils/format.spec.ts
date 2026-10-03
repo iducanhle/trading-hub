@@ -10,6 +10,7 @@ import {
   formatSignedMoney,
   formatSignedNumber,
   reportTimeLabel,
+  splitMoney,
   toneClass,
   toneOf,
 } from './format';
@@ -85,6 +86,20 @@ describe('format', () => {
     expect(reportTimeLabel(null)).toBe('Time TBD');
     expect(fiscalLabel(3, 2026)).toBe('Q3 FY2026');
     expect(fiscalLabel(null, 2026)).toBeNull();
+  });
+
+  it('splits money into the number and the currency symbol', () => {
+    expect(splitMoney(1719.99, 'USD', {}, 'en-US')).toEqual({
+      amount: '1,719.99',
+      symbol: '$',
+      symbolFirst: true,
+    });
+    const czk = splitMoney(-30735.38, 'CZK', {}, 'cs-CZ');
+    expect(czk.amount.replace(/\s/g, ' ')).toBe(MINUS + '30 735,38');
+    expect(czk.symbol).toBe('Kč');
+    expect(czk.symbolFirst).toBe(false);
+    expect(splitMoney(5, 'EUR', { signed: true }, 'en-US').amount).toBe('+5.00');
+    expect(splitMoney(null, 'EUR')).toEqual({ amount: DASH, symbol: '', symbolFirst: false });
   });
 });
 

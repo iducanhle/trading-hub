@@ -8,11 +8,9 @@ import { formatPercent, formatSignedMoney, toneClass } from '../../shared/utils/
 @Component({
   selector: 'app-pnl',
   template: `
-    <span class="tabular-nums" [class]="tone()" [class.font-semibold]="strong()">{{
-      amount()
-    }}</span>
+    <span [class]="tone()" [class.font-bold]="strong()">{{ amount() }}</span>
     @if (pct() !== undefined) {
-      <span class="ml-1 text-xs tabular-nums" [class]="tone()">{{ percent() }}</span>
+      <span class="ml-1 text-[0.85em] font-semibold" [class]="tone()">({{ percent() }})</span>
     }
   `,
   host: { class: 'inline-flex flex-wrap items-baseline justify-end' },

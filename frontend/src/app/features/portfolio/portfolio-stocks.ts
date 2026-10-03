@@ -1,9 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { MatButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatFormField, MatPrefix } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { T212Instrument } from '../../core/models/contract';
@@ -14,9 +11,15 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
-import { PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
+import { FilterButton } from '../../shared/components/filter-button/filter-button';
+import {
+  PercentPipe,
+  PricePipe,
+  QuantityPipe,
+  SignedMoneyPipe,
+} from '../../shared/pipes/format.pipes';
+import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
-import { Pnl } from './pnl';
 import {
   DEFAULT_STOCKS_VIEW,
   StocksFilterContext,
@@ -41,10 +44,6 @@ import {
   selector: 'app-portfolio-stocks',
   imports: [
     RouterLink,
-    MatButton,
-    MatFormField,
-    MatPrefix,
-    MatInput,
     EmptyState,
     ErrorState,
     Skeleton,
@@ -53,46 +52,51 @@ import {
     Icon,
     PricePipe,
     QuantityPipe,
-    Pnl,
+    SignedMoneyPipe,
+    PercentPipe,
+    FilterButton,
   ],
   template: `
-    <div class="mb-3 flex flex-wrap items-center gap-2">
-      <button matButton="outlined" type="button" (click)="openFilters()">
-        <app-icon matButtonIcon name="tune" [size]="18" />
-        <ng-container i18n>Filters</ng-container>
-      </button>
-      @for (chip of chips(); track chip.key) {
-        <button
-          type="button"
-          class="inline-flex min-h-8 items-center gap-1 rounded-full bg-secondary-container px-3 text-sm text-on-secondary-container"
-          [attr.aria-label]="chip.removeLabel"
-          (click)="resetPart(chip.key)"
-        >
-          {{ chip.label }}
-          <app-icon name="close" [size]="16" />
-        </button>
-      }
+    <div class="flex items-center gap-2.5">
+      <label
+        class="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
+      >
+        <app-icon name="search" [size]="20" />
+        <input
+          type="search"
+          class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
+          placeholder="Search by name or ticker"
+          i18n-placeholder
+          aria-label="Search by name or ticker"
+          i18n-aria-label
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+        />
+      </label>
+      <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
     </div>
-    <mat-form-field appearance="fill" subscriptSizing="dynamic" class="mb-3 w-full">
-      <app-icon matPrefix name="search" class="mx-2" [size]="20" />
-      <input
-        matInput
-        type="search"
-        placeholder="Search by name or ticker"
-        i18n-placeholder
-        aria-label="Search by name or ticker"
-        i18n-aria-label
-        [value]="search()"
-        (input)="search.set($any($event.target).value)"
-      />
-    </mat-form-field>
+    @if (chips().length) {
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        @for (chip of chips(); track chip.key) {
+          <button
+            type="button"
+            class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
+            [attr.aria-label]="chip.removeLabel"
+            (click)="resetPart(chip.key)"
+          >
+            {{ chip.label }}
+            <app-icon name="close" [size]="16" />
+          </button>
+        }
+      </div>
+    }
 
     @if (data.error() && !data.hasValue()) {
       <app-error-state [error]="data.error()" (retry)="data.reload()" />
     } @else if (!data.hasValue()) {
-      <div class="space-y-2" aria-hidden="true">
+      <div class="mt-5 space-y-3" aria-hidden="true">
         @for (i of [1, 2, 3, 4, 5]; track i) {
-          <app-skeleton shape="card" class="h-16" />
+          <app-skeleton shape="card" class="block h-14" />
         }
       </div>
     } @else {
@@ -106,46 +110,55 @@ import {
           [text]="data.value().items.length ? undefined : labels.emptyText"
         />
       } @else {
-        <ul class="divide-y divide-outline-variant/40" aria-label="Stocks" i18n-aria-label>
+        <div class="mt-5 flex justify-between px-1">
+          <span class="app-label"
+            ><ng-container i18n>Stocks</ng-container> · {{ items().length }}</span
+          >
+          <span class="app-label" i18n>Profit/loss</span>
+        </div>
+        <ul class="mt-1" aria-label="Stocks" i18n-aria-label>
           @for (item of items(); track item.t212Ticker) {
             <li>
               <a
                 [routerLink]="['/portfolio', item.t212Ticker]"
-                class="flex min-h-16 items-center gap-3 rounded-2xl px-2 py-2 hover:bg-surface-container-high"
+                class="flex items-center gap-3.5 rounded-2xl px-1 py-3 hover:bg-surface-container"
               >
-                <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="40" />
+                <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="48" />
                 <span class="min-w-0 flex-1">
-                  <span class="flex items-center gap-2">
-                    <span class="truncate font-medium">{{ item.name }}</span>
+                  <span class="block truncate text-base font-semibold">{{ item.name }}</span>
+                  <span class="mt-0.5 flex min-w-0 items-center gap-1.5">
                     @if (item.status === 'OPEN') {
                       <span
-                        class="shrink-0 rounded-full bg-secondary-container px-2 py-0.5 text-[11px] font-medium text-on-secondary-container"
+                        class="shrink-0 rounded-full bg-primary-container px-[7px] py-[3px] text-[10.5px] font-extrabold tracking-[.04em] text-on-primary-container uppercase"
                         i18n="Position status|Shares still held"
                         >Open</span
                       >
                     } @else {
                       <span
-                        class="shrink-0 rounded-full bg-surface-container-highest px-2 py-0.5 text-[11px] font-medium text-on-surface-variant"
+                        class="shrink-0 rounded-full bg-surface-container-high px-[7px] py-[3px] text-[10.5px] font-extrabold tracking-[.04em] text-on-surface-variant uppercase"
                         i18n="Position status|Shares fully sold"
                         >Closed</span
                       >
                     }
-                  </span>
-                  <span class="block truncate text-xs text-on-surface-variant">
-                    {{ ticker(item) }}
-                    @if (item.status === 'OPEN') {
-                      · {{ item.quantity | qty }} <ng-container i18n>shares</ng-container> ·
-                      {{ item.value | price: data.value().accountCurrency }}
-                    }
+                    <span class="truncate text-[12.5px] font-semibold text-on-surface-variant">
+                      {{ ticker(item) }}
+                      @if (item.status === 'OPEN') {
+                        · {{ item.quantity | qty }} <ng-container i18n>shares</ng-container> ·
+                        {{ item.value | price: data.value().accountCurrency }}
+                      }
+                    </span>
                   </span>
                 </span>
-                <app-pnl
-                  strong
-                  class="max-w-[45%] text-right"
-                  [value]="pnl(item)"
-                  [currency]="data.value().accountCurrency"
-                  [pct]="allTime() ? pct(item) : undefined"
-                />
+                <span class="flex max-w-[45%] shrink-0 flex-col items-end text-right">
+                  <span class="text-base font-bold" [class]="tone(pnl(item))">{{
+                    pnl(item) | money: data.value().accountCurrency
+                  }}</span>
+                  @if (allTime()) {
+                    <span class="mt-0.5 text-[12.5px] font-bold" [class]="tone(pnl(item))">{{
+                      pct(item) | pct
+                    }}</span>
+                  }
+                </span>
               </a>
             </li>
           }
@@ -172,6 +185,10 @@ export class PortfolioStocks {
   protected readonly search = signal('');
   protected readonly allTime = computed(() => isAllTime(this.period()));
   private readonly sheet = inject(MatBottomSheet);
+
+  protected tone(value: number | null): string {
+    return toneClass(value);
+  }
 
   /** A chip for each setting that differs from the default; removing it resets that setting. */
   protected readonly chips = computed(() => {

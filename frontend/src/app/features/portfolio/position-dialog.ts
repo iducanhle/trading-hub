@@ -61,9 +61,9 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
         @let d = detail.value();
         @let i = d.instrument;
         <div class="flex items-center gap-3">
-          <app-stock-logo [symbol]="ticker()" [logoUrl]="i.logoUrl" [size]="40" />
+          <app-stock-logo [symbol]="ticker()" [logoUrl]="i.logoUrl" [size]="44" />
           <div class="min-w-0 flex-1">
-            <h2 class="truncate text-lg font-semibold">{{ i.name }}</h2>
+            <h2 class="truncate text-lg font-bold">{{ i.name }}</h2>
             <p class="text-sm text-on-surface-variant">
               {{ ticker() }} · {{ i.currentPrice | price: i.instrumentCurrency }}
             </p>
@@ -126,8 +126,8 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
           </div>
         }
 
-        <div class="mt-4 rounded-3xl bg-surface-container-low p-4">
-          <p class="flex items-center gap-1 text-xs text-on-surface-variant">
+        <div class="app-card mt-4">
+          <p class="app-label flex items-center gap-1">
             <ng-container i18n>Total profit/loss</ng-container><app-term-info term="totalPnl" />
           </p>
           <app-pnl
@@ -137,40 +137,40 @@ const RANGES: PriceRange[] = ['1D', '1W', '1M', '2M', '3M', '6M', '1Y', '3Y', '5
             [currency]="d.accountCurrency"
             [pct]="i.totalPnlPct"
           />
-          <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-[15px] font-semibold">
             <div>
-              <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+              <dt class="app-label flex items-center gap-1 text-[11px]">
                 <ng-container i18n>Unrealized · as of now</ng-container
                 ><app-term-info term="unrealizedPnl" />
               </dt>
               <dd><app-pnl [value]="i.unrealizedPnl" [currency]="d.accountCurrency" /></dd>
             </div>
             <div>
-              <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+              <dt class="app-label flex items-center gap-1 text-[11px]">
                 <ng-container i18n>Realized</ng-container><app-term-info term="realizedPnl" />
               </dt>
               <dd><app-pnl [value]="i.realizedPnl - i.fees" [currency]="d.accountCurrency" /></dd>
             </div>
             <div>
-              <dt class="text-xs text-on-surface-variant" i18n>Dividends</dt>
+              <dt class="app-label text-[11px]" i18n>Dividends</dt>
               <dd><app-pnl [value]="i.dividends" [currency]="d.accountCurrency" /></dd>
             </div>
             <div>
-              <dt class="text-xs text-on-surface-variant" i18n>Shares held</dt>
+              <dt class="app-label text-[11px]" i18n>Shares held</dt>
               <dd class="tabular-nums">{{ i.quantity | qty }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-on-surface-variant" i18n>Value · as of now</dt>
+              <dt class="app-label text-[11px]" i18n>Value · as of now</dt>
               <dd class="tabular-nums">{{ i.value | price: d.accountCurrency }}</dd>
             </div>
             <div>
-              <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+              <dt class="app-label flex items-center gap-1 text-[11px]">
                 <ng-container i18n>Average cost</ng-container><app-term-info term="averageCost" />
               </dt>
               <dd class="tabular-nums">{{ i.averageCost | price: i.instrumentCurrency }}</dd>
             </div>
             <div>
-              <dt class="text-xs text-on-surface-variant" i18n>Current price</dt>
+              <dt class="app-label text-[11px]" i18n>Current price</dt>
               <dd class="tabular-nums">{{ i.currentPrice | price: i.instrumentCurrency }}</dd>
             </div>
           </dl>

@@ -1,5 +1,6 @@
 import {
   Component,
+  afterRenderEffect,
   ElementRef,
   booleanAttribute,
   computed,
@@ -75,7 +76,7 @@ export class Segment {
   template: `<ng-content />`,
   host: {
     role: 'radiogroup',
-    class: 'max-w-full overflow-x-auto no-scrollbar',
+    class: 'relative max-w-full overflow-x-auto no-scrollbar',
     '[class]': 'hostClass()',
     '(keydown)': 'onKeydown($event)',
   },
@@ -89,6 +90,21 @@ export class Segmented<T = unknown> {
   private readonly segments = contentChildren(Segment, { descendants: true });
   readonly first = computed(() => this.segments()[0]);
   readonly hasSelection = computed(() => this.segments().some((s) => s.value() === this.value()));
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // A row wider than the screen scrolls sideways; keep the chosen option in view (e.g. "All" at the end).
+    afterRenderEffect(() => {
+      this.value();
+      const host = this.host.nativeElement;
+      const chosen = host.querySelector<HTMLElement>('[aria-checked="true"]');
+      if (!chosen || host.scrollWidth <= host.clientWidth) return;
+      const left = chosen.offsetLeft; // The host is positioned, so this is relative to it.
+      if (left < host.scrollLeft) host.scrollLeft = left;
+      else if (left + chosen.offsetWidth > host.scrollLeft + host.clientWidth)
+        host.scrollLeft = left + chosen.offsetWidth - host.clientWidth;
+    });
+  }
 
   protected readonly hostClass = computed(() => {
     const layout = this.stretch() ? 'flex w-full' : 'inline-flex';
