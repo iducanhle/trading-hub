@@ -20,7 +20,7 @@ import {
   IChartApi,
   IPriceLine,
   ISeriesApi,
-  LineSeries,
+  AreaSeries,
   MouseEventParams,
   Time,
   createChart,
@@ -118,141 +118,8 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
     SignedNumberPipe,
   ],
   template: `
-    <section class="border-t border-outline-variant pt-3 pb-2" aria-labelledby="price-chart-title">
+    <section class="pt-2 pb-2" aria-labelledby="price-chart-title">
       <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
-      <div class="flex flex-wrap items-center justify-between gap-2 px-4">
-        <app-segmented
-          appearance="chips"
-          aria-label="Chart range"
-          i18n-aria-label
-          [value]="range()"
-          (valueChange)="setRange($event)"
-        >
-          @for (r of ranges; track r) {
-            <app-segment [value]="r">{{ rangeLabels[r] }}</app-segment>
-          }
-        </app-segmented>
-        <app-segmented
-          aria-label="Chart type"
-          i18n-aria-label
-          [value]="type()"
-          (valueChange)="setType($event)"
-        >
-          <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
-            <app-icon name="show_chart" [size]="20" class="align-middle" />
-          </app-segment>
-          <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
-            <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
-          </app-segment>
-        </app-segmented>
-        @if (type() === 'candles') {
-          <app-term-info term="candles" class="-ml-1" />
-        }
-      </div>
-
-      <!-- The range's change, or in measure mode the change from A to B. -->
-      <div class="flex min-h-14 items-center gap-2 px-4 pt-2 text-sm tabular-nums">
-        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2" aria-live="polite">
-          @if (measuring()) {
-            @if (measurement(); as m) {
-              <span class="text-on-surface-variant"
-                >{{ m.from.date | appDate: 'dayMonth' }} →
-                {{ m.to.date | appDate: 'dayMonth' }}</span
-              >
-              <app-change pill [value]="m.percent" />
-              <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
-                m.amount | signed
-              }}</span>
-              <span class="text-on-surface-variant" i18n>{m.days, plural,
-                =1 {1 day}
-                other {{{ m.days }} days}
-              }</span>
-            } @else if (points().length) {
-              <span class="text-on-surface-variant" i18n>Now tap the end point</span>
-            } @else {
-              <span class="text-on-surface-variant" i18n>Tap the start point</span>
-            }
-          } @else if (rangeGain(); as g) {
-            <span class="font-medium text-on-surface-variant">{{ rangeLabels[range()] }}</span>
-            <app-change pill [value]="g.percent" />
-            <span [class]="g.amount >= 0 ? 'text-gain' : 'text-loss'">{{ g.amount | signed }}</span>
-          }
-        </div>
-        <button
-          type="button"
-          class="flex h-9 shrink-0 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium"
-          [class.invisible]="intraday()"
-          [attr.aria-hidden]="intraday() || null"
-          [disabled]="intraday()"
-          [class.bg-secondary-container]="measuring()"
-          [class.text-on-secondary-container]="measuring()"
-          [class.border-transparent]="measuring()"
-          [attr.aria-pressed]="measuring()"
-          title="Tap two points on the chart to see the change between them"
-          i18n-title
-          (click)="toggleMeasuring()"
-        >
-          <app-icon [name]="measuring() ? 'close' : 'straighten'" [size]="18" />
-          @if (measuring()) {
-            <ng-container i18n>Done</ng-container>
-          } @else {
-            <ng-container i18n="Measure the change between two points">Measure</ng-container>
-          }
-        </button>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2 px-4 pt-1 text-xs text-on-surface-variant">
-        @if (positionPrices()) {
-          <button
-            type="button"
-            class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
-            [class.bg-secondary-container]="showLines()"
-            [class.border-transparent]="showLines()"
-            [attr.aria-pressed]="showLines()"
-            (click)="showLines.set(!showLines())"
-          >
-            <app-icon name="straighten" [size]="16" />
-            <ng-container i18n="Chart toggle: average cost and current price lines"
-              >Average and current price</ng-container
-            >
-          </button>
-        }
-        <button
-          type="button"
-          class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
-          [class.bg-secondary-container]="showEarnings()"
-          [class.border-transparent]="showEarnings()"
-          [attr.aria-pressed]="showEarnings()"
-          (click)="showEarnings.set(!showEarnings())"
-        >
-          <app-icon name="event" [size]="16" />
-          <ng-container i18n="Chart toggle: earnings markers">Earnings</ng-container>
-        </button>
-        @if (hasTrades()) {
-          <button
-            type="button"
-            class="flex h-8 items-center gap-1 rounded-full border border-outline-variant px-3 text-sm font-medium text-on-surface"
-            [class.bg-secondary-container]="showTrades()"
-            [class.border-transparent]="showTrades()"
-            [attr.aria-pressed]="showTrades()"
-            (click)="showTrades.set(!showTrades())"
-          >
-            <app-icon name="account_balance_wallet" [size]="16" />
-            <ng-container i18n>My trades</ng-container>
-          </button>
-          @if (showTrades()) {
-            <span class="inline-flex items-center gap-1" aria-hidden="true"
-              ><span class="text-primary">▲</span>
-              <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
-            >
-            <span class="inline-flex items-center gap-1" aria-hidden="true"
-              ><span class="text-on-surface">▼</span>
-              <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
-            >
-          }
-        }
-      </div>
-
       <div
         class="flex min-h-7 flex-wrap items-center gap-x-3 px-4 pt-1 text-xs tabular-nums text-on-surface-variant"
       >
@@ -355,6 +222,139 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
           </div>
         }
       </div>
+      <div class="px-2.5 pt-3">
+        <app-segmented
+          appearance="chips"
+          stretch
+          aria-label="Chart range"
+          i18n-aria-label
+          [value]="range()"
+          (valueChange)="setRange($event)"
+        >
+          @for (r of ranges; track r) {
+            <app-segment [value]="r">{{ rangeLabels[r] }}</app-segment>
+          }
+        </app-segmented>
+      </div>
+
+      <!-- The range's change, or in measure mode the change from A to B. -->
+      <div class="flex min-h-14 items-center gap-2 px-5 pt-1 text-sm font-semibold">
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2" aria-live="polite">
+          @if (measuring()) {
+            @if (measurement(); as m) {
+              <span class="text-on-surface-variant"
+                >{{ m.from.date | appDate: 'dayMonth' }} →
+                {{ m.to.date | appDate: 'dayMonth' }}</span
+              >
+              <app-change pill [value]="m.percent" />
+              <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
+                m.amount | signed
+              }}</span>
+              <span class="text-on-surface-variant" i18n>{m.days, plural,
+                =1 {1 day}
+                other {{{ m.days }} days}
+              }</span>
+            } @else if (points().length) {
+              <span class="text-on-surface-variant" i18n>Now tap the end point</span>
+            } @else {
+              <span class="text-on-surface-variant" i18n>Tap the start point</span>
+            }
+          } @else if (rangeGain(); as g) {
+            <span class="app-label">{{ rangeLabels[range()] }}</span>
+            <app-change pill [value]="g.percent" />
+            <span [class]="g.amount >= 0 ? 'text-gain' : 'text-loss'">{{ g.amount | signed }}</span>
+          }
+        </div>
+        <button
+          type="button"
+          class="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-outline-variant px-3.5 text-[13px] font-bold"
+          [class.invisible]="intraday()"
+          [attr.aria-hidden]="intraday() || null"
+          [disabled]="intraday()"
+          [class.bg-secondary-container]="measuring()"
+          [class.text-on-secondary-container]="measuring()"
+          [class.border-transparent]="measuring()"
+          [attr.aria-pressed]="measuring()"
+          title="Tap two points on the chart to see the change between them"
+          i18n-title
+          (click)="toggleMeasuring()"
+        >
+          <app-icon [name]="measuring() ? 'close' : 'straighten'" [size]="18" />
+          @if (measuring()) {
+            <ng-container i18n>Done</ng-container>
+          } @else {
+            <ng-container i18n="Measure the change between two points">Measure</ng-container>
+          }
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 px-4 pt-2 text-xs text-on-surface-variant">
+        @if (positionPrices()) {
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] font-bold text-on-surface"
+            [class.bg-secondary-container]="showLines()"
+            [attr.aria-pressed]="showLines()"
+            (click)="showLines.set(!showLines())"
+          >
+            <app-icon name="straighten" [size]="16" />
+            <ng-container i18n="Chart toggle: average cost and current price lines"
+              >Average and current price</ng-container
+            >
+          </button>
+        }
+        <button
+          type="button"
+          class="flex h-9 items-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] font-bold text-on-surface"
+          [class.bg-secondary-container]="showEarnings()"
+          [attr.aria-pressed]="showEarnings()"
+          (click)="showEarnings.set(!showEarnings())"
+        >
+          <app-icon name="event" [size]="16" />
+          <ng-container i18n="Chart toggle: earnings markers">Earnings</ng-container>
+        </button>
+        @if (hasTrades()) {
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] font-bold text-on-surface"
+            [class.bg-secondary-container]="showTrades()"
+            [attr.aria-pressed]="showTrades()"
+            (click)="showTrades.set(!showTrades())"
+          >
+            <app-icon name="account_balance_wallet" [size]="16" />
+            <ng-container i18n>My trades</ng-container>
+          </button>
+          @if (showTrades()) {
+            <span class="inline-flex items-center gap-1" aria-hidden="true"
+              ><span class="text-primary">▲</span>
+              <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
+            >
+            <span class="inline-flex items-center gap-1" aria-hidden="true"
+              ><span class="text-on-surface">▼</span>
+              <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
+            >
+          }
+        }
+        <span class="ml-auto flex items-center gap-1">
+          <app-segmented
+            aria-label="Chart type"
+            i18n-aria-label
+            [value]="type()"
+            (valueChange)="setType($event)"
+          >
+            <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
+              <app-icon name="show_chart" [size]="20" class="align-middle" />
+            </app-segment>
+            <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
+              <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
+            </app-segment>
+          </app-segmented>
+          @if (type() === 'candles') {
+            <app-term-info term="candles" class="-ml-1" />
+          }
+        </span>
+      </div>
+
       @if (data()?.stale) {
         <div class="px-4 pt-2"><app-stale-chip [asOf]="data()!.asOf" /></div>
       }
@@ -477,7 +477,7 @@ export class PriceChart {
   });
 
   private chart?: IChartApi;
-  private main?: ISeriesApi<'Line'> | ISeriesApi<'Candlestick'>;
+  private main?: ISeriesApi<'Area'> | ISeriesApi<'Candlestick'>;
   private mainType?: ChartType;
   private volume?: ISeriesApi<'Histogram'>;
   private readonly markers = new EarningsMarkersPrimitive();
@@ -555,7 +555,7 @@ export class PriceChart {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+        fontFamily: "'Manrope Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
         fontSize: 11,
         // Required by the Lightweight Charts licence: keep the TradingView attribution.
         attributionLogo: true,
@@ -633,7 +633,7 @@ export class PriceChart {
               priceLineVisible: false,
               autoscaleInfoProvider,
             })
-          : chart.addSeries(LineSeries, {
+          : chart.addSeries(AreaSeries, {
               lineWidth: 2,
               priceLineVisible: false,
               crosshairMarkerRadius: 4,
@@ -652,7 +652,11 @@ export class PriceChart {
         wickDownColor: colors.loss,
       });
     } else {
-      (this.main as ISeriesApi<'Line'>).applyOptions({ color: colors.line });
+      (this.main as ISeriesApi<'Area'>).applyOptions({
+        lineColor: colors.line,
+        topColor: withAlpha(colors.line, 0.28),
+        bottomColor: withAlpha(colors.line, 0),
+      });
     }
 
     const bars = data?.bars ?? [];
@@ -674,7 +678,7 @@ export class PriceChart {
         ...blanks,
       ]);
     } else {
-      (this.main as ISeriesApi<'Line'>).setData([
+      (this.main as ISeriesApi<'Area'>).setData([
         ...bars.map((b) => ({ time: barTime(b), value: b.close })),
         ...blanks,
       ]);

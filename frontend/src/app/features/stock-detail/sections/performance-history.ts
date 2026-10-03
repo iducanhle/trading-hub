@@ -73,7 +73,12 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
         }
       </app-segmented>
 
-      <div appSwipe (swipeLeft)="shift(1)" (swipeRight)="shift(-1)" class="min-h-40">
+      <div
+        appSwipe
+        (swipeLeft)="shift(1)"
+        (swipeRight)="shift(-1)"
+        class="app-card min-h-40 px-3.5"
+      >
         @if (view() === 'CALENDAR') {
           <app-history-calendar [currency]="currency()" />
         } @else if (error() && !rows().length) {

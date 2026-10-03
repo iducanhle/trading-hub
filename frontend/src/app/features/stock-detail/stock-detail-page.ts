@@ -1,7 +1,8 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { Location } from '@angular/common';
+import { Component, computed, effect, inject, input, linkedSignal, untracked } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { FollowTarget } from '../../core/services/follows.service';
@@ -12,7 +13,7 @@ import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { FollowButton } from '../../shared/components/follow-button/follow-button';
 import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
-import { RegionBadge } from '../../shared/components/region-badge/region-badge';
+import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
@@ -33,10 +34,20 @@ import { Recommendations } from './sections/recommendations';
 import { UpcomingEarnings } from './sections/upcoming-earnings';
 import { StockContext } from './stock-context';
 
+type StockTab = 'overview' | 'results' | 'analysts' | 'news';
+
+const TABS: { id: StockTab; label: string }[] = [
+  { id: 'overview', label: $localize`:Stock page tab:Overview` },
+  { id: 'results', label: $localize`:Stock page tab|Earnings results:Results` },
+  { id: 'analysts', label: $localize`:Stock page tab:Analysts` },
+  { id: 'news', label: $localize`:Stock page tab:News` },
+];
+
 /**
- * `/stock/:symbol` (deep-linkable; the digest email links here). The overview fills the sticky header, key stats
- * and performance at once; the other sections load in parallel as they scroll into view, each with its own
- * loading and error state.
+ * `/stock/:symbol` (deep-linkable; the digest email links here). Price, chart and then tabs: Overview (upcoming
+ * earnings, your position, key stats, performance, peers, notes), Results (performance history, earnings stats and
+ * history), Analysts and News. The tab is in the URL (`?tab=results`). The overview response fills the header and
+ * the overview tab at once; the other sections load as they are shown, each with its own loading and error state.
  */
 @Component({
   selector: 'app-stock-detail-page',
@@ -47,7 +58,7 @@ import { StockContext } from './stock-context';
     MatIconButton,
     Icon,
     StockLogo,
-    RegionBadge,
+    HeroAmount,
     FollowButton,
     PullToRefresh,
     Skeleton,
@@ -76,9 +87,9 @@ import { StockContext } from './stock-context';
       (refresh)="ctx.refresh()"
     >
       <header
-        class="sticky top-0 z-20 border-b border-outline-variant bg-surface/95 pt-safe backdrop-blur supports-[backdrop-filter]:bg-surface/85"
+        class="sticky top-0 z-20 border-b border-outline-variant bg-surface/90 pt-safe backdrop-blur supports-[backdrop-filter]:bg-surface/80"
       >
-        <div class="mx-auto flex min-h-16 max-w-4xl items-center gap-2 py-2 pr-2 pl-1">
+        <div class="mx-auto flex h-16 max-w-4xl items-center gap-2 px-1.5">
           <button
             matIconButton
             type="button"
@@ -86,34 +97,29 @@ import { StockContext } from './stock-context';
             i18n-aria-label
             (click)="navigation.back('/search')"
           >
-            <app-icon name="arrow_back" />
+            <app-icon name="arrow_back" [size]="26" />
           </button>
-          <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="36" />
-          <div class="min-w-0 flex-1">
-            <h1 class="truncate text-lg leading-tight font-semibold">{{ ctx.symbol() }}</h1>
-            @if (stock(); as s) {
-              <p class="truncate text-xs text-on-surface-variant">{{ s.name }}</p>
-            } @else if (!notFound()) {
-              <app-skeleton class="mt-1 h-3 w-28" />
-            }
+          <div class="flex min-w-0 flex-1 justify-center">
+            <h1
+              class="flex min-w-0 items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-sm font-bold"
+            >
+              <span
+                class="size-[9px] shrink-0 rounded-full"
+                [class]="stock() ? dotClass() : 'bg-on-surface-variant'"
+                aria-hidden="true"
+              ></span>
+              <span class="truncate"
+                >{{ ctx.symbol() }}
+                @if (stock(); as s) {
+                  · {{ s.quote.price | price: s.currency }}
+                }
+              </span>
+            </h1>
           </div>
-          @if (stock(); as s) {
-            <div class="text-right tabular-nums">
-              <p class="text-lg leading-tight font-semibold">
-                {{ s.quote.price | price: s.currency }}
-              </p>
-              <p class="text-xs whitespace-nowrap" [class]="changeClass()">
-                {{ s.quote.change | signed }} ({{ s.quote.changePercent | pct }})
-              </p>
-            </div>
-          } @else if (!notFound()) {
-            <div class="flex flex-col items-end gap-1">
-              <app-skeleton class="h-5 w-20" /><app-skeleton class="h-3 w-24" />
-            </div>
-          }
           @if (!notFound()) {
-            <app-follow-button class="sm:hidden" compact [target]="followTarget()" />
-            <app-follow-button class="hidden sm:block" [target]="followTarget()" />
+            <app-follow-button compact [target]="followTarget()" />
+          } @else {
+            <span class="w-11"></span>
           }
           <button
             matIconButton
@@ -146,67 +152,131 @@ import { StockContext } from './stock-context';
             <app-error-state [error]="overview.error()" (retry)="overview.reload()" />
           </div>
         } @else {
+          <section class="px-5 pt-5" aria-label="Price" i18n-aria-label>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                @if (stock(); as s) {
+                  <p class="truncate text-[17px] font-semibold">{{ s.name }}</p>
+                  <app-hero-amount class="mt-1" [value]="s.quote.price" [currency]="s.currency" />
+                  <p class="mt-1 text-[15px] font-semibold" [class]="changeClass()">
+                    {{ s.quote.change | signed }} ({{ s.quote.changePercent | pct }})
+                  </p>
+                } @else {
+                  <app-skeleton class="h-5 w-40" />
+                  <app-skeleton class="mt-3 h-12 w-48" />
+                  <app-skeleton class="mt-2 h-4 w-32" />
+                }
+              </div>
+              <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="60" />
+            </div>
+            <div class="mt-3.5 flex flex-wrap gap-1.5">
+              @if (stock(); as s) {
+                <span class="app-label rounded-lg bg-surface-container px-2.5 py-1.5 text-[11px]"
+                  >{{ s.region }} · {{ s.exchange }}</span
+                >
+                <span class="app-label rounded-lg bg-surface-container px-2.5 py-1.5 text-[11px]">{{
+                  s.currency
+                }}</span>
+                @if (s.sector || s.industry) {
+                  <span class="app-label rounded-lg bg-surface-container px-2.5 py-1.5 text-[11px]"
+                    >{{ s.sector }}{{ s.sector && s.industry ? ' · ' : '' }}{{ s.industry }}</span
+                  >
+                }
+              } @else {
+                <app-skeleton class="h-6 w-56" />
+              }
+            </div>
+            @if (stock()?.stale) {
+              <app-stale-chip class="mt-3 block" [asOf]="stock()!.asOf" />
+            }
+          </section>
+
+          @defer (on viewport; prefetch on idle) {
+            <app-price-chart class="mt-3 block" />
+          } @placeholder {
+            <div class="mt-3 h-[27rem] sm:h-[29rem] lg:h-[33rem]"></div>
+          }
+
           <div
-            class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-3 pb-1 text-xs text-on-surface-variant"
+            role="tablist"
+            aria-label="Stock sections"
+            i18n-aria-label
+            class="no-scrollbar mt-3 flex gap-6 overflow-x-auto border-b border-outline-variant px-5"
           >
-            @if (stock(); as s) {
-              <app-region-badge [region]="s.region" />
-              <span>{{ s.exchange }}</span>
-              <span aria-hidden="true">·</span>
-              <span>{{ s.currency }}</span>
-              @if (s.sector || s.industry) {
-                <span aria-hidden="true">·</span>
-                <span>{{ s.sector }}{{ s.sector && s.industry ? ' / ' : '' }}{{ s.industry }}</span>
-              }
-              @if (s.stale) {
-                <app-stale-chip class="basis-full pt-1" [asOf]="s.asOf" />
-              }
-            } @else {
-              <app-skeleton class="h-4 w-56" />
+            @for (t of tabs; track t.id) {
+              <button
+                type="button"
+                role="tab"
+                [id]="'stock-tab-' + t.id"
+                aria-controls="stock-tab-panel"
+                [attr.aria-selected]="activeTab() === t.id"
+                [tabIndex]="activeTab() === t.id ? 0 : -1"
+                class="shrink-0 border-b-[3px] py-3 text-base font-semibold whitespace-nowrap"
+                [class]="
+                  activeTab() === t.id
+                    ? 'border-on-surface text-on-surface'
+                    : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                "
+                (click)="selectTab(t.id)"
+                (keydown)="onTabKey($event)"
+              >
+                {{ t.label }}
+              </button>
             }
           </div>
 
-          <app-key-stats [overview]="stock()" />
-          <app-performance-summary [performance]="stock()?.performance" />
-          <app-your-position />
-
-          @defer (on viewport; prefetch on idle) {
-            <app-price-chart />
-          } @placeholder {
-            <div class="h-[25rem] border-t border-outline-variant sm:h-[27rem] lg:h-[31rem]"></div>
-          }
-          @defer (on viewport; prefetch on idle) {
-            <app-performance-history />
-          } @placeholder {
-            <div class="h-14 border-t border-outline-variant"></div>
-          }
-          <app-upcoming-earnings [event]="stock()?.nextEarnings" [loading]="!stock()" />
-          @defer (on viewport; prefetch on idle) {
-            <app-earnings-history />
-          } @placeholder {
-            <div class="h-14 border-t border-outline-variant"></div>
-          }
-          <app-earnings-stats [stats]="stock()?.earningsStats" />
-          @defer (on viewport; prefetch on idle) {
-            <app-recommendations />
-          } @placeholder {
-            <div class="h-14 border-t border-outline-variant"></div>
-          }
-          @defer (on viewport; prefetch on idle) {
-            <app-news />
-          } @placeholder {
-            <div class="h-14 border-t border-outline-variant"></div>
-          }
-          @defer (on viewport; prefetch on idle) {
-            <app-peers />
-          } @placeholder {
-            <div class="h-14 border-t border-outline-variant"></div>
-          }
-          @defer (on viewport; prefetch on idle) {
-            <app-notes />
-          } @placeholder {
-            <div class="h-14 border-t border-outline-variant"></div>
-          }
+          <div
+            id="stock-tab-panel"
+            role="tabpanel"
+            class="pt-1"
+            [attr.aria-labelledby]="'stock-tab-' + activeTab()"
+          >
+            @switch (activeTab()) {
+              @case ('results') {
+                @defer (on viewport; prefetch on idle) {
+                  <app-performance-history />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
+                <app-earnings-stats [stats]="stock()?.earningsStats" />
+                @defer (on viewport; prefetch on idle) {
+                  <app-earnings-history />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
+              }
+              @case ('analysts') {
+                @defer (on viewport; prefetch on idle) {
+                  <app-recommendations />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
+              }
+              @case ('news') {
+                @defer (on viewport; prefetch on idle) {
+                  <app-news />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
+              }
+              @default {
+                <app-upcoming-earnings [event]="stock()?.nextEarnings" [loading]="!stock()" />
+                <app-your-position />
+                <app-key-stats [overview]="stock()" />
+                <app-performance-summary [performance]="stock()?.performance" />
+                @defer (on viewport; prefetch on idle) {
+                  <app-peers />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
+                @defer (on viewport; prefetch on idle) {
+                  <app-notes />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
+              }
+            }
+          </div>
         }
       </div>
     </app-pull-to-refresh>
@@ -219,8 +289,20 @@ export class StockDetailPage {
   private readonly recent = inject(RecentSearchesService);
   private readonly title = inject(Title);
 
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+
   /** Route parameter (`/stock/:symbol`). */
   readonly symbol = input.required<string>();
+  /** Query parameter (`?tab=`). */
+  readonly tab = input<string>();
+
+  protected readonly tabs = TABS;
+  /** Starts from the URL; switching tabs only rewrites the URL (no navigation, so the page title stays). */
+  protected readonly activeTab = linkedSignal<StockTab>(
+    () => TABS.find((t) => t.id === this.tab())?.id ?? 'overview',
+  );
 
   protected readonly overview = this.ctx.resource((symbol, options) =>
     this.api.overview(symbol, options),
@@ -245,6 +327,41 @@ export class StockDetailPage {
       : null;
   });
   protected readonly changeClass = computed(() => toneClass(this.stock()?.quote.change));
+  /** The header pill's dot: the day's direction. */
+  protected readonly dotClass = computed(() => {
+    const change = this.stock()?.quote.change;
+    if (change === null || change === undefined || change === 0) return 'bg-on-surface-variant';
+    return change > 0 ? 'bg-gain' : 'bg-loss';
+  });
+
+  protected selectTab(tab: StockTab): void {
+    this.activeTab.set(tab);
+    const url = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'overview' ? null : tab },
+      queryParamsHandling: 'merge',
+    });
+    this.location.replaceState(url.toString());
+  }
+
+  /** Arrow keys, Home and End move between the tabs (and show them). */
+  protected onTabKey(event: KeyboardEvent): void {
+    const index = TABS.findIndex((t) => t.id === this.activeTab());
+    const next =
+      event.key === 'ArrowRight'
+        ? (index + 1) % TABS.length
+        : event.key === 'ArrowLeft'
+          ? (index - 1 + TABS.length) % TABS.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? TABS.length - 1
+              : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    this.selectTab(TABS[next]!.id);
+    document.getElementById('stock-tab-' + TABS[next]!.id)?.focus();
+  }
 
   constructor() {
     effect(() => {

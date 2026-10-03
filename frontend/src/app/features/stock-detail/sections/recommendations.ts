@@ -71,6 +71,23 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
   });
 }
 
+/**
+ * The majority view of one month: buy (strong buy + buy), hold or sell (sell + strong sell), with how many analysts
+ * hold it. A tie goes to hold. Null without any analysts.
+ */
+export function recommendationConsensus(p: RecommendationPeriod) {
+  const buy = p.strongBuy + p.buy;
+  const sell = p.sell + p.strongSell;
+  const total = buy + p.hold + sell;
+  if (!total) return null;
+  const month = formatDate(`${p.period}-01`, 'monthYear');
+  if (buy > p.hold && buy > sell)
+    return { label: SCALE[1].label, tone: 'text-gain', count: buy, total, month };
+  if (sell > p.hold && sell > buy)
+    return { label: SCALE[3].label, tone: 'text-loss', count: sell, total, month };
+  return { label: SCALE[2].label, tone: 'text-on-surface', count: p.hold, total, month };
+}
+
 /** Section 10: analyst recommendations per month as stacked bars (hidden when there are none). */
 @Component({
   selector: 'app-recommendations',
@@ -87,46 +104,57 @@ export function recommendationBars(periods: RecommendationPeriod[]): Bar[] {
             }
           </div>
         } @else {
-          <ul class="space-y-2.5">
-            @for (bar of bars(); track bar.period) {
-              <li class="flex items-center gap-3 text-sm">
-                <span class="w-16 shrink-0 text-xs text-on-surface-variant">{{ bar.label }}</span>
-                <span
-                  class="flex h-6 flex-1 overflow-hidden rounded-md"
-                  role="img"
-                  [attr.aria-label]="bar.description"
+          <div class="app-card">
+            @if (consensus(); as c) {
+              <p class="flex flex-wrap items-baseline gap-x-2.5">
+                <span class="text-[26px] font-bold" [class]="c.tone">{{ c.label }}</span>
+                <span class="text-sm font-semibold text-on-surface-variant" i18n
+                  >{{ c.count }} of {{ c.total }} analysts · {{ c.month }}</span
                 >
-                  @for (s of bar.segments; track s.label) {
-                    @if (s.count) {
-                      <span
-                        class="flex items-center justify-center text-[11px] font-semibold tabular-nums"
-                        [style.width.%]="s.percent"
-                        [style.background]="s.color"
-                        [style.color]="s.text"
-                        >{{ s.percent >= 9 ? s.count : '' }}</span
-                      >
+              </p>
+            }
+            <ul class="mt-4 space-y-3">
+              @for (bar of bars(); track bar.period) {
+                <li class="flex items-center gap-2.5 text-sm">
+                  <span
+                    class="w-[74px] shrink-0 text-[13px] font-semibold text-on-surface-variant"
+                    >{{ bar.label }}</span
+                  >
+                  <span
+                    class="flex h-[26px] flex-1 gap-0.5 overflow-hidden rounded-lg"
+                    role="img"
+                    [attr.aria-label]="bar.description"
+                  >
+                    @for (s of bar.segments; track s.label) {
+                      @if (s.count) {
+                        <span
+                          class="flex items-center justify-center text-xs font-extrabold"
+                          [style.width.%]="s.percent"
+                          [style.background]="s.color"
+                          [style.color]="s.text"
+                          >{{ s.percent >= 9 ? s.count : '' }}</span
+                        >
+                      }
                     }
-                  }
-                </span>
-                <span
-                  class="w-7 shrink-0 text-right text-xs text-on-surface-variant tabular-nums"
-                  >{{ bar.total }}</span
-                >
-              </li>
-            }
-          </ul>
-          <ul
-            class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant"
-            aria-label="Legend"
-            i18n-aria-label="Chart legend"
-          >
-            @for (s of scale; track s.key) {
-              <li class="flex items-center gap-1.5">
-                <span class="size-2.5 rounded-sm" [style.background]="s.color"></span>{{ s.label }}
-              </li>
-            }
-            <li class="flex items-center"><app-term-info term="recommendations" /></li>
-          </ul>
+                  </span>
+                  <span class="w-6 shrink-0 text-right text-[13px] font-bold">{{ bar.total }}</span>
+                </li>
+              }
+            </ul>
+            <ul
+              class="mt-4 flex flex-wrap gap-x-3.5 gap-y-2 text-[12.5px] font-semibold text-on-surface-variant"
+              aria-label="Legend"
+              i18n-aria-label="Chart legend"
+            >
+              @for (s of scale; track s.key) {
+                <li class="flex items-center gap-1.5">
+                  <span class="size-2.5 rounded-[3px]" [style.background]="s.color"></span
+                  >{{ s.label }}
+                </li>
+              }
+              <li class="flex items-center"><app-term-info term="recommendations" /></li>
+            </ul>
+          </div>
         }
       </app-section>
     }
@@ -145,4 +173,9 @@ export class Recommendations {
   protected readonly bars = computed(() =>
     recommendationBars(this.recs.hasValue() ? (this.recs.value() ?? []) : []),
   );
+  /** The newest month's majority: buy (strong buy + buy), hold or sell (sell + strong sell). */
+  protected readonly consensus = computed(() => {
+    const latest = this.recs.hasValue() ? this.recs.value()?.[0] : undefined;
+    return latest ? recommendationConsensus(latest) : null;
+  });
 }

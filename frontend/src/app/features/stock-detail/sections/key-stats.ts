@@ -10,78 +10,73 @@ import { formatPlainPercent } from '../../../shared/utils/format';
   selector: 'app-key-stats',
   imports: [TermInfo, Skeleton, CompactPipe, PricePipe, NumberPipe],
   template: `
-    <h2 class="sr-only" i18n>Key stats</h2>
+    <h2 class="px-5 pt-7 pb-3 text-xl font-bold" i18n>Key stats</h2>
     @if (overview(); as o) {
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3 text-sm sm:grid-cols-3">
-        <div>
-          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+      <dl class="mx-4 rounded-[22px] border border-outline-variant px-5 py-2.5">
+        <div class="flex items-baseline justify-between gap-3 py-2.5">
+          <dt class="app-label inline-flex items-center gap-1">
             <span i18n>Market cap</span><app-term-info term="marketCap" />
           </dt>
-          <dd class="font-medium tabular-nums">
+          <dd class="text-right text-base font-semibold">
             {{ o.keyStats.marketCap | compact: o.currency }}
             @if (o.currency !== 'USD' && o.keyStats.marketCapUsd !== null) {
-              <span class="text-xs font-normal text-on-surface-variant"
+              <span class="block text-xs font-semibold text-on-surface-variant"
                 >≈ {{ o.keyStats.marketCapUsd | compact: 'USD' }}</span
               >
             }
           </dd>
         </div>
-        <div>
-          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+        <div class="flex items-baseline justify-between gap-3 py-2.5">
+          <dt class="app-label inline-flex items-center gap-1">
             <span i18n="Price to earnings ratio">P/E</span><app-term-info term="pe" />
           </dt>
-          <dd class="font-medium tabular-nums">{{ o.keyStats.peRatio | num: 1 }}</dd>
+          <dd class="text-base font-semibold">{{ o.keyStats.peRatio | num: 1 }}</dd>
         </div>
-        <div>
-          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+        <div class="flex items-baseline justify-between gap-3 py-2.5">
+          <dt class="app-label inline-flex items-center gap-1">
             <span i18n="Earnings per share, trailing 12 months"> EPS (TTM) </span
             ><app-term-info term="eps" />
           </dt>
-          <dd class="font-medium tabular-nums">{{ o.keyStats.epsTtm | price: o.currency }}</dd>
+          <dd class="text-base font-semibold">{{ o.keyStats.epsTtm | price: o.currency }}</dd>
         </div>
-        <div>
-          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+        <div class="flex items-baseline justify-between gap-3 py-2.5">
+          <dt class="app-label inline-flex items-center gap-1">
             <span i18n>Avg volume</span><app-term-info term="avgVolume" />
           </dt>
-          <dd class="font-medium tabular-nums">{{ o.keyStats.avgVolume | compact }}</dd>
+          <dd class="text-base font-semibold">{{ o.keyStats.avgVolume | compact }}</dd>
         </div>
-        <div class="col-span-2">
-          <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+        <div class="pt-2.5 pb-3">
+          <dt class="app-label inline-flex items-center gap-1">
             <span i18n>52-week range</span><app-term-info term="range52w" />
           </dt>
-          <dd class="mt-1">
-            <div class="flex items-center gap-2 tabular-nums">
-              <span class="text-xs">{{ o.keyStats.week52Low | price: o.currency }}</span>
-              <span
-                class="relative h-1.5 flex-1 rounded-full bg-surface-container-highest"
-                role="img"
-                [attr.aria-label]="rangeLabel()"
-              >
-                @if (rangePosition() !== null) {
-                  <span
-                    class="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-surface"
-                    [style.left.%]="rangePosition()! * 100"
-                  ></span>
-                }
-              </span>
-              <span class="text-xs">{{ o.keyStats.week52High | price: o.currency }}</span>
-            </div>
+          <dd class="mt-3">
+            <span
+              class="relative block h-1 rounded-full bg-surface-container-high"
+              role="img"
+              [attr.aria-label]="rangeLabel()"
+            >
+              @if (rangePosition() !== null) {
+                <span
+                  class="absolute inset-y-0 left-0 rounded-full bg-primary"
+                  [style.width.%]="rangePosition()! * 100"
+                ></span>
+                <span
+                  class="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-on-surface ring-[3px] ring-surface"
+                  [style.left.%]="rangePosition()! * 100"
+                ></span>
+              }
+            </span>
+            <span
+              class="mt-2.5 flex justify-between text-[13px] font-semibold text-on-surface-variant"
+            >
+              <span>{{ o.keyStats.week52Low | price: o.currency }}</span>
+              <span>{{ o.keyStats.week52High | price: o.currency }}</span>
+            </span>
           </dd>
         </div>
       </dl>
     } @else {
-      <div class="grid grid-cols-2 gap-x-4 gap-y-4 px-4 py-3 sm:grid-cols-3" aria-hidden="true">
-        @for (i of [1, 2, 3, 4]; track i) {
-          <div class="space-y-1.5">
-            <app-skeleton class="h-3 w-16" />
-            <app-skeleton class="h-4 w-20" />
-          </div>
-        }
-        <div class="col-span-2 space-y-1.5">
-          <app-skeleton class="h-3 w-24" />
-          <app-skeleton class="h-4 w-full" />
-        </div>
-      </div>
+      <app-skeleton shape="card" class="mx-4 block h-64 rounded-[22px]" aria-hidden="true" />
     }
   `,
 })

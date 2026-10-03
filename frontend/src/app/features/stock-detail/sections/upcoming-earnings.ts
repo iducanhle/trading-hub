@@ -1,9 +1,7 @@
 import { Component, input } from '@angular/core';
 import { EarningsEvent } from '../../../core/models/contract';
 import { TermInfo } from '../../../shared/components/term-info/term-info';
-import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
-import { Icon } from '../../../shared/icon/icon';
 import {
   AppDatePipe,
   CompactPipe,
@@ -12,16 +10,13 @@ import {
   ReportTimePipe,
 } from '../../../shared/pipes/format.pipes';
 import { fiscalLabel } from '../../../shared/utils/format';
-import { persistedSignal } from '../../../shared/utils/persisted-signal';
 
 /** Section 6: the next report (from the overview): date, countdown, time, fiscal quarter, EPS and revenue estimates. */
 @Component({
   selector: 'app-upcoming-earnings',
   imports: [
     TermInfo,
-    Section,
     Skeleton,
-    Icon,
     AppDatePipe,
     RelativeDayPipe,
     ReportTimePipe,
@@ -29,59 +24,54 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
     CompactPipe,
   ],
   template: `
-    <app-section title="Upcoming earnings" i18n-title [(expanded)]="expanded">
+    <section class="mx-4 mt-4" aria-labelledby="upcoming-title">
       @if (loading()) {
-        <app-skeleton shape="card" class="h-28" />
+        <app-skeleton shape="card" class="block h-44 rounded-[22px]" />
       } @else if (event(); as e) {
-        <div class="rounded-2xl bg-primary-container/60 p-4 text-on-primary-container">
-          <div class="flex items-start gap-3">
+        <div class="app-card">
+          <div class="flex items-center justify-between gap-3">
+            <h2 id="upcoming-title" class="app-label inline-flex items-center gap-1">
+              <ng-container i18n>Upcoming earnings</ng-container><app-term-info term="earnings" />
+            </h2>
             <span
-              class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface text-primary"
+              class="shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-extrabold text-on-primary"
+              >{{ e.date | relativeDay }}</span
             >
-              <app-icon name="event" />
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="flex items-center gap-1.5 text-lg font-semibold">
-                {{ e.date | appDate: 'long' }}<app-term-info term="earnings" />
-              </p>
-              <p class="text-sm">
-                <span class="font-medium">{{ e.date | relativeDay }}</span> ·
-                {{ e.time | reportTime }} <app-term-info term="reportTime" />
-                @if (fiscal(e); as label) {
-                  · {{ label }}
-                }
-              </p>
-            </div>
           </div>
-          <dl class="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums">
-            <div>
-              <dt class="flex items-center gap-1 text-xs">
-                <span class="opacity-80" i18n>EPS estimate</span
-                ><app-term-info term="epsEstimate" />
+          <p class="mt-2 text-[26px] font-semibold">{{ e.date | appDate: 'long' }}</p>
+          <p class="mt-0.5 text-sm font-semibold text-on-surface-variant">
+            {{ e.time | reportTime }} <app-term-info term="reportTime" />
+            @if (fiscal(e); as label) {
+              · {{ label }}
+            }
+          </p>
+          <dl class="mt-4 grid grid-cols-2 gap-3">
+            <div class="rounded-[14px] bg-surface-container-high px-3.5 py-3">
+              <dt class="app-label inline-flex items-center gap-1 text-[11px]">
+                <span i18n>EPS estimate</span><app-term-info term="epsEstimate" />
               </dt>
-              <dd class="font-semibold">{{ e.epsEstimate | price: e.currency }}</dd>
+              <dd class="mt-1 text-lg font-bold">{{ e.epsEstimate | price: e.currency }}</dd>
             </div>
-            <div>
-              <dt class="flex items-center gap-1 text-xs">
-                <span class="opacity-80" i18n>Revenue estimate</span
-                ><app-term-info term="revenueEstimate" />
+            <div class="rounded-[14px] bg-surface-container-high px-3.5 py-3">
+              <dt class="app-label inline-flex items-center gap-1 text-[11px]">
+                <span i18n>Revenue estimate</span><app-term-info term="revenueEstimate" />
               </dt>
-              <dd class="font-semibold">{{ e.revenueEstimate | compact: e.currency }}</dd>
+              <dd class="mt-1 text-lg font-bold">{{ e.revenueEstimate | compact: e.currency }}</dd>
             </div>
           </dl>
         </div>
       } @else {
-        <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant" i18n>
-          No upcoming date announced.
-        </p>
+        <div class="app-card">
+          <h2 id="upcoming-title" class="app-label" i18n>Upcoming earnings</h2>
+          <p class="mt-2 text-sm text-on-surface-variant" i18n>No upcoming date announced.</p>
+        </div>
       }
-    </app-section>
+    </section>
   `,
 })
 export class UpcomingEarnings {
   readonly event = input<EarningsEvent | null | undefined>();
   readonly loading = input(false);
-  protected readonly expanded = persistedSignal('et.section.upcoming', true);
 
   protected fiscal(e: EarningsEvent): string | null {
     return fiscalLabel(e.fiscalQuarter, e.fiscalYear);

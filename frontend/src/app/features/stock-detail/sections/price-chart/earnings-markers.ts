@@ -29,13 +29,14 @@ interface PlacedMarker {
 
 type DrawTarget = Parameters<IPrimitivePaneRenderer['draw']>[0];
 
-const RADIUS = 8;
+const RADIUS = 10;
 const GAP = 10;
 const HIT_SLOP = 8;
 
 /**
- * Earnings markers drawn as a series primitive: a filled "E" dot under the reaction-day bar (green = beat,
- * red = miss, grey = in line / unknown) and an outlined one for the upcoming report. The built-in series markers
+ * Earnings markers drawn as a series primitive: a 20 px ring with an "E" under the reaction-day bar, on the page
+ * colour, in the result's colour (green = beat, red = miss, grey = in line / unknown; the upcoming report in the
+ * marker's own colour). The built-in series markers
  * cannot draw hollow shapes, and owning the layout makes taps easy to hit-test.
  */
 export class EarningsMarkersPrimitive implements ISeriesPrimitive<Time> {
@@ -109,7 +110,7 @@ export class EarningsMarkersPrimitive implements ISeriesPrimitive<Time> {
     target.useBitmapCoordinateSpace(
       ({ context, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
         context.save();
-        context.font = `700 ${Math.round(10 * vr)}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`;
+        context.font = `800 ${Math.round(10 * vr)}px 'Manrope Variable', system-ui, sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         for (const { x, y, marker } of this.placed) {
@@ -117,18 +118,12 @@ export class EarningsMarkersPrimitive implements ISeriesPrimitive<Time> {
           const cy = Math.round(y * vr);
           context.beginPath();
           context.arc(cx, cy, RADIUS * hr, 0, Math.PI * 2);
-          if (marker.hollow) {
-            context.fillStyle = this.surface;
-            context.fill();
-            context.lineWidth = 2 * hr;
-            context.strokeStyle = marker.color;
-            context.stroke();
-            context.fillStyle = marker.color;
-          } else {
-            context.fillStyle = marker.color;
-            context.fill();
-            context.fillStyle = '#ffffff';
-          }
+          context.fillStyle = this.surface;
+          context.fill();
+          context.lineWidth = 2 * hr;
+          context.strokeStyle = marker.color;
+          context.stroke();
+          context.fillStyle = marker.color;
           context.fillText('E', cx, cy + 0.5 * vr);
         }
         context.restore();

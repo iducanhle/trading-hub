@@ -6,7 +6,7 @@ import { ChartColors, withAlpha } from './sections/price-chart/chart-colors';
 import { futureSessions, placeMarkers, weekdaysAfter } from './sections/price-chart/chart-data';
 import { measure, rangeChange } from './sections/price-chart/measure';
 import { tradeDay, tradeMarks } from './sections/price-chart/trade-markers';
-import { recommendationBars } from './sections/recommendations';
+import { recommendationBars, recommendationConsensus } from './sections/recommendations';
 
 const bar = (date: string, close: number): PriceBar => ({
   date,
@@ -128,6 +128,21 @@ describe('stock sections', () => {
     expect(bar.total).toBe(4);
     expect(bar.segments.map((s) => s.percent)).toEqual([50, 25, 25, 0, 0]);
     expect(bar.description).toContain('2 strong buy, 1 buy, 1 hold, 0 sell, 0 strong sell');
+  });
+
+  it('takes the majority of buy, hold and sell as the consensus, a tie as hold', () => {
+    const month = { period: '2026-09', strongBuy: 0, buy: 0, hold: 0, sell: 0, strongSell: 0 };
+    expect(recommendationConsensus({ ...month, strongBuy: 11, buy: 17, hold: 5 })).toMatchObject({
+      label: 'Buy',
+      count: 28,
+      total: 33,
+    });
+    expect(recommendationConsensus({ ...month, hold: 4, sell: 2, strongSell: 3 })).toMatchObject({
+      label: 'Sell',
+      count: 5,
+    });
+    expect(recommendationConsensus({ ...month, buy: 3, sell: 3 })?.label).toBe('Hold');
+    expect(recommendationConsensus(month)).toBeNull();
   });
 
   it('measures the change between two points in date order', () => {

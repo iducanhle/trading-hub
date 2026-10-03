@@ -26,18 +26,22 @@ import { StockContext } from '../stock-context';
             }
           </div>
         } @else {
-          <ul class="divide-y divide-outline-variant/60">
+          <ul class="divide-y divide-outline-variant px-1">
             @for (item of items(); track item.url) {
               <li>
                 <a
                   [href]="item.url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex min-h-16 gap-3 rounded-xl py-3 hover:bg-surface-container-low"
+                  class="flex min-h-16 gap-3.5 py-3.5 hover:opacity-80"
                 >
                   <span class="min-w-0 flex-1">
-                    <span class="line-clamp-3 text-sm font-medium">{{ item.headline }}</span>
-                    <span class="mt-1 flex items-center gap-1 text-xs text-on-surface-variant">
+                    <span class="line-clamp-3 text-[15px] leading-snug font-bold">{{
+                      item.headline
+                    }}</span>
+                    <span
+                      class="mt-1.5 flex items-center gap-1 text-[12.5px] font-semibold text-on-surface-variant"
+                    >
                       @if (item.source) {
                         <span class="truncate">{{ item.source }}</span> ·
                       }
@@ -55,7 +59,7 @@ import { StockContext } from '../stock-context';
                       loading="lazy"
                       decoding="async"
                       referrerpolicy="no-referrer"
-                      class="size-16 shrink-0 rounded-lg bg-surface-container-high object-cover"
+                      class="size-16 shrink-0 rounded-[14px] bg-surface-container-high object-cover"
                       (error)="imageFailed(item.url)"
                     />
                   }

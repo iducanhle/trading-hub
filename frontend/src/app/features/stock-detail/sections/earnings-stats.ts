@@ -30,19 +30,19 @@ export function beatRateText(stats: Stats): string | null {
     <app-section title="Earnings stats" i18n-title [(expanded)]="expanded">
       @if (stats(); as s) {
         <dl
-          class="divide-y divide-outline-variant/60 rounded-2xl bg-surface-container-low sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+          class="divide-y divide-outline-variant rounded-[22px] border border-outline-variant px-5 py-1.5"
         >
-          <div class="flex items-center justify-between gap-3 px-4 py-3 sm:block">
-            <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+          <div class="flex items-baseline justify-between gap-3 py-3">
+            <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Beat rate</span><app-term-info term="beatRate" />
             </dt>
-            <dd class="text-right font-semibold sm:mt-1 sm:text-left">{{ beatRate() ?? '—' }}</dd>
+            <dd class="text-right text-[15px] font-bold">{{ beatRate() ?? '—' }}</dd>
           </div>
-          <div class="flex items-center justify-between gap-3 px-4 py-3 sm:block">
-            <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+          <div class="flex items-baseline justify-between gap-3 py-3">
+            <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Current streak</span><app-term-info term="streak" />
             </dt>
-            <dd class="font-semibold sm:mt-1">
+            <dd class="text-right text-[15px] font-bold">
               @if (s.streak; as streak) {
                 <span
                   [class.text-gain]="streak.result === 'BEAT'"
@@ -54,15 +54,15 @@ export function beatRateText(stats: Stats): string | null {
               }
             </dd>
           </div>
-          <div class="flex items-center justify-between gap-3 px-4 py-3 sm:block">
-            <dt class="flex items-center gap-1 text-xs text-on-surface-variant">
+          <div class="flex items-baseline justify-between gap-3 py-3">
+            <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Avg. reaction (absolute)</span><app-term-info term="avgReaction" />
             </dt>
-            <dd class="font-semibold tabular-nums sm:mt-1">{{ avgReaction() }}</dd>
+            <dd class="text-right text-[15px] font-bold">{{ avgReaction() }}</dd>
           </div>
         </dl>
       } @else {
-        <app-skeleton shape="card" class="h-36 sm:h-20" />
+        <app-skeleton shape="card" class="block h-40 rounded-[22px]" />
       }
     </app-section>
   `,

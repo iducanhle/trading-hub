@@ -266,7 +266,6 @@
     "463942226510219395": "Doporučení analytiků",
     "7297822327994766046": "Legenda",
     "1668658744700409199": "Odhad tržeb",
-    "5700364892452272425": " Datum příštích výsledků zatím nebylo oznámeno. ",
     "8890553633144307762": "Zpět",
     "4996673220152114896": "Symbol nenalezen",
     "2428982638079529641": "{$INTERPOLATION} jsme nenašli. Zkontrolujte ticker, např. SAP.DE pro SAP ve Frankfurtu.",
@@ -560,6 +559,12 @@
     "1171404766209504100": "Hledat v portfoliu",
     "8145704115014610296": "Žádné odpovídající akcie.",
     "7286475218857509962": "Míra výnosu",
-    "2676717228803691384": "čisté vklady"
+    "2676717228803691384": "čisté vklady",
+    "7753230920383356927": "{$INTERPOLATION} z {$INTERPOLATION_1} analytiků · {$INTERPOLATION_2}",
+    "320492738316694005": "Datum příštích výsledků zatím nebylo oznámeno.",
+    "2078447930198975401": "Výsledky",
+    "4432594779358729482": "Analytici",
+    "8894377483833272091": "Cena",
+    "3437265929665724548": "Sekce akcie"
   }
 }

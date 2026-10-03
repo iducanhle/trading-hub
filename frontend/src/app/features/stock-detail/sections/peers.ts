@@ -29,7 +29,7 @@ import { StockContext } from '../stock-context';
               <li class="shrink-0">
                 <a
                   [routerLink]="['/stock', peer.symbol]"
-                  class="flex h-11 items-center gap-2 rounded-full border border-outline-variant pr-4 pl-1.5 text-sm font-medium hover:bg-surface-container-high"
+                  class="flex h-11 items-center gap-2 rounded-full bg-surface-container pr-4 pl-1.5 text-sm font-bold hover:bg-surface-container-high"
                   [attr.aria-label]="peer.symbol + ', ' + peer.name"
                 >
                   <app-stock-logo [symbol]="peer.symbol" [logoUrl]="peer.logoUrl" [size]="30" />

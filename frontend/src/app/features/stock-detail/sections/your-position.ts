@@ -21,30 +21,42 @@ import { StockContext } from '../stock-context';
     @if (position(); as p) {
       <a
         [routerLink]="['/portfolio', p.t212Ticker]"
-        class="mx-4 mb-3 flex items-center gap-4 rounded-3xl bg-surface-container-low p-4 hover:bg-surface-container"
+        class="app-card mx-4 mt-3.5 flex items-center gap-3.5 hover:bg-surface-container-high"
         aria-labelledby="your-position-title"
       >
-        <app-icon name="account_balance_wallet" class="shrink-0 text-primary" />
+        <span
+          class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
+          aria-hidden="true"
+          ><app-icon name="account_balance_wallet" [size]="20"
+        /></span>
         <div class="min-w-0 flex-1">
-          <p id="your-position-title" class="text-sm font-semibold">
-            <ng-container i18n>Your position</ng-container>
-            @if (p.status === 'CLOSED') {
-              · <ng-container i18n="Position status|Shares fully sold">Closed</ng-container>
-            }
+          <p class="flex items-baseline justify-between gap-3">
+            <span id="your-position-title" class="text-[15px] font-bold">
+              <ng-container i18n>Your position</ng-container>
+              @if (p.status === 'CLOSED') {
+                · <ng-container i18n="Position status|Shares fully sold">Closed</ng-container>
+              }
+            </span>
+            <span class="app-label text-[11px]" i18n>Total profit/loss</span>
           </p>
-          <p class="mt-1 text-sm text-on-surface-variant">
-            @if (p.status === 'OPEN') {
-              {{ p.quantity | qty }} <ng-container i18n>shares</ng-container> ·
-              <ng-container i18n>avg.</ng-container>
-              {{ p.averageCost | price: p.instrumentCurrency }}
-            } @else {
-              <ng-container i18n>Fully sold</ng-container>
-            }
+          <p class="mt-0.5 flex items-baseline justify-between gap-3">
+            <span class="min-w-0 truncate text-[12.5px] font-semibold text-on-surface-variant">
+              @if (p.status === 'OPEN') {
+                {{ p.quantity | qty }} <ng-container i18n>shares</ng-container> ·
+                <ng-container i18n>avg.</ng-container>
+                {{ p.averageCost | price: p.instrumentCurrency }}
+              } @else {
+                <ng-container i18n>Fully sold</ng-container>
+              }
+            </span>
+            <app-pnl
+              strong
+              class="shrink-0"
+              [value]="p.totalPnl"
+              [currency]="currency()"
+              [pct]="p.totalPnlPct"
+            />
           </p>
-        </div>
-        <div class="text-right">
-          <p class="text-xs text-on-surface-variant" i18n>Total profit/loss</p>
-          <app-pnl strong [value]="p.totalPnl" [currency]="currency()" [pct]="p.totalPnlPct" />
         </div>
         <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
       </a>

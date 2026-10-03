@@ -57,11 +57,11 @@ import { StockContext } from '../stock-context';
         <!-- Phones: one card per quarter, results on top and the price reaction below. -->
         <ul class="space-y-3 md:hidden">
           @for (q of quarters(); track q.date) {
-            <li class="rounded-2xl bg-surface-container-low p-4 text-sm">
+            <li class="app-card text-sm">
               <div class="flex items-start justify-between gap-2">
                 <div>
-                  <p class="font-semibold">{{ label(q) }}</p>
-                  <p class="text-xs text-on-surface-variant">
+                  <p class="text-lg font-bold">{{ label(q) }}</p>
+                  <p class="mt-0.5 text-[13px] font-semibold text-on-surface-variant">
                     {{ q.date | appDate: 'medium' }} · {{ q.time | reportTime }}
                     @if (q.timeAssumed) {
                       <span class="italic" i18n="The report time is a guess">(assumed)</span>
@@ -72,9 +72,9 @@ import { StockContext } from '../stock-context';
                   <app-result-badge [result]="q.result" /><app-term-info term="result" />
                 </span>
               </div>
-              <dl class="mt-3 space-y-1.5 tabular-nums">
+              <dl class="mt-3 space-y-1.5 text-[15px] font-semibold">
                 <div class="flex items-baseline justify-between gap-2">
-                  <dt class="text-on-surface-variant" i18n="Earnings per share">EPS</dt>
+                  <dt class="app-label" i18n="Earnings per share">EPS</dt>
                   <dd class="text-right">
                     {{ q.eps.estimate | price: q.currency }} →
                     <span class="font-medium">{{ q.eps.actual | price: q.currency }}</span>
@@ -82,7 +82,7 @@ import { StockContext } from '../stock-context';
                   </dd>
                 </div>
                 <div class="flex items-baseline justify-between gap-2">
-                  <dt class="text-on-surface-variant" i18n>Revenue</dt>
+                  <dt class="app-label" i18n>Revenue</dt>
                   <dd class="text-right">
                     {{ q.revenue.estimate | compact: q.currency }} →
                     <span class="font-medium">{{ q.revenue.actual | compact: q.currency }}</span>
@@ -90,17 +90,17 @@ import { StockContext } from '../stock-context';
                   </dd>
                 </div>
               </dl>
-              <div class="mt-3 border-t border-outline-variant pt-3">
-                <p
-                  class="mb-1.5 flex items-center gap-1 text-xs font-medium text-on-surface-variant"
-                >
+              <div class="mt-3">
+                <p class="app-label mb-2 flex items-center gap-1">
                   <span i18n>Price reaction</span><app-term-info term="reaction" />
                 </p>
-                <dl class="grid grid-cols-4 gap-1 text-center text-xs tabular-nums">
+                <dl class="grid grid-cols-4 gap-1.5 text-center">
                   @for (cell of reaction(q); track cell.label) {
-                    <div class="rounded-lg bg-surface-container px-1 py-1.5">
-                      <dt class="text-[11px] text-on-surface-variant">{{ cell.label }}</dt>
-                      <dd><app-change [value]="cell.value" [digits]="1" /></dd>
+                    <div class="rounded-xl bg-surface-container-high px-1 py-2.5">
+                      <dt class="app-label text-[11px] tracking-[.04em]">{{ cell.label }}</dt>
+                      <dd class="mt-0.5 text-sm font-bold">
+                        <app-change [value]="cell.value" [digits]="1" />
+                      </dd>
                     </div>
                   }
                 </dl>

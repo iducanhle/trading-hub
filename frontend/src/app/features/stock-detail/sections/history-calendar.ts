@@ -78,7 +78,7 @@ const MIX = [0, 14, 26, 42, 80];
       >
         <app-icon name="chevron_left" />
       </button>
-      <h3 class="text-sm font-medium" aria-live="polite">{{ title() }}</h3>
+      <h3 class="text-[15px] font-bold" aria-live="polite">{{ title() }}</h3>
       <button
         matIconButton
         type="button"
@@ -93,7 +93,7 @@ const MIX = [0, 14, 26, 42, 80];
 
     <div class="grid grid-cols-5 gap-1 tabular-nums">
       @for (weekday of weekdays; track weekday) {
-        <span class="pb-1 text-center text-xs text-on-surface-variant">{{ weekday }}</span>
+        <span class="app-label pb-1.5 text-center text-[11px]">{{ weekday }}</span>
       }
       @if (page.error()) {
         <div class="col-span-5">
@@ -101,19 +101,19 @@ const MIX = [0, 14, 26, 42, 80];
         </div>
       } @else if (!page.hasValue()) {
         @for (i of skeletonCells; track i) {
-          <app-skeleton class="h-12 rounded-lg" />
+          <app-skeleton class="h-[46px] rounded-[10px]" />
         }
       } @else {
         @for (cell of cells(); track $index) {
           @if (cell) {
             <button
               type="button"
-              class="relative flex h-12 flex-col items-center justify-center rounded-lg text-xs transition-shadow"
+              class="relative flex h-[46px] flex-col items-center justify-center rounded-[10px] text-xs transition-shadow"
               [style.background]="background(cell)"
               [style.color]="foreground(cell)"
               [class.ring-2]="selected() === cell.date"
               [class.ring-primary]="selected() === cell.date"
-              [class.bg-surface-container]="!cell.row"
+              [class.bg-surface-container-high]="!cell.row"
               [disabled]="!cell.row"
               [attr.aria-label]="ariaLabel(cell)"
               [attr.aria-pressed]="selected() === cell.date"
