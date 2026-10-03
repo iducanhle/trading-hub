@@ -110,7 +110,7 @@ export class EarningsMarkersPrimitive implements ISeriesPrimitive<Time> {
     target.useBitmapCoordinateSpace(
       ({ context, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
         context.save();
-        context.font = `800 ${Math.round(10 * vr)}px 'Poppins', system-ui, sans-serif`;
+        context.font = `800 ${Math.round(10 * vr)}px 'App Numerals', 'Poppins', system-ui, sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         for (const { x, y, marker } of this.placed) {

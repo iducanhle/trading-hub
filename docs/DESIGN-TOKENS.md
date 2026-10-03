@@ -40,7 +40,7 @@ Charts:
 
 ## Typography
 
-Font **Poppins**, weights 400–800 (static files), self-hosted from `@fontsource/poppins` (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
+Font **Poppins** for text, weights 400–800 (static files), self-hosted from `@fontsource/poppins`; digits use **Geist** (`@fontsource-variable/geist`) through the `App Numerals` face in `styles.css`, which covers only 0–9 and leads every font stack (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
 
 | Role | Size / weight | Note |
 |---|---|---|

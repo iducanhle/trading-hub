@@ -9,6 +9,17 @@
 /* Class-based dark mode: ThemeService and the boot script in index.html put .dark on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Digits come from Geist (tabular, crisp) while all other text stays Poppins: this face covers only 0-9 and is
+   listed first in every font stack. */
+@font-face {
+  font-family: 'App Numerals';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0030-0039;
+}
+
 /* Tailwind colors read Material's system tokens (light-dark() values), so utilities follow the theme too. */
 @theme inline {
   --color-surface: var(--mat-sys-surface);
@@ -45,7 +56,7 @@
 
 @theme {
   --font-sans:
-    'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'App Numerals', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
 }
 

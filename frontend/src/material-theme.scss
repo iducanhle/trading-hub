@@ -6,6 +6,7 @@
 // The palette only seeds the tokens the design does not name; the ones it names are set by `theme-overrides` below.
 // Tailwind reads the same --mat-sys-* tokens (see styles.css), so both always agree.
 $font:
+  'App Numerals',
   'Poppins',
   system-ui,
   -apple-system,
