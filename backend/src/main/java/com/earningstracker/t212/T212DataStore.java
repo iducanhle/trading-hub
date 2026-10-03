@@ -213,9 +213,10 @@ public class T212DataStore {
         return doc;
     }
 
+    /** Maps the symbol again on load, so a mapper fix applies before the next sync rewrites the document. */
     private static T212InstrumentInfo instrument(Map<String, Object> d) {
         return new T212InstrumentInfo(str(d, "ticker"), str(d, "name"), str(d, "isin"), str(d, "ccy"),
-                str(d, "symbol"));
+                T212SymbolMapper.map(str(d, "ticker"), str(d, "ccy")));
     }
 
     private static String str(Map<String, Object> d, String key) {

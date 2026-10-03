@@ -136,6 +136,16 @@ class T212SyncServiceTest {
     }
 
     @Test
+    void storedSymbolsAreMappedAgainOnLoad() {
+        Map<String, Object> sandisk = new java.util.HashMap<>(Map.of("ticker", "SNDK1_US_EQ", "name", "Sandisk",
+                "ccy", "USD", "symbol", "SNDK1")); // written by an older mapper
+        store.set(T212StateStore.COLLECTION + "/" + UID + "/instruments", "all", Map.of("items", List.of(sandisk)));
+        restart();
+
+        assertThat(data.load(UID).instruments().get("SNDK1_US_EQ").symbol()).isEqualTo("SNDK");
+    }
+
+    @Test
     void laterSyncsStopAtTheFirstPageWithNothingNew() {
         sync.runNow(UID);
         routes.requests().clear();
