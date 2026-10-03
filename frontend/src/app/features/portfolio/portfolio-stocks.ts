@@ -336,10 +336,10 @@ export class PortfolioStocks {
       : { value: this.total() - this.accountFees.value().totals.fees },
   );
 
-  /** Best and worst stock of the period by profit/loss, on the same basis as the rows; the whole list, not the search. */
+  /** Best and worst stock of the period by profit/loss, on the same basis as the rows and within the search, like the total. */
   protected readonly extremes = computed(() => {
     if (!this.data.hasValue()) return [];
-    const ranked = [...this.data.value().items].sort((a, b) => this.pnl(b) - this.pnl(a));
+    const ranked = [...this.items()].sort((a, b) => this.pnl(b) - this.pnl(a));
     const rows: { label: string; item: T212Instrument }[] = [];
     if (ranked.length) rows.push({ label: $localize`Best`, item: ranked[0] });
     if (ranked.length > 1) rows.push({ label: $localize`Worst`, item: ranked[ranked.length - 1] });
