@@ -24,7 +24,8 @@ export type TermId =
   | 'realizedPnl'
   | 'unrealizedPnl'
   | 'totalPnl'
-  | 'fxFees';
+  | 'fxFees'
+  | 'accountFees';
 
 export interface Term {
   title: string;
@@ -187,6 +188,14 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:Frequent trading adds up: the fee is paid on the whole amount of each trade, win or lose. It is already deducted in Realized.`,
     ],
     example: $localize`:Term example:You buy for 100,000 CZK and later sell for 100,000 CZK: you pay 150 CZK twice, 300 CZK in total.`,
+  },
+  accountFees: {
+    title: $localize`:Term title:Account fees`,
+    body: [
+      $localize`:Term text:Fees Trading 212 takes from the account that do not belong to any stock, so the profit/loss of the stocks does not include them.`,
+      $localize`:Term text:Mostly the 0.7% fee for deposits by card, Apple Pay or Google Pay. Deposits by bank transfer are free.`,
+    ],
+    example: $localize`:Term example:You deposit 30,000 CZK by card: Trading 212 charges 210 CZK.`,
   },
   unrealizedPnl: {
     title: $localize`:Term title:Unrealized profit/loss`,
