@@ -7,7 +7,6 @@ export type TermId =
   | 'eps'
   | 'avgVolume'
   | 'range52w'
-  | 'performance'
   | 'candles'
   | 'earnings'
   | 'epsEstimate'
@@ -73,13 +72,6 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:The lowest and the highest price of the last 52 weeks (one year). The dot shows where today's price is.`,
       $localize`:Term text:Near the right end, the stock trades close to its yearly high; near the left end, close to its yearly low.`,
     ],
-  },
-  performance: {
-    title: $localize`:Term title:Performance (1W, 1M, YTD, 1Y)`,
-    body: [
-      $localize`:Term text:How much the price changed over the last week (1W), the last month (1M), since the start of this year (YTD, year to date) and over the last year (1Y).`,
-    ],
-    example: $localize`:Term example:1M +10% means the price is 10% higher than one month ago.`,
   },
   candles: {
     title: $localize`:Term title:Candlestick chart`,
