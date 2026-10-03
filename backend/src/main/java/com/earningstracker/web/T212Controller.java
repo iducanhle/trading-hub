@@ -1,6 +1,9 @@
 package com.earningstracker.web;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.earningstracker.security.AuthenticatedUser;
 import com.earningstracker.t212.T212ConnectionService;
@@ -34,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class T212Controller {
 
     private static final int MAX_TICKER_LENGTH = 40;
+    private static final int MAX_TICKERS = 50;
 
     private final T212ConnectionService connection;
     private final T212SyncService sync;
@@ -119,7 +123,7 @@ public class T212Controller {
         if (limit < 1 || limit > 100) {
             throw new ApiException(ErrorCode.BAD_REQUEST, "limit must be 1–100");
         }
-        return portfolio.trades(user.uid(), T212Period.of(from, to, tz), side, optionalTicker(ticker), cursor, limit);
+        return portfolio.trades(user.uid(), T212Period.of(from, to, tz), side, tickers(ticker), cursor, limit);
     }
 
     @GetMapping("/dividends")
@@ -139,6 +143,19 @@ public class T212Controller {
             @RequestParam(required = false) String type) {
         return portfolio.transactions(user.uid(), T212Period.of(from, to, tz),
                 type == null || type.isBlank() ? null : type.strip().toUpperCase());
+    }
+
+    /** A comma-separated list of tickers; empty means all. */
+    private static Set<String> tickers(String tickers) {
+        if (tickers == null || tickers.isBlank()) {
+            return Set.of();
+        }
+        Set<String> result = Arrays.stream(tickers.split(",")).filter(t -> !t.isBlank())
+                .map(T212Controller::ticker).collect(Collectors.toSet());
+        if (result.size() > MAX_TICKERS) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, "at most " + MAX_TICKERS + " tickers");
+        }
+        return result;
     }
 
     private static String optionalTicker(String ticker) {

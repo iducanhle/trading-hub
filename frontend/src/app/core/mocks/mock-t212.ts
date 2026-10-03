@@ -369,13 +369,13 @@ export class MockT212 {
   private async trades(period: Period, params: HttpParams): Promise<T212TradesResponse> {
     const data = await this.fixture();
     const side = params.get('side');
-    const ticker = params.get('ticker');
+    const tickers = (params.get('ticker') ?? '').split(',').filter(Boolean);
     const limit = Number(params.get('limit') ?? 50);
     const offset = Number(params.get('cursor') ?? 0);
     const all = compute(data, ALL_TIME)
       .trades.filter((t) => inPeriod(t.executedAt, period))
       .filter((t) => !side || t.side === side)
-      .filter((t) => !ticker || t.t212Ticker === ticker)
+      .filter((t) => !tickers.length || tickers.includes(t.t212Ticker))
       .reverse()
       .map(({ positionAfter: _p, ...trade }) => trade);
     const items = all.slice(offset, offset + limit);

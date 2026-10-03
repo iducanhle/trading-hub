@@ -255,7 +255,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/t212/holdings` | `{ accountCurrency, items: T212Holding[] /* largest value first */, piesAvailable: boolean, asOf, stale }` | Open positions as Trading 212 lists them: each pie is one item |
 | `GET /api/t212/instruments?from=&to=&tz=&status=OPEN\|CLOSED\|ALL` | `{ from, to, tz, accountCurrency, items: T212Instrument[], asOf, stale }` | Sorted by `totalPnl` desc |
 | `GET /api/t212/instruments/{t212Ticker}` | `{ accountCurrency, instrument: T212Instrument /* all time */, trades: (T212Trade & { positionAfter: number })[], dividends: T212Dividend[], asOf, stale }` | Both lists newest first. 404 `NOT_FOUND` if the caller never held it |
-| `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker` |
+| `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker`, or several comma-separated (max 50) |
 | `GET /api/t212/dividends?from=&to=&tz=&ticker=` | `{ from, to, tz, accountCurrency, total: number, items: T212Dividend[] /* newest first */, asOf, stale }` | |
 | `GET /api/t212/transactions?from=&to=&tz=&type=` | `{ from, to, tz, accountCurrency, totals: { deposits, withdrawals, fees, interest }, items: T212Transaction[] /* newest first */, asOf, stale }` | `type` is one `T212TransactionType`; totals ignore it |
 
@@ -364,3 +364,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-02 | After checking a real account: transaction totals convert other currencies at today's rate; the realized-P/L note says how Trading 212 computes it. No field changes. |
 | 2026-10-03 | Added `GET /api/t212/holdings` with `T212Holding`, `T212Pie` and `T212HoldingPosition` (additive): open positions grouped by pie. |
 | 2026-10-03 | Prices: ranges `1D`, `2M`, `3M`, `3Y` (additive); `PriceBar.time` (null except for 1D). |
+| 2026-10-03 | `GET /api/t212/trades`: `ticker` accepts several comma-separated tickers (max 50). Additive. |

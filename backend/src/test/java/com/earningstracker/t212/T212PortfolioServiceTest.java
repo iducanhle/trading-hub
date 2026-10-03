@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -271,23 +272,23 @@ class T212PortfolioServiceTest {
 
     @Test
     void tradesPageNewestFirstWithACursor() {
-        T212Dtos.TradePage first = portfolio.trades(UID, T212Period.ALL_TIME, null, null, null, 2);
+        T212Dtos.TradePage first = portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of(), null, 2);
         assertThat(first.items()).extracting(T212Dtos.Trade::id).containsExactly("1003-2003", "1001-2001");
         assertThat(first.nextCursor()).isNotNull();
 
-        T212Dtos.TradePage second = portfolio.trades(UID, T212Period.ALL_TIME, null, null, first.nextCursor(), 2);
+        T212Dtos.TradePage second = portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of(), first.nextCursor(), 2);
         assertThat(second.items()).extracting(T212Dtos.Trade::id).containsExactly("900-901", "1000-2000");
         assertThat(second.nextCursor()).isNull();
 
-        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, T212PortfolioService.SideFilter.SELL, null, null, 50)
+        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, T212PortfolioService.SideFilter.SELL, Set.of(), null, 50)
                 .items()).extracting(T212Dtos.Trade::id).containsExactly("1003-2003");
-        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, null, "AZNl_EQ", null, 50).items())
+        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of("AZNl_EQ"), null, 50).items())
                 .singleElement().satisfies(t -> {
                     assertThat(t.price()).isEqualTo(120.0);
                     assertThat(t.priceCurrency()).isEqualTo("GBP");
                     assertThat(t.realizedPnl()).isNull();
                 });
-        assertThatThrownBy(() -> portfolio.trades(UID, T212Period.ALL_TIME, null, null, "%%%", 2))
+        assertThatThrownBy(() -> portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of(), "%%%", 2))
                 .isInstanceOf(ApiException.class);
     }
 

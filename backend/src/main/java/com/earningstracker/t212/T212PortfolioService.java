@@ -212,7 +212,7 @@ public class T212PortfolioService {
                 dividends, ctx.asOf(), ctx.stale());
     }
 
-    public T212Dtos.TradePage trades(String uid, T212Period period, SideFilter side, String ticker, String cursor,
+    public T212Dtos.TradePage trades(String uid, T212Period period, SideFilter side, Set<String> tickers, String cursor,
             int limit) {
         Context ctx = context(uid, false);
         Cursor after = Cursor.decode(cursor);
@@ -220,7 +220,7 @@ public class T212PortfolioService {
         List<FillResult> matching = result.fills().values().stream()
                 .filter(f -> period.contains(f.fill().executedAt()))
                 .filter(f -> side == null || f.fill().side().name().equals(side.name()))
-                .filter(f -> ticker == null || f.fill().ticker().equals(ticker))
+                .filter(f -> tickers.isEmpty() || tickers.contains(f.fill().ticker()))
                 .sorted(Comparator.comparing(FillResult::fill, NEWEST_FIRST))
                 .filter(f -> after == null || after.isBefore(f.fill()))
                 .limit(limit + 1L).toList();
