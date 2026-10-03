@@ -37,13 +37,13 @@ export interface EventsDaySheetData {
             @if (e.symbol) {
               <button
                 type="button"
-                class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-container-high"
+                class="flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left hover:bg-surface-container-high"
                 (click)="openStock(e.symbol)"
               >
                 <ng-container *ngTemplateOutlet="row; context: { $implicit: e }" />
               </button>
             } @else {
-              <div class="flex min-h-14 w-full items-center gap-3 px-4 py-2">
+              <div class="flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5">
                 <ng-container *ngTemplateOutlet="row; context: { $implicit: e }" />
               </div>
             }
@@ -55,9 +55,9 @@ export interface EventsDaySheetData {
     </app-sheet>
 
     <ng-template #row let-e>
-      <app-event-badge [event]="e" [size]="36" [followed]="data.followed.has(e.symbol ?? '')" />
+      <app-event-badge [event]="e" [size]="44" [followed]="data.followed.has(e.symbol ?? '')" />
       <span class="min-w-0 flex-1">
-        <span class="block font-semibold">{{ e.title }}</span>
+        <span class="block text-[15px] font-bold">{{ e.title }}</span>
         <span class="block text-sm text-on-surface-variant">{{ details(e) }}</span>
         @if (e.note) {
           <span class="mt-0.5 block text-xs text-on-surface-variant">{{ e.note }}</span>

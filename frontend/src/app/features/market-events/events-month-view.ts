@@ -11,9 +11,9 @@ const MAX_BADGES = 3;
   selector: 'app-events-month-view',
   imports: [EventBadge],
   template: `
-    <div class="px-2 sm:px-4">
+    <div class="px-3 pt-3.5 sm:px-4">
       <div
-        class="grid grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,0.6fr))] pb-1 text-center text-xs font-medium text-on-surface-variant"
+        class="app-label grid grid-cols-[repeat(5,minmax(0,1fr))_32px_32px] gap-1 pb-2 text-center text-[11px] sm:grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,0.6fr))]"
         aria-hidden="true"
       >
         @for (d of weekdays; track d) {
@@ -21,7 +21,7 @@ const MAX_BADGES = 3;
         }
       </div>
       <div
-        class="grid grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,0.6fr))] gap-px overflow-hidden rounded-2xl border border-outline-variant bg-outline-variant"
+        class="grid grid-cols-[repeat(5,minmax(0,1fr))_32px_32px] gap-1 sm:grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,0.6fr))]"
       >
         @for (day of calendarDays(); track day.date) {
           @let weekend = isWeekend(day.date);
@@ -29,15 +29,13 @@ const MAX_BADGES = 3;
           @let isToday = day.date === today();
           <button
             type="button"
-            class="flex min-h-18 flex-col items-center gap-1 p-1 text-left hover:bg-surface-container-high sm:min-h-24 sm:items-start sm:p-1.5"
-            [class.bg-surface]="!weekend && !outside"
-            [class.bg-surface-container-low]="weekend && !outside"
-            [class.bg-surface-container-high]="outside"
+            class="flex min-h-24 flex-col items-center gap-1 rounded-xl bg-surface-container px-0.5 py-1.5 text-left hover:bg-surface-container-high sm:items-start sm:p-1.5"
+            [class.opacity-40]="outside"
             [attr.aria-label]="label(day)"
             (click)="openDay.emit(day)"
           >
             <span
-              class="flex size-6 items-center justify-center rounded-full text-xs tabular-nums"
+              class="flex size-6 items-center justify-center rounded-full text-[12.5px] font-bold"
               [class.bg-primary]="isToday"
               [class.text-on-primary]="isToday"
               [class.font-semibold]="isToday"
@@ -52,13 +50,13 @@ const MAX_BADGES = 3;
                 @for (e of day.events.slice(0, maxBadges); track e.id) {
                   <app-event-badge
                     [event]="e"
-                    [size]="20"
+                    [size]="18"
                     [followed]="followed().has(e.symbol ?? '')"
                   />
                 }
               </span>
               @if (day.events.length > maxBadges) {
-                <span class="text-[10px] font-medium text-on-surface-variant" aria-hidden="true"
+                <span class="text-[10.5px] font-bold text-on-surface-variant" aria-hidden="true"
                   >+{{ day.events.length - maxBadges }}</span
                 >
               }

@@ -384,7 +384,6 @@
     "80663871075536039": "Japonsko",
     "438825594839815409": "Událostí: {$count}",
     "5722782554700224943": "Událostí: {$count}",
-    "1656810522307996993": "Tržní události",
     "1619346619719263028": "V tomto období nejsou žádné události",
     "6589197220807534620": "Události se tu objeví, jakmile centrální banky a úřady zveřejní své kalendáře.",
     "1737617888391724784": "Události dne",
@@ -568,6 +567,7 @@
     "6019837254827645734": "Nejbližší výsledky",
     "1176941758877501314": "{VAR_PLURAL, plural, =1 {den} =2 {dny} =3 {dny} =4 {dny} other {dní}}",
     "1206114608530090218": "Přidat akcii ke sledování",
-    "4911843450729688319": "Nedávné"
+    "4911843450729688319": "Nedávné",
+    "5299675037912081667": "Dny v týdnu"
   }
 }

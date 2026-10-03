@@ -20,7 +20,11 @@ import { CATEGORY_ICONS } from './events-model';
         [followed]="followed()"
       />
     } @else {
-      <span class="flex size-full items-center justify-center rounded-full" [class]="tone()">
+      <span
+        class="flex size-full items-center justify-center"
+        [class]="tone()"
+        [style.border-radius.px]="size() * 0.29"
+      >
         <app-icon [name]="icon()" [size]="iconSize()" />
       </span>
     }

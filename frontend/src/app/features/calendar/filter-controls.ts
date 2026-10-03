@@ -21,7 +21,7 @@ let nextId = 0;
     >
       <div>
         <p
-          [class]="inline() ? 'mb-2 text-sm font-medium lg:sr-only' : 'mb-2 text-sm font-medium'"
+          [class]="inline() ? 'app-label mb-2.5 lg:sr-only' : 'app-label mb-2.5'"
           [id]="id + '-cap'"
           i18n
         >
@@ -39,7 +39,7 @@ let nextId = 0;
       </div>
       <div>
         <p
-          [class]="inline() ? 'mb-2 text-sm font-medium lg:sr-only' : 'mb-2 text-sm font-medium'"
+          [class]="inline() ? 'app-label mb-2.5 lg:sr-only' : 'app-label mb-2.5'"
           [id]="id + '-region'"
           i18n
         >

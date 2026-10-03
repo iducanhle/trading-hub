@@ -49,7 +49,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
   ],
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="refresh()">
-      <app-page-header title="Market events" i18n-title maxWidth="max-w-6xl">
+      <app-page-header title="Events" i18n-title maxWidth="max-w-6xl">
         <div actions class="flex items-center">
           <button matButton type="button" (click)="goToday()" [disabled]="showsToday()" i18n>
             Today
