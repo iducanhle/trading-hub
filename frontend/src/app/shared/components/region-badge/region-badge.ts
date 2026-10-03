@@ -7,7 +7,7 @@ import { Region } from '../../../core/models/contract';
   template: `{{ region() }}`,
   host: {
     class:
-      'inline-flex h-5 items-center rounded-md border border-outline-variant px-1.5 text-[11px] font-semibold tracking-wide text-on-surface-variant',
+      'inline-flex items-center rounded-full bg-surface-container-high px-[7px] py-[3px] text-[10.5px] font-extrabold tracking-[.04em] text-on-surface-variant',
     '[attr.aria-label]': 'label()',
   },
 })

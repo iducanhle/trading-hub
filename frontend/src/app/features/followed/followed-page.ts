@@ -19,7 +19,7 @@ import {
   RelativeDayPipe,
   ReportTimePipe,
 } from '../../shared/pipes/format.pipes';
-import { todayIso } from '../../shared/utils/dates';
+import { diffDays, todayIso } from '../../shared/utils/dates';
 import { groupFollowed } from './followed-groups';
 
 /** Automatic refetches for a follow the backend does not list yet: soon, then past its 1-minute follows cache. */
@@ -67,7 +67,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
         </button>
       </app-page-header>
 
-      <div class="mx-auto max-w-2xl px-2 pb-8">
+      <div class="mx-auto max-w-2xl px-4 pb-8">
         @if (follows.error()) {
           <div class="px-2 pt-4">
             <app-error-state
@@ -81,11 +81,11 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             <app-error-state [error]="data.error()" (retry)="refresh()" />
           </div>
         } @else if (!view()) {
-          <div class="px-2" aria-hidden="true">
+          <div aria-hidden="true">
             <app-skeleton class="mt-4 mb-3 h-4 w-24" />
             @for (i of [1, 2, 3, 4]; track i) {
               <div class="flex h-20 items-center gap-3">
-                <app-skeleton shape="circle" class="size-10" />
+                <app-skeleton class="size-12 rounded-[14px]" />
                 <div class="flex-1 space-y-2">
                   <app-skeleton class="h-4 w-24" /><app-skeleton class="h-3 w-40" />
                 </div>
@@ -107,34 +107,68 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             </a>
           </app-empty-state>
         } @else {
+          @if (next(); as n) {
+            <a
+              [routerLink]="['/stock', n.event.symbol]"
+              class="app-card mt-4 flex items-center gap-4 hover:bg-surface-container-high"
+            >
+              <span class="min-w-0 flex-1">
+                <span class="app-label block" i18n>Next earnings</span>
+                <span class="mt-1 block truncate text-2xl font-semibold"
+                  >{{ n.event.symbol }} · {{ n.event.date | appDate: 'day' }}</span
+                >
+                <span class="mt-0.5 block text-sm font-semibold text-on-surface-variant"
+                  >{{ n.event.time | reportTime }} · {{ n.event.date | relativeDay }}</span
+                >
+              </span>
+              <span
+                class="flex size-[72px] shrink-0 flex-col items-center justify-center rounded-full border-[3px] border-primary"
+              >
+                <span class="text-2xl leading-none font-bold">{{ n.days }}</span>
+                <span class="app-label text-[10px]" i18n>{n.days, plural,
+                  =1 {day}
+                  other {days}
+                }</span>
+              </span>
+            </a>
+          }
+          <a
+            routerLink="/search"
+            class="mt-3.5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-[15px] text-on-surface-variant hover:bg-surface-container-high"
+          >
+            <app-icon name="search" [size]="20" />
+            <ng-container i18n>Add a stock to follow</ng-container>
+          </a>
           @for (group of view()!.groups; track group.title) {
             <section [attr.aria-label]="group.title">
-              <h2 class="px-3 pt-4 pb-1 text-sm font-semibold text-on-surface-variant">
-                {{ group.title }} <span class="font-normal">· {{ group.events.length }}</span>
+              <h2 class="app-label px-1 pt-6 pb-1">
+                {{ group.title }} · {{ group.events.length }}
               </h2>
               <ul>
                 @for (e of group.events; track e.symbol) {
                   <li class="flex items-center">
                     <a
                       [routerLink]="['/stock', e.symbol]"
-                      class="flex min-h-18 min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-container-high"
+                      class="-mx-1 flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-1 py-[13px] hover:bg-surface-container"
                     >
-                      <app-stock-logo [symbol]="e.symbol" [logoUrl]="e.logoUrl" [size]="40" />
+                      <app-stock-logo [symbol]="e.symbol" [logoUrl]="e.logoUrl" [size]="48" />
                       <span class="min-w-0 flex-1">
-                        <span class="block font-semibold">{{ e.symbol }}</span>
-                        <span class="block truncate text-sm text-on-surface-variant">{{
-                          e.name
-                        }}</span>
-                        <span class="block truncate text-xs text-on-surface-variant">
-                          {{ e.time | reportTime }} ·
+                        <span class="block text-base font-bold">{{ e.symbol }}</span>
+                        <span
+                          class="mt-0.5 block truncate text-[13px] font-semibold text-on-surface-variant"
+                          >{{ e.name }} · {{ e.time | reportTime }}</span
+                        >
+                        <span class="block truncate text-xs font-semibold text-on-surface-variant">
                           <ng-container i18n
                             >EPS est. {{ e.epsEstimate | price: e.currency }}</ng-container
                           >
                         </span>
                       </span>
                       <span class="shrink-0 text-right">
-                        <span class="block text-sm font-medium">{{ e.date | appDate: 'day' }}</span>
-                        <span class="block text-xs font-medium text-primary">{{
+                        <span class="block text-[15px] font-bold">{{
+                          e.date | appDate: 'day'
+                        }}</span>
+                        <span class="mt-0.5 block text-[12.5px] font-bold text-primary">{{
                           e.date | relativeDay
                         }}</span>
                       </span>
@@ -142,6 +176,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                     <button
                       matIconButton
                       type="button"
+                      class="-mr-2 text-on-surface-variant"
                       [matMenuTriggerFor]="rowMenu"
                       [matMenuTriggerData]="{ symbol: e.symbol }"
                       aria-label="More actions for {{ e.symbol }}"
@@ -156,28 +191,29 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
           }
           @if (view()!.noDate.length) {
             <section aria-label="No date announced" i18n-aria-label>
-              <h2 class="px-3 pt-4 pb-1 text-sm font-semibold text-on-surface-variant">
-                <ng-container i18n>No date announced</ng-container>
-                <span class="font-normal"> · {{ view()!.noDate.length }}</span>
+              <h2 class="app-label px-1 pt-6 pb-1">
+                <ng-container i18n>No date announced</ng-container> · {{ view()!.noDate.length }}
               </h2>
               <ul>
                 @for (s of view()!.noDate; track s.symbol) {
                   <li class="flex items-center">
                     <a
                       [routerLink]="['/stock', s.symbol]"
-                      class="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-2 hover:bg-surface-container-high"
+                      class="-mx-1 flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-1 py-[13px] hover:bg-surface-container"
                     >
-                      <app-stock-logo [symbol]="s.symbol" [logoUrl]="s.logoUrl" [size]="40" />
+                      <app-stock-logo [symbol]="s.symbol" [logoUrl]="s.logoUrl" [size]="48" />
                       <span class="min-w-0 flex-1">
-                        <span class="block font-semibold">{{ s.symbol }}</span>
-                        <span class="block truncate text-sm text-on-surface-variant">{{
-                          s.name
-                        }}</span>
+                        <span class="block text-base font-bold">{{ s.symbol }}</span>
+                        <span
+                          class="mt-0.5 block truncate text-[13px] font-semibold text-on-surface-variant"
+                          >{{ s.name }}</span
+                        >
                       </span>
                     </a>
                     <button
                       matIconButton
                       type="button"
+                      class="-mr-2 text-on-surface-variant"
                       [matMenuTriggerFor]="rowMenu"
                       [matMenuTriggerData]="{ symbol: s.symbol }"
                       aria-label="More actions for {{ s.symbol }}"
@@ -233,6 +269,11 @@ export class FollowedPage {
   });
 
   protected readonly refreshing = computed(() => this.data.isLoading() && this.fetches() > 0);
+  /** The soonest report among the followed stocks, with the days left until it. */
+  protected readonly next = computed(() => {
+    const event = this.view()?.groups[0]?.events[0];
+    return event ? { event, days: diffDays(todayIso(), event.date) } : null;
+  });
 
   /** Automatic refetches for the current set of follows (capped, so a lagging backend cannot cause a loop). */
   private autoFetchKey = '';

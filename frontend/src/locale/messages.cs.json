@@ -135,7 +135,6 @@
     "5607897678178533463": "Hledat akcie podle symbolu nebo názvu",
     "754061398763931008": "Symbol nebo firma, např. AAPL, SAP.DE",
     "3643866539136239218": "Vymazat hledání",
-    "7542074709541168939": " Nedávné ",
     "8700121026680200191": "Vymazat",
     "7370819875146330240": "Hledejte americké a evropské akcie",
     "6097837416841989455": "Zadejte ticker nebo název firmy, například AAPL, SAP.DE nebo Nestlé.",
@@ -565,6 +564,10 @@
     "2078447930198975401": "Výsledky",
     "4432594779358729482": "Analytici",
     "8894377483833272091": "Cena",
-    "3437265929665724548": "Sekce akcie"
+    "3437265929665724548": "Sekce akcie",
+    "6019837254827645734": "Nejbližší výsledky",
+    "1176941758877501314": "{VAR_PLURAL, plural, =1 {den} =2 {dny} =3 {dny} =4 {dny} other {dní}}",
+    "1206114608530090218": "Přidat akcii ke sledování",
+    "4911843450729688319": "Nedávné"
   }
 }
