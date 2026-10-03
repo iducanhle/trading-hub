@@ -102,13 +102,22 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                       }
                     </span>
                     <span
-                      class="mt-0.5 block text-[12.5px] font-semibold text-on-surface-variant"
-                      i18n
-                      >{pie.positions.length, plural,
-                        =1 {1 holding}
-                        other {{{pie.positions.length}} holdings}
-                      }</span
+                      class="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold text-on-surface-variant"
                     >
+                      <ng-container i18n
+                        >{pie.positions.length, plural,
+                          =1 {1 holding}
+                          other {{{pie.positions.length}} holdings}
+                        }</ng-container
+                      >
+                      <app-icon
+                        name="keyboard_arrow_down"
+                        [size]="16"
+                        [strokeWidth]="2.2"
+                        class="transition-transform"
+                        [class.rotate-180]="open"
+                      />
+                    </span>
                   </span>
                   <ng-container
                     [ngTemplateOutlet]="amounts"
@@ -118,12 +127,6 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                       pct: pie.pnlPct,
                       currency: d.accountCurrency,
                     }"
-                  />
-                  <app-icon
-                    name="keyboard_arrow_down"
-                    [size]="20"
-                    class="shrink-0 text-on-surface-variant transition-transform"
-                    [class.rotate-180]="open"
                   />
                 </button>
                 @if (open) {
