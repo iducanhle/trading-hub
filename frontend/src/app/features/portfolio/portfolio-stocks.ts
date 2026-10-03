@@ -12,6 +12,7 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
+import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import {
   PercentPipe,
   PricePipe,
@@ -58,6 +59,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
     SignedMoneyPipe,
     PercentPipe,
     FilterButton,
+    HeroAmount,
   ],
   template: `
     <div class="flex items-center gap-2.5">
@@ -113,6 +115,16 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
           [text]="data.value().items.length ? undefined : labels.emptyText"
         />
       } @else {
+        <section aria-labelledby="stocks-total-title" class="mt-5">
+          <h2 id="stocks-total-title" class="app-label px-1" i18n>Total profit/loss</h2>
+          <app-hero-amount
+            class="mt-1 px-1"
+            size="md"
+            signed
+            [value]="total()"
+            [currency]="data.value().accountCurrency"
+          />
+        </section>
         <div class="mt-5 flex justify-between px-1">
           <span class="app-label"
             ><ng-container i18n>Stocks</ng-container> · {{ items().length }}</span
@@ -254,6 +266,11 @@ export class PortfolioStocks {
           this.unrealized(),
         )
       : [],
+  );
+
+  /** Sum of the listed stocks' profit/loss, on the same basis as the rows. */
+  protected readonly total = computed(() =>
+    this.items().reduce((sum, item) => sum + this.pnl(item), 0),
   );
 
   protected readonly labels = {

@@ -24,6 +24,7 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
+import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import {
   AppDatePipe,
   PricePipe,
@@ -84,8 +85,23 @@ const EMPTY: ListState = {
     QuantityPipe,
     SignedMoneyPipe,
     FilterButton,
+    HeroAmount,
   ],
   template: `
+    <section aria-labelledby="trades-total-title" class="mb-4">
+      <h2 id="trades-total-title" class="app-label px-1" i18n>Total realized profit/loss</h2>
+      @if (realizedTotal(); as total) {
+        <app-hero-amount
+          class="mt-1 px-1"
+          size="md"
+          signed
+          [value]="total.value"
+          [currency]="total.currency"
+        />
+      } @else {
+        <app-skeleton class="mt-2 block h-12 w-48" aria-hidden="true" />
+      }
+    </section>
     <div class="mb-3 flex flex-wrap items-center gap-2">
       <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
       @for (chip of chips(); track chip.key) {
@@ -244,6 +260,17 @@ export class PortfolioTrades {
           .sort((a, b) => displayTicker(a).localeCompare(displayTicker(b)))
       : [],
   );
+
+  /** Realized profit/loss after fees of the period, for the stocks in the filter (all when none). */
+  protected readonly realizedTotal = computed(() => {
+    if (!this.instrumentList.hasValue()) return null;
+    const { items, accountCurrency } = this.instrumentList.value();
+    const tickers = this.filters().tickers;
+    const value = items
+      .filter((i) => !tickers.length || tickers.includes(i.t212Ticker))
+      .reduce((sum, i) => sum + i.realizedPnl - i.fees, 0);
+    return { value, currency: accountCurrency };
+  });
 
   protected readonly filterContext: TradeFiltersContext = {
     filters: this.filters,
