@@ -25,6 +25,8 @@ import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
+import { TermInfo } from '../../shared/components/term-info/term-info';
+import { Pnl } from './pnl';
 import {
   AppDatePipe,
   PricePipe,
@@ -86,21 +88,41 @@ const EMPTY: ListState = {
     SignedMoneyPipe,
     FilterButton,
     HeroAmount,
+    TermInfo,
+    Pnl,
   ],
   template: `
-    <section aria-labelledby="trades-total-title" class="mb-4">
-      <h2 id="trades-total-title" class="app-label px-1" i18n>Total realized profit/loss</h2>
-      @if (realizedTotal(); as total) {
-        <app-hero-amount
-          class="mt-1 px-1"
-          size="md"
-          signed
-          [value]="total.value"
-          [currency]="total.currency"
-        />
-      } @else {
-        <app-skeleton class="mt-2 block h-12 w-48" aria-hidden="true" />
-      }
+    <section class="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 px-1">
+      <div aria-labelledby="trades-total-title">
+        <h2 id="trades-total-title" class="app-label" i18n>Total realized profit/loss</h2>
+        @if (totals(); as total) {
+          <app-hero-amount
+            class="mt-1"
+            size="md"
+            signed
+            [value]="total.realized"
+            [currency]="total.currency"
+          />
+        } @else {
+          <app-skeleton class="mt-2 block h-12 w-48" aria-hidden="true" />
+        }
+      </div>
+      <div class="pb-1">
+        <h2 class="app-label flex items-center gap-1">
+          <ng-container i18n>Unrealized · as of now</ng-container
+          ><app-term-info term="unrealizedPnl" />
+        </h2>
+        @if (totals(); as total) {
+          <app-pnl
+            strong
+            class="mt-1 text-xl tabular-nums"
+            [value]="total.unrealized"
+            [currency]="total.currency"
+          />
+        } @else {
+          <app-skeleton class="mt-1 block h-7 w-28" aria-hidden="true" />
+        }
+      </div>
     </section>
     <div class="mb-3 flex flex-wrap items-center gap-2">
       <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
@@ -261,15 +283,20 @@ export class PortfolioTrades {
       : [],
   );
 
-  /** Realized profit/loss after fees of the period, for the stocks in the filter (all when none). */
-  protected readonly realizedTotal = computed(() => {
+  /**
+   * Realized profit/loss after fees of the period and unrealized profit/loss as of now, for the stocks in the
+   * filter (all when none).
+   */
+  protected readonly totals = computed(() => {
     if (!this.instrumentList.hasValue()) return null;
     const { items, accountCurrency } = this.instrumentList.value();
     const tickers = this.filters().tickers;
-    const value = items
-      .filter((i) => !tickers.length || tickers.includes(i.t212Ticker))
-      .reduce((sum, i) => sum + i.realizedPnl - i.fees, 0);
-    return { value, currency: accountCurrency };
+    const selected = items.filter((i) => !tickers.length || tickers.includes(i.t212Ticker));
+    return {
+      realized: selected.reduce((sum, i) => sum + i.realizedPnl - i.fees, 0),
+      unrealized: selected.reduce((sum, i) => sum + (i.unrealizedPnl ?? 0), 0),
+      currency: accountCurrency,
+    };
   });
 
   protected readonly filterContext: TradeFiltersContext = {
