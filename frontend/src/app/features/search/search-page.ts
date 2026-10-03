@@ -35,7 +35,7 @@ import { StockRow } from './stock-row';
           <button
             matIconButton
             type="button"
-            class="shrink-0 lg:hidden"
+            class="shrink-0"
             aria-label="Open menu"
             i18n-aria-label
             (click)="menu.show()"

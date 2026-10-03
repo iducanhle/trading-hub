@@ -1,10 +1,12 @@
 @use '@angular/material' as mat;
 
-// Material 3 theme: one accent (azure) on neutral surfaces.
+// Material 3 theme with the redesign's tokens (docs/DESIGN-TOKENS.md).
 // `theme-type: color-scheme` emits light-dark() values, so the `color-scheme` that ThemeService (and the boot
 // script in index.html) sets on <html> switches every Material component between light and dark.
+// The palette only seeds the tokens the design does not name; the ones it names are set by `theme-overrides` below.
 // Tailwind reads the same --mat-sys-* tokens (see styles.css), so both always agree.
 $font:
+  'Manrope Variable',
   system-ui,
   -apple-system,
   'Segoe UI',
@@ -25,33 +27,192 @@ html {
       typography: (
         plain-family: $font,
         brand-family: $font,
+        regular-weight: 500,
+        medium-weight: 600,
+        bold-weight: 700,
       ),
       density: 0,
+    )
+  );
+
+  // Design tokens → Material system tokens: light-dark(<light>, <dark>).
+  // bg → surface, card → surface-container, card2 → surface-container-high, text → on-surface,
+  // muted → on-surface-variant, accent → primary, onAccent → on-primary, line → outline-variant.
+  // Two surface levels only: "low" is a card too, "lowest" is the page.
+  @include mat.theme-overrides(
+    (
+      surface: light-dark(#ffffff, #04080c),
+      surface-dim: light-dark(#ffffff, #04080c),
+      surface-bright: light-dark(#e6e9ed, #182733),
+      surface-container-lowest: light-dark(#ffffff, #04080c),
+      surface-container-low: light-dark(#f2f4f6, #0e1a24),
+      surface-container: light-dark(#f2f4f6, #0e1a24),
+      surface-container-high: light-dark(#e6e9ed, #182733),
+      surface-container-highest: light-dark(#dadfe4, #213240),
+      surface-variant: light-dark(#e6e9ed, #182733),
+      on-surface: light-dark(#0a0d12, #f4f7fa),
+      on-surface-variant: light-dark(#5e6773, #8d9aa6),
+      outline: light-dark(#7d8791, #66737f),
+      outline-variant: light-dark(#e1e5e9, #1e2e3b),
+      primary: light-dark(#0272a8, #1aa6e4),
+      on-primary: light-dark(#ffffff, #04131c),
+      primary-container: light-dark(rgba(2, 114, 168, 0.12), rgba(26, 166, 228, 0.16)),
+      on-primary-container: light-dark(#015e8c, #1aa6e4),
+      secondary-container: light-dark(rgba(2, 114, 168, 0.12), rgba(26, 166, 228, 0.16)),
+      on-secondary-container: light-dark(#0a0d12, #f4f7fa),
+      inverse-surface: light-dark(#182733, #e6e9ed),
+      inverse-on-surface: light-dark(#f4f7fa, #0a0d12),
+      inverse-primary: light-dark(#1aa6e4, #0272a8),
+      error: light-dark(#c02f36, #ff5e5b),
+      on-error: light-dark(#ffffff, #04080c),
+      error-container: light-dark(rgba(192, 47, 54, 0.11), rgba(255, 94, 91, 0.14)),
+      on-error-container: light-dark(#c02f36, #ff5e5b),
     )
   );
 
   // Visible focus rings for keyboard users on every Material component.
   @include mat.strong-focus-indicators();
 
-  // Tonal surfaces instead of shadows, and full-width snackbars on phones.
-  @include mat.snack-bar-overrides(
+  // Pill buttons, bold labels; no shadows anywhere (depth comes from the two surface levels).
+  @include mat.button-overrides(
     (
-      container-shape: 12px,
+      filled-container-shape: 999px,
+      filled-container-height: 44px,
+      filled-horizontal-padding: 20px,
+      filled-label-text-size: 15px,
+      filled-label-text-weight: 700,
+      tonal-container-shape: 999px,
+      tonal-container-height: 44px,
+      tonal-horizontal-padding: 18px,
+      tonal-container-color: var(--mat-sys-surface-container-high),
+      tonal-label-text-color: var(--mat-sys-on-surface),
+      tonal-label-text-size: 15px,
+      tonal-label-text-weight: 700,
+      outlined-container-shape: 999px,
+      outlined-container-height: 44px,
+      outlined-outline-color: var(--mat-sys-outline-variant),
+      outlined-label-text-color: var(--mat-sys-on-surface),
+      outlined-label-text-size: 15px,
+      outlined-label-text-weight: 700,
+      text-container-shape: 999px,
+      text-container-height: 44px,
+      text-label-text-size: 15px,
+      text-label-text-weight: 700,
+      protected-container-shape: 999px,
+      protected-container-elevation-shadow: none,
+      protected-hover-container-elevation-shadow: none,
+      protected-focus-container-elevation-shadow: none,
+      protected-pressed-container-elevation-shadow: none,
     )
   );
-  @include mat.bottom-sheet-overrides(
+  @include mat.icon-button-overrides(
     (
-      container-shape: 28px,
-      container-background-color: var(--mat-sys-surface-container-low),
+      state-layer-size: 44px,
+      icon-color: var(--mat-sys-on-surface),
     )
   );
+
+  // Segmented controls: borderless, the selected segment on card2.
   @include mat.button-toggle-overrides(
     (
       shape: 999px,
+      height: 40px,
+      divider-color: transparent,
+      background-color: transparent,
+      text-color: var(--mat-sys-on-surface-variant),
+      selected-state-background-color: var(--mat-sys-surface-container-high),
+      selected-state-text-color: var(--mat-sys-on-surface),
+      label-text-size: 13px,
+      label-text-weight: 700,
+    )
+  );
+
+  // Filter options: pills on card2; selected = accent with a check.
+  @include mat.chips-overrides(
+    (
+      container-shape-radius: 999px,
+      container-height: 40px,
+      outline-width: 0,
+      flat-selected-outline-width: 0,
+      elevated-container-color: var(--mat-sys-surface-container-high),
+      elevated-selected-container-color: var(--mat-sys-primary),
+      label-text-color: var(--mat-sys-on-surface),
+      selected-label-text-color: var(--mat-sys-on-primary),
+      with-icon-selected-icon-color: var(--mat-sys-on-primary),
+      selected-hover-state-layer-color: var(--mat-sys-on-primary),
+      selected-focus-state-layer-color: var(--mat-sys-on-primary),
+      label-text-size: 14px,
+      label-text-weight: 700,
+    )
+  );
+
+  // Switch 52×32: off = card2 track with a muted knob, on = accent track with an onAccent knob.
+  @include mat.slide-toggle-overrides(
+    (
+      track-outline-color: transparent,
+      unselected-track-color: var(--mat-sys-surface-container-high),
+      unselected-hover-track-color: var(--mat-sys-surface-container-high),
+      unselected-focus-track-color: var(--mat-sys-surface-container-high),
+      unselected-pressed-track-color: var(--mat-sys-surface-container-high),
+      unselected-handle-color: var(--mat-sys-on-surface-variant),
+      unselected-hover-handle-color: var(--mat-sys-on-surface-variant),
+      unselected-focus-handle-color: var(--mat-sys-on-surface-variant),
+      unselected-pressed-handle-color: var(--mat-sys-on-surface-variant),
+      unselected-handle-size: 24px,
+      selected-handle-color: var(--mat-sys-on-primary),
+      selected-hover-handle-color: var(--mat-sys-on-primary),
+      selected-focus-handle-color: var(--mat-sys-on-primary),
+      selected-pressed-handle-color: var(--mat-sys-on-primary),
+      selected-icon-color: var(--mat-sys-primary),
+      handle-elevation-shadow: none,
+    )
+  );
+
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: 14px,
+      outlined-outline-color: var(--mat-sys-outline),
+    )
+  );
+
+  @include mat.bottom-sheet-overrides(
+    (
+      container-shape: 28px,
+      container-background-color: var(--app-sheet),
+    )
+  );
+  @include mat.dialog-overrides(
+    (
+      container-shape: 28px,
+      container-color: var(--app-sheet),
+      container-elevation-shadow: none,
+    )
+  );
+  @include mat.menu-overrides(
+    (
+      container-shape: 16px,
+      container-color: var(--mat-sys-surface-container-high),
+      container-elevation-shadow: none,
+    )
+  );
+  @include mat.select-overrides(
+    (
+      panel-background-color: var(--mat-sys-surface-container-high),
+      container-elevation-shadow: none,
+    )
+  );
+  @include mat.snack-bar-overrides(
+    (
+      container-shape: 14px,
     )
   );
 }
 
 html.dark {
   color-scheme: dark;
+}
+
+// Overlays (dialogs, sheets, menus) dim the page with the design's scrim.
+.cdk-overlay-dark-backdrop {
+  background: var(--app-scrim);
 }

@@ -14,13 +14,13 @@ Navigation stays a burger menu (drawer) in the top-left corner; there is no bott
 | `line` | `#1E2E3B` | `#E1E5E9` | dividers, borders, logo outline |
 | `text` | `#F4F7FA` | `#0A0D12` | primary text |
 | `muted` | `#8D9AA6` | `#5E6773` | labels, secondary text |
-| `accent` | `#1AA6E4` | `#0B8FCB` | chart, countdown, today, star |
+| `accent` | `#1AA6E4` | `#0272A8` | chart, countdown, today, star |
 | `onAccent` | `#04131C` | `#FFFFFF` | text on accent |
-| `up` | `#4ADE63` | `#12932A` | gain |
-| `down` | `#FF5E5B` | `#D63A3F` | loss |
-| `upBg` | `rgba(74,222,99,.13)` | `rgba(18,147,42,.11)` | "NAD ODHADEM" badge background |
-| `downBg` | `rgba(255,94,91,.14)` | `rgba(214,58,63,.11)` | high-impact event tile, negative day cell |
-| `accentBg` | `rgba(26,166,228,.16)` | `rgba(11,143,203,.12)` | active drawer item, "Otevřená" pill, buy tile |
+| `up` | `#4ADE63` | `#0B7A22` | gain |
+| `down` | `#FF5E5B` | `#C02F36` | loss |
+| `upBg` | `rgba(74,222,99,.13)` | `rgba(11,122,34,.11)` | "NAD ODHADEM" badge background |
+| `downBg` | `rgba(255,94,91,.14)` | `rgba(192,47,54,.11)` | high-impact event tile, negative day cell |
+| `accentBg` | `rgba(26,166,228,.16)` | `rgba(2,114,168,.12)` | active drawer item, "Otevřená" pill, buy tile |
 | `sheet` | `#0B151E` | `#FFFFFF` | bottom sheet background |
 | `scrim` | `rgba(0,0,0,.62)` | `rgba(10,13,18,.38)` | overlay behind drawer and sheets |
 | `amber` | `#E8B931` | `#E8B931` | analyst "Držet" segment |
@@ -40,7 +40,7 @@ Charts:
 
 ## Typography
 
-Font **Manrope** (Google Fonts), weights 300–800. All numbers use `font-variant-numeric: tabular-nums`.
+Font **Manrope**, weights 300–800, self-hosted from `@fontsource-variable/manrope` (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
 
 | Role | Size / weight | Note |
 |---|---|---|
@@ -58,7 +58,7 @@ Font **Manrope** (Google Fonts), weights 300–800. All numbers use `font-varian
 - Page padding 20 px; cards inset 16 px from the edge; card padding 18 px.
 - Gap between cards 14 px; space above a section heading 28–30 px.
 - List row: 14 px vertical padding, 14 px gap between logo and text.
-- Icon buttons 44×44 px; icons 24 px, stroke 1.6 px, round caps and joins.
+- Icon buttons 44×44 px; icons 24 px, stroke 1.6 px, round caps and joins (Lucide, `shared/icon`).
 - No shadows: depth comes only from `card` / `card2`.
 
 ## Components
@@ -93,10 +93,19 @@ Map tokens onto `--mat-sys-*` so Material components pick them up without restyl
 | `accent` | `primary` |
 | `onAccent` | `on-primary` |
 | `line` | `outline-variant` |
+| `accentBg` | `secondary-container`, `primary-container` |
+| `down` / `downBg` | `error` / `error-container` |
 
-Define each with `light-dark(<light>, <dark>)`. Keep `up`, `down`, `upBg` and `glow` as custom properties.
+Define each with `light-dark(<light>, <dark>)` (`mat.theme-overrides` in `frontend/src/material-theme.scss`). The rest are
+custom properties in `frontend/src/styles.css`: `up` = `--app-gain`, `down` = `--app-loss`, `upBg` / `downBg` =
+`--app-gain-container` / `--app-loss-container`, `--app-sheet`, `--app-scrim` and the analyst scale `--app-rec-*`. The glow
+is the `app-glow` utility (dark theme only). Tailwind exposes the same colours (`bg-surface-container`, `text-gain`,
+`bg-sheet`, `bg-scrim`, …).
 
 ## Accessibility notes
 
 - `muted` on `card` is 6.1:1 (dark) and 5.2:1 (light); on `card2` 5.3:1 (dark) and 4.7:1 (light). All pass AA.
+- The canvas's light `accent` (`#0B8FCB`), `up` (`#12932A`) and `down` (`#D63A3F`) failed AA (white on accent 3.6:1,
+  up on card 3.6:1, down on card 4.2:1), so the light values above are darker: white on accent 5.3:1, up on card 5.0:1,
+  down on card 5.2:1. Dark values pass as designed.
 - Check layouts at 360 px in Czech; the longest labels (e.g. "Tržní kapitalizace") still fit on one line.

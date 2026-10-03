@@ -14,19 +14,19 @@ const SCALE = [
     key: 'strongBuy',
     label: $localize`:Analyst rating:Strong buy`,
     color: 'var(--app-rec-strong-buy)',
-    text: '#fff',
+    text: 'light-dark(#fff, #05210b)',
   },
   {
     key: 'buy',
     label: $localize`:Analyst rating:Buy`,
     color: 'var(--app-rec-buy)',
-    text: '#10230f',
+    text: 'var(--mat-sys-on-surface)',
   },
   {
     key: 'hold',
     label: $localize`:Analyst rating:Hold`,
     color: 'var(--app-rec-hold)',
-    text: '#2a2000',
+    text: '#1a1404',
   },
   {
     key: 'sell',
@@ -38,7 +38,7 @@ const SCALE = [
     key: 'strongSell',
     label: $localize`:Analyst rating:Strong sell`,
     color: 'var(--app-rec-strong-sell)',
-    text: '#fff',
+    text: 'light-dark(#fff, #2a0606)',
   },
 ] as const;
 

@@ -32,7 +32,11 @@
                 "output": "assets"
               }
             ],
-            "styles": ["src/material-theme.scss", "src/styles.css"]
+            "styles": [
+              "node_modules/@fontsource-variable/manrope/index.css",
+              "src/material-theme.scss",
+              "src/styles.css"
+            ]
           },
           "configurations": {
             "production": {

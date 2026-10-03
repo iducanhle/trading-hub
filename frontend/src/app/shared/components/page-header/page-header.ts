@@ -5,7 +5,7 @@ import { NavigationService } from '../../../core/services/navigation.service';
 import { Icon } from '../../icon/icon';
 
 /**
- * Sticky top app bar below the status bar (safe area): back button, or the burger menu button below `lg`, title, projected actions
+ * Sticky top app bar below the status bar (safe area): back button or the burger menu button, title, projected actions
  * (`[actions]`) and anything else projected below the bar (tabs, filters).
  */
 @Component({
@@ -30,7 +30,6 @@ import { Icon } from '../../icon/icon';
           <button
             matIconButton
             type="button"
-            class="lg:hidden"
             aria-label="Open menu"
             i18n-aria-label
             (click)="menu.show()"

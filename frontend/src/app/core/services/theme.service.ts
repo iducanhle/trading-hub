@@ -4,8 +4,8 @@ import { ThemePreference } from '../models/user-data';
 /** Also read by the boot script in src/index.html, which applies the theme before Angular starts (no flash). */
 export const THEME_STORAGE_KEY = 'et.theme';
 
-/** Browser UI colour (`<meta name="theme-color">`): Material's surface colour of each theme. Keep in sync with index.html. */
-export const THEME_COLORS = { light: '#faf9fd', dark: '#121316' } as const;
+/** Browser UI colour (`<meta name="theme-color">`): the page background (`bg` token) of each theme. Keep in sync with index.html. */
+export const THEME_COLORS = { light: '#ffffff', dark: '#04080c' } as const;
 
 function readPreference(): ThemePreference {
   try {

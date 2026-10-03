@@ -271,7 +271,7 @@ import { T212Settings } from './t212-settings';
           </div>
           <div>
             <dt class="text-xs text-on-surface-variant" i18n>Icons</dt>
-            <dd i18n>Material Symbols by Google (Apache 2.0).</dd>
+            <dd i18n>Lucide (ISC).</dd>
           </div>
         </dl>
         <p

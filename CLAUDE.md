@@ -50,9 +50,11 @@ Backend (run in `backend/`; `./mvnw` in Bash, `mvnw.cmd` in PowerShell):
 - **Never invent data.** Missing values are `null` from the API and `—` in the UI (known gaps: EU revenue estimates,
   unknown report times, small-cap estimates; see DATA-SOURCES.md).
 - Frontend: `resource`/`rxResource`/`httpResource` are fine (stable in v22). Use reactive forms (not Signal Forms).
-  Icons are inline SVG paths in `shared/icon/icon-paths.ts` (`npm run generate:icons`), not an icon font. Firestore
+  Icons are inline Lucide SVG paths in `shared/icon/icon-paths.ts` (`npm run generate:icons`), not an icon font. Firestore
   and the Material snack bar load lazily, so don't import them eagerly. `inject()` goes before the first `await` in guards.
-- Tailwind is for layout around Material, not for restyling Material components. Theme = `light-dark()` tokens.
+- Design: `docs/DESIGN-TOKENS.md` (redesign in progress, see PROGRESS-frontend). Material is themed only through tokens and
+  `mat.*-overrides` in `material-theme.scss`; Tailwind is for layout around it, not for restyling Material components.
+  Theme = `light-dark()` tokens (`--mat-sys-*`, `--app-*`). Font Manrope (self-hosted), no shadows.
 - Backend: provider API keys go only in headers, never in URLs or exception messages. A Finnhub `403` means "try the
   next provider", not "not found". Request paths for followed stocks never call providers (stored data only).
 - New mock data must match the contract shape. Mock dates shift by whole weeks to the current week at runtime.

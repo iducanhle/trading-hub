@@ -39,26 +39,35 @@
   --color-gain-container: var(--app-gain-container);
   --color-loss-container: var(--app-loss-container);
   --color-neutral-mark: var(--app-neutral-mark);
+  --color-sheet: var(--app-sheet);
+  --color-scrim: var(--app-scrim);
 }
 
 @theme {
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans:
+    'Manrope Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
 }
 
 @layer base {
   :root {
-    /* Gains and losses, tuned for at least 4.5:1 contrast on the surfaces of both themes. */
-    --app-gain: light-dark(#0f7b3a, #5fd68f);
-    --app-loss: light-dark(#c42b25, #ff8e86);
-    --app-gain-container: light-dark(#dcf5e4, #10361f);
-    --app-loss-container: light-dark(#fde2df, #45140f);
-    --app-neutral-mark: light-dark(#8a8f98, #8f949d);
+    /*
+     * Design tokens Material has no slot for (docs/DESIGN-TOKENS.md). The Material ones live in material-theme.scss.
+     * Gains (up) and losses (down) keep at least 4.5:1 contrast on the page and on cards in both themes.
+     */
+    --app-gain: light-dark(#0b7a22, #4ade63);
+    --app-loss: light-dark(#c02f36, #ff5e5b);
+    --app-gain-container: light-dark(rgba(11, 122, 34, 0.11), rgba(74, 222, 99, 0.13));
+    --app-loss-container: light-dark(rgba(192, 47, 54, 0.11), rgba(255, 94, 91, 0.14));
+    --app-neutral-mark: light-dark(#5e6773, #8d9aa6);
+    --app-sheet: light-dark(#ffffff, #0b151e);
+    --app-scrim: light-dark(rgba(10, 13, 18, 0.38), rgba(0, 0, 0, 0.62));
     /* Analyst recommendation scale, strong buy → strong sell. */
-    --app-rec-strong-buy: light-dark(#0b6b35, #3fbf73);
-    --app-rec-buy: light-dark(#5aa469, #8fd6a0);
-    --app-rec-hold: light-dark(#d4a72c, #e5c663);
-    --app-rec-sell: light-dark(#e07b39, #f2a36f);
-    --app-rec-strong-sell: light-dark(#b3261e, #ff8a80);
+    --app-rec-strong-buy: light-dark(#0b7a22, #4ade63);
+    --app-rec-buy: light-dark(#a7ddb1, #2c6b3a);
+    --app-rec-hold: #e8b931;
+    --app-rec-sell: #f08a4b;
+    --app-rec-strong-sell: light-dark(#c02f36, #ff5e5b);
   }
 
   html {
@@ -72,6 +81,8 @@
     background: var(--mat-sys-surface);
     color: var(--mat-sys-on-surface);
     font-family: var(--font-sans);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
     /* No browser pull-to-refresh or scroll chaining: the app has its own pull-to-refresh. */
     overscroll-behavior-y: none;
   }
@@ -79,6 +90,19 @@
   :focus-visible {
     outline: 2px solid var(--mat-sys-primary);
     outline-offset: 2px;
+  }
+}
+
+/* Dark theme only: a blue glow at the top of the page that scrolls away with the content. */
+@utility app-glow {
+  html.dark & {
+    background-image: radial-gradient(
+      140% 600px at 85% -4%,
+      #0e3b54 0%,
+      #071520 40%,
+      transparent 72%
+    );
+    background-repeat: no-repeat;
   }
 }
 

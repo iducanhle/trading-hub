@@ -17,8 +17,8 @@ interface Tab {
 }
 
 /**
- * The signed-in app: a burger menu drawer on phones (opened from the page headers), a navigation rail from `lg` up,
- * and an offline banner. Starting it starts the user's live data (settings, follows).
+ * The signed-in app: a burger menu drawer at every width (opened from the page headers) and an offline banner.
+ * Starting it starts the user's live data (settings, follows).
  */
 @Component({
   selector: 'app-shell',
@@ -35,57 +35,24 @@ interface Tab {
     @if (!online()) {
       <div
         role="status"
-        class="sticky top-0 z-40 flex items-center justify-center gap-2 bg-inverse-surface px-4 pt-safe pb-1.5 text-center text-xs text-inverse-on-surface lg:ml-24"
+        class="sticky top-0 z-40 flex items-center justify-center gap-2 bg-inverse-surface px-4 pt-safe pb-1.5 text-center text-xs text-inverse-on-surface"
       >
         <app-icon name="cloud_off" [size]="16" />
         <ng-container i18n>You're offline. Showing saved data.</ng-container>
       </div>
     }
 
-    <main #main tabindex="-1" class="min-h-dvh outline-none lg:pl-24">
+    <main #main tabindex="-1" class="min-h-dvh outline-none">
       <router-outlet />
     </main>
 
-    <nav
-      aria-label="Main"
-      i18n-aria-label="Main navigation"
-      class="fixed inset-y-0 left-0 z-30 hidden w-24 border-r border-outline-variant bg-surface-container pt-safe lg:block"
-    >
-      <ul class="flex h-full flex-col justify-start gap-2 pt-4">
-        <li class="mb-4 flex justify-center" aria-hidden="true">
-          <img src="icons/icon.svg" alt="" width="40" height="40" class="rounded-xl" />
-        </li>
-        @for (tab of tabs; track tab.path) {
-          @let active = activeTab() === tab.path;
-          <li class="flex">
-            <a
-              [routerLink]="tab.path"
-              [attr.aria-current]="active ? 'page' : null"
-              class="flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium"
-              [class.text-on-surface]="active"
-              [class.text-on-surface-variant]="!active"
-            >
-              <span
-                class="flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200"
-                [class.bg-secondary-container]="active"
-                [class.text-on-secondary-container]="active"
-              >
-                <app-icon [name]="active ? tab.activeIcon : tab.icon" />
-              </span>
-              {{ tab.label }}
-            </a>
-          </li>
-        }
-      </ul>
-    </nav>
-
     @if (menu.open()) {
-      <div class="fixed inset-0 z-50 lg:hidden">
+      <div class="fixed inset-0 z-50">
         <button
           type="button"
           tabindex="-1"
           aria-hidden="true"
-          class="absolute inset-0 bg-scrim/32"
+          class="absolute inset-0 bg-scrim"
           (click)="menu.hide()"
         ></button>
         <nav
@@ -93,11 +60,11 @@ interface Tab {
           aria-modal="true"
           aria-label="Main"
           i18n-aria-label="Main navigation"
-          class="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-surface-container pt-safe pb-safe shadow-xl"
+          class="app-glow absolute inset-y-0 left-0 flex w-77 max-w-[85vw] flex-col rounded-r-[28px] border-r border-outline-variant bg-surface pt-safe pb-safe"
         >
-          <div class="flex h-14 items-center gap-2 pr-2 pl-4">
-            <img src="icons/icon.svg" alt="" width="32" height="32" class="rounded-lg" />
-            <span class="flex-1 text-lg font-semibold tracking-tight">Tradiqo</span>
+          <div class="flex h-16 items-center gap-2.5 pr-3 pl-5">
+            <img src="icons/icon.svg" alt="" width="36" height="36" class="rounded-[11px]" />
+            <span class="flex-1 text-xl font-extrabold">Tradiqo</span>
             <button
               #closeButton
               matIconButton
@@ -109,19 +76,21 @@ interface Tab {
               <app-icon name="close" />
             </button>
           </div>
-          <ul class="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+          <ul class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
             @for (tab of tabs; track tab.path) {
               @let active = activeTab() === tab.path;
               <li>
                 <a
                   [routerLink]="tab.path"
                   [attr.aria-current]="active ? 'page' : null"
-                  class="flex h-14 items-center gap-3 rounded-full px-4 text-sm font-medium"
+                  class="flex h-13 items-center gap-4 rounded-2xl px-4 text-base font-semibold text-on-surface"
                   [class.bg-secondary-container]="active"
-                  [class.text-on-secondary-container]="active"
-                  [class.text-on-surface-variant]="!active"
                 >
-                  <app-icon [name]="active ? tab.activeIcon : tab.icon" />
+                  <app-icon
+                    [name]="active ? tab.activeIcon : tab.icon"
+                    [class.text-primary]="active"
+                    [class.text-on-surface-variant]="!active"
+                  />
                   {{ tab.label }}
                 </a>
               </li>
@@ -141,7 +110,7 @@ export class Shell {
     ),
     { initialValue: this.router.url },
   );
-  private readonly closeButton = viewChild<ElementRef<HTMLElement>>('closeButton');
+  private readonly closeButton = viewChild('closeButton', { read: ElementRef });
 
   protected readonly menu = inject(MenuService);
   protected readonly online = inject(OnlineService).online;
@@ -152,7 +121,7 @@ export class Shell {
       path: '/calendar',
       label: $localize`Calendar`,
       icon: 'calendar_month',
-      activeIcon: 'calendar_month-fill',
+      activeIcon: 'calendar_month',
     },
     {
       path: '/events',
@@ -164,13 +133,13 @@ export class Shell {
       path: '/portfolio',
       label: $localize`:Bottom navigation tab:Portfolio`,
       icon: 'account_balance_wallet',
-      activeIcon: 'account_balance_wallet-fill',
+      activeIcon: 'account_balance_wallet',
     },
     {
       path: '/settings',
       label: $localize`Settings`,
       icon: 'settings',
-      activeIcon: 'settings-fill',
+      activeIcon: 'settings',
     },
   ];
 

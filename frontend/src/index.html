@@ -10,7 +10,7 @@
       content="Earnings dates, results and price reactions for the stocks you follow."
     />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#faf9fd" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -33,12 +33,12 @@
           root.style.colorScheme = dark ? 'dark' : 'light';
           document
             .querySelector('meta[name="theme-color"]')
-            .setAttribute('content', dark ? '#121316' : '#faf9fd');
+            .setAttribute('content', dark ? '#04080c' : '#ffffff');
         } catch (e) {}
       })();
     </script>
   </head>
-  <body>
+  <body class="app-glow">
     <app-root></app-root>
     <noscript>Earnings Tracker needs JavaScript.</noscript>
   </body>
