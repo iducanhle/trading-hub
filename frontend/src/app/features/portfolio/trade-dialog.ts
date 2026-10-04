@@ -1,9 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { RouterLink } from '@angular/router';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { T212Trade } from '../../core/models/contract';
-import { DIALOG_CONFIG, Dialog } from '../../shared/components/dialog/dialog';
+import { Dialog } from '../../shared/components/dialog/dialog';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
@@ -11,7 +9,6 @@ import { DateTimePipe, NumberPipe, PricePipe, QuantityPipe } from '../../shared/
 import { Pnl } from './pnl';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import { PortfolioPeriod, displayTicker } from './portfolio-model';
-import { PositionDialog, PositionDialogData } from './position-dialog';
 
 export interface TradeDialogData {
   trade: T212Trade;
@@ -32,8 +29,6 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
 @Component({
   selector: 'app-trade-dialog',
   imports: [
-    RouterLink,
-    MatButton,
     Dialog,
     StockLogo,
     HeroAmount,
@@ -92,26 +87,10 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
           {{ t.orderType ? orderLabels[t.orderType] : '—' }}
         </div>
       </dl>
-
-      <button matButton="tonal" dialogActions type="button" (click)="openPosition()" i18n>
-        Whole position
-      </button>
-      @if (t.symbol) {
-        <a
-          matButton="filled"
-          dialogActions
-          [routerLink]="['/stock', t.symbol]"
-          (click)="close()"
-          i18n
-          >Stock detail</a
-        >
-      }
     </app-dialog>
   `,
 })
 export class TradeDialog {
-  private readonly ref = inject(MatDialogRef<TradeDialog>);
-  private readonly dialog = inject(MatDialog);
   protected readonly data = inject<TradeDialogData>(MAT_DIALOG_DATA);
 
   protected readonly orderLabels = ORDER_LABELS;
@@ -135,15 +114,4 @@ export class TradeDialog {
     return cost > 0 ? Math.round((result / cost) * 10000) / 100 : null;
   });
 
-  protected openPosition(): void {
-    this.close();
-    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      ...DIALOG_CONFIG,
-      data: { t212Ticker: this.data.trade.t212Ticker, period: this.data.period },
-    });
-  }
-
-  protected close(): void {
-    this.ref.close();
-  }
 }

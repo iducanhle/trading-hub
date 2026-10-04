@@ -1,7 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
-import { RouterLink } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
@@ -34,8 +32,6 @@ export interface PositionDialogData {
 @Component({
   selector: 'app-position-dialog',
   imports: [
-    MatButton,
-    RouterLink,
     Dialog,
     ErrorState,
     Skeleton,
@@ -134,12 +130,6 @@ export interface PositionDialogData {
           </div>
         }
       }
-
-      @if (symbol(); as symbol) {
-        <a matButton="filled" dialogActions [routerLink]="['/stock', symbol]" (click)="close()" i18n
-          >Stock detail</a
-        >
-      }
     </app-dialog>
   `,
 })
@@ -149,11 +139,6 @@ export class PositionDialog {
   protected readonly data = inject<PositionDialogData>(MAT_DIALOG_DATA);
 
   protected readonly tradesOpen = signal(false);
-
-  /** The stock page exists only for instruments with a known symbol. */
-  protected readonly symbol = computed(() =>
-    this.detail.hasValue() ? this.detail.value().instrument.symbol : null,
-  );
 
   protected readonly detail = rxResource({
     params: () => this.data.t212Ticker,

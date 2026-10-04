@@ -213,19 +213,6 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                 <span class="min-w-0 flex-1">
                   <span class="block truncate app-row-title">{{ item.name }}</span>
                   <span class="mt-0.5 flex min-w-0 items-center gap-1.5">
-                    @if (item.status === 'OPEN') {
-                      <span
-                        class="shrink-0 app-tag bg-primary-container text-on-primary-container"
-                        i18n="Position status|Shares still held"
-                        >Open</span
-                      >
-                    } @else {
-                      <span
-                        class="shrink-0 app-tag bg-surface-container-high text-on-surface-variant"
-                        i18n="Position status|Shares fully sold"
-                        >Closed</span
-                      >
-                    }
                     <span class="truncate app-row-meta">
                       {{ ticker(item) }}
                       @if (item.status === 'OPEN') {

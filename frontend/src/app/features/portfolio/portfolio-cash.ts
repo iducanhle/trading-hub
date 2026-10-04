@@ -2,6 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
+import { T212Dividend } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
@@ -20,7 +21,7 @@ import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { transactionLabel } from './portfolio-labels';
 import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-model';
-import { PositionDialog, PositionDialogData } from './position-dialog';
+import { DividendDialog, DividendDialogData } from './dividend-dialog';
 import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /** Portfolio → Dividends & cash: dividends with their total, or (switch) deposits, withdrawals, fees and interest. */
@@ -90,7 +91,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                 <li>
                   <button
                     type="button"
-                    (click)="openPosition(x.t212Ticker)"
+                    (click)="openDividend(x, d.accountCurrency)"
                     class="w-[calc(100%+1rem)] text-left -mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-2.5 hover:bg-surface-container-high"
                   >
                     <span
@@ -199,9 +200,9 @@ export class PortfolioCash {
     stream: ({ params }) => this.api.t212Transactions(params.query),
   });
 
-  protected openPosition(t212Ticker: string): void {
-    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker, period: this.period() },
+  protected openDividend(dividend: T212Dividend, currency: string | null): void {
+    this.dialog.open<DividendDialog, DividendDialogData>(DividendDialog, {
+      data: { dividend, currency },
       ...DIALOG_CONFIG,
     });
   }
