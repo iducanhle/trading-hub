@@ -75,10 +75,11 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
           </div>
         } @else if (!view()) {
           <div aria-hidden="true">
-            <app-skeleton class="mt-4 mb-3 h-4 w-24" />
+            <app-skeleton shape="card" class="mt-2 block h-52 rounded-[22px]" />
+            <app-skeleton class="mt-6 mb-2 h-4 w-24" />
             @for (i of [1, 2, 3, 4]; track i) {
-              <div class="flex h-20 items-center gap-3">
-                <app-skeleton class="size-12 rounded-[14px]" />
+              <div class="flex h-[76px] items-center gap-3.5 px-1">
+                <app-skeleton class="size-10 rounded-xl" />
                 <div class="flex-1 space-y-2">
                   <app-skeleton class="h-4 w-24" /><app-skeleton class="h-3 w-40" />
                 </div>
@@ -100,63 +101,68 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             </a>
           </app-empty-state>
         } @else {
+          <!-- Same building blocks as Portfolio: a summary card on top, then labelled plain lists. -->
           @if (next(); as n) {
             <a
               [routerLink]="['/stock', n.event.symbol]"
-              class="-mx-2 block rounded-[22px] px-2 py-1 hover:bg-surface-container"
+              class="app-card mt-2 block transition-colors hover:bg-surface-container-high"
             >
-              <span class="app-label block" i18n>Next earnings</span>
-              <span class="mt-2 flex items-center gap-3">
-                <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="40" />
-                <span class="min-w-0">
-                  <span class="block truncate text-base font-bold">{{ n.event.symbol }}</span>
-                  <span
-                    class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                    >{{ n.event.name }}</span
-                  >
-                </span>
+              <span class="flex items-center justify-between gap-3">
+                <span class="app-label" i18n>Next earnings</span>
+                <span
+                  class="shrink-0 rounded-full bg-primary-container px-2.5 py-1 text-[11px] font-extrabold text-on-primary-container"
+                  >{{ n.event.time | reportTime }}</span
+                >
               </span>
               <span
-                class="mt-3 block text-[32px] leading-tight font-light tracking-[-.02em] text-primary"
+                class="mt-2 block text-[34px] leading-[1.05] font-light tracking-[-.02em] text-primary"
                 >{{ n.event.date | relativeDay }}</span
               >
-              <span class="mt-1 block text-[15px] font-semibold"
-                >{{ n.event.date | appDate: 'day' }} · {{ n.event.time | reportTime }}</span
-              >
+              <span class="mt-1 block text-[15px] font-semibold text-on-surface-variant">{{
+                n.event.date | appDate: 'day'
+              }}</span>
+              <span class="mt-4 flex items-center gap-3 border-t border-outline-variant pt-3.5">
+                <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="36" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-[15px] font-medium">{{ n.event.name }}</span>
+                  <span class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
+                    >{{ n.event.symbol }} ·
+                    <ng-container i18n
+                      >EPS est. {{ n.event.epsEstimate | price: n.event.currency }}</ng-container
+                    ></span
+                  >
+                </span>
+                <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
+              </span>
             </a>
           }
-          <a
-            routerLink="/search"
-            class="mt-5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-[15px] text-on-surface-variant hover:text-on-surface"
-          >
-            <app-icon name="search" [size]="20" />
-            <ng-container i18n>Add a stock to follow</ng-container>
-          </a>
           @for (group of view()!.groups; track group.title) {
-            <section class="app-card mt-3.5 pb-1.5" [attr.aria-label]="group.title">
-              <h2 class="app-label">{{ group.title }} · {{ group.events.length }}</h2>
+            <section class="mt-6" [attr.aria-label]="group.title">
+              <h2 class="app-label px-1">{{ group.title }} · {{ group.events.length }}</h2>
               <ul class="mt-1">
                 @for (e of group.events; track e.symbol) {
                   <li class="flex items-center">
                     <a
                       [routerLink]="['/stock', e.symbol]"
-                      class="-mx-2 flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-2 py-3.5 hover:bg-surface-container-high"
+                      class="flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-1 py-3 hover:bg-surface-container"
                     >
-                      <app-stock-logo [symbol]="e.symbol" [logoUrl]="e.logoUrl" [size]="48" />
+                      <app-stock-logo [symbol]="e.symbol" [logoUrl]="e.logoUrl" [size]="40" />
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate text-base font-semibold">{{ e.symbol }}</span>
+                        <span class="block truncate text-[15px] font-medium">{{ e.name }}</span>
                         <span
                           class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                          >{{ e.name }} · {{ e.time | reportTime }}</span
+                          >{{ e.symbol }} · {{ e.time | reportTime }}</span
                         >
-                        <span class="block truncate text-xs font-semibold text-on-surface-variant">
+                        <span
+                          class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
+                        >
                           <ng-container i18n
                             >EPS est. {{ e.epsEstimate | price: e.currency }}</ng-container
                           >
                         </span>
                       </span>
                       <span class="shrink-0 text-right">
-                        <span class="block text-base font-semibold">{{
+                        <span class="block text-[15px] font-semibold">{{
                           e.date | appDate: 'day'
                         }}</span>
                         <span class="mt-0.5 block text-[12.5px] font-bold text-primary">{{
@@ -167,13 +173,13 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                     <button
                       matIconButton
                       type="button"
-                      class="-mr-3 text-on-surface-variant"
+                      class="-mr-2 shrink-0 text-on-surface-variant"
                       [matMenuTriggerFor]="rowMenu"
                       [matMenuTriggerData]="{ symbol: e.symbol }"
                       aria-label="More actions for {{ e.symbol }}"
                       i18n-aria-label
                     >
-                      <app-icon name="more_vert" />
+                      <app-icon name="more_vert" [size]="20" />
                     </button>
                   </li>
                 }
@@ -181,8 +187,8 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             </section>
           }
           @if (view()!.noDate.length) {
-            <section class="app-card mt-3.5 pb-1.5" aria-label="No date announced" i18n-aria-label>
-              <h2 class="app-label">
+            <section class="mt-6" aria-label="No date announced" i18n-aria-label>
+              <h2 class="app-label px-1">
                 <ng-container i18n>No date announced</ng-container> · {{ view()!.noDate.length }}
               </h2>
               <ul class="mt-1">
@@ -190,27 +196,27 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                   <li class="flex items-center">
                     <a
                       [routerLink]="['/stock', s.symbol]"
-                      class="-mx-2 flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-2 py-3.5 hover:bg-surface-container-high"
+                      class="flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-1 py-3 hover:bg-surface-container"
                     >
-                      <app-stock-logo [symbol]="s.symbol" [logoUrl]="s.logoUrl" [size]="48" />
+                      <app-stock-logo [symbol]="s.symbol" [logoUrl]="s.logoUrl" [size]="40" />
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate text-base font-semibold">{{ s.symbol }}</span>
+                        <span class="block truncate text-[15px] font-medium">{{ s.name }}</span>
                         <span
                           class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                          >{{ s.name }}</span
+                          >{{ s.symbol }}</span
                         >
                       </span>
                     </a>
                     <button
                       matIconButton
                       type="button"
-                      class="-mr-3 text-on-surface-variant"
+                      class="-mr-2 shrink-0 text-on-surface-variant"
                       [matMenuTriggerFor]="rowMenu"
                       [matMenuTriggerData]="{ symbol: s.symbol }"
                       aria-label="More actions for {{ s.symbol }}"
                       i18n-aria-label
                     >
-                      <app-icon name="more_vert" />
+                      <app-icon name="more_vert" [size]="20" />
                     </button>
                   </li>
                 }
