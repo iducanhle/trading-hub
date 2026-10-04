@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
@@ -14,6 +15,7 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
 import { DateTimePipe } from '../../shared/pipes/format.pipes';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { openT212Guide } from './t212-guide';
 
 /**
  * Settings → Trading 212: connect with an API key (sent once to the backend, stored there encrypted, never kept
@@ -156,30 +158,19 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       } @else {
         <p class="text-sm" i18n>
           Connect your Trading 212 account to see your trades and how much you made or lost on each
-          stock. The app only reads your account; it can't trade.
+          stock.
         </p>
-        <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-on-surface-variant">
-          <li i18n>In the Trading 212 app: ☰ → Settings → API (Beta) → Generate API key.</li>
-          <li i18n>
-            Permissions: turn on account data, portfolio, history (orders, dividends, transactions)
-            and metadata. Leave orders and pies off.
-          </li>
-          <li>
-            @if (status()?.serverIpHint; as ip) {
-              <ng-container i18n
-                >IP access: choose "Restrict access to trusted IPs" and enter
-                <span class="font-mono text-on-surface">{{ ip }}</span
-                >, the server's address.</ng-container
-              >
-            } @else {
-              <ng-container i18n
-                >IP access: restricting the key to the server's IP address is
-                recommended.</ng-container
-              >
-            }
-          </li>
-          <li i18n>Copy the key and the secret here. The secret is shown only once.</li>
-        </ol>
+        <p class="mt-3 flex gap-2 rounded-2xl bg-gain-container p-3 text-sm text-on-surface">
+          <app-icon name="shield" [size]="18" class="shrink-0 text-gain" />
+          <ng-container i18n
+            >Read-only: Tradiqo can see your account, but it can never trade or move
+            money.</ng-container
+          >
+        </p>
+        <button matButton="tonal" type="button" class="mt-3" (click)="openGuide()">
+          <app-icon matButtonIcon name="info" [size]="18" />
+          <ng-container i18n>How do I get a key?</ng-container>
+        </button>
 
         <form class="mt-4 flex flex-col gap-1" (submit)="$event.preventDefault(); connect()">
           <app-segmented
@@ -274,6 +265,7 @@ export class T212Settings {
   protected readonly t212 = inject(T212Service);
   private readonly notifier = inject(NotifierService);
   private readonly dialog = inject(MatDialog);
+  private readonly sheet = inject(MatBottomSheet);
 
   protected readonly status = this.t212.status;
   protected readonly environment = signal<T212Environment>('LIVE');
@@ -295,6 +287,10 @@ export class T212Settings {
 
   constructor() {
     void this.t212.load();
+  }
+
+  protected openGuide(): void {
+    openT212Guide(this.sheet, this.status()?.serverIpHint ?? null);
   }
 
   protected async connect(): Promise<void> {
@@ -380,7 +376,7 @@ function connectError(error: unknown): string {
       const permissions = /permissions: ([^.]+)\./.exec(e.message)?.[1];
       return permissions
         ? $localize`The key is missing these permissions: ${permissions}:permissions:. Generate a new key with them.`
-        : $localize`The key is missing a permission the app needs. Generate a new key with the permissions above.`;
+        : $localize`The key is missing a permission the app needs. Generate a new key with the permissions from the guide.`;
     }
     case 'BAD_REQUEST':
       return $localize`Check the key and the secret: they look incomplete.`;

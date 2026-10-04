@@ -42,6 +42,8 @@ const ICONS = {
   keyboard_arrow_down: 'chevron-down',
   link_off: 'unlink',
   lock: 'lock',
+  content_copy: 'copy',
+  shield: 'shield-check',
   logout: 'log-out',
   menu: 'menu',
   mail: 'mail',
