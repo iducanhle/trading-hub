@@ -227,7 +227,7 @@ type T212Pie = {
 };
 type T212AllocationItem = {           // one instrument held now, inside and outside pies together
   t212Ticker: string; symbol: string | null; name: string; logoUrl: string | null;
-  value: number; weightPct: number /* of total */; dayChangePct: number | null /* today's price change */;
+  value: number; weightPct: number /* of total */;
 };
 type T212Holding = { kind: "PIE"; pie: T212Pie; position: null } | { kind: "POSITION"; pie: null; position: T212HoldingPosition };
 
@@ -259,6 +259,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/t212/summary?from=&to=&tz=` | `T212Summary` | |
 | `GET /api/t212/holdings` | `{ accountCurrency, items: T212Holding[] /* largest value first */, piesAvailable: boolean, asOf, stale }` | Open positions as Trading 212 lists them: each pie is one item |
 | `GET /api/t212/allocation` | `{ accountCurrency, total: number, items: T212AllocationItem[] /* largest value first */, asOf, stale }` | Open positions as shares of their value |
+| `GET /api/t212/allocation/day-changes` | `{ changes: Record<string /* t212Ticker */, number /* percent */>, asOf, stale }` | Today's price change of the largest open positions |
 | `GET /api/t212/instruments?from=&to=&tz=&status=OPEN\|CLOSED\|ALL` | `{ from, to, tz, accountCurrency, items: T212Instrument[], asOf, stale }` | Sorted by `totalPnl` desc |
 | `GET /api/t212/instruments/{t212Ticker}` | `{ accountCurrency, instrument: T212Instrument /* all time */, trades: (T212Trade & { positionAfter: number })[], dividends: T212Dividend[], asOf, stale }` | Both lists newest first. 404 `NOT_FOUND` if the caller never held it |
 | `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker`, or several comma-separated (max 50) |
@@ -349,7 +350,8 @@ Every endpoint acts on the caller's own account only; there is no way to address
   - `totalPnl` = `realizedPnl` + `dividends` − `fees` (+ `unrealizedPnl` for all time). `interest`, deposits and withdrawals are not part of it.
   - `totalPnlPct` (all time only) = `totalPnl` ÷ the total value of all buys × 100.
   - `rateOfReturnPct` (all time only) = Trading 212's "Rate of return": the money-weighted rate of return (internal rate of return) of every `DEPOSIT` and `WITHDRAW` against `totalValue` now, as one rate over the time since the first deposit (not annualized). Trading 212 does not publish its exact formula, so it can differ from the app by about a percentage point. `null` without deposits or without a live `totalValue`.
-- **`GET /allocation`:** `total` is the sum of the open positions' live values (cash excluded). Only the 24 largest positions carry `dayChangePct` (today's price change of the mapped symbol's quote, in percent, cached 60 s); the rest, unmapped instruments and failed quotes have `null`.
+- **`GET /allocation`:** `total` is the sum of the open positions' live values (cash excluded). Live positions only, no quotes, so it answers as fast as `/holdings`.
+- **`GET /allocation/day-changes`:** today's price change of the 24 largest positions (the mapped symbol's quote, in percent, cached 60 s on the server). Unmapped instruments, smaller positions and failed quotes are left out of `changes`. It can take tens of seconds while quotes are uncached (Finnhub allows about one call a second), which is why it is separate; the frontend caches it for 45 s.
 - **`GET /instruments`:** all time lists every instrument ever traded or held; a period lists the instruments with a trade or dividend in it. `status` (default `ALL`) filters by the current state. `bought`/`sold`/`realizedPnl`/`dividends`/`fees`/`tradeCount` are for the period; quantity, prices, value and unrealized P/L are as of now.
 - **`GET /holdings`:** a position partly in a pie appears twice: its pie part inside the pie, the rest as its own item (quantity, value and result pro rata). Pie values and results are Trading 212's own (pie average price); outside pies the result is the position's unrealized P/L, `pnlPct` = that ÷ its cost. Pies come from Trading 212's deprecated pie endpoints (`pies:read`), reused for 5 minutes; when they fail, `piesAvailable: false` and all pie parts form one pie with `id` and `name` `null`. No pies at all: only `POSITION` items.
 - **`{t212Ticker}` in paths** is case-sensitive (`SAPd_EQ`). `positionAfter` is the number of shares held right after that trade.
@@ -378,3 +380,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-03 | Prices: `interval=1m` for `1D` and `1W`. Additive. |
 | 2026-10-03 | Added `GET /api/t212/allocation` with `T212AllocationItem` (additive). |
 | 2026-10-03 | `T212Summary.rateOfReturnPct`: money-weighted rate of return, all time only. Additive. |
+| 2026-10-04 | `T212AllocationItem.dayChangePct` removed; today's change moved to the new `GET /api/t212/allocation/day-changes`, so `/allocation` no longer waits for quotes. Breaking (frontend and backend change together). |

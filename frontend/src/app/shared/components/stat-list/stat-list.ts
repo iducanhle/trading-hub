@@ -60,7 +60,7 @@ export class StatList {
   `,
   host: {
     class: 'flex items-baseline justify-between gap-3',
-    '[class]': `total()
+    '[class]': `total() || divider()
       ? 'border-t border-outline-variant pt-[11px] pb-[9px]'
       : sub() ? 'pb-[9px]' : 'py-[9px]'`,
   },
@@ -70,4 +70,6 @@ export class StatRow {
   readonly term = input<TermId | null>(null);
   readonly total = input(false, { transform: booleanAttribute });
   readonly sub = input(false, { transform: booleanAttribute });
+  /** A divider above the row without making it bold, for a sum that is not the last line. */
+  readonly divider = input(false, { transform: booleanAttribute });
 }

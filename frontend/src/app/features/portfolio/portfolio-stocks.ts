@@ -115,7 +115,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
       <p
         class="mt-3 flex h-[42px] items-center justify-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] leading-tight font-medium text-on-surface-variant"
       >
-        <app-icon name="info" [size]="16" class="shrink-0" />
+        <app-icon name="info" [size]="14" class="shrink-0" />
         <ng-container i18n="Shown instead of the unrealized switch outside the All period"
           >Switch to All to see the unrealized profit/loss</ng-container
         >

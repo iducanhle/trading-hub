@@ -152,6 +152,13 @@
   font-weight: 700;
   line-height: 1.4;
 }
+/* Day heading above a group of rows (trades): quieter than a card title. */
+@utility app-title-day {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--mat-sys-on-surface-variant);
+}
 
 /* The design's small uppercase label above a value ("HODNOTA ÚČTU", "ODHAD EPS"). Never a section heading. */
 @utility app-label {

@@ -25,6 +25,7 @@ import {
   T212DividendsResponse,
   T212HoldingsResponse,
   T212AllocationResponse,
+  T212DayChangesResponse,
   T212InstrumentDetail,
   T212InstrumentsResponse,
   T212PositionStatus,
@@ -40,7 +41,13 @@ import { ResponseCache } from './response-cache';
 
 const MINUTE = 60_000;
 /** Overview (price) data is cached for 60 s, everything else for 5 min. */
-const TTL = { overview: MINUTE, default: 5 * MINUTE, t212: MINUTE, t212Status: 10_000 } as const;
+const TTL = {
+  overview: MINUTE,
+  default: 5 * MINUTE,
+  t212: MINUTE,
+  t212DayChanges: 45_000,
+  t212Status: 10_000,
+} as const;
 
 export interface LoadOptions {
   /** Skip the session cache (pull-to-refresh, Retry). */
@@ -211,6 +218,16 @@ export class ApiService {
 
   t212Allocation(options?: LoadOptions): Observable<T212AllocationResponse> {
     return this.get<T212AllocationResponse>('/t212/allocation', {}, options, TTL.t212);
+  }
+
+  /** Slow when the server has to fetch the quotes, so it is cached separately and shorter (45 s). */
+  t212DayChanges(options?: LoadOptions): Observable<T212DayChangesResponse> {
+    return this.get<T212DayChangesResponse>(
+      '/t212/allocation/day-changes',
+      {},
+      options,
+      TTL.t212DayChanges,
+    );
   }
 
   t212Instruments(

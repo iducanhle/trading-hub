@@ -12,6 +12,7 @@ import {
   T212HoldingsResponse,
   T212AllocationItem,
   T212AllocationResponse,
+  T212DayChangesResponse,
   T212InstrumentDetail,
   T212InstrumentRef,
   T212InstrumentsResponse,
@@ -141,7 +142,7 @@ export class MockT212 {
       case 'holdings':
         return this.holdings();
       case 'allocation':
-        return this.allocation();
+        return id === 'day-changes' ? this.dayChanges() : this.allocation();
       case 'instruments':
         return id ? this.instrument(id) : this.instruments(period, params.get('status') ?? 'ALL');
       case 'trades':
@@ -385,14 +386,13 @@ export class MockT212 {
     };
   }
 
-  /** Every position once; today's change is a stable made-up number per ticker (null when unmapped). */
+  /** Every position once, largest first. */
   private async allocation(): Promise<T212AllocationResponse> {
     const data = await this.fixture();
     const total = data.positions.reduce((sum, p) => sum + p.value, 0);
     const items = data.positions
       .map((p): T212AllocationItem => {
         const info = data.instruments.find((i) => i.t212Ticker === p.t212Ticker);
-        const seed = [...p.t212Ticker].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000, 7);
         return {
           t212Ticker: p.t212Ticker,
           symbol: info?.symbol ?? null,
@@ -400,7 +400,6 @@ export class MockT212 {
           logoUrl: info?.logoUrl ?? null,
           value: round(p.value),
           weightPct: round((p.value / total) * 100),
-          dayChangePct: info?.symbol ? round(seed / 100 - 5) : null,
         };
       })
       .sort((a, b) => b.value - a.value);
@@ -411,6 +410,18 @@ export class MockT212 {
       asOf: new Date().toISOString(),
       stale: false,
     };
+  }
+
+  /** Today's change is a stable made-up number per mapped ticker; the 24 largest only. */
+  private async dayChanges(): Promise<T212DayChangesResponse> {
+    const data = await this.fixture();
+    const changes: Record<string, number> = {};
+    for (const p of [...data.positions].sort((a, b) => b.value - a.value).slice(0, 24)) {
+      if (!data.instruments.find((i) => i.t212Ticker === p.t212Ticker)?.symbol) continue;
+      const seed = [...p.t212Ticker].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000, 7);
+      changes[p.t212Ticker] = round(seed / 100 - 5);
+    }
+    return { changes, asOf: new Date().toISOString(), stale: false };
   }
 
   private async instrument(ticker: string): Promise<T212InstrumentDetail> {

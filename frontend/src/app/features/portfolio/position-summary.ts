@@ -82,8 +82,8 @@ export class PositionHeader {
 
 /**
  * The profit/loss of one instrument and the position (docs/REDESIGN-SPEC.md): the basis pill (pills projected with
- * `summaryPill` come first), the total as a hero figure, then the figures it adds up from as rows ending in the total,
- * and the position facts as plain rows. Extra rows (`<div appStatRow>`) can be projected after the standard ones.
+ * `summaryPill` come first), the total (including fees) as a hero figure, then the figures it adds up
+ * from as rows ending in their sum before fees and the total including fees, and the position facts as plain rows. Extra rows (`<div appStatRow>`) can be projected after the standard ones.
  */
 @Component({
   selector: 'app-position-summary',
@@ -127,11 +127,20 @@ export class PositionHeader {
       <div appStatRow label="Dividends" i18n-label>
         <app-pnl [value]="i.dividends" [currency]="currency()" />
       </div>
-      <!-- Not deducted in Realized; the total subtracts them. -->
-      <div appStatRow label="Fees" i18n-label>
+      <div appStatRow divider label="Total" i18n-label="Sum of the rows above">
+        <app-pnl [value]="totalBeforeFees()" [currency]="currency()" />
+      </div>
+      <div appStatRow label="Fees" i18n-label="Trading fees and taxes">
         <app-pnl [value]="-i.fees" [currency]="currency()" />
       </div>
-      <div appStatRow total label="Total" i18n-label="Sum of the rows above">
+      <!-- Fees are not deducted in Realized; the hero total is this one. -->
+      <div
+        appStatRow
+        total
+        label="Total inc. fees"
+        i18n-label="Total after fees and taxes"
+        term="includingFees"
+      >
         <app-pnl [value]="total()" [currency]="currency()" />
       </div>
     </dl>
@@ -160,6 +169,9 @@ export class PositionSummary {
 
   protected readonly total = computed(() =>
     instrumentPnl(this.instrument(), this.includeUnrealized()),
+  );
+  protected readonly totalBeforeFees = computed(
+    () => Math.round((this.total() + this.instrument().fees) * 100) / 100,
   );
   /** All time only; hidden rather than shown as a dash in a shorter period. */
   protected readonly pct = computed(() =>

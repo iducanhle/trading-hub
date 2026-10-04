@@ -56,7 +56,7 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
       >
 
       <p class="app-label" i18n="Total value of a trade">Value</p>
-      <app-hero-amount class="mt-1" size="md" [value]="t.value" [currency]="data.currency" />
+      <app-hero-amount class="mt-1" size="md" [value]="valueBeforeFees()" [currency]="data.currency" />
       <dl appStatList card class="mt-3.5">
         <div appStatRow label="Shares" i18n-label>{{ t.quantity | qty }}</div>
         <div appStatRow label="Price per share" i18n-label>
@@ -65,7 +65,9 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         @if (t.fxRate !== null && t.fxRate !== 1) {
           <div appStatRow label="Exchange rate" i18n-label>{{ t.fxRate | num: 4 }}</div>
         }
-        <div appStatRow label="Fees" i18n-label>{{ t.fees + t.taxes | price: data.currency }}</div>
+        <div appStatRow label="Including fees" i18n-label term="includingFees">
+          {{ t.value | price: data.currency }}
+        </div>
         @if (t.realizedPnl !== null) {
           <div
             appStatRow
@@ -98,6 +100,16 @@ export class TradeDialog {
   protected readonly label = computed(() => {
     const t = this.data.trade;
     return t.kind === 'TRADE' ? SIDE_LABELS[t.side] : KIND_LABELS[t.kind];
+  });
+
+  /**
+   * The value before fees and taxes. Trading 212's value includes them: paid on top of a buy, deducted from a sell.
+   * The "Including fees" row shows the value as it is.
+   */
+  protected readonly valueBeforeFees = computed(() => {
+    const t = this.data.trade;
+    const fees = t.fees + t.taxes;
+    return Math.round((t.side === 'BUY' ? t.value - fees : t.value + fees) * 100) / 100;
   });
 
   /** A sell before its fees and taxes, as in the realized figure on the position detail. */

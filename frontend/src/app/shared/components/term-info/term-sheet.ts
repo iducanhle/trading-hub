@@ -16,7 +16,7 @@ import { TERMS, TermId } from './terms';
         <span
           class="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary"
           aria-hidden="true"
-          ><app-icon name="info" [size]="20"
+          ><app-icon name="info" [size]="16"
         /></span>
         <h2 class="app-title-modal">{{ term().title }}</h2>
       </div>

@@ -12,7 +12,7 @@ import {
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { Subscription } from 'rxjs';
+import { EMPTY as NEVER_MORE, Subscription, expand, of, reduce } from 'rxjs';
 import { ApiService, T212TradesQuery } from '../../core/api/api.service';
 import { T212Side, T212Trade } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
@@ -20,6 +20,7 @@ import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
+import { TermInfo } from '../../shared/components/term-info/term-info';
 import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
@@ -99,6 +100,7 @@ const EMPTY: ListState = {
     FilterButton,
     Segmented,
     Segment,
+    TermInfo,
   ],
   template: `
     <div class="flex items-center gap-2.5">
@@ -169,10 +171,60 @@ const EMPTY: ListState = {
           }
         </app-empty-state>
       } @else {
+        @let s = summary();
+        <section class="app-card mb-4 grid grid-cols-2 gap-x-3.5">
+          <div class="flex min-w-0 flex-col gap-2">
+            <h2 class="app-label" i18n>Bought</h2>
+            @if (filters().side === 'SELL') {
+              <span class="text-[15px] font-semibold">—</span>
+            } @else if (s) {
+              <span class="text-[15px] font-semibold">{{ s.bought | price: s.currency }}</span>
+            } @else {
+              <app-skeleton class="h-[22px] w-20" />
+            }
+          </div>
+          <div class="flex min-w-0 flex-col gap-2 border-l border-outline-variant pl-3.5">
+            <h2 class="app-label" i18n>Sold</h2>
+            @if (filters().side === 'BUY') {
+              <span class="text-[15px] font-semibold">—</span>
+            } @else if (s) {
+              <span class="text-[15px] font-semibold">{{ s.sold | price: s.currency }}</span>
+            } @else {
+              <app-skeleton class="h-[22px] w-20" />
+            }
+          </div>
+        </section>
+        <section class="app-card mb-4 grid grid-cols-2 gap-x-3.5">
+          <div class="flex min-w-0 flex-col gap-2">
+            <h2 class="app-label" i18n>Realized</h2>
+            @if (filters().side === 'BUY') {
+              <span class="text-[15px] font-semibold">—</span>
+            } @else if (s) {
+              <span class="text-[15px] font-semibold" [class]="tone(s.realized)">{{
+                s.realized | money: s.currency
+              }}</span>
+            } @else {
+              <app-skeleton class="h-[22px] w-20" />
+            }
+          </div>
+          <div class="flex min-w-0 flex-col gap-2 border-l border-outline-variant pl-3.5">
+            <h2 class="app-label">
+              <ng-container i18n>Including fees</ng-container>
+              <app-term-info class="ml-0.5 inline-flex align-middle" term="includingFees" />
+            </h2>
+            @if (s) {
+              <span class="text-[15px] font-semibold" [class]="tone(s.afterFees)">{{
+                s.afterFees | money: s.currency
+              }}</span>
+            } @else {
+              <app-skeleton class="h-[22px] w-20" />
+            }
+          </div>
+        </section>
         @for (day of days(); track day.date) {
           <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
             @if (day.date) {
-              <h3 class="app-title-card">
+              <h3 class="app-title-day">
                 {{ day.date | appDate: 'long' }}
               </h3>
             }
@@ -367,6 +419,47 @@ export class PortfolioTrades {
       ticker: tickers?.join(',') || null,
       limit: this.sort() === 'newest' ? PAGE_SIZE : 100,
     };
+  });
+
+  /** Every trade matching the filters (all pages), for the figures above the list. */
+  private readonly allTrades = rxResource({
+    params: () => ({
+      query: this.query(),
+      version: this.version() + this.t212.dataVersion() + this.localVersion(),
+    }),
+    stream: ({ params }) => {
+      const query = params.query;
+      if (!query) return of(null);
+      const page = (cursor: string | null) =>
+        this.api.t212Trades({ ...query, limit: 100, cursor });
+      return page(null).pipe(
+        expand((p) => (p.nextCursor ? page(p.nextCursor) : NEVER_MORE)),
+        reduce(
+          (acc, p) => ({ items: [...acc.items, ...p.items], currency: p.accountCurrency }),
+          { items: [] as T212Trade[], currency: null as string | null },
+        ),
+      );
+    },
+  });
+
+  /** Totals of the filtered trades; null until all of them are loaded. */
+  protected readonly summary = computed(() => {
+    const all = this.allTrades.hasValue() ? this.allTrades.value() : null;
+    if (!all || all.items.length === 0) return null;
+    let bought = 0;
+    let sold = 0;
+    let realized = 0;
+    let fees = 0;
+    for (const t of all.items) {
+      if (t.kind === 'TRADE') {
+        if (t.side === 'BUY') bought += t.value;
+        else sold += t.value;
+      }
+      realized += t.realizedPnl ?? 0;
+      fees += t.fees + t.taxes;
+    }
+    const afterFees = Math.round((realized - fees) * 100) / 100;
+    return { bought, sold, realized, afterFees, currency: all.currency };
   });
 
   /** Sorts other than newest first wait for the whole period. */

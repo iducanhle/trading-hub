@@ -16,11 +16,11 @@ import { TERMS, TermId } from './terms';
     @if (enabled()) {
       <button
         type="button"
-        class="relative inline-flex size-5 items-center justify-center rounded-full align-[-0.2em] text-on-surface-variant after:absolute after:-inset-3 hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+        class="relative inline-flex size-4 items-center justify-center rounded-full align-[-0.15em] text-on-surface-variant after:absolute after:-inset-3 hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
         [attr.aria-label]="label()"
         (click)="open($event)"
       >
-        <app-icon name="info" [size]="16" />
+        <app-icon name="info" [size]="13" />
       </button>
     }
   `,

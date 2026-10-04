@@ -201,31 +201,55 @@ public class T212PortfolioService {
 
     /**
      * Open positions as shares of their total value, largest first, each instrument once (inside and outside pies
-     * together). The largest {@link #QUOTED_POSITIONS} carry today's price change from the quote of their mapped
-     * symbol; the others, unmapped ones and failed quotes have none.
+     * together). Live positions only, no quotes: today's change comes from {@link #dayChanges(String)}.
      */
     public T212Dtos.Allocation allocation(String uid) {
         Context ctx = context(uid, true);
-        Map<String, T212Live.Position> live = ctx.positions() == null ? Map.of() : ctx.positions();
-        List<T212Live.Position> held = live.values().stream()
-                .filter(p -> p.value() != null && p.value() > 0)
-                .sorted(Comparator.comparingDouble(T212Live.Position::value).reversed()).toList();
+        List<T212Live.Position> held = held(ctx);
         double total = held.stream().mapToDouble(T212Live.Position::value).sum();
         Map<String, String> logos = logos(ctx, held.stream().map(T212Live.Position::ticker).toList());
-        List<String> quoted = held.stream().limit(QUOTED_POSITIONS).map(p -> info(ctx, p.ticker()).symbol())
-                .filter(Objects::nonNull).distinct().toList();
-        Map<String, Double> changes = dayChanges(quoted);
         List<T212Dtos.AllocationItem> items = held.stream().map(p -> {
             T212InstrumentInfo info = info(ctx, p.ticker());
             return new T212Dtos.AllocationItem(p.ticker(), info.symbol(), name(info), logos.get(p.ticker()),
-                    round(p.value()), round(p.value() / total * 100),
-                    info.symbol() == null ? null : changes.get(info.symbol()));
+                    round(p.value()), round(p.value() / total * 100));
         }).toList();
         return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
     }
 
+    /**
+     * Today's price change of the {@link #QUOTED_POSITIONS} largest open positions by Trading 212 ticker, from the
+     * quote of their mapped symbol; unmapped instruments and failed quotes are left out. Slow while the quotes are
+     * not cached (Finnhub allows about one call a second), which is why it is separate from {@link #allocation}.
+     */
+    public T212Dtos.DayChanges dayChanges(String uid) {
+        Context ctx = context(uid, true);
+        Map<String, String> symbols = new java.util.LinkedHashMap<>();
+        for (T212Live.Position position : held(ctx).stream().limit(QUOTED_POSITIONS).toList()) {
+            String symbol = info(ctx, position.ticker()).symbol();
+            if (symbol != null) {
+                symbols.put(position.ticker(), symbol);
+            }
+        }
+        Map<String, Double> bySymbol = quoteChanges(symbols.values().stream().distinct().toList());
+        Map<String, Double> changes = new java.util.LinkedHashMap<>();
+        symbols.forEach((ticker, symbol) -> {
+            Double change = bySymbol.get(symbol);
+            if (change != null) {
+                changes.put(ticker, change);
+            }
+        });
+        return new T212Dtos.DayChanges(changes, ctx.asOf(), ctx.stale());
+    }
+
+    /** Live positions with a value, largest first. */
+    private static List<T212Live.Position> held(Context ctx) {
+        Map<String, T212Live.Position> live = ctx.positions() == null ? Map.of() : ctx.positions();
+        return live.values().stream().filter(p -> p.value() != null && p.value() > 0)
+                .sorted(Comparator.comparingDouble(T212Live.Position::value).reversed()).toList();
+    }
+
     /** Today's price change in percent by symbol, quotes fetched in parallel; a failed quote is left out. */
-    private Map<String, Double> dayChanges(List<String> symbols) {
+    private Map<String, Double> quoteChanges(List<String> symbols) {
         Map<String, Double> changes = new java.util.concurrent.ConcurrentHashMap<>();
         try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
             for (String symbol : symbols) {

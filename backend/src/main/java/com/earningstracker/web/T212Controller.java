@@ -110,6 +110,11 @@ public class T212Controller {
         return portfolio.allocation(user.uid());
     }
 
+    @GetMapping("/allocation/day-changes")
+    public T212Dtos.DayChanges dayChanges(@AuthenticationPrincipal AuthenticatedUser user) {
+        return portfolio.dayChanges(user.uid());
+    }
+
     @GetMapping("/instruments/{t212Ticker}")
     public T212Dtos.InstrumentDetail instrument(@AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable String t212Ticker) {

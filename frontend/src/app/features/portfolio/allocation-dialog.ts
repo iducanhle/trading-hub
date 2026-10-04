@@ -9,6 +9,8 @@ import { displayTicker } from './portfolio-model';
 
 export interface AllocationDialogData {
   items: T212AllocationItem[];
+  /** Today's change by `t212Ticker`, as far as loaded. */
+  changes: Record<string, number>;
 }
 
 /** Opened from the treemap's "…" tile: every open position with its share; closes with the one tapped. */
@@ -35,8 +37,8 @@ export interface AllocationDialogData {
                   >{{ ticker(item) }} · {{ share(item) }}</span
                 >
               </span>
-              <span class="shrink-0 text-[15px] font-semibold" [class]="tone(item.dayChangePct)">{{
-                item.dayChangePct | pct
+              <span class="shrink-0 text-[15px] font-semibold" [class]="tone(change(item))">{{
+                change(item) | pct
               }}</span>
             </button>
           </li>
@@ -48,6 +50,10 @@ export interface AllocationDialogData {
 export class AllocationDialog {
   protected readonly ref = inject<MatDialogRef<AllocationDialog, T212AllocationItem>>(MatDialogRef);
   protected readonly data = inject<AllocationDialogData>(MAT_DIALOG_DATA);
+
+  protected change(item: T212AllocationItem): number | null {
+    return this.data.changes[item.t212Ticker] ?? null;
+  }
 
   protected ticker(item: T212AllocationItem): string {
     return displayTicker(item);

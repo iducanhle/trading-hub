@@ -26,7 +26,8 @@ export type TermId =
   | 'totalPnl'
   | 'breakEven'
   | 'fxFees'
-  | 'accountFees';
+  | 'accountFees'
+  | 'includingFees';
 
 export interface Term {
   title: string;
@@ -197,6 +198,14 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:Mostly the 0.7% fee for deposits by card, Apple Pay or Google Pay. Deposits by bank transfer are free.`,
     ],
     example: $localize`:Term example:You deposit 30,000 CZK by card: Trading 212 charges 210 CZK.`,
+  },
+  includingFees: {
+    title: $localize`:Term title:Including fees`,
+    body: [
+      $localize`:Term text:The amount once the fees and taxes Trading 212 charges on trades are counted: on a buy what you paid with them, on a sell what you received after them, and for profit/loss what is left after they are deducted.`,
+      $localize`:Term text:Trading 212 charges no commission, so this is mostly the 0.15% currency conversion fee.`,
+    ],
+    example: $localize`:Term example:Realized +$100 and $3 of fees on the trades: including fees, +$97.`,
   },
   unrealizedPnl: {
     title: $localize`:Term title:Unrealized profit/loss`,

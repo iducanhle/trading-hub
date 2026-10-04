@@ -3,6 +3,7 @@ package com.earningstracker.web.dto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import com.earningstracker.provider.t212.T212Environment;
 
@@ -57,13 +58,17 @@ public final class T212Dtos {
     public record Holding(String kind, Pie pie, HoldingPosition position) {
     }
 
-    /** One instrument held now (inside and outside pies together); {@code dayChangePct} is today's price change. */
+    /** One instrument held now (inside and outside pies together). */
     public record AllocationItem(String t212Ticker, String symbol, String name, String logoUrl, double value,
-            double weightPct, Double dayChangePct) {
+            double weightPct) {
     }
 
     public record Allocation(String accountCurrency, double total, List<AllocationItem> items, Instant asOf,
             boolean stale) {
+    }
+
+    /** Today's price change in percent by Trading 212 ticker; positions without one are left out. */
+    public record DayChanges(Map<String, Double> changes, Instant asOf, boolean stale) {
     }
 
     public record HoldingList(String accountCurrency, List<Holding> items, boolean piesAvailable, Instant asOf,

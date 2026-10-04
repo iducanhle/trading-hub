@@ -503,8 +503,6 @@ export interface T212AllocationItem {
   value: number;
   /** Share of all open positions' value, in percent. */
   weightPct: number;
-  /** Today's price change in percent; null beyond the 24 largest, unmapped or without a quote. */
-  dayChangePct: number | null;
 }
 
 export interface T212AllocationResponse {
@@ -512,6 +510,13 @@ export interface T212AllocationResponse {
   total: number;
   /** Largest value first. */
   items: T212AllocationItem[];
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212DayChangesResponse {
+  /** Today's price change in percent by `t212Ticker`; only the 24 largest positions, mapped and quoted. */
+  changes: Record<string, number>;
   asOf: string;
   stale: boolean;
 }

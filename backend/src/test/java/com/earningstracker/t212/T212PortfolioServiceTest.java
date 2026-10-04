@@ -8,9 +8,11 @@ import static com.earningstracker.provider.t212.T212TestSupport.API_KEY;
 import static com.earningstracker.provider.t212.T212TestSupport.API_SECRET;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -127,7 +129,7 @@ class T212PortfolioServiceTest {
     }
 
     @Test
-    void allocationGivesSharesAndTodaysChange() {
+    void allocationGivesSharesWithoutQuoting() {
         T212Dtos.Allocation a = portfolio.allocation(UID);
 
         assertThat(a.total()).isEqualTo(1564.0);
@@ -135,15 +137,20 @@ class T212PortfolioServiceTest {
             assertThat(item.t212Ticker()).isEqualTo("AAPL_US_EQ");
             assertThat(item.value()).isEqualTo(1564.0);
             assertThat(item.weightPct()).isEqualTo(100.0);
-            assertThat(item.dayChangePct()).isEqualTo(-1.16); // 170 after 172
         });
+        verifyNoInteractions(quotes);
     }
 
     @Test
-    void allocationWithoutAQuoteHasNoChange() {
+    void dayChangesGiveTodaysChangeByTicker() {
+        assertThat(portfolio.dayChanges(UID).changes()).containsExactly(entry("AAPL_US_EQ", -1.16)); // 170 after 172
+    }
+
+    @Test
+    void dayChangesLeaveOutAFailedQuote() {
         given(quotes.quote("AAPL")).willThrow(new IllegalStateException("down"));
 
-        assertThat(portfolio.allocation(UID).items().getFirst().dayChangePct()).isNull();
+        assertThat(portfolio.dayChanges(UID).changes()).isEmpty();
     }
 
     @Test

@@ -27,7 +27,7 @@ export interface DaySheetData {
         count()
       }}</span>
       @for (group of groups(); track group.time) {
-        <h3 class="pt-3 pb-1 app-title-card first-of-type:pt-0">
+        <h3 class="pt-3 pb-1 app-title-day first-of-type:pt-0">
           {{ group.time | reportTime }}
         </h3>
         <ul class="-mx-4">

@@ -82,7 +82,7 @@ interface Tile {
                     <button
                       type="button"
                       class="flex size-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[14px] px-1 text-center"
-                      [class]="tileClass(item.dayChangePct)"
+                      [class]="tileClass(change(item))"
                       [attr.aria-label]="tileLabel(item)"
                       (click)="open(item)"
                     >
@@ -100,8 +100,8 @@ interface Tile {
                         }}</span>
                       }
                       @if (t.fit === 'full' || t.fit === 'text') {
-                        <span class="text-[13px] font-medium" [class]="tone(item.dayChangePct)">{{
-                          item.dayChangePct | pct
+                        <span class="text-[13px] font-medium" [class]="tone(change(item))">{{
+                          change(item) | pct
                         }}</span>
                       }
                     </button>
@@ -141,6 +141,16 @@ export class PortfolioAllocation {
     stream: () => this.api.t212Allocation(),
   });
 
+  /**
+   * Today's change, loaded apart from the shares because the server may have to fetch quotes first: the treemap
+   * shows right away and colours in when this arrives. Cached for 45 s, so coming back within that shows the same
+   * values without a request.
+   */
+  private readonly dayChanges = rxResource({
+    params: () => ({ version: this.version() + this.t212.dataVersion() }),
+    stream: () => this.api.t212DayChanges(),
+  });
+
   protected readonly tiles = computed((): Tile[] => {
     if (!this.data.hasValue()) return [];
     const items = this.data.value().items.filter((i) => i.weightPct > 0);
@@ -176,8 +186,18 @@ export class PortfolioAllocation {
           },
           () => undefined,
         );
+        // Not forced: the 45 s cache has run out by the next minute's tick anyway.
+        firstValueFrom(this.api.t212DayChanges()).then(
+          (value) => this.dayChanges.set(value),
+          () => undefined,
+        );
       });
     });
+  }
+
+  /** Today's price change in percent; null while loading and for positions without one. */
+  protected change(item: T212AllocationItem): number | null {
+    return this.dayChanges.hasValue() ? (this.dayChanges.value().changes[item.t212Ticker] ?? null) : null;
   }
 
   protected ticker(item: T212AllocationItem): string {
@@ -206,9 +226,10 @@ export class PortfolioAllocation {
   protected tileLabel(item: T212AllocationItem): string {
     const ticker = this.ticker(item);
     const share = this.share(item);
-    if (item.dayChangePct === null)
+    const dayChange = this.change(item);
+    if (dayChange === null)
       return $localize`:Treemap tile; ticker, share of the portfolio:${ticker}:ticker:, ${share}:share: of the portfolio`;
-    const change = formatPercent(item.dayChangePct);
+    const change = formatPercent(dayChange);
     return $localize`:Treemap tile; ticker, share of the portfolio, today's change:${ticker}:ticker:, ${share}:share: of the portfolio, today ${change}:change:`;
   }
 
@@ -216,7 +237,10 @@ export class PortfolioAllocation {
     if (!this.data.hasValue()) return;
     this.dialog
       .open<AllocationDialog, AllocationDialogData, T212AllocationItem>(AllocationDialog, {
-        data: { items: this.data.value().items },
+        data: {
+          items: this.data.value().items,
+          changes: this.dayChanges.hasValue() ? this.dayChanges.value().changes : {},
+        },
         ...DIALOG_CONFIG,
       })
       .afterClosed()
