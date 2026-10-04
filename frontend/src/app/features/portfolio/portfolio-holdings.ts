@@ -62,30 +62,26 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
       @if (open()) {
         <div id="holdings-content">
           @if (accountValue() !== null) {
-            <div class="mt-3.5">
-              <div class="grid grid-cols-3 gap-2">
-                <div
-                  class="min-w-0 rounded-2xl px-2.5 py-2.5 text-center bg-surface-container-high"
-                >
-                  <p class="app-label" i18n>Account value</p>
-                  <p class="mt-1 truncate text-[13px] font-semibold">
-                    {{ accountValue() | price: currency() }}
-                  </p>
-                </div>
-                <div
-                  class="min-w-0 rounded-2xl px-2.5 py-2.5 text-center bg-surface-container-high"
-                >
+            <div class="mt-3.5 space-y-2">
+              <div class="rounded-2xl bg-surface-container-high px-3.5 py-3">
+                <p class="app-label" i18n>Account value</p>
+                <p class="mt-1 text-[22px] font-semibold leading-tight tabular-nums [overflow-wrap:anywhere]">
+                  {{ accountValue() | price: currency() }}
+                </p>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-2.5">
                   <p class="app-label" i18n="Money in the account that is not invested">Cash</p>
-                  <p class="mt-1 truncate text-[13px] font-semibold">
+                  <p class="mt-1 text-[13px] font-semibold tabular-nums [overflow-wrap:anywhere]">
                     {{ cash() | price: currency() }}
                   </p>
                 </div>
                 <div
-                  class="min-w-0 rounded-2xl px-2.5 py-2.5 text-center"
+                  class="min-w-0 rounded-2xl px-3.5 py-2.5"
                   [class]="unrealizedTile(unrealizedPnl())"
                 >
-                  <p class="app-label" i18n>unrealized profit</p>
-                  <p class="mt-1 truncate text-[13px] font-semibold">
+                  <p class="app-label" i18n="Unrealized profit or loss of open positions">Unrealized</p>
+                  <p class="mt-1 text-[13px] font-semibold tabular-nums [overflow-wrap:anywhere]">
                     {{ unrealizedPnl() | money: currency() }}
                   </p>
                 </div>

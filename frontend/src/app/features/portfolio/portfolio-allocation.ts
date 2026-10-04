@@ -19,6 +19,8 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
 
 /** Tiles drawn for the largest positions; the rest share one "…" tile that opens the full list. */
 const MAX_TILES = 9;
+/** Positions below this share go into the "…" tile instead of becoming an unreadable sliver. */
+const MIN_TILE_PCT = 2;
 /** The "…" tile never gets smaller than this share, so it stays tappable. */
 const MIN_OTHERS_PCT = 4;
 /** The treemap's box: about the width of a phone card, a little taller than wide. */
@@ -92,7 +94,7 @@ interface Tile {
                           class="mb-1"
                           [symbol]="ticker(item)"
                           [logoUrl]="item.logoUrl"
-                          [size]="28"
+                          [size]="24"
                         />
                       }
                       @if (t.fit !== 'none') {
@@ -155,13 +157,13 @@ export class PortfolioAllocation {
   protected readonly tiles = computed((): Tile[] => {
     if (!this.data.hasValue()) return [];
     const items = this.data.value().items.filter((i) => i.weightPct > 0);
-    const shown = items.slice(0, MAX_TILES);
-    const rest = items.slice(MAX_TILES).reduce((sum, i) => sum + i.weightPct, 0);
+    const shown = items.slice(0, MAX_TILES).filter((i) => i.weightPct >= MIN_TILE_PCT);
+    const rest = items.filter((i) => !shown.includes(i)).reduce((sum, i) => sum + i.weightPct, 0);
     const entries: { item: T212AllocationItem | null; weight: number }[] = shown.map((item) => ({
       item,
       weight: item.weightPct,
     }));
-    if (items.length > MAX_TILES)
+    if (shown.length < items.length)
       entries.push({ item: null, weight: Math.max(rest, MIN_OTHERS_PCT) });
     return squarify(entries, (e) => e.weight, BOX_W, BOX_H).map((r) => ({
       item: r.item.item,
@@ -269,7 +271,7 @@ export class PortfolioAllocation {
 
 /** How much of a tile's content fits, by its size in pixels at a typical phone width. */
 function fitOf(width: number, height: number): Tile['fit'] {
-  if (width >= 60 && height >= 88) return 'full';
+  if (width >= 60 && height >= 72) return 'full';
   if (width >= 52 && height >= 44) return 'text';
   if (width >= 40 && height >= 24) return 'ticker';
   return 'none';
