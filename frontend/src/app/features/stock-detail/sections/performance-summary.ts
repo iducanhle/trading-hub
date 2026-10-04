@@ -11,7 +11,7 @@ import { PERIOD_LABELS } from '../../../shared/utils/format';
   template: `
     <h2 class="sr-only" i18n>Performance</h2>
     <ul
-      class="no-scrollbar mt-3.5 flex gap-2.5 overflow-x-auto px-4"
+      class="no-scrollbar mt-5 flex gap-2.5 overflow-x-auto px-4"
       tabindex="0"
       aria-label="Performance"
       i18n-aria-label

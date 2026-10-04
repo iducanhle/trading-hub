@@ -11,7 +11,7 @@ let nextId = 0;
   selector: 'app-section',
   imports: [Icon],
   template: `
-    <section class="pt-5" [attr.aria-labelledby]="headingId">
+    <section class="pt-7" [attr.aria-labelledby]="headingId">
       @if (collapsible()) {
         <h2 class="m-0">
           <button
@@ -38,7 +38,7 @@ let nextId = 0;
         </h2>
       }
       @if (expanded() || !collapsible()) {
-        <div [id]="contentId" class="px-4 pt-1 pb-2">
+        <div [id]="contentId" class="px-4 pt-2 pb-2">
           <ng-content />
         </div>
       }

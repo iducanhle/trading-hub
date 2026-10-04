@@ -218,7 +218,7 @@ export class PortfolioCash {
 
   protected openPosition(t212Ticker: string): void {
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker },
+      data: { t212Ticker, period: this.period() },
       width: 'calc(100vw - 32px)',
       maxWidth: '32rem',
       autoFocus: 'dialog',

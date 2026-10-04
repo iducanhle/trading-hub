@@ -234,6 +234,19 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             </dd>
           </div>
           <div>
+            <dt class="app-label text-[11px]" i18n>Company logos</dt>
+            <dd>
+              <a
+                href="https://elbstream.com/logos"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary underline"
+                >Elbstream</a
+              >
+              (Parqet Logo API), Finnhub
+            </dd>
+          </div>
+          <div>
             <dt class="app-label text-[11px]" i18n>Icons</dt>
             <dd i18n>Lucide (ISC).</dd>
           </div>

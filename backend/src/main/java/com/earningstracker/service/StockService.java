@@ -26,6 +26,7 @@ import com.earningstracker.domain.PerformanceCalculator;
 import com.earningstracker.domain.ReactionCalculator;
 import com.earningstracker.market.EarningsReport;
 import com.earningstracker.market.IntradayBar;
+import com.earningstracker.market.Logos;
 import com.earningstracker.market.Exchange;
 import com.earningstracker.market.PriceBar;
 import com.earningstracker.market.Quote;
@@ -90,7 +91,7 @@ public class StockService {
         EarningsView view = view(symbol, reports, barList);
         StockProfile p = profile.value();
         return new Dtos.StockOverview(symbol, p.name(), p.exchange().displayName(), Symbols.region(symbol),
-                p.currency(), p.logoUrl(), p.sector(), p.industry(), p.website(),
+                p.currency(), Logos.orParqet(symbol, p.logoUrl()), p.sector(), p.industry(), p.website(),
                 new Dtos.QuoteInfo(q.price(), q.change(), q.changePercent(), q.previousClose(), q.asOf()),
                 new Dtos.KeyStats(p.marketCap(), p.marketCapUsd(), p.week52High(), p.week52Low(), p.peRatio(),
                         p.epsTtm(), p.avgVolume()),

@@ -24,7 +24,7 @@ import { fiscalLabel } from '../../../shared/utils/format';
     CompactPipe,
   ],
   template: `
-    <section class="mx-4 mt-4" aria-labelledby="upcoming-title">
+    <section class="mx-4 mt-5" aria-labelledby="upcoming-title">
       @if (loading()) {
         <app-skeleton shape="card" class="block h-44 rounded-[22px]" />
       } @else if (event(); as e) {

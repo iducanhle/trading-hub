@@ -114,7 +114,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                       (click)="toggle(key(h))"
                     >
                       <span
-                        class="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-primary-container text-primary"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
                       >
                         <app-icon name="pie_chart" />
                       </span>
@@ -197,7 +197,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
         class="-mx-2 flex w-[calc(100%+16px)] items-center gap-3.5 rounded-2xl px-2 py-3.5 text-left hover:bg-surface-container-high"
         (click)="openPosition(p)"
       >
-        <app-stock-logo [symbol]="ticker(p)" [logoUrl]="p.logoUrl" [size]="48" />
+        <app-stock-logo [symbol]="ticker(p)" [logoUrl]="p.logoUrl" [size]="40" />
         <span class="min-w-0 flex-1">
           <span class="block truncate text-[15px] font-medium">{{ p.name }}</span>
           <span

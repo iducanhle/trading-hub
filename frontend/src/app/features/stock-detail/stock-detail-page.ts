@@ -7,6 +7,7 @@ import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { FollowTarget } from '../../core/services/follows.service';
 import { APP_NAME } from '../../core/services/app-title.strategy';
+import { MenuService } from '../../core/services/menu.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { RecentSearchesService } from '../../core/services/recent-searches.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
@@ -43,8 +44,8 @@ const TABS: { id: StockTab; label: string }[] = [
 ];
 
 /**
- * `/stock/:symbol` (deep-linkable; the digest email links here). Price, chart and then tabs: Overview (upcoming
- * earnings, your position, key stats, performance, peers, notes), Results (performance history, earnings stats and
+ * `/stock/:symbol` (deep-linkable; the digest email links here). Price, chart, your position and then tabs: Overview
+ * (upcoming earnings, key stats, performance, peers, notes), Results (performance history, earnings stats and
  * history), Analysts and News. The tab is in the URL (`?tab=results`). The overview response fills the header and
  * the overview tab at once; the other sections load as they are shown, each with its own loading and error state.
  */
@@ -90,11 +91,12 @@ const TABS: { id: StockTab; label: string }[] = [
           <button
             matIconButton
             type="button"
-            aria-label="Back"
+            class="lg:hidden!"
+            aria-label="Open menu"
             i18n-aria-label
-            (click)="navigation.back('/search')"
+            (click)="menu.show()"
           >
-            <app-icon name="arrow_back" [size]="26" />
+            <app-icon name="menu" [size]="26" />
           </button>
           <div class="flex min-w-0 flex-1 justify-center">
             <h1
@@ -149,7 +151,16 @@ const TABS: { id: StockTab; label: string }[] = [
             <app-error-state [error]="overview.error()" (retry)="overview.reload()" />
           </div>
         } @else {
-          <section class="px-5 pt-5" aria-label="Price" i18n-aria-label>
+          <section class="px-5 pt-3" aria-label="Price" i18n-aria-label>
+            <!-- Back sits here, at the top of the content; the header's left corner holds the menu. -->
+            <button
+              type="button"
+              class="-ml-2 mb-2.5 inline-flex h-8 items-center gap-1 rounded-full pr-3 pl-1.5 text-[13px] font-bold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+              (click)="navigation.back('/followed')"
+            >
+              <app-icon name="arrow_back" [size]="18" />
+              <ng-container i18n>Back</ng-container>
+            </button>
             <!-- The change sits right below, above the chart (it follows the chart's range). -->
             <div class="flex min-w-0 items-center gap-2">
               <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="24" />
@@ -187,17 +198,21 @@ const TABS: { id: StockTab; label: string }[] = [
           </section>
 
           @defer (on viewport; prefetch on idle) {
-            <app-price-chart class="mt-3 block" />
+            <app-price-chart class="mt-4 block" />
           } @placeholder {
-            <div class="mt-3 h-[27rem] sm:h-[29rem] lg:h-[33rem]"></div>
+            <div class="mt-4 h-[27rem] sm:h-[29rem] lg:h-[33rem]"></div>
           }
+
+          <!-- Above the tabs, so the user's profit stays in view whichever tab is open. -->
+          <app-your-position class="block" />
 
           <div
             role="tablist"
             aria-label="Stock sections"
             i18n-aria-label
-            class="no-scrollbar sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 mt-3 flex gap-6 overflow-x-auto border-b border-outline-variant bg-surface/90 px-5 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
+            class="no-scrollbar sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 mt-5 flex justify-center-safe gap-1 overflow-x-auto border-b border-outline-variant bg-surface/90 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
           >
+            <!-- Same pills as the portfolio sub-tabs. -->
             @for (t of tabs; track t.id) {
               <button
                 type="button"
@@ -206,11 +221,11 @@ const TABS: { id: StockTab; label: string }[] = [
                 aria-controls="stock-tab-panel"
                 [attr.aria-selected]="activeTab() === t.id"
                 [tabIndex]="activeTab() === t.id ? 0 : -1"
-                class="shrink-0 border-b-[3px] py-3 text-base font-semibold whitespace-nowrap"
+                class="shrink-0 rounded-full px-3.5 py-[9px] text-[13px] font-bold whitespace-nowrap transition-colors"
                 [class]="
                   activeTab() === t.id
-                    ? 'border-on-surface text-on-surface'
-                    : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                    ? 'bg-surface-container-high text-on-surface'
+                    : 'text-on-surface-variant hover:text-on-surface'
                 "
                 (click)="selectTab(t.id)"
                 (keydown)="onTabKey($event)"
@@ -223,7 +238,7 @@ const TABS: { id: StockTab; label: string }[] = [
           <div
             id="stock-tab-panel"
             role="tabpanel"
-            class="pt-1"
+            class="pt-2"
             [attr.aria-labelledby]="'stock-tab-' + activeTab()"
           >
             @switch (activeTab()) {
@@ -256,7 +271,6 @@ const TABS: { id: StockTab; label: string }[] = [
               }
               @default {
                 <app-upcoming-earnings [event]="stock()?.nextEarnings" [loading]="!stock()" />
-                <app-your-position />
                 <app-key-stats [overview]="stock()" />
                 <app-performance-summary [performance]="stock()?.performance" />
                 @defer (on viewport; prefetch on idle) {
@@ -284,6 +298,7 @@ export class StockDetailPage {
   protected readonly showNotes = false;
   protected readonly ctx = inject(StockContext);
   protected readonly navigation = inject(NavigationService);
+  protected readonly menu = inject(MenuService);
   private readonly api = inject(ApiService);
   private readonly recent = inject(RecentSearchesService);
   private readonly title = inject(Title);

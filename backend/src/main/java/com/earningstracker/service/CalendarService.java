@@ -137,9 +137,9 @@ public class CalendarService {
         return parsed.stream().map(CalendarService::withCleanLogo).toList();
     }
 
-    /** Stored days still carry logos from the retired ticker-based fallback. */
+    /** Stored days hold logos from retired fallbacks, and none for stocks without a provider logo. */
     private static Dtos.EarningsEvent withCleanLogo(Dtos.EarningsEvent e) {
-        String logo = Logos.clean(e.logoUrl());
+        String logo = Logos.orParqet(e.symbol(), e.logoUrl());
         return java.util.Objects.equals(logo, e.logoUrl()) ? e
                 : new Dtos.EarningsEvent(e.symbol(), e.name(), e.exchange(), e.region(), logo, e.date(), e.time(),
                         e.fiscalQuarter(), e.fiscalYear(), e.currency(), e.epsEstimate(), e.epsActual(),

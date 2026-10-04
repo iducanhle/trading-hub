@@ -1,7 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { MatOption, MatSelect } from '@angular/material/select';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { T212DetailTrade, T212Dividend, T212Side } from '../../core/models/contract';
 import { Icon } from '../../shared/icon/icon';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
@@ -61,46 +59,58 @@ export function applyView(items: readonly TimelineItem[], view: TimelineView): T
     });
 }
 
-/** Controls of the instrument page: all / buy / sell, and a sort dropdown (date by default) with its direction. */
+/**
+ * Controls of the instrument page: the projected heading with a sort menu (date by default) and its direction beside
+ * it, then all / buy / sell across the full width.
+ */
 @Component({
   selector: 'app-instrument-filters',
-  imports: [Segmented, Segment, MatFormField, MatLabel, MatSelect, MatOption, MatIconButton, Icon],
+  imports: [Segmented, Segment, MatMenu, MatMenuItem, MatMenuTrigger, Icon],
   template: `
-    <div class="flex flex-wrap items-center gap-3">
-      <app-segmented
-        aria-label="Trade side"
-        i18n-aria-label
-        [value]="side()"
-        (valueChange)="update({ side: $event === 'ALL' ? null : $event })"
+    <div class="flex items-center gap-2">
+      <div class="min-w-0 flex-1"><ng-content /></div>
+      <button
+        type="button"
+        class="inline-flex h-9 min-w-0 items-center gap-1 rounded-full bg-surface-container pr-2.5 pl-4 text-[13px] font-bold hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-primary"
+        [matMenuTriggerFor]="sortMenu"
+        [attr.aria-label]="sortLabel()"
       >
-        <app-segment value="ALL" i18n="All trades">All</app-segment>
-        <app-segment value="BUY" i18n="Trade direction|Kind of trade">Buy</app-segment>
-        <app-segment value="SELL" i18n="Trade direction|Kind of trade">Sell</app-segment>
-      </app-segmented>
-      <div class="ml-auto flex items-center gap-1">
-        <mat-form-field appearance="fill" subscriptSizing="dynamic" class="sort-field">
-          <mat-label i18n>Sort</mat-label>
-          <mat-select [value]="view().sort" (selectionChange)="update({ sort: $event.value })">
-            @for (key of keys; track key) {
-              <mat-option [value]="key">{{ labels[key] }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <button
-          matIconButton
-          type="button"
-          [attr.aria-label]="view().descending ? descendingLabel : ascendingLabel"
-          (click)="update({ descending: !view().descending })"
-        >
-          <app-icon name="swap_vert" [class.opacity-60]="view().descending" />
-        </button>
-      </div>
+        <span class="truncate">{{ labels[view().sort] }}</span>
+        <app-icon name="keyboard_arrow_down" [size]="18" class="shrink-0 text-on-surface-variant" />
+      </button>
+      <button
+        type="button"
+        class="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-primary"
+        [attr.aria-label]="view().descending ? descendingLabel : ascendingLabel"
+        (click)="update({ descending: !view().descending })"
+      >
+        <app-icon [name]="view().descending ? 'arrow_down' : 'arrow_up'" [size]="18" />
+      </button>
     </div>
-  `,
-  styles: `
-    .sort-field {
-      width: 10rem;
-    }
+    <app-segmented
+      class="mt-3"
+      stretch
+      aria-label="Trade side"
+      i18n-aria-label
+      [value]="side()"
+      (valueChange)="update({ side: $event === 'ALL' ? null : $event })"
+    >
+      <app-segment value="ALL" i18n="All trades">All</app-segment>
+      <app-segment value="BUY" i18n="Trade direction|Kind of trade">Buy</app-segment>
+      <app-segment value="SELL" i18n="Trade direction|Kind of trade">Sell</app-segment>
+    </app-segmented>
+    <mat-menu #sortMenu="matMenu" xPosition="before">
+      @for (key of keys; track key) {
+        <button mat-menu-item type="button" (click)="update({ sort: key })">
+          <span class="flex items-center justify-between gap-6">
+            {{ labels[key] }}
+            @if (key === view().sort) {
+              <app-icon name="check" [size]="18" class="text-primary" />
+            }
+          </span>
+        </button>
+      }
+    </mat-menu>
   `,
 })
 export class InstrumentFilters {
@@ -111,10 +121,28 @@ export class InstrumentFilters {
 
   protected readonly keys = SORT_KEYS;
   protected readonly labels = TIMELINE_SORT_LABELS;
+  protected readonly sortLabel = computed(
+    () => $localize`Sort by ${TIMELINE_SORT_LABELS[this.view().sort]}:sort:`,
+  );
   protected readonly descendingLabel = $localize`Descending, tap for ascending`;
   protected readonly ascendingLabel = $localize`Ascending, tap for descending`;
 
   protected update(patch: Partial<TimelineView>): void {
     this.viewChange.emit({ ...this.view(), ...patch });
   }
+}
+
+/** Trades and dividends together, newest first. */
+export function buildTimeline(
+  trades: readonly T212DetailTrade[],
+  dividends: readonly T212Dividend[],
+): TimelineItem[] {
+  return [
+    ...trades.map((trade): TimelineItem => ({ kind: 'trade', at: trade.executedAt, trade })),
+    ...dividends.map((dividend): TimelineItem => ({
+      kind: 'dividend',
+      at: dividend.paidAt,
+      dividend,
+    })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
 }

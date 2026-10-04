@@ -127,9 +127,15 @@ export function filterInstruments(
   );
 }
 
-/** Profit/loss of an instrument; without unrealized, only what is realized, dividends and fees. */
+/**
+ * Profit/loss of an instrument: realized + dividends − fees, plus the unrealized as of now when included. Built from
+ * the parts because `totalPnl` holds the unrealized only for all time (CONTRACT.md), so subtracting it in a shorter
+ * period would count it twice.
+ */
 export function instrumentPnl(i: T212Instrument, includeUnrealized: boolean): number {
-  return includeUnrealized ? i.totalPnl : i.totalPnl - (i.unrealizedPnl ?? 0);
+  const pnl =
+    i.realizedPnl + i.dividends - i.fees + (includeUnrealized ? (i.unrealizedPnl ?? 0) : 0);
+  return Math.round(pnl * 100) / 100;
 }
 
 /** All-time percentage of the money bought; null outside all time. */

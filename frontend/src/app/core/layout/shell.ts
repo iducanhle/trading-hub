@@ -4,9 +4,11 @@ import {
   computed,
   effect,
   inject,
+  signal,
   untracked,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconButton } from '@angular/material/button';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -40,12 +42,13 @@ interface Tab {
 }
 
 /**
- * The signed-in app: a burger menu drawer at every width (opened from the page headers) and an offline banner.
+ * The signed-in app: the navigation docked on the left on wide screens (1024 px and up), below that a burger menu
+ * drawer opened from the page headers; and an offline banner.
  * Starting it starts the user's live data (settings, follows).
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, MatIconButton, Icon, UserAvatar],
+  imports: [NgTemplateOutlet, RouterOutlet, RouterLink, MatIconButton, Icon, UserAvatar],
   host: { '(document:keydown.escape)': 'menu.hide()' },
   template: `
     <button
@@ -65,11 +68,102 @@ interface Tab {
       </div>
     }
 
-    <main #main tabindex="-1" class="min-h-dvh outline-none">
+    <main #main tabindex="-1" class="min-h-dvh outline-none" [class.pl-77]="wide()">
       <router-outlet />
     </main>
 
-    @if (menu.open()) {
+    <ng-template #navContent let-docked>
+      <div class="flex h-16 items-center gap-2.5 pr-3 pl-5">
+        <img src="icons/icon.svg" alt="" width="36" height="36" class="rounded-[11px]" />
+        <span class="flex-1 text-xl font-extrabold">Tradiqo</span>
+        @if (!docked) {
+          <button
+            #closeButton
+            matIconButton
+            type="button"
+            aria-label="Close menu"
+            i18n-aria-label
+            (click)="menu.hide()"
+          >
+            <app-icon name="close" />
+          </button>
+        }
+      </div>
+      @if (account(); as a) {
+        <a
+          routerLink="/portfolio"
+          class="mx-4 mt-2 mb-3 block rounded-[20px] bg-surface-container p-4"
+        >
+          <span
+            class="block text-xs font-bold tracking-[.05em] text-on-surface-variant uppercase"
+            i18n
+            >Account value</span
+          >
+          <span class="mt-1 block text-[22px] font-semibold">{{ a.value }}</span>
+          <span class="mt-0.5 block text-sm font-bold" [class]="a.tone">{{ a.pnl }}</span>
+        </a>
+      }
+      <ul class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+        @for (tab of tabs; track tab.path) {
+          @let active = activeTab() === tab.path;
+          <li>
+            <a
+              [routerLink]="tab.path"
+              [attr.aria-current]="active ? 'page' : null"
+              class="flex h-13 items-center gap-4 rounded-2xl px-4 text-base font-semibold text-on-surface"
+              [class.bg-secondary-container]="active"
+            >
+              <app-icon
+                [name]="active ? tab.activeIcon : tab.icon"
+                [class.text-primary]="active"
+                [class.text-on-surface-variant]="!active"
+              />
+              {{ tab.label }}
+              @if (tab.path === '/followed' && followedCount()) {
+                <span class="ml-auto text-[13px] font-bold text-on-surface-variant">{{
+                  followedCount()
+                }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+      <div class="mx-5 border-t border-outline-variant"></div>
+      <a
+        routerLink="/settings"
+        [attr.aria-current]="activeTab() === '/settings' ? 'page' : null"
+        class="mx-3 mt-2 flex h-13 items-center gap-4 rounded-2xl px-4 text-base font-semibold text-on-surface"
+        [class.bg-secondary-container]="activeTab() === '/settings'"
+      >
+        <app-icon
+          name="settings"
+          [class.text-primary]="activeTab() === '/settings'"
+          [class.text-on-surface-variant]="activeTab() !== '/settings'"
+        />
+        <ng-container i18n>Settings</ng-container>
+      </a>
+      @if (user(); as u) {
+        <div class="flex items-center gap-3 px-7 pt-3 pb-4">
+          <app-user-avatar [user]="u" [size]="36" />
+          <span class="min-w-0">
+            <span class="block truncate text-sm font-bold">{{ u.displayName || u.email }}</span>
+            <span class="block truncate text-xs font-semibold text-on-surface-variant">{{
+              provider()
+            }}</span>
+          </span>
+        </div>
+      }
+    </ng-template>
+
+    @if (wide()) {
+      <nav
+        aria-label="Main"
+        i18n-aria-label="Main navigation"
+        class="fixed inset-y-0 left-0 z-30 flex w-77 flex-col border-r border-outline-variant bg-surface pt-safe pb-safe"
+      >
+        <ng-container *ngTemplateOutlet="navContent; context: { $implicit: true }" />
+      </nav>
+    } @else if (menu.open()) {
       <div class="fixed inset-0 z-50">
         <button
           type="button"
@@ -85,84 +179,7 @@ interface Tab {
           i18n-aria-label="Main navigation"
           class="app-glow absolute inset-y-0 left-0 flex w-77 max-w-[85vw] flex-col rounded-r-[28px] border-r border-outline-variant bg-surface pt-safe pb-safe"
         >
-          <div class="flex h-16 items-center gap-2.5 pr-3 pl-5">
-            <img src="icons/icon.svg" alt="" width="36" height="36" class="rounded-[11px]" />
-            <span class="flex-1 text-xl font-extrabold">Tradiqo</span>
-            <button
-              #closeButton
-              matIconButton
-              type="button"
-              aria-label="Close menu"
-              i18n-aria-label
-              (click)="menu.hide()"
-            >
-              <app-icon name="close" />
-            </button>
-          </div>
-          @if (account(); as a) {
-            <a
-              routerLink="/portfolio"
-              class="mx-4 mt-2 mb-3 block rounded-[20px] bg-surface-container p-4"
-            >
-              <span
-                class="block text-xs font-bold tracking-[.05em] text-on-surface-variant uppercase"
-                i18n
-                >Account value</span
-              >
-              <span class="mt-1 block text-[22px] font-semibold">{{ a.value }}</span>
-              <span class="mt-0.5 block text-sm font-bold" [class]="a.tone">{{ a.pnl }}</span>
-            </a>
-          }
-          <ul class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-            @for (tab of tabs; track tab.path) {
-              @let active = activeTab() === tab.path;
-              <li>
-                <a
-                  [routerLink]="tab.path"
-                  [attr.aria-current]="active ? 'page' : null"
-                  class="flex h-13 items-center gap-4 rounded-2xl px-4 text-base font-semibold text-on-surface"
-                  [class.bg-secondary-container]="active"
-                >
-                  <app-icon
-                    [name]="active ? tab.activeIcon : tab.icon"
-                    [class.text-primary]="active"
-                    [class.text-on-surface-variant]="!active"
-                  />
-                  {{ tab.label }}
-                  @if (tab.path === '/followed' && followedCount()) {
-                    <span class="ml-auto text-[13px] font-bold text-on-surface-variant">{{
-                      followedCount()
-                    }}</span>
-                  }
-                </a>
-              </li>
-            }
-          </ul>
-          <div class="mx-5 border-t border-outline-variant"></div>
-          <a
-            routerLink="/settings"
-            [attr.aria-current]="activeTab() === '/settings' ? 'page' : null"
-            class="mx-3 mt-2 flex h-13 items-center gap-4 rounded-2xl px-4 text-base font-semibold text-on-surface"
-            [class.bg-secondary-container]="activeTab() === '/settings'"
-          >
-            <app-icon
-              name="settings"
-              [class.text-primary]="activeTab() === '/settings'"
-              [class.text-on-surface-variant]="activeTab() !== '/settings'"
-            />
-            <ng-container i18n>Settings</ng-container>
-          </a>
-          @if (user(); as u) {
-            <div class="flex items-center gap-3 px-7 pt-3 pb-4">
-              <app-user-avatar [user]="u" [size]="36" />
-              <span class="min-w-0">
-                <span class="block truncate text-sm font-bold">{{ u.displayName || u.email }}</span>
-                <span class="block truncate text-xs font-semibold text-on-surface-variant">{{
-                  provider()
-                }}</span>
-              </span>
-            </div>
-          }
+          <ng-container *ngTemplateOutlet="navContent; context: { $implicit: false }" />
         </nav>
       </div>
     }
@@ -180,6 +197,9 @@ export class Shell {
   private readonly closeButton = viewChild('closeButton', { read: ElementRef });
 
   protected readonly menu = inject(MenuService);
+  /** Wide screens (Tailwind `lg`) keep the navigation docked; the page headers hide the burger there. */
+  private readonly wideQuery = window.matchMedia('(min-width: 1024px)');
+  protected readonly wide = signal(this.wideQuery.matches);
   protected readonly online = inject(OnlineService).online;
   private readonly t212 = inject(T212Service);
   private readonly api = inject(ApiService);
@@ -191,7 +211,7 @@ export class Shell {
   /** Trading 212 account value and all-time result for the drawer's card, fetched while the drawer is open. */
   private readonly summary = rxResource({
     params: () =>
-      this.menu.open() && this.t212.connected()
+      (this.menu.open() || this.wide()) && this.t212.connected()
         ? { query: periodQuery(ALL_TIME), version: this.t212.dataVersion() }
         : undefined,
     stream: ({ params }) => this.api.t212Summary(params.query),
@@ -207,7 +227,6 @@ export class Shell {
     };
   });
   private readonly sections: Tab[] = [
-    { path: '/search', label: $localize`Search`, icon: 'search', activeIcon: 'search' },
     { path: '/followed', label: $localize`Followed`, icon: 'star', activeIcon: 'star-fill' },
     {
       path: '/calendar',
@@ -226,13 +245,14 @@ export class Shell {
   /** The drawer lists the sections; Settings sits at the bottom, next to the user. */
   protected readonly tabs = this.sections.filter((t) => t.path !== '/settings');
 
-  /** The tab whose section is showing; none on a stock page. */
+  /** The tab whose section is showing; none on a stock page or Search (opened from the page headers). */
   protected readonly activeTab = computed(
     () => this.sections.find((t) => this.url().startsWith(t.path))?.path ?? null,
   );
 
   constructor() {
     inject(SessionService).start();
+    this.wideQuery.addEventListener('change', (e) => this.wide.set(e.matches));
     // Navigating closes the drawer; opening it moves focus inside.
     effect(() => {
       this.url();
@@ -241,7 +261,7 @@ export class Shell {
     effect(() => this.closeButton()?.nativeElement.focus());
     // The drawer's account card needs to know whether Trading 212 is connected.
     effect(() => {
-      if (this.menu.open()) void untracked(() => this.t212.load());
+      if (this.menu.open() || this.wide()) void untracked(() => this.t212.load());
     });
   }
 }

@@ -24,6 +24,7 @@ export type TermId =
   | 'realizedPnl'
   | 'unrealizedPnl'
   | 'totalPnl'
+  | 'breakEven'
   | 'fxFees'
   | 'accountFees';
 
@@ -177,7 +178,7 @@ export const TERMS: Record<TermId, Term> = {
     title: $localize`:Term title:Realized profit/loss`,
     body: [
       $localize`:Term text:Money you actually made or lost by selling: the sale price minus the average cost of the shares sold.`,
-      $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees and taxes are already deducted.`,
+      $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees are not deducted; they are shown separately.`,
     ],
     example: $localize`:Term example:Average cost $110, you sell 5 shares at $130: realized profit is 5 × $20 = $100.`,
   },
@@ -185,7 +186,7 @@ export const TERMS: Record<TermId, Term> = {
     title: $localize`:Term title:FX fees`,
     body: [
       $localize`:Term text:Trading 212 charges 0.15% each time it converts your money into the stock's currency: on every buy and again on every sell.`,
-      $localize`:Term text:Frequent trading adds up: the fee is paid on the whole amount of each trade, win or lose. It is already deducted in Realized.`,
+      $localize`:Term text:Frequent trading adds up: the fee is paid on the whole amount of each trade, win or lose. It is not deducted in Realized.`,
     ],
     example: $localize`:Term example:You buy for 100,000 CZK and later sell for 100,000 CZK: you pay 150 CZK twice, 300 CZK in total.`,
   },
@@ -208,9 +209,17 @@ export const TERMS: Record<TermId, Term> = {
   totalPnl: {
     title: $localize`:Term title:Total profit/loss`,
     body: [
-      $localize`:Term text:Realized profit/loss plus dividends, minus fees and taxes. For all time, the unrealized profit/loss of what you still hold is added too.`,
+      $localize`:Term text:Realized profit/loss plus dividends, minus fees. For all time, the unrealized profit/loss of what you still hold is added too.`,
       $localize`:Term text:The percentage compares it with everything you spent on buying the stock.`,
     ],
     example: $localize`:Term example:Realized +$100, dividends +$5, fees −$2 and unrealized −$40: total +$63.`,
+  },
+  breakEven: {
+    title: $localize`:Term title:Break-even price`,
+    body: [
+      $localize`:Term text:The price at which you are neither up nor down on the shares you hold: your average cost. Above it you are in profit, below it at a loss. Fees are not included.`,
+      $localize`:Term text:Exchange rate changes move the value in your account currency too, so the result can change even when the price does not.`,
+    ],
+    example: $localize`:Term example:Average cost $110 and the price is $100: the price has to rise 10% to break even.`,
   },
 };

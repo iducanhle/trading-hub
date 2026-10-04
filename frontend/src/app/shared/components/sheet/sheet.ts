@@ -25,6 +25,12 @@ import { Component, input } from '@angular/core';
       display: block;
       padding: 0 4px calc(env(safe-area-inset-bottom) + 20px);
     }
+    /* From lg the sheet is a dialog's content, which has no padding of its own. */
+    @media (min-width: 64rem) {
+      :host {
+        padding: 28px 28px 24px;
+      }
+    }
     .sheet-actions {
       --mat-button-filled-container-height: 52px;
       --mat-button-tonal-container-height: 52px;

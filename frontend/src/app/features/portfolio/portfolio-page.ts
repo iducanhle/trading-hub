@@ -64,7 +64,14 @@ import { TradeFilters } from './trades-filters';
             >
               <app-icon name="refresh" [class.animate-spin]="t212.syncing()" />
             </button>
+            <a matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+              <app-icon name="search" />
+            </a>
           </div>
+        } @else {
+          <a actions matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+            <app-icon name="search" />
+          </a>
         }
         @if (t212.connected()) {
           <div class="mx-auto max-w-3xl px-4 pb-2">

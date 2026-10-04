@@ -10,13 +10,13 @@ import { TERMS, TermId } from './terms';
   selector: 'app-term-sheet',
   imports: [RouterLink, Sheet],
   template: `
-    <app-sheet class="lg:p-4" [title]="term().title">
+    <app-sheet [title]="term().title">
       <div class="space-y-3 text-[15px] leading-relaxed">
         @for (paragraph of term().body; track $index) {
           <p>{{ paragraph }}</p>
         }
         @if (term().example; as example) {
-          <p class="rounded-2xl bg-surface-container px-4 py-3">
+          <p class="text-on-surface-variant">
             <span class="font-medium" i18n="A worked example follows">Example:</span>
             {{ example }}
           </p>

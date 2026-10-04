@@ -55,16 +55,9 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="refresh()">
       <app-page-header title="Followed" i18n-title maxWidth="max-w-3xl">
-        <button
-          actions
-          matIconButton
-          type="button"
-          aria-label="Refresh"
-          i18n-aria-label
-          (click)="refresh()"
-        >
-          <app-icon name="refresh" [class.animate-spin]="data.isLoading()" />
-        </button>
+        <a actions matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+          <app-icon name="search" />
+        </a>
       </app-page-header>
 
       <div class="mx-auto max-w-3xl px-4 pt-2 pb-10">

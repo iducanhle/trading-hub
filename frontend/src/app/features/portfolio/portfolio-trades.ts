@@ -11,11 +11,10 @@ import {
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { ApiService, T212TradesQuery } from '../../core/api/api.service';
-import { T212Trade } from '../../core/models/contract';
+import { T212Side, T212Trade } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
@@ -23,7 +22,10 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
+import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import {
   AppDatePipe,
   PricePipe,
@@ -32,12 +34,21 @@ import {
 } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
-import { PortfolioPeriod, displayTicker, groupTradesByDay, periodQuery } from './portfolio-model';
-import { PositionDialog, PositionDialogData } from './position-dialog';
 import {
+  PortfolioPeriod,
+  displayTicker,
+  filterInstruments,
+  groupTradesByDay,
+  periodQuery,
+} from './portfolio-model';
+import { TradeDialog, TradeDialogData } from './trade-dialog';
+import {
+  DEFAULT_TRADE_SORT,
   InstrumentOption,
+  TRADE_SORT_LABELS,
   TradeFilters,
-  TradeFiltersContext,
+  TradeSort,
+  TradesFilterContext,
   TradesFilterSheet,
 } from './trades-filters';
 
@@ -67,7 +78,9 @@ const EMPTY: ListState = {
 
 /**
  * Portfolio → Trades: filled trades, newest first, grouped by day and loaded 50 at a time as the list scrolls.
- * Filters (side, stocks) live in the URL and are edited in a bottom sheet that applies them on Done.
+ * Side is on the page; stocks and sort are in the filter sheet, as on the Stocks tab. Side and stocks live in the URL;
+ * the search narrows the stocks, and sorts other than newest first load the whole period (day sections only for
+ * oldest first).
  */
 @Component({
   selector: 'app-portfolio-trades',
@@ -84,26 +97,60 @@ const EMPTY: ListState = {
     QuantityPipe,
     SignedMoneyPipe,
     FilterButton,
+    Segmented,
+    Segment,
   ],
   template: `
-    <div class="mb-3 flex flex-wrap items-center gap-2">
+    <div class="flex items-center gap-2.5">
+      <label
+        class="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
+      >
+        <app-icon name="search" [size]="20" />
+        <input
+          type="search"
+          class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
+          placeholder="Search by name or ticker"
+          i18n-placeholder
+          aria-label="Search by name or ticker"
+          i18n-aria-label
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+        />
+      </label>
       <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
-      @for (chip of chips(); track chip.key) {
-        <button
-          type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
-          [attr.aria-label]="chip.removeLabel"
-          (click)="remove(chip.key)"
-        >
-          {{ chip.label }}
-          <app-icon name="close" [size]="16" />
-        </button>
-      }
     </div>
+    @if (chips().length) {
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        @for (chip of chips(); track chip.key) {
+          <button
+            type="button"
+            class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
+            [attr.aria-label]="chip.removeLabel"
+            (click)="remove(chip.key)"
+          >
+            {{ chip.label }}
+            <app-icon name="close" [size]="16" />
+          </button>
+        }
+      </div>
+    }
+
+    <app-segmented
+      class="mt-3 mb-5"
+      aria-label="Trade side"
+      i18n-aria-label
+      stretch
+      [value]="filters().side ?? 'ALL'"
+      (valueChange)="setSide($event)"
+    >
+      <app-segment value="ALL" i18n="All trades">All</app-segment>
+      <app-segment value="BUY" i18n="Trade direction|Kind of trade">Buy</app-segment>
+      <app-segment value="SELL" i18n="Trade direction|Kind of trade">Sell</app-segment>
+    </app-segmented>
 
     @if (state().error && !state().loaded) {
       <app-error-state [error]="state().error" (retry)="reload()" />
-    } @else if (!state().loaded) {
+    } @else if (!ready()) {
       <div class="space-y-3" aria-hidden="true">
         @for (i of [1, 2]; track i) {
           <app-skeleton shape="card" class="block h-56 rounded-[22px]" />
@@ -115,7 +162,7 @@ const EMPTY: ListState = {
       }
       @if (state().items.length === 0) {
         <app-empty-state icon="receipt_long" title="No trades" i18n-title [text]="emptyText()">
-          @if (chips().length) {
+          @if (filtered()) {
             <button matButton="outlined" type="button" (click)="clearFilters()" i18n>
               Reset filters
             </button>
@@ -124,15 +171,17 @@ const EMPTY: ListState = {
       } @else {
         @for (day of days(); track day.date) {
           <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
-            <h3 class="app-label">
-              {{ day.date | appDate: 'long' }}
-            </h3>
+            @if (day.date) {
+              <h3 class="app-label">
+                {{ day.date | appDate: 'long' }}
+              </h3>
+            }
             <ul>
               @for (t of day.items; track t.id) {
                 <li>
                   <button
                     type="button"
-                    (click)="openPosition(t.t212Ticker)"
+                    (click)="openTrade(t)"
                     class="w-[calc(100%+1rem)] text-left -mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-[11px] hover:bg-surface-container-high"
                   >
                     <span
@@ -205,11 +254,10 @@ export class PortfolioTrades {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
   private readonly dialog = inject(MatDialog);
-  private readonly sheet = inject(MatBottomSheet);
 
-  protected openPosition(t212Ticker: string): void {
-    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker },
+  protected openTrade(trade: T212Trade): void {
+    this.dialog.open<TradeDialog, TradeDialogData>(TradeDialog, {
+      data: { trade, currency: this.state().currency, period: this.period() },
       width: 'calc(100vw - 32px)',
       maxWidth: '32rem',
       autoFocus: 'dialog',
@@ -245,41 +293,117 @@ export class PortfolioTrades {
       : [],
   );
 
-  protected readonly filterContext: TradeFiltersContext = {
-    filters: this.filters,
-    instruments: this.instruments,
-    change: (filters) => this.filtersChange.emit(filters),
-  };
+  protected readonly search = signal('');
+  protected readonly sort = persistedSignal<TradeSort>('portfolio.trades.sort', DEFAULT_TRADE_SORT);
+  private readonly sheet = inject(MatBottomSheet);
 
-  private readonly query = computed<T212TradesQuery>(() => ({
-    ...periodQuery(this.period()),
-    side: this.filters().side,
-    ticker: this.filters().tickers.join(',') || null,
-    limit: PAGE_SIZE,
-  }));
-
-  protected readonly days = computed(() => groupTradesByDay(this.state().items));
-
+  /** A chip for each picked stock and a non-default sort; removing one drops it. */
   protected readonly chips = computed(() => {
-    const { side, tickers } = this.filters();
     const chips: { key: string; label: string; removeLabel: string }[] = [];
-    if (side) {
-      chips.push({
-        key: 'side',
-        label: SIDE_LABELS[side],
-        removeLabel: $localize`Remove filter ${SIDE_LABELS[side]}:filter:`,
-      });
-    }
-    for (const ticker of tickers) {
+    for (const ticker of this.filters().tickers) {
       const option = this.instruments().find((i) => i.t212Ticker === ticker);
       const label = option ? displayTicker(option) : ticker;
       chips.push({ key: ticker, label, removeLabel: $localize`Remove filter ${label}:filter:` });
     }
+    if (this.sort() !== DEFAULT_TRADE_SORT) {
+      const label = TRADE_SORT_LABELS[this.sort()];
+      chips.push({ key: 'sort', label, removeLabel: $localize`Remove filter ${label}:filter:` });
+    }
     return chips;
   });
 
+  protected openFilters(): void {
+    const context: TradesFilterContext = {
+      view: { tickers: this.filters().tickers, sort: this.sort() },
+      instruments: this.instruments,
+      change: (view) => {
+        this.sort.set(view.sort);
+        const current = this.filters().tickers;
+        const same =
+          view.tickers.length === current.length && view.tickers.every((t) => current.includes(t));
+        if (!same) this.filtersChange.emit({ ...this.filters(), tickers: view.tickers });
+      },
+    };
+    this.sheet.open(TradesFilterSheet, { data: context, ariaLabel: $localize`Filters` });
+  }
+
+  /** Resets the sort (`sort`) or drops one stock (its t212Ticker). */
+  protected remove(key: string): void {
+    if (key === 'sort') {
+      this.sort.set(DEFAULT_TRADE_SORT);
+      return;
+    }
+    const filters = this.filters();
+    this.filtersChange.emit({ ...filters, tickers: filters.tickers.filter((t) => t !== key) });
+  }
+
+  protected setSide(value: string): void {
+    this.filtersChange.emit({
+      ...this.filters(),
+      side: value === 'ALL' ? null : (value as T212Side),
+    });
+  }
+
+  /**
+   * Stocks to ask for: the selected ones narrowed by the search (matched against the stocks traded in the period),
+   * or null for all; an empty list means nothing can match.
+   */
+  private readonly tickers = computed<string[] | null>(() => {
+    const selected = this.filters().tickers;
+    const q = this.search().trim();
+    if (!q) return selected.length ? selected : null;
+    if (!this.instrumentList.hasValue()) return null;
+    return filterInstruments(this.instrumentList.value().items, q)
+      .map((i) => i.t212Ticker)
+      .filter((t) => !selected.length || selected.includes(t))
+      .slice(0, 50);
+  });
+
+  private readonly query = computed<T212TradesQuery | null>(() => {
+    const tickers = this.tickers();
+    if (tickers?.length === 0) return null;
+    return {
+      ...periodQuery(this.period()),
+      side: this.filters().side,
+      ticker: tickers?.join(',') || null,
+      limit: this.sort() === 'newest' ? PAGE_SIZE : 100,
+    };
+  });
+
+  /** Sorts other than newest first wait for the whole period. */
+  protected readonly ready = computed(
+    () => this.state().loaded && (this.sort() === 'newest' || !this.state().next),
+  );
+
+  protected readonly filtered = computed(
+    () => !!this.filters().side || this.filters().tickers.length > 0 || !!this.search().trim(),
+  );
+
+  /** Day sections when sorted by date; one section without a date otherwise. */
+  protected readonly days = computed<{ date: string | null; items: T212Trade[] }[]>(() => {
+    const items = this.state().items;
+    switch (this.sort()) {
+      case 'newest':
+        return groupTradesByDay(items);
+      case 'oldest':
+        return groupTradesByDay([...items].reverse());
+      case 'value':
+        return [{ date: null, items: [...items].sort((a, b) => b.value - a.value) }];
+      case 'result':
+        return [
+          {
+            date: null,
+            items: [...items].sort(
+              (a, b) =>
+                (b.realizedPnl ?? -Infinity) - (a.realizedPnl ?? -Infinity) || b.value - a.value,
+            ),
+          },
+        ];
+    }
+  });
+
   protected readonly emptyText = computed(() =>
-    this.chips().length
+    this.filtered()
       ? $localize`No trades match the filters in this period.`
       : $localize`Trades of this period appear here.`,
   );
@@ -301,25 +425,13 @@ export class PortfolioTrades {
 
   protected loadMore(): void {
     const s = this.state();
-    if (!s.next || s.loading) return;
-    this.fetch({ ...this.query(), cursor: s.next }, true);
-  }
-
-  protected openFilters(): void {
-    this.sheet.open(TradesFilterSheet, { data: this.filterContext, ariaLabel: $localize`Filters` });
-  }
-
-  /** Removes the side chip (`side`) or one stock chip (its t212Ticker). */
-  protected remove(key: string): void {
-    const filters = this.filters();
-    this.filtersChange.emit(
-      key === 'side'
-        ? { ...filters, side: null }
-        : { ...filters, tickers: filters.tickers.filter((t) => t !== key) },
-    );
+    const query = this.query();
+    if (!query || !s.next || s.loading) return;
+    this.fetch({ ...query, cursor: s.next }, true);
   }
 
   protected clearFilters(): void {
+    this.search.set('');
     this.filtersChange.emit({ side: null, tickers: [] });
   }
 
@@ -327,7 +439,12 @@ export class PortfolioTrades {
     return displayTicker(trade);
   }
 
-  private loadFirst(query: T212TradesQuery): void {
+  private loadFirst(query: T212TradesQuery | null): void {
+    this.request?.unsubscribe();
+    if (!query) {
+      this.state.set({ ...EMPTY, loading: false, loaded: true });
+      return;
+    }
     this.state.set(EMPTY);
     this.fetch(query, false);
   }
@@ -336,7 +453,7 @@ export class PortfolioTrades {
     this.request?.unsubscribe();
     this.state.update((s) => ({ ...s, loading: true, error: null }));
     this.request = this.api.t212Trades(query).subscribe({
-      next: (page) =>
+      next: (page) => {
         this.state.update((s) => ({
           items: append ? [...s.items, ...page.items] : page.items,
           next: page.nextCursor,
@@ -346,7 +463,11 @@ export class PortfolioTrades {
           stale: page.stale,
           asOf: page.asOf,
           loaded: true,
-        })),
+        }));
+        if (page.nextCursor && this.sort() !== 'newest') {
+          this.fetch({ ...query, cursor: page.nextCursor }, true);
+        }
+      },
       error: (error: unknown) => this.state.update((s) => ({ ...s, loading: false, error })),
     });
   }

@@ -1,6 +1,5 @@
 package com.earningstracker.service;
 
-import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -30,7 +29,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Company profiles in {@code symbols/{symbol}}, fresh for 7 days. Fields the answering provider lacks (Finnhub has
- * no sector) are filled from the next provider in the chain. Logos fall back to the website's favicon.
+ * no sector) are filled from the next provider in the chain.
  */
 @Service
 public class ProfileService {
@@ -173,22 +172,7 @@ public class ProfileService {
             String website) {
         return new StockProfile(symbol, profile.name(), profile.exchange(), profile.currency(),
                 profile.financialCurrency(), sector, industry, website,
-                profile.logoUrl() != null ? profile.logoUrl() : faviconFor(website),
-                profile.marketCap(), fx.toUsd(profile.marketCap(), profile.currency()),
+                profile.logoUrl(), profile.marketCap(), fx.toUsd(profile.marketCap(), profile.currency()),
                 profile.week52High(), profile.week52Low(), profile.peRatio(), profile.epsTtm(), profile.avgVolume());
-    }
-
-    /** {@code https://www.google.com/s2/favicons?domain={domain}&sz=128}, or null without a usable website. */
-    static String faviconFor(String website) {
-        if (website == null || website.isBlank()) {
-            return null;
-        }
-        try {
-            String host = URI.create(website.contains("://") ? website.strip() : "https://" + website.strip()).getHost();
-            return host == null ? null
-                    : "https://www.google.com/s2/favicons?domain=" + host.replaceFirst("^www\\.", "") + "&sz=128";
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 }

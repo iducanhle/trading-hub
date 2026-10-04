@@ -69,7 +69,7 @@ import { StockContext } from '../stock-context';
                   </p>
                 </div>
                 <span class="flex items-center gap-1">
-                  <app-result-badge [result]="q.result" /><app-term-info term="result" />
+                  <app-result-badge [result]="q.result" />
                 </span>
               </div>
               <dl class="mt-3 space-y-1.5 text-[15px] font-semibold">

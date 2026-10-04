@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.earningstracker.cache.TieredCache.Cached;
 import com.earningstracker.market.EarningsReport;
+import com.earningstracker.market.Logos;
 import com.earningstracker.market.ReportTime;
 import com.earningstracker.service.EarningsService;
 import com.earningstracker.service.FollowService;
@@ -81,8 +82,8 @@ public class DigestService {
                 earnings.warmUp(follow.symbol());
                 continue;
             }
-            String logo = follow.logoUrl() != null ? follow.logoUrl()
-                    : profiles.stored(follow.symbol()).map(StockProfile::logoUrl).orElse(null);
+            String logo = Logos.clean(follow.logoUrl() != null ? follow.logoUrl()
+                    : profiles.stored(follow.symbol()).map(StockProfile::logoUrl).orElse(null));
             stored.get().value().stream()
                     .filter(r -> r.date() != null && r.epsActual() == null && !r.date().isBefore(from)
                             && !r.date().isAfter(to))

@@ -16,6 +16,12 @@
       "port": 4200
     },
     {
+      "name": "frontend-remote",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "start:remote"],
+      "port": 4200
+    },
+    {
       "name": "frontend-emulators",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { RouterLink } from '@angular/router';
 import { CalendarQuery } from '../../core/api/api.service';
 import { CalendarDay } from '../../core/models/contract';
 import { FollowsService } from '../../core/services/follows.service';
@@ -38,6 +39,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 @Component({
   selector: 'app-calendar-page',
   imports: [
+    RouterLink,
     MatButton,
     MatIconButton,
     Segmented,
@@ -78,15 +80,9 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
               }
             </span>
           </button>
-          <button
-            matIconButton
-            type="button"
-            aria-label="Refresh"
-            i18n-aria-label
-            (click)="refresh()"
-          >
-            <app-icon name="refresh" [class.animate-spin]="data.isLoading()" />
-          </button>
+          <a matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+            <app-icon name="search" />
+          </a>
         </div>
         <div class="mx-auto flex max-w-6xl items-center gap-1 px-2 pb-2">
           <button

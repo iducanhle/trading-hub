@@ -31,6 +31,7 @@ import {
   periodParams,
   presetRange,
   shiftMonths,
+  instrumentPnl,
   sortInstruments,
 } from './portfolio/portfolio-model';
 
@@ -244,7 +245,7 @@ describe('portfolio model', () => {
     costBasis: null,
     bought: { quantity: 1, value: 100 },
     sold: { quantity: 0, value: 0 },
-    realizedPnl: 0,
+    realizedPnl: totalPnl,
     dividends: 0,
     fees: 0,
     unrealizedPnl: null,
@@ -288,6 +289,21 @@ describe('portfolio model', () => {
       ...presetRange('1M', today),
     });
     expect(isAllTime(parsePeriod({}, today))).toBe(true);
+  });
+
+  it('counts the unrealized once, whether or not totalPnl holds it', () => {
+    // A shorter period: totalPnl = realized + dividends − fees, without the unrealized.
+    const period = instrument('SNDK_US_EQ', 'Sandisk', 'OPEN', 50, {
+      realizedPnl: 52,
+      fees: 2,
+      unrealizedPnl: -30,
+    });
+    expect(instrumentPnl(period, false)).toBe(50);
+    expect(instrumentPnl(period, true)).toBe(20);
+    // All time: totalPnl includes the unrealized.
+    const allTime = { ...period, totalPnl: 20 };
+    expect(instrumentPnl(allTime, false)).toBe(50);
+    expect(instrumentPnl(allTime, true)).toBe(20);
   });
 
   it('filters and sorts instruments', () => {

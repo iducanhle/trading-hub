@@ -16,7 +16,8 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+  src: url('../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2')
+    format('woff2-variations');
   unicode-range: U+0030-0039;
 }
 
@@ -56,8 +57,8 @@
 
 @theme {
   --font-sans:
-    'App Numerals', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+    'App Numerals', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
 }
 
 @layer base {
@@ -180,4 +181,10 @@
   .app-snackbar-offset {
     margin-bottom: 24px !important;
   }
+}
+
+/* Cards inside dialogs and bottom sheets sit one step lighter so they stand out from the sheet background. */
+.mat-mdc-dialog-surface .app-card,
+.mat-bottom-sheet-container .app-card {
+  background: var(--mat-sys-surface-container-high);
 }

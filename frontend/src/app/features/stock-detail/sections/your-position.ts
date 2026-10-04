@@ -1,31 +1,65 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
+import { T212Instrument } from '../../../core/models/contract';
 import { ApiService } from '../../../core/api/api.service';
 import { T212Service } from '../../../core/services/t212.service';
 import { Icon } from '../../../shared/icon/icon';
-import { PricePipe, QuantityPipe } from '../../../shared/pipes/format.pipes';
-import { InstrumentDialogData, InstrumentPage } from '../../portfolio/instrument-page';
 import { Pnl } from '../../portfolio/pnl';
-import { DEVICE_TZ } from '../../portfolio/portfolio-model';
+import { DEVICE_TZ, instrumentPnl, instrumentPnlPct } from '../../portfolio/portfolio-model';
+import { PositionDialog, PositionDialogData } from '../../portfolio/position-dialog';
 import { StockContext } from '../stock-context';
+import { UnrealizedSheet, UnrealizedSheetData } from './unrealized-sheet';
 
 /**
- * "Your position": shares, average cost and total profit/loss when the user's Trading 212 account holds or held
- * this stock. Nothing at all otherwise (not connected, never traded, or Trading 212 not set up on the server).
- * Tapping it opens the whole position (trades and dividends) in a dialog.
+ * The user's Trading 212 result for this stock: an "Unrealized profit" card while shares are held (tap: what it means
+ * and the break-even price) and a "Realized profit" card: realized + dividends − fees, as on the Stocks tab (tap: the
+ * position dialog, all time, realized only). Nothing at all when not connected, never traded, or Trading 212 is not
+ * set up on the server.
  */
 @Component({
   selector: 'app-your-position',
-  imports: [Icon, PricePipe, QuantityPipe, Pnl],
+  imports: [Icon, Pnl],
   template: `
     @if (position(); as p) {
+      @if (p.status === 'OPEN') {
+        <button
+          type="button"
+          class="app-card mx-4 mt-3.5 flex w-[calc(100%-2rem)] items-center gap-3.5 text-left hover:bg-surface-container-high"
+          aria-labelledby="unrealized-title"
+          (click)="openUnrealized(p)"
+        >
+          <span
+            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
+            aria-hidden="true"
+            ><app-icon name="trending_up" [size]="20"
+          /></span>
+          <div class="min-w-0 flex-1">
+            <p class="flex items-baseline justify-between gap-3">
+              <span id="unrealized-title" class="text-[15px] font-bold" i18n
+                >Unrealized profit</span
+              >
+              <span class="app-label text-[11px]" i18n>As of now</span>
+            </p>
+            <p class="mt-0.5 flex">
+              <app-pnl
+                strong
+                [value]="p.unrealizedPnl"
+                [currency]="currency()"
+                [pct]="unrealizedPct(p)"
+              />
+            </p>
+          </div>
+          <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
+        </button>
+      }
       <button
         type="button"
         class="app-card mx-4 mt-3.5 flex w-[calc(100%-2rem)] items-center gap-3.5 text-left hover:bg-surface-container-high"
-        aria-labelledby="your-position-title"
-        (click)="open(p.t212Ticker)"
+        aria-labelledby="total-pnl-title"
+        (click)="openRealized(p.t212Ticker)"
       >
         <span
           class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
@@ -33,32 +67,16 @@ import { StockContext } from '../stock-context';
           ><app-icon name="account_balance_wallet" [size]="20"
         /></span>
         <div class="min-w-0 flex-1">
-          <p class="flex items-baseline justify-between gap-3">
-            <span id="your-position-title" class="text-[15px] font-bold">
-              <ng-container i18n>Your position</ng-container>
-              @if (p.status === 'CLOSED') {
-                · <ng-container i18n="Position status|Shares fully sold">Closed</ng-container>
-              }
-            </span>
-            <span class="app-label text-[11px]" i18n>Total profit/loss</span>
+          <p id="total-pnl-title" class="text-[15px] font-bold">
+            <ng-container i18n="Card title|Realized profit/loss of this stock"
+              >Realized profit</ng-container
+            >
+            @if (p.status === 'CLOSED') {
+              · <ng-container i18n="Position status|Shares fully sold">Closed</ng-container>
+            }
           </p>
-          <p class="mt-0.5 flex items-baseline justify-between gap-3">
-            <span class="min-w-0 truncate text-[12.5px] font-semibold text-on-surface-variant">
-              @if (p.status === 'OPEN') {
-                {{ p.quantity | qty }} <ng-container i18n>shares</ng-container> ·
-                <ng-container i18n>avg.</ng-container>
-                {{ p.averageCost | price: p.instrumentCurrency }}
-              } @else {
-                <ng-container i18n>Fully sold</ng-container>
-              }
-            </span>
-            <app-pnl
-              strong
-              class="shrink-0"
-              [value]="p.totalPnl"
-              [currency]="currency()"
-              [pct]="p.totalPnlPct"
-            />
+          <p class="mt-0.5 flex">
+            <app-pnl strong [value]="realized(p)" [currency]="currency()" [pct]="realizedPct(p)" />
           </p>
         </div>
         <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
@@ -71,6 +89,7 @@ export class YourPosition {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
   private readonly dialog = inject(MatDialog);
+  private readonly sheet = inject(MatBottomSheet);
 
   private readonly instruments = rxResource({
     params: () => ({
@@ -90,13 +109,35 @@ export class YourPosition {
     this.instruments.hasValue() ? (this.instruments.value()?.accountCurrency ?? null) : null,
   );
 
-  protected open(t212Ticker: string): void {
-    this.dialog.open<InstrumentPage, InstrumentDialogData>(InstrumentPage, {
-      data: { t212Ticker },
+  /** Without the unrealized, matching the Stocks tab the card links to. */
+  protected realized(p: T212Instrument): number {
+    return instrumentPnl(p, false);
+  }
+
+  protected realizedPct(p: T212Instrument): number | null {
+    return instrumentPnlPct(p, false);
+  }
+
+  protected openRealized(t212Ticker: string): void {
+    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      data: { t212Ticker, includeUnrealized: false },
       width: 'calc(100vw - 32px)',
-      maxWidth: '48rem',
+      maxWidth: '32rem',
       autoFocus: 'dialog',
     });
+  }
+
+  protected unrealizedPct(p: T212Instrument): number | null {
+    return p.unrealizedPnl !== null && p.costBasis ? (p.unrealizedPnl / p.costBasis) * 100 : null;
+  }
+
+  protected openUnrealized(instrument: T212Instrument): void {
+    const data: UnrealizedSheetData = { instrument, accountCurrency: this.currency() };
+    if (matchMedia('(min-width: 64rem)').matches) {
+      this.dialog.open(UnrealizedSheet, { data, maxWidth: '28rem', autoFocus: 'dialog' });
+    } else {
+      this.sheet.open(UnrealizedSheet, { data });
+    }
   }
 
   constructor() {

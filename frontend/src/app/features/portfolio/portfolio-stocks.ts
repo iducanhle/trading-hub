@@ -13,7 +13,7 @@ import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { TermInfo } from '../../shared/components/term-info/term-info';
-import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+// import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import {
   PercentPipe,
   PricePipe,
@@ -22,12 +22,7 @@ import {
 } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
-import {
-  DEFAULT_STOCKS_VIEW,
-  StocksFilterContext,
-  StocksFilterSheet,
-  StocksView,
-} from './stocks-filters';
+import { DEFAULT_STOCKS_VIEW, StocksFilterContext, StocksFilterSheet } from './stocks-filters';
 import { SORT_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
@@ -61,8 +56,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
     PercentPipe,
     FilterButton,
     TermInfo,
-    Segmented,
-    Segment,
+    // Segmented, Segment: for the unrealized switch, turned off (see the template).
   ],
   template: `
     <div class="flex items-center gap-2.5">
@@ -90,7 +84,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
             type="button"
             class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
             [attr.aria-label]="chip.removeLabel"
-            (click)="resetSort()"
+            (click)="removeChip(chip.key)"
           >
             {{ chip.label }}
             <app-icon name="close" [size]="16" />
@@ -99,19 +93,35 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
       </div>
     }
 
-    <app-segmented
-      class="mt-3"
-      aria-label="Profit and loss"
-      i18n-aria-label
-      stretch
-      [value]="unrealized()"
-      (valueChange)="unrealized.set($event)"
-    >
-      <app-segment [value]="false" i18n="Profit/loss basis|Realized only">Without</app-segment>
-      <app-segment [value]="true" i18n="Profit/loss basis|Includes unrealized"
-        >With unrealized</app-segment
+    <!-- Switch "Without / With unrealized", turned off for now. To bring it back, uncomment it and the
+      withUnrealized line in the class, and add back the Czech: "Zisk a ztráta", "Bez nerealizovaného",
+      "S nerealizovaným", "Nerealizovaný výsledek uvidíte v období Vše" (npm run i18n:check lists the ids).
+    @if (allTime()) {
+      <app-segmented
+        class="mt-3"
+        aria-label="Profit and loss"
+        i18n-aria-label
+        stretch
+        [value]="unrealized()"
+        (valueChange)="unrealized.set($event)"
       >
-    </app-segmented>
+        <app-segment [value]="false" i18n="Profit/loss basis|Realized only">Without</app-segment>
+        <app-segment [value]="true" i18n="Profit/loss basis|Includes unrealized"
+          >With unrealized</app-segment
+        >
+      </app-segmented>
+    } @else {
+      (info line: same size as the switch, 3 px track + 36 px option, so the list does not jump)
+      <p
+        class="mt-3 flex h-[42px] items-center justify-center gap-1.5 rounded-full bg-surface-container px-3.5 text-[13px] leading-tight font-medium text-on-surface-variant"
+      >
+        <app-icon name="info" [size]="16" class="shrink-0" />
+        <ng-container i18n="Shown instead of the unrealized switch outside the All period"
+          >Switch to All to see the unrealized profit/loss</ng-container
+        >
+      </p>
+    }
+    -->
 
     @if (data.error() && !data.hasValue()) {
       <app-error-state [error]="data.error()" (retry)="data.reload()" />
@@ -199,7 +209,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                 class="flex w-full items-center gap-3.5 rounded-2xl px-1 py-3 text-left hover:bg-surface-container"
                 (click)="openPosition(item)"
               >
-                <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="48" />
+                <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="40" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-[15px] font-medium">{{ item.name }}</span>
                   <span class="mt-0.5 flex min-w-0 items-center gap-1.5">
@@ -256,7 +266,15 @@ export class PortfolioStocks {
     DEFAULT_STOCKS_VIEW.sort,
   );
   protected readonly search = signal('');
+  /** Selected t212Tickers; empty = all stocks. */
+  protected readonly tickers = signal<string[]>([]);
   protected readonly allTime = computed(() => isAllTime(this.period()));
+  /**
+   * Unrealized counts only for all time: in a shorter period the list holds only stocks active in it, and the
+   * unrealized is the whole holding's as of now, so adding it would give a sum that means nothing.
+   */
+  // private readonly withUnrealized = computed(() => this.allTime() && this.unrealized());
+  private readonly withUnrealized = computed(() => false); // The switch is turned off: realized only.
   private readonly sheet = inject(MatBottomSheet);
   private readonly dialog = inject(MatDialog);
 
@@ -266,7 +284,13 @@ export class PortfolioStocks {
 
   /** A chip for each setting that differs from the default; removing it resets that setting. */
   protected readonly chips = computed(() => {
-    const chips: { key: keyof StocksView; label: string; removeLabel: string }[] = [];
+    const chips: { key: string; label: string; removeLabel: string }[] = [];
+    const items = this.data.hasValue() ? this.data.value().items : [];
+    for (const ticker of this.tickers()) {
+      const item = items.find((i) => i.t212Ticker === ticker);
+      const label = item ? displayTicker(item) : ticker;
+      chips.push({ key: ticker, label, removeLabel: $localize`Remove filter ${label}:filter:` });
+    }
     if (this.sort() !== DEFAULT_STOCKS_VIEW.sort) {
       const label = SORT_LABELS[this.sort()];
       chips.push({ key: 'sort', label, removeLabel: $localize`Remove filter ${label}:filter:` });
@@ -276,8 +300,10 @@ export class PortfolioStocks {
 
   protected openFilters(): void {
     const context: StocksFilterContext = {
-      view: { sort: this.sort() },
+      view: { tickers: this.tickers(), sort: this.sort() },
+      instruments: this.instrumentOptions,
       change: (view) => {
+        this.tickers.set(view.tickers);
         this.sort.set(view.sort);
       },
     };
@@ -286,16 +312,30 @@ export class PortfolioStocks {
 
   protected openPosition(item: T212Instrument): void {
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker: item.t212Ticker },
+      data: {
+        t212Ticker: item.t212Ticker,
+        period: this.period(),
+        includeUnrealized: this.withUnrealized(),
+      },
       width: 'calc(100vw - 32px)',
       maxWidth: '32rem',
       autoFocus: 'dialog',
     });
   }
 
-  protected resetSort(): void {
-    this.sort.set(DEFAULT_STOCKS_VIEW.sort);
+  protected removeChip(key: string): void {
+    if (key === 'sort') this.sort.set(DEFAULT_STOCKS_VIEW.sort);
+    else this.tickers.update((tickers) => tickers.filter((t) => t !== key));
   }
+
+  /** Stocks of the period for the filter, by ticker. */
+  private readonly instrumentOptions = computed(() =>
+    this.data.hasValue()
+      ? [...this.data.value().items].sort((a, b) =>
+          displayTicker(a).localeCompare(displayTicker(b)),
+        )
+      : [],
+  );
 
   protected readonly data = rxResource({
     params: () => ({
@@ -308,9 +348,11 @@ export class PortfolioStocks {
   protected readonly items = computed(() =>
     this.data.hasValue()
       ? sortInstruments(
-          filterInstruments(this.data.value().items, this.search()),
+          filterInstruments(this.data.value().items, this.search()).filter(
+            (i) => !this.tickers().length || this.tickers().includes(i.t212Ticker),
+          ),
           this.sort(),
-          this.unrealized(),
+          this.withUnrealized(),
         )
       : [],
   );
@@ -331,7 +373,7 @@ export class PortfolioStocks {
 
   /** The total minus account fees; only for the whole list, since the fees belong to no stock. */
   protected readonly totalAfterFees = computed(() =>
-    this.search().trim() || !this.accountFees.hasValue()
+    this.search().trim() || this.tickers().length || !this.accountFees.hasValue()
       ? null
       : { value: this.total() - this.accountFees.value().totals.fees },
   );
@@ -353,11 +395,11 @@ export class PortfolioStocks {
   };
 
   protected pnl(item: T212Instrument): number {
-    return instrumentPnl(item, this.unrealized());
+    return instrumentPnl(item, this.withUnrealized());
   }
 
   protected pct(item: T212Instrument): number | null {
-    return instrumentPnlPct(item, this.unrealized());
+    return instrumentPnlPct(item, this.withUnrealized());
   }
 
   protected ticker(item: T212Instrument): string {

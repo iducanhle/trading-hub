@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 import { distinctUntilChanged, map, of, switchMap, timer } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { SearchResult } from '../../core/models/contract';
-import { MenuService } from '../../core/services/menu.service';
+import { NavigationService } from '../../core/services/navigation.service';
 import { RecentSearchesService } from '../../core/services/recent-searches.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
@@ -36,11 +36,11 @@ import { StockRow } from './stock-row';
             matIconButton
             type="button"
             class="shrink-0"
-            aria-label="Open menu"
+            aria-label="Back"
             i18n-aria-label
-            (click)="menu.show()"
+            (click)="navigation.back('/followed')"
           >
-            <app-icon name="menu" [size]="26" />
+            <app-icon name="arrow_back" [size]="26" />
           </button>
           <div class="relative min-w-0 flex-1">
             <app-icon
@@ -155,7 +155,7 @@ import { StockRow } from './stock-row';
 export class SearchPage {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  protected readonly menu = inject(MenuService);
+  protected readonly navigation = inject(NavigationService);
   protected readonly recent = inject(RecentSearchesService);
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
 

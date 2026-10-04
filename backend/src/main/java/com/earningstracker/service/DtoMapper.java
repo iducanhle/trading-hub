@@ -24,7 +24,7 @@ final class DtoMapper {
     static Dtos.EarningsEvent event(String symbol, String name, String exchange, String logoUrl, Double marketCapUsd,
             EarningsReport report) {
         Region region = Symbols.region(symbol);
-        return new Dtos.EarningsEvent(symbol, name, exchange, region, Logos.clean(logoUrl), report.date(), report.time(),
+        return new Dtos.EarningsEvent(symbol, name, exchange, region, Logos.orParqet(symbol, logoUrl), report.date(), report.time(),
                 report.fiscalQuarter(), report.fiscalYear(), report.currency(), report.epsEstimate(),
                 report.epsActual(), report.revenueEstimate(), report.revenueActual(), marketCapUsd);
     }
@@ -51,6 +51,6 @@ final class DtoMapper {
 
     static Dtos.SearchResult searchResult(SymbolMatch match, String logoUrl) {
         return new Dtos.SearchResult(match.symbol(), match.name(), match.exchange().displayName(), match.region(),
-                match.currency(), Logos.clean(logoUrl));
+                match.currency(), Logos.orParqet(match.symbol(), logoUrl));
     }
 }

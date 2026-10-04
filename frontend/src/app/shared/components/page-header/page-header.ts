@@ -38,6 +38,7 @@ import { Icon } from '../../icon/icon';
           <button
             matIconButton
             type="button"
+            class="lg:hidden!"
             aria-label="Open menu"
             i18n-aria-label
             (click)="menu.show()"

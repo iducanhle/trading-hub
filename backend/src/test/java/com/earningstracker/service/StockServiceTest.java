@@ -43,7 +43,7 @@ class StockServiceTest {
     @BeforeEach
     void seed() {
         f.provider.profiles.put(SAP, new CompanyProfile(SAP, "SAP SE", Exchange.XETRA, "EUR", "EUR", "Technology",
-                "Software", "https://www.sap.com", null, "Germany", 214.6e9, 244.3, 127.5, 27.87, 6.67, 2_602_567L));
+                "Software", "https://www.sap.com", "https://logos.example/sap.png", "Germany", 214.6e9, 244.3, 127.5, 27.87, 6.67, 2_602_567L));
         f.provider.quotes.put(SAP, Quote.of(SAP, 185.92, 184.18, "EUR", Instant.parse("2026-09-25T15:39:50Z"), 1_888_918L));
         f.provider.bars.put(SAP, ServiceFixture.weekdays("2021-09-20", "2026-09-25"));
         f.provider.earnings.put(SAP, List.of(
@@ -61,7 +61,7 @@ class StockServiceTest {
         assertThat(overview.name()).isEqualTo("SAP SE");
         assertThat(overview.exchange()).isEqualTo("XETRA");
         assertThat(overview.region()).isEqualTo(Region.EU);
-        assertThat(overview.logoUrl()).isEqualTo("https://www.google.com/s2/favicons?domain=sap.com&sz=128");
+        assertThat(overview.logoUrl()).isEqualTo("https://logos.example/sap.png");
         assertThat(overview.keyStats().marketCapUsd()).isCloseTo(214.6e9 * 1.14, within(1.0));
         assertThat(overview.quote().price()).isEqualTo(185.92);
         assertThat(overview.performance().w1()).isNotNull();
@@ -204,7 +204,7 @@ class StockServiceTest {
                 f.router, f.fx, f.clock);
 
         assertThat(restarted.logos(List.of(SAP, "NOPE.DE")))
-                .containsExactly(Map.entry(SAP, "https://www.google.com/s2/favicons?domain=sap.com&sz=128"));
+                .containsExactly(Map.entry(SAP, "https://logos.example/sap.png"));
         long reads = f.store.usage().reads();
         restarted.logos(List.of("NOPE.DE"));
         assertThat(f.store.usage().reads()).as("an unknown symbol is not read again").isEqualTo(reads);
@@ -216,7 +216,8 @@ class StockServiceTest {
         f.provider.listings.put("SIE.DE", new SymbolMatch("SIE.DE", "Siemens AG", Exchange.XETRA, "EUR"));
 
         assertThat(f.stocks.peers(SAP)).containsExactly(
-                new Dtos.SearchResult("SIE.DE", "Siemens AG", "XETRA", Region.EU, "EUR", null));
+                new Dtos.SearchResult("SIE.DE", "Siemens AG", "XETRA", Region.EU, "EUR",
+                        "https://assets.parqet.com/logos/symbol/SIE.DE?format=png&size=128"));
     }
 
     @Test

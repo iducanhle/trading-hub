@@ -10,14 +10,14 @@ import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { PercentPipe, PricePipe, SignedMoneyPipe } from '../../shared/pipes/format.pipes';
-import { toneClass } from '../../shared/utils/format';
+import { toneClass, toneOf } from '../../shared/utils/format';
 import { PortfolioAllocation } from './portfolio-allocation';
 import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioPeriod, periodQuery } from './portfolio-model';
 
 const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 
-/** Portfolio → Overview: account value, all-time profit/loss, open positions. */
+/** Portfolio → Overview: account value, all-time and unrealized profit/loss, open positions. */
 @Component({
   selector: 'app-portfolio-overview',
   imports: [
@@ -79,13 +79,27 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
             </div>
           }
         </div>
-        <p
-          class="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-semibold"
-        >
-          <span class="size-[9px] rounded-full bg-on-surface-variant" aria-hidden="true"></span>
-          {{ s.netDeposits | price: s.accountCurrency }}
-          <span class="app-label text-[11.5px]" i18n>net deposits</span>
-        </p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <p
+            class="inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-semibold"
+          >
+            <span class="size-[9px] rounded-full bg-on-surface-variant" aria-hidden="true"></span>
+            {{ s.netDeposits | price: s.accountCurrency }}
+            <span class="app-label text-[11.5px]" i18n>net deposits</span>
+          </p>
+          <p
+            class="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[12.5px] font-semibold"
+            [class]="unrealizedPill(s.unrealizedPnl)"
+          >
+            <span
+              class="size-[9px] rounded-full"
+              [class]="unrealizedDot(s.unrealizedPnl)"
+              aria-hidden="true"
+            ></span>
+            {{ s.unrealizedPnl | money: s.accountCurrency }}
+            <span class="app-label text-[11.5px]" i18n>unrealized profit</span>
+          </p>
+        </div>
       </section>
 
       @if (!s.best && !t212.syncing()) {
@@ -140,5 +154,28 @@ export class PortfolioOverview {
 
   protected tone(value: number | null): string {
     return toneClass(value);
+  }
+
+  /** Same pill as net deposits, tinted by the sign: green for a gain, red for a loss, grey at zero. */
+  protected unrealizedPill(value: number | null): string {
+    switch (toneOf(value)) {
+      case 'gain':
+        return 'bg-gain-container text-gain';
+      case 'loss':
+        return 'bg-loss-container text-loss';
+      default:
+        return 'bg-surface-container-high';
+    }
+  }
+
+  protected unrealizedDot(value: number | null): string {
+    switch (toneOf(value)) {
+      case 'gain':
+        return 'bg-gain';
+      case 'loss':
+        return 'bg-loss';
+      default:
+        return 'bg-on-surface-variant';
+    }
   }
 }
