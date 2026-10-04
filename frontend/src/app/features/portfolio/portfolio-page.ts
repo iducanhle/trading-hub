@@ -14,7 +14,7 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
 import { PeriodSelector } from './period-selector';
 import { PortfolioCash } from './portfolio-cash';
-import { TAB_LABELS } from './portfolio-labels';
+import { PortfolioNav } from './portfolio-nav';
 import {
   PORTFOLIO_TABS,
   PortfolioPeriod,
@@ -28,8 +28,8 @@ import { PortfolioTrades } from './portfolio-trades';
 import { TradeFilters } from './trades-filters';
 
 /**
- * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Dividends & cash share one
- * period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
+ * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Dividends & cash (a floating
+ * pill at the bottom, `app-portfolio-nav`) share one period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
  * down starts a sync. Without a connection it explains the feature and links to Settings.
  */
 @Component({
@@ -45,6 +45,7 @@ import { TradeFilters } from './trades-filters';
     Skeleton,
     Icon,
     PeriodSelector,
+    PortfolioNav,
     PortfolioOverview,
     PortfolioStocks,
     PortfolioTrades,
@@ -73,35 +74,9 @@ import { TradeFilters } from './trades-filters';
             <app-icon name="search" />
           </a>
         }
-        @if (t212.connected()) {
-          <div class="mx-auto max-w-3xl px-4 pb-2">
-            <nav
-              class="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1"
-              aria-label="Portfolio sections"
-              i18n-aria-label
-            >
-              @for (t of tabs; track t) {
-                <a
-                  [routerLink]="[]"
-                  [queryParams]="{ tab: t === 'overview' ? null : t }"
-                  queryParamsHandling="merge"
-                  replaceUrl
-                  [attr.aria-current]="tab() === t ? 'page' : null"
-                  class="shrink-0 rounded-full px-3 py-[9px] text-[13px] font-bold whitespace-nowrap"
-                  [class]="
-                    tab() === t
-                      ? 'bg-surface-container-high text-on-surface'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  "
-                  >{{ tabLabels[t] }}</a
-                >
-              }
-            </nav>
-          </div>
-        }
       </app-page-header>
 
-      <div class="mx-auto max-w-3xl px-4 pt-2 pb-10">
+      <div class="mx-auto max-w-3xl px-4 pt-2" [class]="t212.connected() ? 'pb-36' : 'pb-10'">
         @if (!t212.loaded()) {
           <div class="space-y-3" aria-hidden="true">
             <app-skeleton shape="card" class="h-32" />
@@ -173,6 +148,9 @@ import { TradeFilters } from './trades-filters';
           }
         }
       </div>
+      @if (t212.connected()) {
+        <app-portfolio-nav [tab]="tab()" />
+      }
     </app-pull-to-refresh>
   `,
 })
@@ -186,8 +164,6 @@ export class PortfolioPage {
     initialValue: this.route.snapshot.queryParamMap,
   });
 
-  protected readonly tabs = PORTFOLIO_TABS;
-  protected readonly tabLabels = TAB_LABELS;
   protected readonly version = signal(0);
 
   protected readonly tab = computed<PortfolioTab>(() => {

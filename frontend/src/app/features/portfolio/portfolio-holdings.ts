@@ -21,10 +21,11 @@ import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { displayTicker } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
 import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
+import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/unrealized-sheet';
 
 /**
  * Open positions as Trading 212 lists them, largest value first. A pie is one row; tapping it expands its
- * instruments in place. Tapping a position opens its chart and profit/loss in a dialog. The card collapses to
+ * instruments in place. Tapping a position opens its unrealized profit/loss in a dialog. The card collapses to
  * its title and total; the choice is remembered.
  */
 @Component({
@@ -154,7 +155,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                       />
                     </button>
                     @if (open) {
-                      <ul [id]="'pie-' + key(h)" class="ml-6 border-l border-outline-variant pl-3">
+                      <ul [id]="'pie-' + key(h)" class="ml-5 pl-2">
                         @for (p of pie.positions; track p.t212Ticker) {
                           <li>
                             <ng-container
@@ -286,11 +287,20 @@ export class PortfolioHoldings {
     });
   }
 
-  protected openPosition(p: T212HoldingPosition): void {
-    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker: p.t212Ticker },
-      ...DIALOG_CONFIG,
-    });
+  /** Opens the unrealized profit/loss dialog; the position dialog if the instrument cannot be loaded. */
+  protected async openPosition(p: T212HoldingPosition): Promise<void> {
+    try {
+      const { instrument, accountCurrency } = await firstValueFrom(
+        this.api.t212Instrument(p.t212Ticker),
+      );
+      const data: UnrealizedSheetData = { instrument, accountCurrency };
+      this.dialog.open(UnrealizedSheet, { ...DIALOG_CONFIG, data });
+    } catch {
+      this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+        data: { t212Ticker: p.t212Ticker },
+        ...DIALOG_CONFIG,
+      });
+    }
   }
 
   protected tone(value: number | null): string {

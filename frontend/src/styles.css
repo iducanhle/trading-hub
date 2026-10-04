@@ -171,8 +171,8 @@
 
 /* The two lines of a list row (stocks, positions, trades, events); the meta line is never heavier than the title. */
 @utility app-row-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.5;
 }
 @utility app-row-meta {
