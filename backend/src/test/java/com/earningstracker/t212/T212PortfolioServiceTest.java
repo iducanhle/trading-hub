@@ -97,7 +97,8 @@ class T212PortfolioServiceTest {
         });
         live = new T212LiveService(client, connection, properties, clock);
         portfolio = new T212PortfolioService(connection, data, live,
-                new T212PieService(client, connection, clock), profiles, quotes, fx, snapshots, clock);
+                new T212PieService(client, connection, clock), profiles, quotes, fx, snapshots,
+                new T212Logos(url -> url.equals(T212Logos.url("AAPL_US_EQ"))), clock);
 
         connection.connect(UID, new T212Dtos.CredentialsRequest(API_KEY, API_SECRET, T212Environment.DEMO));
         sync.runNow(UID).orElseThrow();
@@ -125,7 +126,7 @@ class T212PortfolioServiceTest {
             assertThat(item.kind()).isEqualTo("POSITION");
             assertThat(item.position().t212Ticker()).isEqualTo("AAPL_US_EQ");
             assertThat(item.position().symbol()).isEqualTo("AAPL");
-            assertThat(item.position().logoUrl()).isEqualTo("https://logos.example/aapl.png");
+            assertThat(item.position().logoUrl()).isEqualTo(T212Logos.url("AAPL_US_EQ"));
             assertThat(item.position().quantity()).isEqualTo(10);
             assertThat(item.position().value()).isEqualTo(1564.0);
             assertThat(item.position().pnl()).isEqualTo(-92.0);
@@ -321,7 +322,7 @@ class T212PortfolioServiceTest {
         T212Dtos.Instrument aapl = list.items().get(1);
         assertThat(aapl.symbol()).isEqualTo("AAPL");
         assertThat(aapl.name()).isEqualTo("Apple");
-        assertThat(aapl.logoUrl()).isEqualTo("https://logos.example/aapl.png");
+        assertThat(aapl.logoUrl()).isEqualTo(T212Logos.url("AAPL_US_EQ"));
         assertThat(aapl.status()).isEqualTo("OPEN");
         assertThat(aapl.quantity()).isEqualTo(10);
         assertThat(aapl.averageCost()).isEqualTo(180.0);

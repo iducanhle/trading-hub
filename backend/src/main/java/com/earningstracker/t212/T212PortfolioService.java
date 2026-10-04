@@ -54,11 +54,13 @@ public class T212PortfolioService {
     private final QuoteService quotes;
     private final FxService fx;
     private final T212SnapshotStore snapshots;
+    private final T212Logos t212Logos;
     private final Clock clock;
 
     public T212PortfolioService(T212ConnectionService connection, T212DataStore store, T212LiveService liveService,
             T212PieService pieService, ProfileService profiles, QuoteService quotes, FxService fx,
-            T212SnapshotStore snapshots, Clock clock) {
+            T212SnapshotStore snapshots, T212Logos t212Logos, Clock clock) {
+        this.t212Logos = t212Logos;
         this.connection = connection;
         this.store = store;
         this.liveService = liveService;
@@ -573,7 +575,10 @@ public class T212PortfolioService {
         return info.name() != null ? info.name() : info.ticker();
     }
 
-    /** Logo URLs by ticker, for instruments with a mapped symbol (stored profile, else the ticker's Parqet logo). */
+    /**
+     * Logo URLs by ticker: Trading 212's own icon when it has one, else for instruments with a mapped symbol the
+     * stored profile's logo, else the ticker's Parqet logo.
+     */
     private Map<String, String> logos(Context ctx, List<String> tickers) {
         Map<String, String> symbols = new java.util.HashMap<>();
         for (String ticker : tickers) {
@@ -585,6 +590,7 @@ public class T212PortfolioService {
         Map<String, String> stored = symbols.isEmpty() ? Map.of() : profiles.logos(symbols.values());
         Map<String, String> logos = new java.util.HashMap<>();
         symbols.forEach((ticker, symbol) -> logos.put(ticker, Logos.orParqet(symbol, stored.get(symbol))));
+        logos.putAll(t212Logos.urls(tickers));
         return logos;
     }
 
