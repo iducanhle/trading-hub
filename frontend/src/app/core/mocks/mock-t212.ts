@@ -13,6 +13,8 @@ import {
   T212AllocationItem,
   T212AllocationResponse,
   T212DayChangesResponse,
+  T212HistoryRange,
+  T212HistoryResponse,
   T212InstrumentDetail,
   T212InstrumentRef,
   T212InstrumentsResponse,
@@ -143,6 +145,8 @@ export class MockT212 {
         return this.holdings();
       case 'allocation':
         return id === 'day-changes' ? this.dayChanges() : this.allocation();
+      case 'history':
+        return this.history((params.get('range') ?? '1M') as T212HistoryRange);
       case 'instruments':
         return id ? this.instrument(id) : this.instruments(period, params.get('status') ?? 'ALL');
       case 'trades':
@@ -407,6 +411,51 @@ export class MockT212 {
       accountCurrency: data.accountCurrency,
       total: round(total),
       items,
+      asOf: new Date().toISOString(),
+      stale: false,
+    };
+  }
+
+  /**
+   * A made-up, stable random walk ending at today's account value: 45 days of 15-minute points (so ALL is
+   * short, like a feature that started recently), thinned like the backend. Net deposits as in the fixture.
+   */
+  private async history(range: T212HistoryRange): Promise<T212HistoryResponse> {
+    const data = await this.fixture();
+    const end = data.account.totalValue ?? 0;
+    const netDeposits = round(
+      data.transactions
+        .filter((t) => t.type === 'DEPOSIT' || t.type === 'WITHDRAW')
+        .reduce((sum, t) => sum + t.amount, 0),
+    );
+    const step = 15 * 60_000;
+    const now = Math.floor(Date.now() / step) * step;
+    const count = 45 * 96;
+    const values: number[] = new Array(count);
+    let value = end;
+    let seed = 42;
+    for (let i = count - 1; i >= 0; i--) {
+      values[i] = value;
+      seed = (seed * 16807) % 2147483647;
+      value = value / (1 + (seed / 2147483647 - 0.5) * 0.004);
+    }
+    const spanDays = { '1D': 1, '1W': 7, '1M': 31, '3M': 92, '1Y': 366, ALL: Infinity }[range];
+    const bucket = range === '1D' ? step : range === '1W' ? 3_600_000 : 86_400_000;
+    const byBucket = new Map<number, { at: number; value: number }>();
+    values.forEach((v, i) => {
+      const at = now - (count - 1 - i) * step;
+      if (now - at > spanDays * 86_400_000) return;
+      byBucket.set(Math.floor(at / bucket), { at, value: v });
+    });
+    return {
+      range,
+      accountCurrency: data.accountCurrency,
+      points: [...byBucket.values()].map((p) => ({
+        at: new Date(p.at).toISOString(),
+        value: round(p.value),
+        netDeposits,
+        profit: round(p.value - netDeposits),
+      })),
       asOf: new Date().toISOString(),
       stale: false,
     };

@@ -11,8 +11,10 @@ import com.earningstracker.t212.T212LiveService;
 import com.earningstracker.t212.T212Period;
 import com.earningstracker.t212.T212PieService;
 import com.earningstracker.t212.T212PortfolioService;
+import com.earningstracker.t212.T212PortfolioService.HistoryRange;
 import com.earningstracker.t212.T212PortfolioService.SideFilter;
 import com.earningstracker.t212.T212PortfolioService.StatusFilter;
+import com.earningstracker.t212.T212SnapshotStore;
 import com.earningstracker.t212.T212SyncService;
 import com.earningstracker.web.dto.T212Dtos;
 import com.earningstracker.web.error.ApiException;
@@ -44,14 +46,16 @@ public class T212Controller {
     private final T212LiveService live;
     private final T212PieService pies;
     private final T212PortfolioService portfolio;
+    private final T212SnapshotStore snapshots;
 
     public T212Controller(T212ConnectionService connection, T212SyncService sync, T212LiveService live,
-            T212PieService pies, T212PortfolioService portfolio) {
+            T212PieService pies, T212PortfolioService portfolio, T212SnapshotStore snapshots) {
         this.connection = connection;
         this.sync = sync;
         this.live = live;
         this.pies = pies;
         this.portfolio = portfolio;
+        this.snapshots = snapshots;
     }
 
     @GetMapping("/status")
@@ -65,6 +69,7 @@ public class T212Controller {
         connection.connect(user.uid(), request);
         live.forget(user.uid());
         pies.forget(user.uid());
+        snapshots.forget(user.uid());
         return sync.start(user.uid());
     }
 
@@ -74,6 +79,7 @@ public class T212Controller {
         connection.disconnect(user.uid());
         live.forget(user.uid());
         pies.forget(user.uid());
+        snapshots.forget(user.uid());
     }
 
     /** Starts an incremental sync; if one is running, answers with its status. */
@@ -103,6 +109,15 @@ public class T212Controller {
     @GetMapping("/holdings")
     public T212Dtos.HoldingList holdings(@AuthenticationPrincipal AuthenticatedUser user) {
         return portfolio.holdings(user.uid());
+    }
+
+    /** {@code range}: 1D, 1W, 1M, 3M, 1Y or ALL. */
+    @GetMapping("/history")
+    public T212Dtos.History history(@AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(defaultValue = "1M") String range) {
+        HistoryRange parsed = HistoryRange.parse(range)
+                .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST, "range must be 1D, 1W, 1M, 3M, 1Y or ALL"));
+        return portfolio.history(user.uid(), parsed);
     }
 
     @GetMapping("/allocation")

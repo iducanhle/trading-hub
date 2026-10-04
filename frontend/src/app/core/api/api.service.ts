@@ -26,6 +26,8 @@ import {
   T212HoldingsResponse,
   T212AllocationResponse,
   T212DayChangesResponse,
+  T212HistoryRange,
+  T212HistoryResponse,
   T212InstrumentDetail,
   T212InstrumentsResponse,
   T212PositionStatus,
@@ -218,6 +220,10 @@ export class ApiService {
 
   t212Allocation(options?: LoadOptions): Observable<T212AllocationResponse> {
     return this.get<T212AllocationResponse>('/t212/allocation', {}, options, TTL.t212);
+  }
+
+  t212History(range: T212HistoryRange, options?: LoadOptions): Observable<T212HistoryResponse> {
+    return this.get<T212HistoryResponse>('/t212/history', { range }, options, TTL.t212);
   }
 
   /** Slow when the server has to fetch the quotes, so it is cached separately and shorter (45 s). */

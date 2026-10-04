@@ -514,6 +514,27 @@ export interface T212AllocationResponse {
   stale: boolean;
 }
 
+export type T212HistoryRange = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
+
+/** The account value at one stored moment (snapshots every 15 minutes since the feature shipped). */
+export interface T212HistoryPoint {
+  at: string;
+  value: number;
+  /** Deposits minus withdrawals up to `at`; null when one could not be converted to the account currency. */
+  netDeposits: number | null;
+  /** value − netDeposits. */
+  profit: number | null;
+}
+
+export interface T212HistoryResponse {
+  range: T212HistoryRange;
+  accountCurrency: string | null;
+  /** Oldest first: every point (1D), the last of each hour (1W) or of each day (longer). */
+  points: T212HistoryPoint[];
+  asOf: string;
+  stale: boolean;
+}
+
 export interface T212DayChangesResponse {
   /** Today's price change in percent by `t212Ticker`; only the 24 largest positions, mapped and quoted. */
   changes: Record<string, number>;

@@ -58,6 +58,10 @@ class T212PortfolioServiceTest {
     private T212ConnectionService connection;
     private T212PortfolioService portfolio;
     private T212SyncService sync;
+    private T212SnapshotStore snapshots;
+    private T212LiveService live;
+    private T212StateStore states;
+    private T212Encryption encryption;
     private final QuoteService quotes = mock(QuoteService.class);
 
     @BeforeEach
@@ -72,9 +76,10 @@ class T212PortfolioServiceTest {
                 .on("/api/v0/equity/history/dividends", json("t212/dividends.json"))
                 .on("/api/v0/equity/history/transactions", json("t212/transactions.json"));
         InMemoryDocumentStore store = new InMemoryDocumentStore();
-        T212Encryption encryption = new T212Encryption(properties);
+        encryption = new T212Encryption(properties);
         T212Client client = new T212Client(properties, JSON, clock, new RecordingSleeper(clock));
-        T212StateStore states = new T212StateStore(store);
+        states = new T212StateStore(store);
+        snapshots = new T212SnapshotStore(store);
         T212DataStore data = new T212DataStore(store);
         T212SyncTracker tracker = new T212SyncTracker();
         connection = new T212ConnectionService(client, new T212CredentialStore(store, encryption, clock), states, data,
@@ -90,8 +95,9 @@ class T212PortfolioServiceTest {
             case "USD" -> call.getArgument(0);
             default -> null;
         });
-        portfolio = new T212PortfolioService(connection, data, new T212LiveService(client, connection, properties,
-                clock), new T212PieService(client, connection, clock), profiles, quotes, fx, clock);
+        live = new T212LiveService(client, connection, properties, clock);
+        portfolio = new T212PortfolioService(connection, data, live,
+                new T212PieService(client, connection, clock), profiles, quotes, fx, snapshots, clock);
 
         connection.connect(UID, new T212Dtos.CredentialsRequest(API_KEY, API_SECRET, T212Environment.DEMO));
         sync.runNow(UID).orElseThrow();
@@ -139,6 +145,35 @@ class T212PortfolioServiceTest {
             assertThat(item.weightPct()).isEqualTo(100.0);
         });
         verifyNoInteractions(quotes);
+    }
+
+    @Test
+    void historyKeepsTheLastPointOfEachDayWithNetDepositsUpToThen() {
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-07-31T10:00:00Z"), 5100));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-08-02T10:00:00Z"), 4900));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-08-02T15:00:00Z"), 4950));
+
+        T212Dtos.History all = portfolio.history(UID, T212PortfolioService.HistoryRange.ALL);
+
+        assertThat(all.range()).isEqualTo("ALL");
+        assertThat(all.points()).containsExactly(
+                new T212Dtos.HistoryPoint(Instant.parse("2026-07-31T10:00:00Z"), 5100.0, 5000.0, 100.0),
+                new T212Dtos.HistoryPoint(Instant.parse("2026-08-02T15:00:00Z"), 4950.0, 4800.0, 150.0));
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.M1).points()).isEmpty();
+    }
+
+    @Test
+    void snapshotJobStoresTheAccountValueAtTheJobTime() {
+        Map<String, Object> stats = new com.earningstracker.jobs.T212SnapshotJob(live, snapshots, states, encryption,
+                clock).run();
+
+        assertThat(stats).containsEntry("stored", 1).containsEntry("skipped", 0);
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.D1).points()).singleElement()
+                .satisfies(p -> {
+                    assertThat(p.at()).isEqualTo(clock.instant());
+                    assertThat(p.value()).isEqualTo(10450.25);
+                    assertThat(p.profit()).isEqualTo(10450.25 - 4800);
+                });
     }
 
     @Test

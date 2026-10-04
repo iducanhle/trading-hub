@@ -10,7 +10,7 @@ public interface Job {
 
     /**
      * {@code calendar-refresh}, {@code market-events-refresh}, {@code eu-universe-refresh}, {@code prices-refresh},
-     * {@code earnings-digest} or {@code t212-sync}.
+     * {@code earnings-digest}, {@code t212-sync} or {@code t212-snapshot}.
      */
     String name();
 

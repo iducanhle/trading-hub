@@ -61,6 +61,12 @@ class JobScheduler {
         runner.run(T212SyncJob.NAME, "schedule");
     }
 
+    /** Trading 212 balance history: on the hour and every quarter hour after it. */
+    @Scheduled(cron = "0 0/15 * * * *", zone = "Europe/Prague")
+    void trading212Snapshot() {
+        runner.run(T212SnapshotJob.NAME, "schedule");
+    }
+
     /** §7: run calendar-refresh once on startup if its last success is older than 24 h. */
     @EventListener(ApplicationReadyEvent.class)
     void onStartup() {

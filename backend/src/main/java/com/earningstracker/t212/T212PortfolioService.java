@@ -2,12 +2,16 @@ package com.earningstracker.t212;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,10 +50,12 @@ public class T212PortfolioService {
     private final ProfileService profiles;
     private final QuoteService quotes;
     private final FxService fx;
+    private final T212SnapshotStore snapshots;
     private final Clock clock;
 
     public T212PortfolioService(T212ConnectionService connection, T212DataStore store, T212LiveService liveService,
-            T212PieService pieService, ProfileService profiles, QuoteService quotes, FxService fx, Clock clock) {
+            T212PieService pieService, ProfileService profiles, QuoteService quotes, FxService fx,
+            T212SnapshotStore snapshots, Clock clock) {
         this.connection = connection;
         this.store = store;
         this.liveService = liveService;
@@ -57,6 +63,7 @@ public class T212PortfolioService {
         this.profiles = profiles;
         this.quotes = quotes;
         this.fx = fx;
+        this.snapshots = snapshots;
         this.clock = clock;
     }
 
@@ -214,6 +221,71 @@ public class T212PortfolioService {
                     round(p.value()), round(p.value() / total * 100));
         }).toList();
         return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
+    }
+
+    /** How far back {@link #history} reaches and how densely: every point, the last of each hour or of each day. */
+    public enum HistoryRange {
+        D1("1D", Duration.ofDays(1), null),
+        W1("1W", Duration.ofDays(7), ChronoUnit.HOURS),
+        M1("1M", Duration.ofDays(31), ChronoUnit.DAYS),
+        M3("3M", Duration.ofDays(92), ChronoUnit.DAYS),
+        Y1("1Y", Duration.ofDays(366), ChronoUnit.DAYS),
+        ALL("ALL", null, ChronoUnit.DAYS);
+
+        private final String code;
+        private final Duration span;
+        private final ChronoUnit step;
+
+        HistoryRange(String code, Duration span, ChronoUnit step) {
+            this.code = code;
+            this.span = span;
+            this.step = step;
+        }
+
+        public String code() {
+            return code;
+        }
+
+        public static Optional<HistoryRange> parse(String code) {
+            return Arrays.stream(values()).filter(r -> r.code.equalsIgnoreCase(code)).findFirst();
+        }
+    }
+
+    /**
+     * The stored account values ({@link T212SnapshotStore}) of the range, oldest first, each with the net deposits
+     * up to then. Never calls Trading 212.
+     */
+    public T212Dtos.History history(String uid, HistoryRange range) {
+        Context ctx = context(uid, false);
+        Instant now = clock.instant();
+        List<T212SnapshotStore.Point> points = snapshots.points(uid).stream()
+                .filter(p -> range.span == null || !p.at().isBefore(now.minus(range.span))).toList();
+        if (range.step != null) {
+            Map<Instant, T212SnapshotStore.Point> lastPerStep = new java.util.TreeMap<>();
+            for (T212SnapshotStore.Point p : points) {
+                Instant key = p.at().atZone(T212SnapshotStore.ZONE).truncatedTo(range.step).toInstant();
+                lastPerStep.put(key, p);
+            }
+            points = List.copyOf(lastPerStep.values());
+        }
+
+        List<T212CashTransaction> flows = ctx.data().transactions().values().stream()
+                .filter(t -> t.type().equals("DEPOSIT") || t.type().equals("WITHDRAW"))
+                .sorted(Comparator.comparing(T212CashTransaction::at)).toList();
+        List<T212Dtos.HistoryPoint> result = new java.util.ArrayList<>();
+        int next = 0;
+        Double netDeposits = 0.0;
+        for (T212SnapshotStore.Point p : points) {
+            while (next < flows.size() && !flows.get(next).at().isAfter(p.at())) {
+                T212CashTransaction t = flows.get(next++);
+                Double amount = inAccountCurrency(t.amount(), t.currency(), ctx.currency());
+                netDeposits = netDeposits == null || amount == null ? null : netDeposits + amount;
+            }
+            result.add(new T212Dtos.HistoryPoint(p.at(), round(p.value()),
+                    netDeposits == null ? null : round(netDeposits),
+                    netDeposits == null ? null : round(p.value() - netDeposits)));
+        }
+        return new T212Dtos.History(range.code(), ctx.currency(), result, ctx.asOf(), ctx.stale());
     }
 
     /**

@@ -230,6 +230,8 @@ type T212AllocationItem = {           // one instrument held now, inside and out
   value: number; weightPct: number /* of total */;
 };
 type T212Holding = { kind: "PIE"; pie: T212Pie; position: null } | { kind: "POSITION"; pie: null; position: T212HoldingPosition };
+type T212HistoryRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL";
+type T212HistoryPoint = { at: string; value: number; netDeposits: number | null /* deposits − withdrawals up to at */; profit: number | null /* value − netDeposits */ };
 
 type T212Transaction = { id: string; at: string; type: T212TransactionType; amount: number /* signed: − = money out */; currency: string };
 ```
@@ -251,7 +253,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/market-events?from=&to=&minImportance=LOW\|MEDIUM\|HIGH&region=ALL\|US\|EU\|OTHER&includeEarnings=true` | `{ from, to, days: { date: string, events: MarketEvent[] }[] }` | Every date in the range is present (possibly empty). Events with at least `minImportance` (default `LOW`), most important first, then all-day events, then by time. `region` filters by `country` (`OTHER` = not US or EU). `includeEarnings=false` leaves out the mega-cap reports. Max span 42 days. |
 | `GET /api/followed/earnings` | `{ upcoming: EarningsEvent[] /* date ≥ today, asc */, noUpcomingDate: SearchResult[] }` | Based on the caller's `users/{uid}/follows` |
 | `POST /api/notifications/test` | `202 { sentTo: string }` | |
-| `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `market-events-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`, `t212-sync` |
+| `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `market-events-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`, `t212-sync`, `t212-snapshot` |
 | `GET /api/t212/status` | `T212Status` | Works when not connected (`connected: false`) |
 | `PUT /api/t212/credentials` | `T212Status` | Body `{ apiKey: string, apiSecret: string \| null, environment: T212Environment }`. Validates with Trading 212, encrypts, stores, starts the first sync (`syncState: "RUNNING"`) |
 | `DELETE /api/t212/credentials` | `204` | Deletes the key **and** all synced data. Idempotent |
@@ -260,6 +262,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/t212/holdings` | `{ accountCurrency, items: T212Holding[] /* largest value first */, piesAvailable: boolean, asOf, stale }` | Open positions as Trading 212 lists them: each pie is one item |
 | `GET /api/t212/allocation` | `{ accountCurrency, total: number, items: T212AllocationItem[] /* largest value first */, asOf, stale }` | Open positions as shares of their value |
 | `GET /api/t212/allocation/day-changes` | `{ changes: Record<string /* t212Ticker */, number /* percent */>, asOf, stale }` | Today's price change of the largest open positions |
+| `GET /api/t212/history?range=1D|1W|1M|3M|1Y|ALL` | `{ range, accountCurrency, points: T212HistoryPoint[] /* oldest first */, asOf, stale }` | Account value history; default `range=1M`, unknown → 400. Stored data only |
 | `GET /api/t212/instruments?from=&to=&tz=&status=OPEN\|CLOSED\|ALL` | `{ from, to, tz, accountCurrency, items: T212Instrument[], asOf, stale }` | Sorted by `totalPnl` desc |
 | `GET /api/t212/instruments/{t212Ticker}` | `{ accountCurrency, instrument: T212Instrument /* all time */, trades: (T212Trade & { positionAfter: number })[], dividends: T212Dividend[], asOf, stale }` | Both lists newest first. 404 `NOT_FOUND` if the caller never held it |
 | `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker`, or several comma-separated (max 50) |
@@ -340,6 +343,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
 - **Rejected key later:** when Trading 212 answers 401/403 during a sync or a live call, status shows `credentialsValid: false`, `syncState: "FAILED"`, `lastError.code: "T212_INVALID_CREDENTIALS"`; read endpoints keep serving stored history with `stale: true` until the user replaces the key or disconnects.
 - **Live values** (summary totals, open positions: quantity, average cost, current price, value, unrealized P/L) are fetched from Trading 212 and cached per user for about 60 s. If that fails, the last good values are served with `stale: true`; with none, the live fields are `null`, `stale` is `true`, and `status` (OPEN/CLOSED) follows the synced history. Read endpoints never fail because Trading 212 is down. `/trades`, `/dividends` and `/transactions` use stored data only.
 - **`asOf`** is the oldest of the last successful sync and the live fetch used (now, before the first sync finishes). **`stale`** is also `true` when the last sync failed or the stored key no longer works.
+- **Balance history:** Trading 212 has no balance history, so the `t212-snapshot` job stores each connected user's account value every 15 minutes (on the hour, :15, :30, :45 Europe/Prague) from the cached live values; history starts when the job first ran. A stale or failed value is skipped, never filled in. `/history` returns every point for `1D`, the last of each hour for `1W` and the last of each day for longer ranges. `netDeposits` is computed when read from the synced transactions (other currencies at today's rate), so a deposit shows up once synced and never counts as profit.
 - **`best` / `worst`** are the instruments of the period with the highest and lowest `totalPnl`; `worst` is `null` with fewer than two.
 - **`/transactions?type=`** is case-insensitive; `totals` always cover every type of the period. `interest` is `INTEREST_ON_FREE_CASH` + `LENDING_INTEREST`. Amounts in another currency than the account's (e.g. a USD deposit into a CZK account) are converted at today's rate for the totals, so those totals are approximate; the items keep their own currency.
 - **Periods:** `from` and `to` are optional `YYYY-MM-DD` days, both inclusive, read in the IANA time zone `tz` (default `UTC`; the frontend sends the device's zone). Missing `from` = since the first item; missing `to` = today. Both missing = all time. `from > to` or an unknown `tz` → 400.
@@ -357,7 +361,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
 - **`{t212Ticker}` in paths** is case-sensitive (`SAPd_EQ`). `positionAfter` is the number of shares held right after that trade.
 - **`GET /trades`:** filled trades only (cancelled and rejected orders are not stored), including corporate-action fills (`kind`). `cursor` is opaque; pass `nextCursor` back with the same filters.
 - **`symbol`** is mapped from the Trading 212 ticker and instrument data; `null` when no supported exchange matches. `logoUrl` as for search results (stored profile, else `null`).
-- **Firestore** (backend-only, rules deny all client access): `t212Credentials/{uid}` (encrypted key and secret, hint, environment) and `t212/{uid}` (sync state) with subcollections `orders`, `dividends`, `transactions` (items bucketed by month) and `instruments`.
+- **Firestore** (backend-only, rules deny all client access): `t212Credentials/{uid}` (encrypted key and secret, hint, environment) and `t212/{uid}` (sync state) with subcollections `orders`, `dividends`, `transactions` (items bucketed by month), `instruments` and `snapshots` (one document per day: `{ points: [{ at, value }] }`).
 
 ---
 
@@ -381,3 +385,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-03 | Added `GET /api/t212/allocation` with `T212AllocationItem` (additive). |
 | 2026-10-03 | `T212Summary.rateOfReturnPct`: money-weighted rate of return, all time only. Additive. |
 | 2026-10-04 | `T212AllocationItem.dayChangePct` removed; today's change moved to the new `GET /api/t212/allocation/day-changes`, so `/allocation` no longer waits for quotes. Breaking (frontend and backend change together). |
+| 2026-10-04 | Added `GET /api/t212/history` with `T212HistoryPoint` and the `t212-snapshot` job (every 15 minutes, `t212/{uid}/snapshots`). Additive. |

@@ -67,6 +67,17 @@ public final class T212Dtos {
             boolean stale) {
     }
 
+    /**
+     * The account value at one stored moment. {@code netDeposits} are deposits minus withdrawals up to then (null
+     * when one could not be converted to the account currency); {@code profit} = value − netDeposits.
+     */
+    public record HistoryPoint(Instant at, double value, Double netDeposits, Double profit) {
+    }
+
+    public record History(String range, String accountCurrency, List<HistoryPoint> points, Instant asOf,
+            boolean stale) {
+    }
+
     /** Today's price change in percent by Trading 212 ticker; positions without one are left out. */
     public record DayChanges(Map<String, Double> changes, Instant asOf, boolean stale) {
     }
