@@ -36,6 +36,7 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
+import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
 import { PercentPipe, PricePipe, SignedMoneyPipe } from '../../shared/pipes/format.pipes';
 import { NUMBER_LOCALE, PERIOD_LABELS, toneClass } from '../../shared/utils/format';
@@ -100,6 +101,7 @@ function chartTime(iso: string): UTCTimestamp {
     Segmented,
     SignedMoneyPipe,
     Skeleton,
+    TermInfo,
   ],
   template: `
     <section class="app-card" aria-labelledby="history-title">
@@ -141,6 +143,7 @@ function chartTime(iso: string): UTCTimestamp {
                   {{ p.profit | money: currency() }}
                   @if (profitPct(p) !== null) {
                     <span class="font-medium">· {{ profitPct(p) | pct: 1 }}</span>
+                    <app-term-info class="ml-0.5 inline-flex align-middle" term="accountReturn" />
                   }
                   <span class="app-label ms-1" i18n="Profit since the first deposit">all time</span>
                 </p>

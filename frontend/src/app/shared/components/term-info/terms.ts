@@ -24,6 +24,7 @@ export type TermId =
   | 'realizedPnl'
   | 'unrealizedPnl'
   | 'totalPnl'
+  | 'accountReturn'
   | 'breakEven'
   | 'fxFees'
   | 'accountFees'
@@ -222,6 +223,15 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:The percentage compares it with everything you spent on buying the stock.`,
     ],
     example: $localize`:Term example:Realized +$100, dividends +$5, fees −$2 and unrealized −$40: total +$63.`,
+  },
+  accountReturn: {
+    title: $localize`:Term title:Return on net deposits`,
+    body: [
+      $localize`:Term text:All-time profit divided by your net deposits (everything you paid in minus what you took out). It counts the whole account, cash included.`,
+      $localize`:Term text:It can differ from the percentage in the Trading 212 app, which usually compares the profit with the cost of the stocks you hold. A large cash balance or recent deposits make this figure lower.`,
+      $localize`:Term text:The percentage is always all time: changing the range does not change it, but touching the chart shows it as of that moment.`,
+    ],
+    example: $localize`:Term example:Profit 100,000 on net deposits of 1,290,000: +7.8%.`,
   },
   breakEven: {
     title: $localize`:Term title:Break-even price`,

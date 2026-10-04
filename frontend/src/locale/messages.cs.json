@@ -605,6 +605,11 @@
     "1368068353950925127": "Průměrná nákupní cena 110 $ a cena 100 $: cena musí vzrůst o 10 %, abyste byli na nule.",
     "1509179888425602487": "Cena oproti vyrovnání",
     "9048937552968459323": "Z toho vlivem kurzu měn",
-    "4867213672403876301": "Realizovaný zisk"
+    "4867213672403876301": "Realizovaný zisk",
+    "7834973877974224532": "Výnos z čistých vkladů",
+    "686085955531091934": "Celkový zisk vydělený čistými vklady (vším, co jste vložili, minus co jste vybrali). Počítá se celý účet včetně hotovosti.",
+    "7479052830075111372": "Může se lišit od procenta v aplikaci Trading 212, které obvykle srovnává zisk s cenou akcií, které držíte. Vysoký zůstatek hotovosti nebo čerstvé vklady toto číslo snižují.",
+    "427730725372734761": "Procento je vždy za celou dobu: změna období ho nemění, ale dotykem grafu ho zobrazíte k danému okamžiku.",
+    "2591956570350855638": "Zisk 100 000 při čistých vkladech 1 290 000: +7,8 %."
   }
 }

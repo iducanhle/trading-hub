@@ -89,7 +89,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/settings/settings-page').then((m) => m.SettingsPage),
       },
-      { path: '', pathMatch: 'full', redirectTo: 'followed' },
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Tradiqo',
+        loadComponent: () => import('./features/home/home-page').then((m) => m.HomePage),
+      },
       { path: '**', redirectTo: 'followed' },
     ],
   },
