@@ -16,7 +16,7 @@ import {
   QuantityPipe,
   SignedMoneyPipe,
 } from '../../shared/pipes/format.pipes';
-import { toneClass } from '../../shared/utils/format';
+import { toneClass, toneOf } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { displayTicker } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
@@ -26,7 +26,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
 /**
  * Open positions as Trading 212 lists them, largest value first. A pie is one row; tapping it expands its
  * instruments in place. Tapping a position opens its unrealized profit/loss in a dialog. The card collapses to
- * its title and total; the choice is remembered.
+ * its title; the choice is remembered.
  */
 @Component({
   selector: 'app-portfolio-holdings',
@@ -51,14 +51,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
           aria-controls="holdings-content"
           (click)="open.set(!open())"
         >
-          <span class="min-w-0 flex-1">
-            <span class="app-title-card block" i18n>Open positions</span>
-            @if (total() !== null) {
-              <span class="mt-0.5 block text-base font-semibold">{{
-                total() | price: currency()
-              }}</span>
-            }
-          </span>
+          <span class="app-title-card min-w-0 flex-1" i18n>Open positions</span>
           <app-icon
             name="keyboard_arrow_down"
             class="text-on-surface-variant transition-transform duration-200"
@@ -68,6 +61,45 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
       </h2>
       @if (open()) {
         <div id="holdings-content">
+          @if (netDeposits() !== null || unrealizedPnl() !== null) {
+            <div class="mt-3.5 grid grid-cols-2 gap-2">
+              <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-3">
+                <p class="app-label">
+                  <ng-container i18n>Account value</ng-container>
+                </p>
+                <p class="mt-1 truncate text-[15px] font-semibold">
+                  {{ accountValue() | price: currency() }}
+                </p>
+              </div>
+              <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-3">
+                <p class="app-label">
+                  <ng-container i18n="Money in the account that is not invested">Cash</ng-container>
+                </p>
+                <p class="mt-1 truncate text-[15px] font-semibold">
+                  {{ cash() | price: currency() }}
+                </p>
+              </div>
+              <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-3">
+                <p class="app-label">
+                  <ng-container i18n>net deposits</ng-container>
+                </p>
+                <p class="mt-1 truncate text-[15px] font-semibold">
+                  {{ netDeposits() | price: currency() }}
+                </p>
+              </div>
+              <div
+                class="min-w-0 rounded-2xl px-3.5 py-3"
+                [class]="unrealizedTile(unrealizedPnl())"
+              >
+                <p class="app-label">
+                  <ng-container i18n>unrealized profit</ng-container>
+                </p>
+                <p class="mt-1 truncate text-[15px] font-semibold">
+                  {{ unrealizedPnl() | money: currency() }}
+                </p>
+              </div>
+            </div>
+          }
           <label
             class="mt-3.5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
           >
@@ -228,10 +260,12 @@ export class PortfolioHoldings {
 
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
-  /** Value of all open positions, shown in the card's heading. */
-  readonly total = input<number | null>(null);
   protected readonly open = persistedSignal('portfolio.holdings.expanded', true);
   readonly currency = input<string | null>(null);
+  readonly accountValue = input<number | null>(null);
+  readonly cash = input<number | null>(null);
+  readonly netDeposits = input<number | null>(null);
+  readonly unrealizedPnl = input<number | null>(null);
 
   protected readonly search = signal('');
 
@@ -306,6 +340,19 @@ export class PortfolioHoldings {
   protected tone(value: number | null): string {
     return toneClass(value);
   }
+
+  /** Tinted by the sign: green for a gain, red for a loss, grey at zero. */
+  protected unrealizedTile(value: number | null): string {
+    switch (toneOf(value)) {
+      case 'gain':
+        return 'bg-gain-container text-gain';
+      case 'loss':
+        return 'bg-loss-container text-loss';
+      default:
+        return 'bg-surface-container-high';
+    }
+  }
+
 
   protected ticker(p: T212HoldingPosition): string {
     return displayTicker(p);
