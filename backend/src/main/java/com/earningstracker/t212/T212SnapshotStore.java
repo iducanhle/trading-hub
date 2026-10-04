@@ -17,7 +17,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
 /**
- * The account value every 15 minutes ({@code t212-snapshot} job), one backend-only document per day:
+ * The account value every 5 minutes ({@code t212-snapshot} job), one backend-only document per day:
  * {@code t212/{uid}/snapshots/{YYYY-MM-DD}} = {@code {points: [{at, value}]}} (Europe/Prague days, epoch millis).
  * Trading 212 has no balance history, so this starts on the first snapshot. A user's whole history costs one read
  * per day stored; it is then kept in memory until unused for 6 hours.

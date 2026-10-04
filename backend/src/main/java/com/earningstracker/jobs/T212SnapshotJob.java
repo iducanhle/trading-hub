@@ -15,8 +15,8 @@ import com.earningstracker.t212.T212StateStore;
 import org.springframework.stereotype.Component;
 
 /**
- * Every 15 minutes: stores each connected user's account value ({@link T212SnapshotStore}) for the balance
- * history chart. Reuses the live values the portfolio page shows (one account summary and one positions call when
+ * Every 5 minutes (on the hour, :05, :10 …): stores each connected user's account value
+ * ({@link T212SnapshotStore}) for the balance history chart. Reuses the live values the portfolio page shows (one account summary and one positions call when
  * not cached). A stale or missing value is skipped, never filled in. Does nothing without {@code T212_ENCRYPTION_KEY}.
  */
 @Component
@@ -62,7 +62,7 @@ public class T212SnapshotJob implements Job {
                 skipped++;
                 continue;
             }
-            // Time of the job, not of a cached fetch, so points sit on the quarter hour.
+            // Time of the job, not of a cached fetch, so points sit on the 5-minute marks.
             snapshots.add(uid, new T212SnapshotStore.Point(Instant.now(clock), value));
             stored++;
         }

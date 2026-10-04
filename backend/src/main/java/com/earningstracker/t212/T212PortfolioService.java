@@ -226,9 +226,9 @@ public class T212PortfolioService {
         return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
     }
 
-    /** One step of {@link #history}: the last point of each 15 or 30 minutes, hour, 4 hours, day or week. */
+    /** One step of {@link #history}: the last point of each 5, 15 or 30 minutes, hour, 4 hours, day or week. */
     public enum HistoryInterval {
-        M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440), W1("1w", 0);
+        M5("5m", 5), M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440), W1("1w", 0);
 
         private final String code;
         private final int minutes;
@@ -260,9 +260,10 @@ public class T212PortfolioService {
 
     /** How far back {@link #history} reaches, the intervals it offers (keeping the points to a few thousand). */
     public enum HistoryRange {
-        D1("1D", Duration.ofDays(1), HistoryInterval.M15, HistoryInterval.M30, HistoryInterval.H1),
-        W1("1W", Duration.ofDays(7), HistoryInterval.H1, HistoryInterval.M15, HistoryInterval.M30,
-                HistoryInterval.H4),
+        D1("1D", Duration.ofDays(1), HistoryInterval.M15, HistoryInterval.M5, HistoryInterval.M30,
+                HistoryInterval.H1),
+        W1("1W", Duration.ofDays(7), HistoryInterval.H1, HistoryInterval.M5, HistoryInterval.M15,
+                HistoryInterval.M30, HistoryInterval.H4),
         M1("1M", Duration.ofDays(31), HistoryInterval.H1, HistoryInterval.M15, HistoryInterval.M30,
                 HistoryInterval.H4, HistoryInterval.D1),
         M3("3M", Duration.ofDays(92), HistoryInterval.H4, HistoryInterval.M30, HistoryInterval.H1,
