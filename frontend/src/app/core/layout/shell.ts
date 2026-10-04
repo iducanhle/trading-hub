@@ -74,8 +74,10 @@ interface Tab {
 
     <ng-template #navContent let-docked>
       <div class="flex h-16 items-center gap-2.5 pr-3 pl-5">
-        <img src="icons/icon.svg" alt="" width="36" height="36" class="rounded-[11px]" />
-        <span class="flex-1 text-xl font-extrabold">Tradiqo</span>
+        <a routerLink="/" class="flex flex-1 items-center gap-2.5">
+          <img src="icons/icon.svg" alt="" width="36" height="36" class="rounded-[11px]" />
+          <span class="text-xl font-extrabold">Tradiqo</span>
+        </a>
         @if (!docked) {
           <button
             #closeButton
@@ -227,18 +229,18 @@ export class Shell {
     };
   });
   private readonly sections: Tab[] = [
+    {
+      path: '/portfolio',
+      label: $localize`:Bottom navigation tab:Portfolio`,
+      icon: 'account_balance_wallet',
+      activeIcon: 'account_balance_wallet',
+    },
     { path: '/followed', label: $localize`Followed`, icon: 'star', activeIcon: 'star-fill' },
     {
       path: '/calendar',
       label: $localize`Calendar`,
       icon: 'calendar_month',
       activeIcon: 'calendar_month',
-    },
-    {
-      path: '/portfolio',
-      label: $localize`:Bottom navigation tab:Portfolio`,
-      icon: 'account_balance_wallet',
-      activeIcon: 'account_balance_wallet',
     },
     { path: '/settings', label: $localize`Settings`, icon: 'settings', activeIcon: 'settings' },
   ];

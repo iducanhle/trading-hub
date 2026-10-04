@@ -20,7 +20,6 @@ import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
-import { TermInfo } from '../../shared/components/term-info/term-info';
 import { InView } from '../../shared/directives/in-view';
 import { Icon } from '../../shared/icon/icon';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
@@ -102,7 +101,6 @@ const EMPTY: ListState = {
     FilterButton,
     Segmented,
     Segment,
-    TermInfo,
   ],
   template: `
     <div class="flex items-center gap-2.5">
@@ -191,33 +189,6 @@ const EMPTY: ListState = {
               <span class="text-[15px] font-semibold">—</span>
             } @else if (s) {
               <span class="text-[15px] font-semibold">{{ s.sold | price: s.currency }}</span>
-            } @else {
-              <app-skeleton class="h-[22px] w-20" />
-            }
-          </div>
-        </section>
-        <section class="app-card mb-4 grid grid-cols-2 gap-x-3.5">
-          <div class="flex min-w-0 flex-col gap-2">
-            <h2 class="app-label" i18n>Realized</h2>
-            @if (filters().side === 'BUY') {
-              <span class="text-[15px] font-semibold">—</span>
-            } @else if (s) {
-              <span class="text-[15px] font-semibold" [class]="tone(s.realized)">{{
-                s.realized | money: s.currency
-              }}</span>
-            } @else {
-              <app-skeleton class="h-[22px] w-20" />
-            }
-          </div>
-          <div class="flex min-w-0 flex-col gap-2 border-l border-outline-variant pl-3.5">
-            <h2 class="app-label">
-              <ng-container i18n>Including fees</ng-container>
-              <app-term-info class="ml-0.5 inline-flex align-middle" term="includingFees" />
-            </h2>
-            @if (s) {
-              <span class="text-[15px] font-semibold" [class]="tone(s.afterFees)">{{
-                s.afterFees | money: s.currency
-              }}</span>
             } @else {
               <app-skeleton class="h-[22px] w-20" />
             }
