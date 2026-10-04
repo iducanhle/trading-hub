@@ -1,13 +1,6 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatOption, MatSelect } from '@angular/material/select';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
-import { firstValueFrom } from 'rxjs';
-import { errorMessage, toApiError } from '../../core/api/api-error';
-import { ApiService } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { LANGUAGE, Language, switchLanguage } from '../../core/i18n/language';
 import { ThemePreference, UserSettings } from '../../core/models/user-data';
@@ -32,19 +25,11 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 @Component({
   selector: 'app-settings-page',
   imports: [
-    ReactiveFormsModule,
     MatButton,
     MatIconButton,
     Segmented,
     Segment,
     MatSlideToggle,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatHint,
-    MatError,
-    MatSelect,
-    MatOption,
     PageHeader,
     ErrorState,
     Skeleton,
@@ -172,54 +157,9 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             <ng-container i18n>Email digest</ng-container>
           </mat-slide-toggle>
           @if (settings().notificationsEnabled) {
-          <div class="flex flex-col gap-1">
-            <mat-form-field appearance="fill">
-              <mat-label i18n>Notify me</mat-label>
-              <mat-select
-                [value]="settings().notifyDaysBefore"
-                (selectionChange)="save({ notifyDaysBefore: $event.value })"
-              >
-                @for (n of dayOptions; track n) {
-                  <mat-option [value]="n" i18n>{n, plural,
-                    =1 {1 day before}
-                    other {{{ n }} days before}
-                  }</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="fill">
-              <mat-label i18n>Notification email (optional)</mat-label>
-              <input
-                matInput
-                type="email"
-                inputmode="email"
-                autocomplete="email"
-                [formControl]="email"
-                [placeholder]="user()?.email ?? ''"
-                (blur)="saveEmail()"
-                (keydown.enter)="saveEmail()"
-              />
-              <mat-hint i18n>Empty = your account email</mat-hint>
-              <mat-error i18n>Enter a valid email address.</mat-error>
-            </mat-form-field>
-          </div>
-          <p class="mt-2 text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
+          <p class="text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
             Sent every Sunday at 20:00 (Prague time) when a followed stock reports within the coming week.
           </p>
-          <button
-            matButton="tonal"
-            type="button"
-            class="mt-4"
-            [disabled]="sending()"
-            (click)="sendTest()"
-          >
-            <app-icon matButtonIcon name="send" [size]="18" />
-            @if (sending()) {
-              <ng-container i18n>Sending…</ng-container>
-            } @else {
-              <ng-container i18n>Send test email</ng-container>
-            }
-          </button>
           }
         }
       </section>
@@ -280,7 +220,6 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 })
 export class SettingsPage {
   private readonly auth = inject(AuthService);
-  private readonly api = inject(ApiService);
   private readonly session = inject(SessionService);
   private readonly notifier = inject(NotifierService);
   protected readonly settingsService = inject(SettingsService);
@@ -288,26 +227,10 @@ export class SettingsPage {
 
   protected readonly version = APP_VERSION;
   protected readonly language = LANGUAGE;
-  protected readonly dayOptions = [1, 2, 3, 4, 5, 6, 7];
   protected readonly user = this.auth.user;
   protected readonly settings = this.settingsService.settings;
-  protected readonly sending = signal(false);
-  protected readonly email = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.email],
-  });
 
   protected readonly provider = computed(() => providerLabel(this.user()));
-
-  constructor() {
-    // Show the stored address (also when it changes on another device), unless the user is editing it.
-    effect(() => {
-      const stored = this.settings().notificationEmail ?? '';
-      untracked(() => {
-        if (!this.email.dirty) this.email.setValue(stored);
-      });
-    });
-  }
 
   protected setTheme(theme: ThemePreference): void {
     this.settingsService
@@ -329,42 +252,6 @@ export class SettingsPage {
     this.settingsService
       .update(patch)
       .catch(() => void this.notifier.show($localize`Couldn't save the setting`));
-  }
-
-  protected saveEmail(): void {
-    if (this.email.invalid) return;
-    const value = this.email.value.trim() || null;
-    this.email.markAsPristine();
-    if (value === this.settings().notificationEmail) return;
-    this.settingsService
-      .update({ notificationEmail: value })
-      .then(() =>
-        this.notifier.show(
-          value
-            ? $localize`Digest will go to ${value}:email:`
-            : $localize`Digest will go to your account email`,
-        ),
-      )
-      .catch(() => this.notifier.show($localize`Couldn't save the email address`));
-  }
-
-  protected async sendTest(): Promise<void> {
-    this.sending.set(true);
-    try {
-      const { sentTo } = await firstValueFrom(this.api.sendTestEmail());
-      await this.notifier.show($localize`Test email sent to ${sentTo}:email:`);
-    } catch (error) {
-      const code = toApiError(error).code;
-      const message =
-        code === 'RATE_LIMITED'
-          ? $localize`You can send one test email per minute.`
-          : code === 'UPSTREAM_UNAVAILABLE'
-            ? $localize`The server couldn't send email right now.`
-            : errorMessage(error);
-      await this.notifier.show(message);
-    } finally {
-      this.sending.set(false);
-    }
   }
 
   protected signOut(): void {
