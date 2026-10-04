@@ -2,9 +2,12 @@ package com.earningstracker.t212;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Comparator;
@@ -223,27 +226,73 @@ public class T212PortfolioService {
         return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
     }
 
-    /** How far back {@link #history} reaches and how densely: every point, the last of each hour or of each day. */
-    public enum HistoryRange {
-        D1("1D", Duration.ofDays(1), null),
-        W1("1W", Duration.ofDays(7), ChronoUnit.HOURS),
-        M1("1M", Duration.ofDays(31), ChronoUnit.DAYS),
-        M3("3M", Duration.ofDays(92), ChronoUnit.DAYS),
-        Y1("1Y", Duration.ofDays(366), ChronoUnit.DAYS),
-        ALL("ALL", null, ChronoUnit.DAYS);
+    /** One step of {@link #history}: the last point of each 15 or 30 minutes, hour, 4 hours, day or week. */
+    public enum HistoryInterval {
+        M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440), W1("1w", 0);
 
         private final String code;
-        private final Duration span;
-        private final ChronoUnit step;
+        private final int minutes;
 
-        HistoryRange(String code, Duration span, ChronoUnit step) {
+        HistoryInterval(String code, int minutes) {
             this.code = code;
-            this.span = span;
-            this.step = step;
+            this.minutes = minutes;
         }
 
         public String code() {
             return code;
+        }
+
+        public static Optional<HistoryInterval> parse(String code) {
+            return Arrays.stream(values()).filter(i -> i.code.equalsIgnoreCase(code)).findFirst();
+        }
+
+        /** The start of the step containing {@code at}, in Europe/Prague time (weeks start on Monday). */
+        Instant bucket(Instant at) {
+            ZonedDateTime local = at.atZone(T212SnapshotStore.ZONE);
+            ZonedDateTime day = local.truncatedTo(ChronoUnit.DAYS);
+            if (this == W1) {
+                return day.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant();
+            }
+            int minuteOfDay = local.getHour() * 60 + local.getMinute();
+            return day.plusMinutes(minuteOfDay / minutes * minutes).toInstant();
+        }
+    }
+
+    /** How far back {@link #history} reaches, the intervals it offers (keeping the points to a few thousand). */
+    public enum HistoryRange {
+        D1("1D", Duration.ofDays(1), HistoryInterval.M15, HistoryInterval.M30, HistoryInterval.H1),
+        W1("1W", Duration.ofDays(7), HistoryInterval.H1, HistoryInterval.M15, HistoryInterval.M30,
+                HistoryInterval.H4),
+        M1("1M", Duration.ofDays(31), HistoryInterval.H1, HistoryInterval.M15, HistoryInterval.M30,
+                HistoryInterval.H4, HistoryInterval.D1),
+        M3("3M", Duration.ofDays(92), HistoryInterval.H4, HistoryInterval.M30, HistoryInterval.H1,
+                HistoryInterval.D1),
+        Y1("1Y", Duration.ofDays(366), HistoryInterval.D1, HistoryInterval.H1, HistoryInterval.H4,
+                HistoryInterval.W1),
+        ALL("ALL", null, HistoryInterval.D1, HistoryInterval.H1, HistoryInterval.H4, HistoryInterval.W1);
+
+        private final String code;
+        private final Duration span;
+        private final HistoryInterval defaultInterval;
+        private final Set<HistoryInterval> intervals;
+
+        HistoryRange(String code, Duration span, HistoryInterval defaultInterval, HistoryInterval... others) {
+            this.code = code;
+            this.span = span;
+            this.defaultInterval = defaultInterval;
+            this.intervals = java.util.EnumSet.of(defaultInterval, others);
+        }
+
+        public String code() {
+            return code;
+        }
+
+        public HistoryInterval defaultInterval() {
+            return defaultInterval;
+        }
+
+        public boolean offers(HistoryInterval interval) {
+            return intervals.contains(interval);
         }
 
         public static Optional<HistoryRange> parse(String code) {
@@ -252,22 +301,19 @@ public class T212PortfolioService {
     }
 
     /**
-     * The stored account values ({@link T212SnapshotStore}) of the range, oldest first, each with the net deposits
-     * up to then. Never calls Trading 212.
+     * The stored account values ({@link T212SnapshotStore}) of the range, the last of each interval, oldest first,
+     * each with the net deposits up to then. Never calls Trading 212.
      */
-    public T212Dtos.History history(String uid, HistoryRange range) {
+    public T212Dtos.History history(String uid, HistoryRange range, HistoryInterval interval) {
         Context ctx = context(uid, false);
         Instant now = clock.instant();
-        List<T212SnapshotStore.Point> points = snapshots.points(uid).stream()
-                .filter(p -> range.span == null || !p.at().isBefore(now.minus(range.span))).toList();
-        if (range.step != null) {
-            Map<Instant, T212SnapshotStore.Point> lastPerStep = new java.util.TreeMap<>();
-            for (T212SnapshotStore.Point p : points) {
-                Instant key = p.at().atZone(T212SnapshotStore.ZONE).truncatedTo(range.step).toInstant();
-                lastPerStep.put(key, p);
+        Map<Instant, T212SnapshotStore.Point> lastPerStep = new java.util.TreeMap<>();
+        for (T212SnapshotStore.Point p : snapshots.points(uid)) {
+            if (range.span == null || !p.at().isBefore(now.minus(range.span))) {
+                lastPerStep.put(interval.bucket(p.at()), p);
             }
-            points = List.copyOf(lastPerStep.values());
         }
+        List<T212SnapshotStore.Point> points = List.copyOf(lastPerStep.values());
 
         List<T212CashTransaction> flows = ctx.data().transactions().values().stream()
                 .filter(t -> t.type().equals("DEPOSIT") || t.type().equals("WITHDRAW"))
@@ -285,7 +331,7 @@ public class T212PortfolioService {
                     netDeposits == null ? null : round(netDeposits),
                     netDeposits == null ? null : round(p.value() - netDeposits)));
         }
-        return new T212Dtos.History(range.code(), ctx.currency(), result, ctx.asOf(), ctx.stale());
+        return new T212Dtos.History(range.code(), interval.code(), ctx.currency(), result, ctx.asOf(), ctx.stale());
     }
 
     /**

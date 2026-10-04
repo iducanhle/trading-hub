@@ -74,8 +74,8 @@ public final class T212Dtos {
     public record HistoryPoint(Instant at, double value, Double netDeposits, Double profit) {
     }
 
-    public record History(String range, String accountCurrency, List<HistoryPoint> points, Instant asOf,
-            boolean stale) {
+    public record History(String range, String interval, String accountCurrency, List<HistoryPoint> points,
+            Instant asOf, boolean stale) {
     }
 
     /** Today's price change in percent by Trading 212 ticker; positions without one are left out. */

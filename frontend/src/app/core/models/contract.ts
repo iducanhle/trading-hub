@@ -515,6 +515,8 @@ export interface T212AllocationResponse {
 }
 
 export type T212HistoryRange = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
+/** The chart step; each range offers some (docs/CONTRACT.md). */
+export type T212HistoryInterval = '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
 
 /** The account value at one stored moment (snapshots every 15 minutes since the feature shipped). */
 export interface T212HistoryPoint {
@@ -528,8 +530,9 @@ export interface T212HistoryPoint {
 
 export interface T212HistoryResponse {
   range: T212HistoryRange;
+  interval: T212HistoryInterval;
   accountCurrency: string | null;
-  /** Oldest first: every point (1D), the last of each hour (1W) or of each day (longer). */
+  /** Oldest first: the last point of each interval. */
   points: T212HistoryPoint[];
   asOf: string;
   stale: boolean;

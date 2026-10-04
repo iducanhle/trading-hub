@@ -11,6 +11,7 @@ import com.earningstracker.t212.T212LiveService;
 import com.earningstracker.t212.T212Period;
 import com.earningstracker.t212.T212PieService;
 import com.earningstracker.t212.T212PortfolioService;
+import com.earningstracker.t212.T212PortfolioService.HistoryInterval;
 import com.earningstracker.t212.T212PortfolioService.HistoryRange;
 import com.earningstracker.t212.T212PortfolioService.SideFilter;
 import com.earningstracker.t212.T212PortfolioService.StatusFilter;
@@ -111,13 +112,17 @@ public class T212Controller {
         return portfolio.holdings(user.uid());
     }
 
-    /** {@code range}: 1D, 1W, 1M, 3M, 1Y or ALL. */
+    /** {@code range}: 1D, 1W, 1M, 3M, 1Y or ALL; {@code interval}: one the range offers, default per range. */
     @GetMapping("/history")
     public T212Dtos.History history(@AuthenticationPrincipal AuthenticatedUser user,
-            @RequestParam(defaultValue = "1M") String range) {
-        HistoryRange parsed = HistoryRange.parse(range)
+            @RequestParam(defaultValue = "1M") String range, @RequestParam(required = false) String interval) {
+        HistoryRange parsedRange = HistoryRange.parse(range)
                 .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST, "range must be 1D, 1W, 1M, 3M, 1Y or ALL"));
-        return portfolio.history(user.uid(), parsed);
+        HistoryInterval parsedInterval = interval == null ? parsedRange.defaultInterval()
+                : HistoryInterval.parse(interval).filter(parsedRange::offers)
+                        .orElseThrow(() -> new ApiException(ErrorCode.BAD_REQUEST,
+                                "interval is not offered for range " + parsedRange.code()));
+        return portfolio.history(user.uid(), parsedRange, parsedInterval);
     }
 
     @GetMapping("/allocation")

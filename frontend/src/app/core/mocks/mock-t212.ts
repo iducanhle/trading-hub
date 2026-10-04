@@ -13,6 +13,7 @@ import {
   T212AllocationItem,
   T212AllocationResponse,
   T212DayChangesResponse,
+  T212HistoryInterval,
   T212HistoryRange,
   T212HistoryResponse,
   T212InstrumentDetail,
@@ -146,7 +147,10 @@ export class MockT212 {
       case 'allocation':
         return id === 'day-changes' ? this.dayChanges() : this.allocation();
       case 'history':
-        return this.history((params.get('range') ?? '1M') as T212HistoryRange);
+        return this.history(
+          (params.get('range') ?? '1M') as T212HistoryRange,
+          (params.get('interval') ?? '1h') as T212HistoryInterval,
+        );
       case 'instruments':
         return id ? this.instrument(id) : this.instruments(period, params.get('status') ?? 'ALL');
       case 'trades':
@@ -418,9 +422,12 @@ export class MockT212 {
 
   /**
    * A made-up, stable random walk ending at today's account value: 45 days of 15-minute points (so ALL is
-   * short, like a feature that started recently), thinned like the backend. Net deposits as in the fixture.
+   * short, like a feature that started recently), the last of each interval (UTC). Net deposits as in the fixture.
    */
-  private async history(range: T212HistoryRange): Promise<T212HistoryResponse> {
+  private async history(
+    range: T212HistoryRange,
+    interval: T212HistoryInterval,
+  ): Promise<T212HistoryResponse> {
     const data = await this.fixture();
     const end = data.account.totalValue ?? 0;
     const netDeposits = round(
@@ -440,7 +447,7 @@ export class MockT212 {
       value = value / (1 + (seed / 2147483647 - 0.5) * 0.004);
     }
     const spanDays = { '1D': 1, '1W': 7, '1M': 31, '3M': 92, '1Y': 366, ALL: Infinity }[range];
-    const bucket = range === '1D' ? step : range === '1W' ? 3_600_000 : 86_400_000;
+    const bucket = { '15m': 1, '30m': 2, '1h': 4, '4h': 16, '1d': 96, '1w': 672 }[interval] * step;
     const byBucket = new Map<number, { at: number; value: number }>();
     values.forEach((v, i) => {
       const at = now - (count - 1 - i) * step;
@@ -449,6 +456,7 @@ export class MockT212 {
     });
     return {
       range,
+      interval,
       accountCurrency: data.accountCurrency,
       points: [...byBucket.values()].map((p) => ({
         at: new Date(p.at).toISOString(),

@@ -153,13 +153,31 @@ class T212PortfolioServiceTest {
         snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-08-02T10:00:00Z"), 4900));
         snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-08-02T15:00:00Z"), 4950));
 
-        T212Dtos.History all = portfolio.history(UID, T212PortfolioService.HistoryRange.ALL);
+        T212Dtos.History all = portfolio.history(UID, T212PortfolioService.HistoryRange.ALL,
+                T212PortfolioService.HistoryInterval.D1);
 
         assertThat(all.range()).isEqualTo("ALL");
         assertThat(all.points()).containsExactly(
                 new T212Dtos.HistoryPoint(Instant.parse("2026-07-31T10:00:00Z"), 5100.0, 5000.0, 100.0),
                 new T212Dtos.HistoryPoint(Instant.parse("2026-08-02T15:00:00Z"), 4950.0, 4800.0, 150.0));
-        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.M1).points()).isEmpty();
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.M1,
+                T212PortfolioService.HistoryInterval.H1).points()).isEmpty();
+    }
+
+    @Test
+    void historyIntervalsBucketInPragueTime() {
+        // 2026-10-02 in Prague is UTC+2: 06:00Z = 08:00, 07:45Z = 09:45, 08:15Z = 10:15.
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-02T06:00:00Z"), 1));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-02T07:45:00Z"), 2));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-02T08:15:00Z"), 3));
+
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.D1,
+                T212PortfolioService.HistoryInterval.H1).points()).extracting(T212Dtos.HistoryPoint::value)
+                .containsExactly(1.0, 2.0, 3.0);
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.W1,
+                T212PortfolioService.HistoryInterval.H4).points()).extracting(T212Dtos.HistoryPoint::value)
+                .containsExactly(3.0); // 08:00–12:00
+        assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.D1)).isFalse();
     }
 
     @Test
@@ -168,7 +186,8 @@ class T212PortfolioServiceTest {
                 clock).run();
 
         assertThat(stats).containsEntry("stored", 1).containsEntry("skipped", 0);
-        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.D1).points()).singleElement()
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.D1,
+                T212PortfolioService.HistoryInterval.M15).points()).singleElement()
                 .satisfies(p -> {
                     assertThat(p.at()).isEqualTo(clock.instant());
                     assertThat(p.value()).isEqualTo(10450.25);
