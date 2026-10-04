@@ -257,6 +257,11 @@
   }
 }
 
+/* app-dialog's title: Material reserves a 40 px line box for its own header layout, which app-dialog doesn't use. */
+.mat-mdc-dialog-title.app-dialog-title::before {
+  display: none;
+}
+
 /* Cards inside dialogs and bottom sheets sit one step lighter so they stand out from the sheet background. */
 .mat-mdc-dialog-surface .app-card,
 .mat-bottom-sheet-container .app-card,

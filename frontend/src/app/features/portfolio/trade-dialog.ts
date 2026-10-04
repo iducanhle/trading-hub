@@ -1,12 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { T212Trade } from '../../core/models/contract';
+import { DIALOG_CONFIG, Dialog } from '../../shared/components/dialog/dialog';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
-import { Icon } from '../../shared/icon/icon';
 import { DateTimePipe, NumberPipe, PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
 import { Pnl } from './pnl';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
@@ -34,9 +34,8 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
   imports: [
     RouterLink,
     MatButton,
-    MatIconButton,
+    Dialog,
     StockLogo,
-    Icon,
     HeroAmount,
     StatList,
     StatRow,
@@ -48,21 +47,20 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
   ],
   template: `
     @let t = data.trade;
-    <div class="max-h-[90dvh] overflow-y-auto p-4">
-      <div class="flex items-center gap-3">
-        <app-stock-logo [symbol]="ticker()" [size]="44" />
-        <div class="min-w-0 flex-1">
-          <h2 class="truncate text-lg font-bold">{{ t.name }}</h2>
-          <p class="text-sm text-on-surface-variant">
-            {{ label() }} · {{ ticker() }} · {{ t.executedAt | dateTime }}
-          </p>
-        </div>
-        <button matIconButton type="button" aria-label="Close" i18n-aria-label (click)="close()">
-          <app-icon name="close" />
-        </button>
-      </div>
+    <app-dialog [title]="t.name" [subtitle]="ticker() + ' · ' + (t.executedAt | dateTime)">
+      <app-stock-logo dialogLeading [symbol]="ticker()" [size]="44" />
+      <span
+        dialogTrailing
+        class="shrink-0 app-pill"
+        [class]="
+          t.kind === 'TRADE' && t.side === 'BUY'
+            ? 'bg-primary-container text-primary'
+            : 'bg-surface-container-high text-on-surface'
+        "
+        >{{ label() }}</span
+      >
 
-      <p class="mt-5 app-label" i18n="Total value of a trade">Value</p>
+      <p class="app-label" i18n="Total value of a trade">Value</p>
       <app-hero-amount class="mt-1" size="md" [value]="t.value" [currency]="data.currency" />
       <dl appStatList card class="mt-3.5">
         <div appStatRow label="Shares" i18n-label>{{ t.quantity | qty }}</div>
@@ -95,17 +93,20 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         </div>
       </dl>
 
-      <div class="mt-4 flex flex-wrap justify-end gap-2">
-        @if (t.symbol) {
-          <a matButton [routerLink]="['/stock', t.symbol]" (click)="close()" i18n
-            >Open stock detail</a
-          >
-        }
-        <button matButton="tonal" type="button" (click)="openPosition()" i18n>
-          Whole position
-        </button>
-      </div>
-    </div>
+      <button matButton="tonal" dialogActions type="button" (click)="openPosition()" i18n>
+        Whole position
+      </button>
+      @if (t.symbol) {
+        <a
+          matButton="filled"
+          dialogActions
+          [routerLink]="['/stock', t.symbol]"
+          (click)="close()"
+          i18n
+          >Stock detail</a
+        >
+      }
+    </app-dialog>
   `,
 })
 export class TradeDialog {
@@ -137,10 +138,8 @@ export class TradeDialog {
   protected openPosition(): void {
     this.close();
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+      ...DIALOG_CONFIG,
       data: { t212Ticker: this.data.trade.t212Ticker, period: this.data.period },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
     });
   }
 

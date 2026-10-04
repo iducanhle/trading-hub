@@ -21,6 +21,7 @@ import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { transactionLabel } from './portfolio-labels';
 import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /** Portfolio → Dividends & cash: dividends with their total, or (switch) deposits, withdrawals, fees and interest. */
 @Component({
@@ -201,9 +202,7 @@ export class PortfolioCash {
   protected openPosition(t212Ticker: string): void {
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
       data: { t212Ticker, period: this.period() },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
+      ...DIALOG_CONFIG,
     });
   }
 

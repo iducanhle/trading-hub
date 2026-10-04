@@ -20,6 +20,7 @@ import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { displayTicker } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /**
  * Open positions as Trading 212 lists them, largest value first. A pie is one row; tapping it expands its
@@ -288,9 +289,7 @@ export class PortfolioHoldings {
   protected openPosition(p: T212HoldingPosition): void {
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
       data: { t212Ticker: p.t212Ticker },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
+      ...DIALOG_CONFIG,
     });
   }
 

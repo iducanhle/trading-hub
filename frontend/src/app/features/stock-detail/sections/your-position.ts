@@ -12,6 +12,7 @@ import { DEVICE_TZ, instrumentPnl, instrumentPnlPct } from '../../portfolio/port
 import { PositionDialog, PositionDialogData } from '../../portfolio/position-dialog';
 import { StockContext } from '../stock-context';
 import { UnrealizedSheet, UnrealizedSheetData } from './unrealized-sheet';
+import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
 
 /**
  * The user's Trading 212 result for this stock: an "Unrealized profit" card while shares are held (tap: what it means
@@ -119,9 +120,7 @@ export class YourPosition {
   protected openRealized(t212Ticker: string): void {
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
       data: { t212Ticker, includeUnrealized: false },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
+      ...DIALOG_CONFIG,
     });
   }
 

@@ -51,6 +51,7 @@ import {
   TradesFilterContext,
   TradesFilterSheet,
 } from './trades-filters';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 const PAGE_SIZE = 50;
 
@@ -256,9 +257,7 @@ export class PortfolioTrades {
   protected openTrade(trade: T212Trade): void {
     this.dialog.open<TradeDialog, TradeDialogData>(TradeDialog, {
       data: { trade, currency: this.state().currency, period: this.period() },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
+      ...DIALOG_CONFIG,
     });
   }
 

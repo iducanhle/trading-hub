@@ -194,6 +194,14 @@ html {
       container-shape: 28px,
       container-color: var(--app-sheet),
       container-elevation-shadow: none,
+      // The title is app-dialog's h2 (app-title-modal), which lays out its own header.
+      headline-padding: 0,
+      subhead-font: inherit,
+      subhead-size: 22px,
+      subhead-weight: 700,
+      subhead-line-height: 1.2,
+      subhead-tracking: 0,
+      subhead-color: var(--mat-sys-on-surface),
     )
   );
   @include mat.menu-overrides(

@@ -1,9 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatIconButton } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
+import { Dialog } from '../../shared/components/dialog/dialog';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
@@ -32,7 +34,9 @@ export interface PositionDialogData {
 @Component({
   selector: 'app-position-dialog',
   imports: [
-    MatIconButton,
+    MatButton,
+    RouterLink,
+    Dialog,
     ErrorState,
     Skeleton,
     StaleChip,
@@ -45,62 +49,64 @@ export interface PositionDialogData {
     AppDatePipe,
   ],
   template: `
-    <div class="max-h-[90dvh] overflow-y-auto p-4">
+    <app-dialog>
+      @if (detail.hasValue()) {
+        <app-position-header
+          dialogHeader
+          class="min-w-0 flex-1"
+          [instrument]="detail.value().instrument"
+          linked
+          (opened)="close()"
+        />
+      } @else {
+        <app-skeleton dialogHeader shape="card" class="block h-12 min-w-0 flex-1" />
+      }
+
       @if (detail.error() && !detail.hasValue()) {
         <app-error-state [error]="detail.error()" (retry)="detail.reload()" />
       } @else if (!detail.hasValue()) {
-        <app-skeleton shape="card" class="block h-12" />
-        <app-skeleton shape="card" class="mt-3 block h-56" />
+        <app-skeleton shape="card" class="block h-56" />
+        <app-skeleton shape="card" class="mt-3 block h-40" />
       } @else {
         @let d = detail.value();
         @let i = d.instrument;
-        <app-position-header [instrument]="i" linked (opened)="close()">
-          <button matIconButton type="button" aria-label="Close" i18n-aria-label (click)="close()">
-            <app-icon name="close" />
-          </button>
-        </app-position-header>
         @if (d.stale) {
-          <div class="mt-2"><app-stale-chip [asOf]="d.asOf" /></div>
+          <div class="mb-3"><app-stale-chip [asOf]="d.asOf" /></div>
         }
 
         @if (periodItem.error() && !periodItem.hasValue()) {
-          <app-error-state
-            class="mt-4 block"
-            [error]="periodItem.error()"
-            (retry)="periodItem.reload()"
-          />
+          <app-error-state [error]="periodItem.error()" (retry)="periodItem.reload()" />
         } @else if (!periodItem.hasValue()) {
-          <app-skeleton shape="card" class="mt-4 block h-40" />
+          <app-skeleton shape="card" class="block h-56" />
         } @else {
-          @let shown = periodItem.value() ?? i;
-          <p class="mt-4 mb-2 px-1 text-[13px] font-semibold text-on-surface-variant">
-            @if (periodItem.value() && data.period; as period) {
-              <ng-container i18n="Followed by a date range">Period</ng-container>
-              {{ period.from | appDate }} – {{ period.to | appDate }}
-            } @else {
-              <ng-container i18n="Period without limits">All time</ng-container>
-            }
-          </p>
           <app-position-summary
-            [instrument]="shown"
+            [instrument]="periodItem.value() ?? i"
             [currency]="d.accountCurrency"
             [includeUnrealized]="data.includeUnrealized ?? true"
-          />
+          >
+            <span summaryPill class="app-pill bg-surface-container-high text-on-surface">
+              @if (periodItem.value() && data.period; as period) {
+                {{ period.from | appDate }} – {{ period.to | appDate }}
+              } @else {
+                <ng-container i18n="Period without limits">All time</ng-container>
+              }
+            </span>
+          </app-position-summary>
         }
 
         <button
           type="button"
-          class="mt-4 flex w-full items-center gap-2 rounded-2xl px-1 py-2 text-left hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+          class="mt-2 flex min-h-12 w-full items-center gap-2 border-t border-outline-variant px-1 text-left hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
           [attr.aria-expanded]="tradesOpen()"
           aria-controls="position-trades"
           (click)="tradesOpen.set(!tradesOpen())"
         >
-          <span class="flex-1 text-[15px] font-bold">
-            <ng-container i18n>Trades and dividends</ng-container> ({{ timeline().length }})
+          <span class="flex-1 app-title-card">
+            <ng-container i18n>Trades and dividends</ng-container> · {{ timeline().length }}
           </span>
           <app-icon
             name="keyboard_arrow_down"
-            class="text-on-surface-variant transition-transform"
+            class="text-on-surface-variant transition-transform duration-200"
             [class.rotate-180]="tradesOpen()"
           />
         </button>
@@ -128,7 +134,13 @@ export interface PositionDialogData {
           </div>
         }
       }
-    </div>
+
+      @if (symbol(); as symbol) {
+        <a matButton="filled" dialogActions [routerLink]="['/stock', symbol]" (click)="close()" i18n
+          >Stock detail</a
+        >
+      }
+    </app-dialog>
   `,
 })
 export class PositionDialog {
@@ -137,6 +149,11 @@ export class PositionDialog {
   protected readonly data = inject<PositionDialogData>(MAT_DIALOG_DATA);
 
   protected readonly tradesOpen = signal(false);
+
+  /** The stock page exists only for instruments with a known symbol. */
+  protected readonly symbol = computed(() =>
+    this.detail.hasValue() ? this.detail.value().instrument.symbol : null,
+  );
 
   protected readonly detail = rxResource({
     params: () => this.data.t212Ticker,

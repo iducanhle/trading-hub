@@ -14,6 +14,7 @@ import { AllocationDialog, AllocationDialogData } from './allocation-dialog';
 import { displayTicker } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
 import { squarify } from './treemap';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /** Tiles drawn for the largest positions; the rest share one "…" tile that opens the full list. */
 const MAX_TILES = 9;
@@ -216,9 +217,7 @@ export class PortfolioAllocation {
     this.dialog
       .open<AllocationDialog, AllocationDialogData, T212AllocationItem>(AllocationDialog, {
         data: { items: this.data.value().items },
-        width: 'calc(100vw - 32px)',
-        maxWidth: '32rem',
-        autoFocus: 'dialog',
+        ...DIALOG_CONFIG,
       })
       .afterClosed()
       .subscribe((item) => {
@@ -229,9 +228,7 @@ export class PortfolioAllocation {
   protected open(item: T212AllocationItem): void {
     this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
       data: { t212Ticker: item.t212Ticker },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
+      ...DIALOG_CONFIG,
     });
   }
 }

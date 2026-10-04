@@ -1,5 +1,6 @@
 import { Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { MatDialogTitle } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { Icon } from '../../shared/icon/icon';
 import { T212Instrument } from '../../core/models/contract';
@@ -13,24 +14,26 @@ import { Pnl } from './pnl';
 import { displayTicker, instrumentPnl, instrumentPnlPct } from './portfolio-model';
 
 /**
- * Logo, name, ticker and current price of one instrument. Shared by the position dialog and the instrument page;
- * a close button or other actions can be projected at the end.
+ * Logo, name, ticker and current price of one instrument. Shared by the position dialog (where the name is the
+ * dialog title) and the instrument page; other actions can be projected at the end.
  */
 @Component({
   selector: 'app-position-header',
-  imports: [StockLogo, PricePipe, RouterLink, Icon, NgTemplateOutlet],
+  imports: [StockLogo, PricePipe, RouterLink, Icon, NgTemplateOutlet, MatDialogTitle],
   template: `
     <ng-template #body>
       <app-stock-logo [symbol]="ticker()" [logoUrl]="instrument().logoUrl" [size]="44" />
       <div class="min-w-0 flex-1">
         @if (named()) {
-          <h2 class="flex min-w-0 items-center text-lg font-bold">
-            <span class="truncate">{{ instrument().name }}</span>
-            @if (linked()) {
-              <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
-            }
+          <h2 matDialogTitle class="app-dialog-title">
+            <span class="flex min-w-0 items-center">
+              <span class="truncate">{{ instrument().name }}</span>
+              @if (linked()) {
+                <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
+              }
+            </span>
           </h2>
-          <p class="text-sm text-on-surface-variant">
+          <p class="truncate app-row-meta">
             {{ ticker() }} ·
             {{ instrument().currentPrice | price: instrument().instrumentCurrency }}
           </p>

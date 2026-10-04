@@ -36,6 +36,7 @@ import {
   sortInstruments,
 } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /**
  * Portfolio → Stocks: every instrument of the period with its profit/loss; filter, search, sort.
@@ -317,9 +318,7 @@ export class PortfolioStocks {
         period: this.period(),
         includeUnrealized: this.withUnrealized(),
       },
-      width: 'calc(100vw - 32px)',
-      maxWidth: '32rem',
-      autoFocus: 'dialog',
+      ...DIALOG_CONFIG,
     });
   }
 

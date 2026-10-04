@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { T212AllocationItem } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
-import { Icon } from '../../shared/icon/icon';
+import { Dialog } from '../../shared/components/dialog/dialog';
 import { PercentPipe } from '../../shared/pipes/format.pipes';
 import { formatPlainPercent, toneClass } from '../../shared/utils/format';
 import { displayTicker } from './portfolio-model';
@@ -15,44 +14,35 @@ export interface AllocationDialogData {
 /** Opened from the treemap's "…" tile: every open position with its share; closes with the one tapped. */
 @Component({
   selector: 'app-allocation-dialog',
-  imports: [MatIconButton, StockLogo, Icon, PercentPipe],
+  imports: [Dialog, StockLogo, PercentPipe],
   template: `
-    <div class="max-h-[90dvh] overflow-y-auto p-4">
-      <div class="flex items-center gap-3">
-        <h2 class="flex-1 text-lg font-bold" i18n>All positions</h2>
-        <button
-          matIconButton
-          type="button"
-          aria-label="Close"
-          i18n-aria-label
-          (click)="ref.close()"
-        >
-          <app-icon name="close" />
-        </button>
-      </div>
-      <ul class="mt-1">
+    <app-dialog title="All positions" i18n-title>
+      <span dialogTrailing class="shrink-0 text-[15px] font-semibold text-on-surface-variant">{{
+        data.items.length
+      }}</span>
+      <ul class="-mx-2">
         @for (item of data.items; track item.t212Ticker) {
           <li>
             <button
               type="button"
-              class="-mx-2 flex w-[calc(100%+16px)] items-center gap-3 rounded-2xl px-2 py-2.5 text-left hover:bg-surface-container-high"
+              class="flex w-full items-center gap-3.5 rounded-2xl px-2 py-2.5 text-left hover:bg-surface-container-high"
               (click)="ref.close(item)"
             >
               <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="40" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate app-row-title">{{ item.name }}</span>
-                <span class="block truncate app-row-meta uppercase"
+                <span class="block truncate app-row-meta"
                   >{{ ticker(item) }} · {{ share(item) }}</span
                 >
               </span>
-              <span class="shrink-0 text-[13px] font-medium" [class]="tone(item.dayChangePct)">{{
+              <span class="shrink-0 text-[15px] font-semibold" [class]="tone(item.dayChangePct)">{{
                 item.dayChangePct | pct
               }}</span>
             </button>
           </li>
         }
       </ul>
-    </div>
+    </app-dialog>
   `,
 })
 export class AllocationDialog {
