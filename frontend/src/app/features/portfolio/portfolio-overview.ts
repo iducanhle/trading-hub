@@ -112,8 +112,6 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
 
       <app-portfolio-history class="mt-3.5 block" [version]="version()" />
 
-      <app-portfolio-history class="mt-3.5 block" [version]="version()" />
-
       <app-portfolio-allocation class="mt-3.5 block" [version]="version()" />
 
       <app-portfolio-holdings
