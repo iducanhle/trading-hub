@@ -187,8 +187,8 @@ interface Permission {
       <h3 class="mt-6 mb-2 font-semibold" i18n>If it doesn't connect</h3>
       <ul class="list-disc space-y-1.5 pl-5 text-sm text-on-surface-variant">
         <li i18n>
-          "Rejected the key": check that you copied the whole key and secret, picked Live or Demo
-          correctly, and entered the IP address exactly as above.
+          "Rejected the key": check that you copied the whole key and secret, and entered the IP
+          address exactly as above.
         </li>
         <li i18n>
           "Missing permissions": a switch from step 5 was off. Generate a new key with it on.

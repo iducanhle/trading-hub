@@ -54,7 +54,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
   ],
   template: `
     <app-page-header title="Settings" i18n-title />
-    <div class="mx-auto max-w-2xl space-y-3.5 px-3 pt-2 pb-10">
+    <div class="mx-auto max-w-2xl space-y-5 px-3 pt-2 pb-10">
       <section aria-labelledby="account-title" class="app-card flex items-center gap-3.5">
         <h2 id="account-title" class="sr-only" i18n>Account</h2>
         <app-user-avatar [user]="user()" [size]="52" />
@@ -77,7 +77,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="appearance-title" class="app-card">
-        <h2 id="appearance-title" class="app-title-card mb-3" i18n>Appearance</h2>
+        <h2 id="appearance-title" class="app-title-card mb-4" i18n>Appearance</h2>
         <app-segmented
           aria-labelledby="appearance-title"
           inset
@@ -98,7 +98,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="language-title" class="app-card">
-        <h2 id="language-title" class="app-title-card mb-3" i18n>Language</h2>
+        <h2 id="language-title" class="app-title-card mb-4" i18n>Language</h2>
         <app-segmented
           aria-labelledby="language-title"
           inset
@@ -116,7 +116,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="help-title" class="app-card">
-        <h2 id="help-title" class="app-title-card mb-2" i18n>Help</h2>
+        <h2 id="help-title" class="app-title-card mb-4" i18n>Help</h2>
         <mat-slide-toggle
           class="app-switch-row"
           labelPosition="before"
@@ -132,7 +132,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="notifications-title" class="app-card">
-        <h2 id="notifications-title" class="app-title-card mb-2" i18n>Notifications</h2>
+        <h2 id="notifications-title" class="app-title-card mb-4" i18n>Notifications</h2>
         @if (settingsService.error()) {
           <app-error-state
             compact
@@ -155,12 +155,12 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
           >
             <ng-container i18n>Email digest</ng-container>
           </mat-slide-toggle>
+          @if (settings().notificationsEnabled) {
           <div class="flex flex-col gap-1">
             <mat-form-field appearance="fill">
               <mat-label i18n>Notify me</mat-label>
               <mat-select
                 [value]="settings().notifyDaysBefore"
-                [disabled]="!settings().notificationsEnabled"
                 (selectionChange)="save({ notifyDaysBefore: $event.value })"
               >
                 @for (n of dayOptions; track n) {
@@ -188,7 +188,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             </mat-form-field>
           </div>
           <p class="mt-2 text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
-            Sent daily at 12:00 (Prague time) when a followed stock reports within this window.
+            Sent every Sunday at 20:00 (Prague time) when a followed stock reports within the coming week.
           </p>
           <button
             matButton="tonal"
@@ -204,13 +204,14 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
               <ng-container i18n>Send test email</ng-container>
             }
           </button>
+          }
         }
       </section>
 
       <app-t212-settings id="trading212" class="block scroll-mt-20" />
 
-      <section aria-labelledby="about-title" class="app-card text-sm font-semibold">
-        <h2 id="about-title" class="app-title-card mb-3" i18n>About</h2>
+      <section aria-labelledby="about-title" class="app-card text-sm">
+        <h2 id="about-title" class="app-title-card mb-4" i18n>About</h2>
         <dl class="space-y-3 leading-relaxed">
           <div>
             <dt class="app-label" i18n>Version</dt>

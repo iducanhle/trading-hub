@@ -21,8 +21,9 @@ import org.springframework.mail.MailException;
 import org.springframework.stereotype.Component;
 
 /**
- * Daily 12:00 (§8). Each user with notifications on, still allowlisted and verified, gets one email listing their
- * followed stocks that report in {@code [today+1, today+notifyDaysBefore]}, and only when there is at least one.
+ * Sundays 20:00 Prague time (§8). Each user with notifications on, still allowlisted and verified, gets one email
+ * listing their followed stocks that report in {@code [today+1, today+max(7, notifyDaysBefore)]}, and only when
+ * there is at least one.
  * {@code notificationLog/{uid}_{date}} makes reruns on the same day skip users who already got theirs.
  */
 @Component
@@ -30,6 +31,8 @@ public class EarningsDigestJob implements Job {
 
     public static final String NAME = "earnings-digest";
     static final String LOG = "notificationLog";
+    /** The digest goes out weekly, so it always covers at least the coming week. */
+    private static final int WEEK_DAYS = 7;
     private static final Logger log = LoggerFactory.getLogger(EarningsDigestJob.class);
 
     private final UserDirectory users;
@@ -87,7 +90,7 @@ public class EarningsDigestJob implements Job {
                 continue;
             }
             List<DigestService.Item> items = digest.upcoming(user.uid(), today.plusDays(1),
-                    today.plusDays(user.settings().notifyDaysBefore()));
+                    today.plusDays(Math.max(WEEK_DAYS, user.settings().notifyDaysBefore())));
             if (items.isEmpty()) {
                 nothingUpcoming++;
                 continue;

@@ -159,12 +159,14 @@ function chartTime(iso: string): UTCTimestamp {
                   class="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-on-surface-variant"
                   i18n
                 >
-                  History is being collected. A new point is added every 15 minutes.
+                  History is being collected. A new point is added every 5 minutes.
                 </p>
               }
             </div>
 
-            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant">
+            <div
+              class="mt-1 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-on-surface-variant"
+            >
               <span class="inline-flex items-center gap-1.5">
                 <span class="h-0.5 w-3.5 rounded-full bg-primary" aria-hidden="true"></span>
                 <ng-container i18n>Account value</ng-container>
@@ -182,6 +184,13 @@ function chartTime(iso: string): UTCTimestamp {
                 }
               </span>
             </div>
+
+            <p
+              class="mt-2 mb-0 text-center text-xs text-on-surface-variant"
+              i18n="Note under the account history chart"
+            >
+              Data is captured every 5 minutes.
+            </p>
 
             <div class="pt-3">
               <app-segmented

@@ -50,7 +50,7 @@ class JobScheduler {
         runner.run(PricesRefreshJob.NAME, "schedule");
     }
 
-    @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Prague")
+    @Scheduled(cron = "0 0 20 * * SUN", zone = "Europe/Prague")
     void earningsDigest() {
         runner.run(EarningsDigestJob.NAME, "schedule");
     }

@@ -3,7 +3,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
-import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatError, MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { errorMessage, toApiError } from '../../core/api/api-error';
 import { T212Environment } from '../../core/models/contract';
@@ -14,7 +14,6 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
 import { DateTimePipe } from '../../shared/pipes/format.pipes';
-import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { openT212Guide } from './t212-guide';
 
 /**
@@ -27,12 +26,9 @@ import { openT212Guide } from './t212-guide';
     ReactiveFormsModule,
     MatButton,
     MatIconButton,
-    Segmented,
-    Segment,
     MatFormField,
     MatLabel,
     MatInput,
-    MatHint,
     MatError,
     MatSuffix,
     ErrorState,
@@ -41,13 +37,34 @@ import { openT212Guide } from './t212-guide';
     DateTimePipe,
   ],
   styles: `
-    .danger-text {
-      --mat-button-text-label-text-color: var(--mat-sys-error);
+    /* Three equal buttons in one row: icon above a short label, so Czech labels fit at 360 px. */
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .actions .mat-mdc-button-base {
+      flex-direction: column;
+      gap: 4px;
+      height: auto;
+      min-height: 64px;
+      border-radius: 16px;
+      padding: 10px 4px;
+      font-size: 13px;
+      line-height: 1.2;
+      white-space: normal;
+    }
+    .actions [matButtonIcon] {
+      margin: 0;
+    }
+    .danger {
+      --mat-button-tonal-container-color: var(--mat-sys-error-container);
+      --mat-button-tonal-label-text-color: var(--mat-sys-on-error-container);
     }
   `,
   template: `
     <section aria-labelledby="t212-title" class="app-card">
-      <div class="mb-2 flex items-center justify-between gap-3">
+      <div class="mb-4 flex items-center justify-between gap-3">
         <h2 id="t212-title" class="app-title-card">Trading 212</h2>
         @if (status()?.connected) {
           <span
@@ -130,7 +147,7 @@ import { openT212Guide } from './t212-guide';
             </div>
           }
         </dl>
-        <div class="mt-3 flex flex-wrap gap-2">
+        <div class="actions mt-4">
           <button
             matButton="filled"
             type="button"
@@ -145,9 +162,9 @@ import { openT212Guide } from './t212-guide';
             <ng-container i18n>Replace key</ng-container>
           </button>
           <button
-            matButton
+            matButton="tonal"
             type="button"
-            class="danger-text"
+            class="danger"
             [disabled]="busy()"
             (click)="disconnect()"
           >
@@ -173,20 +190,6 @@ import { openT212Guide } from './t212-guide';
         </button>
 
         <form class="mt-4 flex flex-col gap-1" (submit)="$event.preventDefault(); connect()">
-          <app-segmented
-            aria-label="Account type"
-            i18n-aria-label
-            class="mb-3"
-            inset
-            stretch
-            [value]="environment()"
-            (valueChange)="environment.set($event)"
-          >
-            <app-segment value="LIVE" i18n="Trading 212 real-money account">Live</app-segment>
-            <app-segment value="DEMO" i18n="Trading 212 paper-trading account"
-              >Demo (paper trading)</app-segment
-            >
-          </app-segmented>
           <mat-form-field appearance="fill">
             <mat-label i18n>API key</mat-label>
             <input
@@ -229,12 +232,22 @@ import { openT212Guide } from './t212-guide';
             >
               <app-icon [name]="showSecret() ? 'visibility_off' : 'visibility'" />
             </button>
-            <mat-hint i18n>Leave empty only for an old key without a secret.</mat-hint>
           </mat-form-field>
           @if (formError()) {
             <p role="alert" class="mt-1 text-sm text-error">{{ formError() }}</p>
           }
-          <div class="mt-3 flex flex-wrap gap-2">
+          <div class="mt-5 grid auto-cols-fr grid-flow-col gap-2">
+            @if (replacing()) {
+              <button
+                matButton="tonal"
+                type="button"
+                [disabled]="busy()"
+                (click)="cancelReplace()"
+                i18n
+              >
+                Cancel
+              </button>
+            }
             <button matButton="filled" type="submit" [disabled]="busy()">
               <app-icon matButtonIcon name="account_balance_wallet" [size]="18" />
               @if (busy()) {
@@ -243,11 +256,6 @@ import { openT212Guide } from './t212-guide';
                 <ng-container i18n>Connect</ng-container>
               }
             </button>
-            @if (replacing()) {
-              <button matButton type="button" [disabled]="busy()" (click)="cancelReplace()" i18n>
-                Cancel
-              </button>
-            }
           </div>
           <p class="mt-3 flex gap-2 text-xs text-on-surface-variant">
             <app-icon name="lock" [size]="16" class="shrink-0" />
@@ -268,7 +276,6 @@ export class T212Settings {
   private readonly sheet = inject(MatBottomSheet);
 
   protected readonly status = this.t212.status;
-  protected readonly environment = signal<T212Environment>('LIVE');
   protected readonly showKey = signal(false);
   protected readonly showSecret = signal(false);
   protected readonly replacing = signal(false);
@@ -303,7 +310,8 @@ export class T212Settings {
     const request = {
       apiKey: this.apiKey.value.trim(),
       apiSecret: this.apiSecret.value.trim() || null,
-      environment: this.environment(),
+      // Demo (paper trading) accounts are not offered: the app is for real portfolios.
+      environment: 'LIVE' as T212Environment,
     };
     // The key lives only in this request: the fields are cleared whatever the outcome.
     this.clearForm();
@@ -327,7 +335,6 @@ export class T212Settings {
   }
 
   protected startReplace(): void {
-    this.environment.set(this.status()?.environment ?? 'LIVE');
     this.formError.set(null);
     this.replacing.set(true);
   }
@@ -371,7 +378,7 @@ function connectError(error: unknown): string {
   const e = toApiError(error);
   switch (e.code) {
     case 'T212_INVALID_CREDENTIALS':
-      return $localize`Trading 212 rejected the key. Check the key and the secret, Live or Demo, and the key's IP restriction.`;
+      return $localize`Trading 212 rejected the key. Check the key, the secret and the key's IP restriction.`;
     case 'T212_MISSING_PERMISSIONS': {
       const permissions = /permissions: ([^.]+)\./.exec(e.message)?.[1];
       return permissions

@@ -3,7 +3,8 @@
   "translations": {
     "3740218388929474882": "Vývoj účtu",
     "7645822191910133173": "celkem",
-    "4884940019125369633": " Historie se teprve sbírá. Nový bod přibude každých 15 minut. ",
+    "6863433603438514877": " Historie se teprve sbírá. Nový bod přibude každých 5 minut. ",
+    "1254944660729004962": " Data se zaznamenávají každých 5 minut. ",
     "3074232275695358978": "Čisté vklady",
     "5672642891995855843": "Období historie",
     "3350676806684249188": "Interval",
@@ -165,7 +166,7 @@
     "3035524260157215296": "{VAR_PLURAL, plural, =1 {1 den předem} =2 {2 dny předem} =3 {3 dny předem} =4 {4 dny předem} other {{INTERPOLATION} dní předem}}",
     "1203717668553321056": "E-mail pro oznámení (nepovinné)",
     "6629039698215984158": "Prázdné = e-mail vašeho účtu",
-    "4539079878330704824": " Posíláme denně ve 12:00 (pražského času), pokud některá sledovaná akcie zveřejní výsledky v tomto období. ",
+    "3752126847419143527": " Posíláme každou neděli ve 20:00 (pražského času), pokud některá sledovaná akcie zveřejní výsledky v nadcházejícím týdnu. ",
     "7606672167560356784": "Odesílání…",
     "8147023224302018490": "Poslat zkušební e-mail",
     "2724055831234181057": "Verze",
@@ -412,10 +413,8 @@
     "1498168401303816680": "Synchronizovat",
     "3118592863000722717": "Vyměnit klíč",
     "2907016025519254862": "Odpojit",
-    "5645190583268649317": "Typ účtu",
     "4328498112977581095": "Zadejte API klíč.",
     "4556495766374535274": "Tajný klíč (API secret)",
-    "6539983717645543236": "Prázdné nechte jen u starého klíče bez tajného klíče.",
     "2104609925158911030": "Ověřuji klíč…",
     "813263746069473514": "Propojit",
     "2330577642930707695": " Zrušit ",
@@ -426,7 +425,6 @@
     "6573165614799947572": "Odpojit Trading 212?",
     "4777632646941916623": "Uložený klíč a všechny synchronizované obchody, dividendy a transakce se ze serveru aplikace smažou. Vašeho účtu u Trading 212 se to nijak nedotkne. Znovu ho můžete propojit kdykoli.",
     "7855301178129842967": "Trading 212 je odpojený",
-    "924326527068782423": "Trading 212 klíč odmítl. Zkontrolujte klíč a tajný klíč, volbu Ostrý/Demo a omezení klíče podle IP.",
     "1749998579870711782": "Klíči chybí tato oprávnění: {$permissions}. Vygenerujte nový klíč, který je má.",
     "2932456492840594894": "Zkontrolujte klíč a tajný klíč: vypadají neúplně.",
     "2159130950882492111": "Zrušit",
@@ -618,7 +616,6 @@
     "1912990583182122813": "{$START_BOLD_TEXT}Orders – Execute{$CLOSE_BOLD_TEXT} a {$START_BOLD_TEXT}Pies – Write{$CLOSE_BOLD_TEXT} nechte vypnuté. Jen tyto přepínače by umožnily obchodovat nebo měnit váš účet.",
     "5061324481947036466": "Klepněte na {$START_BOLD_TEXT}Vygenerovat klíč{$CLOSE_BOLD_TEXT} a zkopírujte klíč API i tajný klíč do Tradiqo. Tajný klíč zkopírujte hned: Trading 212 ho ukáže jen jednou.",
     "373112292917884786": "Když se nepřipojí",
-    "151229468721663011": "„Klíč byl odmítnut“: zkontrolujte, že jste zkopírovali celý klíč i tajný klíč, správně zvolili Live nebo Demo a zadali IP adresu přesně jako výše.",
     "5743207071048223133": "„Chybí oprávnění“: některý přepínač z kroku 5 byl vypnutý. Vygenerujte nový klíč, kde bude zapnutý.",
     "2838204586556198081": "Jak získat klíč Trading 212",
     "8392012446361239619": "Zůstatek a měna účtu",
@@ -635,6 +632,8 @@
     "3401756597314273361": "Propojte svůj účet Trading 212 a uvidíte své obchody a kolik jste na každé akcii vydělali nebo prodělali.",
     "5643176278899930159": "Jen pro čtení: Tradiqo vidí váš účet, ale nikdy nemůže obchodovat ani posílat peníze.",
     "6292618623430064879": "Jak získám klíč?",
-    "6319669491600035151": "Klíči chybí oprávnění, které aplikace potřebuje. Vygenerujte nový klíč s oprávněními podle návodu."
+    "6319669491600035151": "Klíči chybí oprávnění, které aplikace potřebuje. Vygenerujte nový klíč s oprávněními podle návodu.",
+    "5343399639849373196": "„Klíč byl odmítnut“: zkontrolujte, že jste zkopírovali celý klíč i tajný klíč a zadali IP adresu přesně jako výše.",
+    "1861422194509457479": "Trading 212 klíč odmítl. Zkontrolujte klíč, tajný klíč a omezení klíče podle IP."
   }
 }

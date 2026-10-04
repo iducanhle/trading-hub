@@ -15,6 +15,7 @@ import { displayTicker } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
 import { squarify } from './treemap';
 import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
+import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/unrealized-sheet';
 
 /** Tiles drawn for the largest positions; the rest share one "…" tile that opens the full list. */
 const MAX_TILES = 9;
@@ -37,7 +38,7 @@ interface Tile {
 
 /**
  * Portfolio → Overview: the open positions as a treemap (area = share of the value, colour = today's price change),
- * as in the Trading 212 app. A tile opens the position; the "…" tile lists every position in a dialog.
+ * as in the Trading 212 app. A tile opens the position's unrealized profit/loss; the "…" tile lists every position in a dialog.
  * The card collapses to its title; the choice is remembered.
  */
 @Component({
@@ -249,11 +250,20 @@ export class PortfolioAllocation {
       });
   }
 
-  protected open(item: T212AllocationItem): void {
-    this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
-      data: { t212Ticker: item.t212Ticker },
-      ...DIALOG_CONFIG,
-    });
+  /** Opens the unrealized profit/loss dialog; the position dialog if the instrument cannot be loaded. */
+  protected async open(item: T212AllocationItem): Promise<void> {
+    try {
+      const { instrument, accountCurrency } = await firstValueFrom(
+        this.api.t212Instrument(item.t212Ticker),
+      );
+      const data: UnrealizedSheetData = { instrument, accountCurrency };
+      this.dialog.open(UnrealizedSheet, { ...DIALOG_CONFIG, data });
+    } catch {
+      this.dialog.open<PositionDialog, PositionDialogData>(PositionDialog, {
+        data: { t212Ticker: item.t212Ticker },
+        ...DIALOG_CONFIG,
+      });
+    }
   }
 }
 
