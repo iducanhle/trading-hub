@@ -76,7 +76,7 @@ import { TradeFilters } from './trades-filters';
         }
       </app-page-header>
 
-      <div class="mx-auto max-w-3xl px-4 pt-2" [class]="t212.connected() ? 'pb-36' : 'pb-10'">
+      <div class="mx-auto max-w-3xl px-3 pt-2" [class]="t212.connected() ? 'pb-36' : 'pb-10'">
         @if (!t212.loaded()) {
           <div class="space-y-3" aria-hidden="true">
             <app-skeleton shape="card" class="h-32" />
