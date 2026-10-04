@@ -1,8 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { T212Instrument } from '../../../core/models/contract';
-import { Sheet } from '../../../shared/components/sheet/sheet';
+import { Dialog } from '../../../shared/components/dialog/dialog';
 import { HeroAmount } from '../../../shared/components/hero-amount/hero-amount';
 import { StatList, StatRow } from '../../../shared/components/stat-list/stat-list';
 import { TERMS } from '../../../shared/components/term-info/terms';
@@ -17,15 +16,15 @@ export interface UnrealizedSheetData {
 
 /**
  * What the open shares of a stock are up or down right now, how it is calculated, the break-even price and how much a
- * 1% price move is worth. Opened by the "Unrealized profit/loss" card: a bottom sheet on phones, a dialog on desktop.
+ * 1% price move is worth. Opened as a dialog by the "Unrealized profit/loss" card.
  */
 @Component({
   selector: 'app-unrealized-sheet',
-  imports: [Sheet, HeroAmount, StatList, StatRow, Pnl, PercentPipe, PricePipe],
+  imports: [Dialog, HeroAmount, StatList, StatRow, Pnl, PercentPipe, PricePipe],
   template: `
     @let i = data.instrument;
     @let ccy = data.accountCurrency;
-    <app-sheet [title]="title">
+    <app-dialog [title]="title">
       <div class="flex flex-wrap items-baseline gap-x-2.5">
         <app-hero-amount size="md" signed [value]="i.unrealizedPnl" [currency]="ccy" />
         @if (pct() !== null) {
@@ -58,13 +57,11 @@ export interface UnrealizedSheetData {
           ± {{ money(onePercent()) }}
         </div>
       </dl>
-    </app-sheet>
+    </app-dialog>
   `,
 })
 export class UnrealizedSheet {
-  protected readonly data: UnrealizedSheetData =
-    inject<UnrealizedSheetData>(MAT_BOTTOM_SHEET_DATA, { optional: true }) ??
-    inject<UnrealizedSheetData>(MAT_DIALOG_DATA);
+  protected readonly data = inject<UnrealizedSheetData>(MAT_DIALOG_DATA);
 
   protected readonly title = TERMS.unrealizedPnl.title;
 

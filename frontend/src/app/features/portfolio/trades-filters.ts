@@ -1,11 +1,11 @@
 import { Component, Signal, computed, inject, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatOption } from '@angular/material/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { T212Side } from '../../core/models/contract';
-import { Sheet } from '../../shared/components/sheet/sheet';
+import { Dialog } from '../../shared/components/dialog/dialog';
 import { displayTicker } from './portfolio-model';
 
 export interface TradeFilters {
@@ -51,9 +51,9 @@ export interface TradesFilterContext {
 /** Stocks (multi-select) and sort of the Trades tab in a bottom sheet, as on the Stocks tab; a draft until Done. */
 @Component({
   selector: 'app-trades-filter-sheet',
-  imports: [Sheet, MatButton, MatFormField, MatLabel, MatSelect, MatSelectTrigger, MatOption],
+  imports: [Dialog, MatButton, MatFormField, MatLabel, MatSelect, MatSelectTrigger, MatOption],
   template: `
-    <app-sheet title="Filters" i18n-title>
+    <app-dialog title="Filters" i18n-title>
       <div class="flex flex-col gap-3">
         <mat-form-field appearance="fill" subscriptSizing="dynamic" class="w-full">
           <mat-label i18n>Stocks</mat-label>
@@ -82,18 +82,18 @@ export interface TradesFilterContext {
           </mat-select>
         </mat-form-field>
       </div>
-      <button sheetActions matButton="tonal" type="button" (click)="draft.set(defaults)">
+      <button dialogActions matButton="tonal" type="button" (click)="draft.set(defaults)">
         <ng-container i18n>Reset</ng-container>
       </button>
-      <button sheetActions matButton="filled" type="button" (click)="done()">
+      <button dialogActions matButton="filled" type="button" (click)="done()">
         <ng-container i18n>Done</ng-container>
       </button>
-    </app-sheet>
+    </app-dialog>
   `,
 })
 export class TradesFilterSheet {
-  private readonly context = inject<TradesFilterContext>(MAT_BOTTOM_SHEET_DATA);
-  private readonly ref = inject(MatBottomSheetRef<TradesFilterSheet>);
+  private readonly context = inject<TradesFilterContext>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<TradesFilterSheet>);
 
   protected readonly sorts = TRADE_SORTS;
   protected readonly sortLabels = TRADE_SORT_LABELS;
@@ -130,6 +130,6 @@ export class TradesFilterSheet {
 
   protected done(): void {
     this.context.change(this.draft());
-    this.ref.dismiss();
+    this.ref.close();
   }
 }

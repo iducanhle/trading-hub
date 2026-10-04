@@ -25,7 +25,6 @@ import { Icon } from '../../shared/icon/icon';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import {
   AppDatePipe,
   PricePipe,
@@ -292,7 +291,6 @@ export class PortfolioTrades {
 
   protected readonly search = signal('');
   protected readonly sort = persistedSignal<TradeSort>('portfolio.trades.sort', DEFAULT_TRADE_SORT);
-  private readonly sheet = inject(MatBottomSheet);
 
   /** A chip for each picked stock and a non-default sort; removing one drops it. */
   protected readonly chips = computed(() => {
@@ -321,7 +319,11 @@ export class PortfolioTrades {
         if (!same) this.filtersChange.emit({ ...this.filters(), tickers: view.tickers });
       },
     };
-    this.sheet.open(TradesFilterSheet, { data: context, ariaLabel: $localize`Filters` });
+    this.dialog.open(TradesFilterSheet, {
+      ...DIALOG_CONFIG,
+      data: context,
+      ariaLabel: $localize`Filters`,
+    });
   }
 
   /** Resets the sort (`sort`) or drops one stock (its t212Ticker). */

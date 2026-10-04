@@ -1,12 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import {
-  MAT_BOTTOM_SHEET_DATA,
-  MatBottomSheet,
-  MatBottomSheetRef,
-} from '@angular/material/bottom-sheet';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
-import { Sheet } from '../sheet/sheet';
+import { DIALOG_CONFIG, Dialog } from '../dialog/dialog';
 
 export interface ConfirmOptions {
   title: string;
@@ -16,26 +12,26 @@ export interface ConfirmOptions {
   danger?: boolean;
 }
 
-/** A yes/no question in a bottom sheet; dismissing it (swipe, backdrop, Escape) counts as no. */
+/** A yes/no question in a dialog; closing it any other way (close button, backdrop, Escape) counts as no. */
 @Component({
   selector: 'app-confirm-sheet',
-  imports: [MatButton, Sheet],
+  imports: [MatButton, Dialog],
   template: `
-    <app-sheet [title]="data.title">
+    <app-dialog [title]="data.title">
       <p class="text-[15px] text-on-surface-variant">{{ data.message }}</p>
-      <button sheetActions matButton="tonal" type="button" (click)="ref.dismiss(false)">
+      <button dialogActions matButton="tonal" type="button" (click)="ref.close(false)">
         <ng-container i18n>Cancel</ng-container>
       </button>
       <button
-        sheetActions
+        dialogActions
         matButton="filled"
         type="button"
         [class.danger]="data.danger"
-        (click)="ref.dismiss(true)"
+        (click)="ref.close(true)"
       >
         {{ data.confirm }}
       </button>
-    </app-sheet>
+    </app-dialog>
   `,
   styles: `
     .danger {
@@ -45,18 +41,19 @@ export interface ConfirmOptions {
   `,
 })
 export class ConfirmSheet {
-  protected readonly data = inject<ConfirmOptions>(MAT_BOTTOM_SHEET_DATA);
-  protected readonly ref = inject(MatBottomSheetRef<ConfirmSheet, boolean>);
+  protected readonly data = inject<ConfirmOptions>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<ConfirmSheet, boolean>);
 }
 
-/** Opens a confirmation sheet; resolves true only when the user confirmed. */
-export async function confirmInSheet(
-  sheet: MatBottomSheet,
+/** Opens a confirmation dialog; resolves true only when the user confirmed. */
+export async function confirmInDialog(
+  dialog: MatDialog,
   options: ConfirmOptions,
 ): Promise<boolean> {
-  const ref = sheet.open<ConfirmSheet, ConfirmOptions, boolean>(ConfirmSheet, {
+  const ref = dialog.open<ConfirmSheet, ConfirmOptions, boolean>(ConfirmSheet, {
+    ...DIALOG_CONFIG,
     data: options,
     ariaLabel: options.title,
   });
-  return (await firstValueFrom(ref.afterDismissed())) === true;
+  return (await firstValueFrom(ref.afterClosed())) === true;
 }

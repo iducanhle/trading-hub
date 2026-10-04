@@ -1,14 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatDialog } from '@angular/material/dialog';
 import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { errorMessage, toApiError } from '../../core/api/api-error';
 import { T212Environment } from '../../core/models/contract';
 import { NotifierService } from '../../core/services/notifier.service';
 import { T212Service } from '../../core/services/t212.service';
-import { confirmInSheet } from '../../shared/components/confirm-sheet/confirm-sheet';
+import { confirmInDialog } from '../../shared/components/confirm-sheet/confirm-sheet';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
@@ -273,7 +273,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 export class T212Settings {
   protected readonly t212 = inject(T212Service);
   private readonly notifier = inject(NotifierService);
-  private readonly sheet = inject(MatBottomSheet);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly status = this.t212.status;
   protected readonly environment = signal<T212Environment>('LIVE');
@@ -343,7 +343,7 @@ export class T212Settings {
   }
 
   protected async disconnect(): Promise<void> {
-    const confirmed = await confirmInSheet(this.sheet, {
+    const confirmed = await confirmInDialog(this.dialog, {
       title: $localize`Disconnect Trading 212?`,
       message: $localize`The stored key and all synced trades, dividends and transactions are deleted from the app's server. Your Trading 212 account is not affected. You can connect again at any time.`,
       confirm: $localize`Disconnect`,

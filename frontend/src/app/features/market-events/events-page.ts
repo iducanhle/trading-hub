@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatDialog } from '@angular/material/dialog';
 import { MarketEventsQuery } from '../../core/api/api.service';
 import { MarketEventDay } from '../../core/models/contract';
 import { FollowsService } from '../../core/services/follows.service';
@@ -23,6 +23,7 @@ import { EventsMonthView } from './events-month-view';
 import { DEFAULT_EVENT_FILTERS, EventFilters, eventFiltersAreDefault } from './events-model';
 import { EventsWeekView } from './events-week-view';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /**
  * `/events`: the events that tend to move the market (central banks, inflation, jobs, growth, Treasury, expiries,
@@ -186,7 +187,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 })
 export class EventsPage {
   private readonly cache = inject(MarketEventsCache);
-  private readonly sheet = inject(MatBottomSheet);
+  private readonly dialog = inject(MatDialog);
   private readonly follows = inject(FollowsService);
 
   protected readonly today = todayIso();
@@ -281,11 +282,19 @@ export class EventsPage {
   }
 
   protected openFilters(): void {
-    this.sheet.open(EventsFilterSheet, { data: this.filters, ariaLabel: this.labels.filters });
+    this.dialog.open(EventsFilterSheet, {
+      ...DIALOG_CONFIG,
+      data: this.filters,
+      ariaLabel: this.labels.filters,
+    });
   }
 
   protected openDay(day: MarketEventDay): void {
     const data: EventsDaySheetData = { day, followed: this.followed() };
-    this.sheet.open(EventsDaySheet, { data, ariaLabel: $localize`Events of the day` });
+    this.dialog.open(EventsDaySheet, {
+      ...DIALOG_CONFIG,
+      data,
+      ariaLabel: $localize`Events of the day`,
+    });
   }
 }

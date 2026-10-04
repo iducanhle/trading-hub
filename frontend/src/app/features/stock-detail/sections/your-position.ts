@@ -1,6 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { T212Instrument } from '../../../core/models/contract';
@@ -88,7 +87,6 @@ export class YourPosition {
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
   private readonly dialog = inject(MatDialog);
-  private readonly sheet = inject(MatBottomSheet);
 
   private readonly instruments = rxResource({
     params: () => ({
@@ -130,11 +128,7 @@ export class YourPosition {
 
   protected openUnrealized(instrument: T212Instrument): void {
     const data: UnrealizedSheetData = { instrument, accountCurrency: this.currency() };
-    if (matchMedia('(min-width: 64rem)').matches) {
-      this.dialog.open(UnrealizedSheet, { data, maxWidth: '28rem', autoFocus: 'dialog' });
-    } else {
-      this.sheet.open(UnrealizedSheet, { data });
-    }
+    this.dialog.open(UnrealizedSheet, { ...DIALOG_CONFIG, data });
   }
 
   constructor() {

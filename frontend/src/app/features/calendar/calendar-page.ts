@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { CalendarQuery } from '../../core/api/api.service';
 import { CalendarDay } from '../../core/models/contract';
@@ -30,6 +30,7 @@ import { FilterSheet } from './filter-sheet';
 import { MonthView } from './month-view';
 import { WeekView } from './week-view';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /**
  * `/calendar`: earnings reports by week (phones) or month (desktop), with previous / next / today navigation,
@@ -188,7 +189,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 })
 export class CalendarPage {
   private readonly cache = inject(CalendarCache);
-  private readonly sheet = inject(MatBottomSheet);
+  private readonly dialog = inject(MatDialog);
   private readonly follows = inject(FollowsService);
 
   protected readonly today = todayIso();
@@ -277,11 +278,19 @@ export class CalendarPage {
   }
 
   protected openFilters(): void {
-    this.sheet.open(FilterSheet, { data: this.filters, ariaLabel: this.labels.filters });
+    this.dialog.open(FilterSheet, {
+      ...DIALOG_CONFIG,
+      data: this.filters,
+      ariaLabel: this.labels.filters,
+    });
   }
 
   protected openDay(day: CalendarDay): void {
     const data: DaySheetData = { day, followed: this.followed() };
-    this.sheet.open(DaySheet, { data, ariaLabel: $localize`Reports of the day` });
+    this.dialog.open(DaySheet, {
+      ...DIALOG_CONFIG,
+      data,
+      ariaLabel: $localize`Reports of the day`,
+    });
   }
 }

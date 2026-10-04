@@ -1,14 +1,13 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { MatDialog } from '@angular/material/dialog';
 import { SettingsService } from '../../../core/services/settings.service';
 import { Icon } from '../../icon/icon';
 import { TermSheet } from './term-sheet';
 import { TERMS, TermId } from './terms';
 
 /**
- * A small ⓘ button after a trading term that explains it for beginners: a bottom sheet on phones, a dialog from
- * `lg`. Hidden when "Show term explanations" is off in the settings.
+ * A small ⓘ button after a trading term that explains it for beginners in a bottom sheet, on every screen size
+ * (the one modal that is not a dialog, docs/REDESIGN-SPEC.md). Hidden when "Show term explanations" is off in the settings.
  */
 @Component({
   selector: 'app-term-info',
@@ -30,7 +29,6 @@ import { TERMS, TermId } from './terms';
 export class TermInfo {
   private readonly settings = inject(SettingsService);
   private readonly sheet = inject(MatBottomSheet);
-  private readonly dialog = inject(MatDialog);
 
   readonly term = input.required<TermId>();
 
@@ -40,10 +38,6 @@ export class TermInfo {
   protected open(event: Event): void {
     event.stopPropagation();
     const data = this.term();
-    if (matchMedia('(min-width: 64rem)').matches) {
-      this.dialog.open(TermSheet, { data, maxWidth: '28rem', autoFocus: 'dialog' });
-    } else {
-      this.sheet.open(TermSheet, { data });
-    }
+    this.sheet.open(TermSheet, { data, panelClass: 'app-sheet-panel' });
   }
 }

@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MarketEvent, MarketEventDay } from '../../core/models/contract';
 import { AppDatePipe, ReportTimePipe } from '../../shared/pipes/format.pipes';
@@ -14,23 +14,22 @@ import {
   importanceLabel,
   notableMove,
 } from './events-model';
-import { Sheet } from '../../shared/components/sheet/sheet';
+import { Dialog } from '../../shared/components/dialog/dialog';
 
 export interface EventsDaySheetData {
   day: MarketEventDay;
   followed: ReadonlySet<string>;
 }
 
-/** Bottom sheet with every event of a day: all-day ones first, then by time in the device's time zone. */
+/** Dialog with every event of a day: all-day ones first, then by time in the device's time zone. */
 @Component({
   selector: 'app-events-day-sheet',
-  imports: [Sheet, NgTemplateOutlet, EventBadge, AppDatePipe, ReportTimePipe],
+  imports: [Dialog, NgTemplateOutlet, EventBadge, AppDatePipe, ReportTimePipe],
   template: `
-    <app-sheet>
-      <div class="flex items-baseline justify-between gap-3 pb-2">
-        <h2 class="text-[22px] leading-tight font-bold">{{ data.day.date | appDate: 'long' }}</h2>
-        <span class="shrink-0 text-sm font-semibold text-on-surface-variant">{{ count() }}</span>
-      </div>
+    <app-dialog [title]="data.day.date | appDate: 'long'">
+      <span dialogTrailing class="shrink-0 text-sm font-semibold text-on-surface-variant">{{
+        count()
+      }}</span>
       <ul class="-mx-4">
         @for (e of events(); track e.id) {
           <li>
@@ -52,7 +51,7 @@ export interface EventsDaySheetData {
           <li class="px-4 py-6 text-sm text-on-surface-variant" i18n>No events on this day.</li>
         }
       </ul>
-    </app-sheet>
+    </app-dialog>
 
     <ng-template #row let-e>
       <app-event-badge [event]="e" [size]="44" [followed]="data.followed.has(e.symbol ?? '')" />
@@ -78,8 +77,8 @@ export interface EventsDaySheetData {
   `,
 })
 export class EventsDaySheet {
-  protected readonly data = inject<EventsDaySheetData>(MAT_BOTTOM_SHEET_DATA);
-  private readonly ref = inject(MatBottomSheetRef<EventsDaySheet>);
+  protected readonly data = inject<EventsDaySheetData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<EventsDaySheet>);
   private readonly router = inject(Router);
 
   protected readonly events = computed(() => chronological(this.data.day.events));
@@ -104,7 +103,7 @@ export class EventsDaySheet {
   }
 
   protected openStock(symbol: string): void {
-    this.ref.dismiss();
+    this.ref.close();
     void this.router.navigate(['/stock', symbol]);
   }
 }

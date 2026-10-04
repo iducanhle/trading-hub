@@ -1,5 +1,4 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../core/api/api.service';
@@ -276,7 +275,6 @@ export class PortfolioStocks {
    */
   // private readonly withUnrealized = computed(() => this.allTime() && this.unrealized());
   private readonly withUnrealized = computed(() => false); // The switch is turned off: realized only.
-  private readonly sheet = inject(MatBottomSheet);
   private readonly dialog = inject(MatDialog);
 
   protected tone(value: number | null): string {
@@ -308,7 +306,11 @@ export class PortfolioStocks {
         this.sort.set(view.sort);
       },
     };
-    this.sheet.open(StocksFilterSheet, { data: context, ariaLabel: $localize`Filters` });
+    this.dialog.open(StocksFilterSheet, {
+      ...DIALOG_CONFIG,
+      data: context,
+      ariaLabel: $localize`Filters`,
+    });
   }
 
   protected openPosition(item: T212Instrument): void {

@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { CalendarDay } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
@@ -10,25 +10,24 @@ import {
   ReportTimePipe,
 } from '../../shared/pipes/format.pipes';
 import { groupByTime, reportCount } from './calendar-model';
-import { Sheet } from '../../shared/components/sheet/sheet';
+import { Dialog } from '../../shared/components/dialog/dialog';
 
 export interface DaySheetData {
   day: CalendarDay;
   followed: ReadonlySet<string>;
 }
 
-/** Bottom sheet with every report of a day, grouped by report time. */
+/** Dialog with every report of a day, grouped by report time. */
 @Component({
   selector: 'app-day-sheet',
-  imports: [Sheet, StockLogo, AppDatePipe, CompactPipe, PricePipe, ReportTimePipe],
+  imports: [Dialog, StockLogo, AppDatePipe, CompactPipe, PricePipe, ReportTimePipe],
   template: `
-    <app-sheet>
-      <div class="flex items-baseline justify-between gap-3 pb-2">
-        <h2 class="text-[22px] leading-tight font-bold">{{ data.day.date | appDate: 'long' }}</h2>
-        <span class="shrink-0 text-sm font-semibold text-on-surface-variant">{{ count() }}</span>
-      </div>
+    <app-dialog [title]="data.day.date | appDate: 'long'">
+      <span dialogTrailing class="shrink-0 text-sm font-semibold text-on-surface-variant">{{
+        count()
+      }}</span>
       @for (group of groups(); track group.time) {
-        <h3 class="pt-4 pb-1 text-xs font-bold tracking-[.05em] text-on-surface-variant uppercase">
+        <h3 class="pt-3 pb-1 app-title-card first-of-type:pt-0">
           {{ group.time | reportTime }}
         </h3>
         <ul class="-mx-4">
@@ -60,19 +59,19 @@ export interface DaySheetData {
       } @empty {
         <p class="py-6 text-sm text-on-surface-variant" i18n>No reports on this day.</p>
       }
-    </app-sheet>
+    </app-dialog>
   `,
 })
 export class DaySheet {
-  protected readonly data = inject<DaySheetData>(MAT_BOTTOM_SHEET_DATA);
-  private readonly ref = inject(MatBottomSheetRef<DaySheet>);
+  protected readonly data = inject<DaySheetData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<DaySheet>);
   private readonly router = inject(Router);
 
   protected readonly groups = computed(() => groupByTime(this.data.day.events));
   protected readonly count = computed(() => reportCount(this.data.day.events.length));
 
   protected open(symbol: string): void {
-    this.ref.dismiss();
+    this.ref.close();
     void this.router.navigate(['/stock', symbol]);
   }
 }
