@@ -38,11 +38,10 @@ export interface AllocationDialogData {
               class="-mx-2 flex w-[calc(100%+16px)] items-center gap-3 rounded-2xl px-2 py-2.5 text-left hover:bg-surface-container-high"
               (click)="ref.close(item)"
             >
-              <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="36" />
+              <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="40" />
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-[15px] font-medium">{{ item.name }}</span>
-                <span
-                  class="block truncate text-[12.5px] font-medium text-on-surface-variant uppercase"
+                <span class="block truncate app-row-title">{{ item.name }}</span>
+                <span class="block truncate app-row-meta uppercase"
                   >{{ ticker(item) }} · {{ share(item) }}</span
                 >
               </span>

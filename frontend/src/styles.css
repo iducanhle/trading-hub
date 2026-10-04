@@ -118,13 +118,87 @@
   }
 }
 
-/* The design's small uppercase label above a value ("HODNOTA ÚČTU", "ODHAD EPS"). */
+/*
+ * Type scale (docs/REDESIGN-SPEC.md): every heading uses one of these. Page titles: caps on section pages,
+ * plain on pages with a back arrow.
+ */
+@utility app-title-page {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+@utility app-title-page-back {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+/* Title of a dialog or the term sheet. */
+@utility app-title-modal {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+/* Section heading on any page. */
+@utility app-title-section {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+/* Title inside a card, a collapsible block or a group inside a modal. */
+@utility app-title-card {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* The design's small uppercase label above a value ("HODNOTA ÚČTU", "ODHAD EPS"). Never a section heading. */
 @utility app-label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
+}
+
+/* The two lines of a list row (stocks, positions, trades, events); the meta line is never heavier than the title. */
+@utility app-row-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+@utility app-row-meta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* Small rounded badge (report time, region, period, P/L basis); colours come from the caller. */
+@utility app-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+/* A tag inside a list row's meta line (position status, region): smaller than a pill so the line keeps its height. */
+@utility app-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* A card: card colour, 22 px corners, 18 px padding (no shadow; depth comes from the surface levels). */

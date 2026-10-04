@@ -8,7 +8,7 @@ import { Icon } from '../../icon/icon';
  * Sticky top app bar below the status bar (safe area): back button or the burger menu button, title, projected actions
  * (`[actions]`) and anything else projected below the bar (tabs, filters). Transparent at the top of the page, so the
  * dark theme's glow shows through; once the page scrolls it gets the page colour and a divider.
- * Section pages show the title in capitals (22 px / 800); pages with a back button in normal case.
+ * Section pages show the title in capitals (`app-title-page`); pages with a back button in normal case.
  */
 @Component({
   selector: 'app-page-header',
@@ -48,9 +48,7 @@ import { Icon } from '../../icon/icon';
         }
         <h1
           class="min-w-0 flex-1 truncate px-1"
-          [class]="
-            back() ? 'text-lg font-bold' : 'text-[22px] font-extrabold tracking-[.01em] uppercase'
-          "
+          [class]="back() ? 'app-title-page-back' : 'app-title-page'"
         >
           <ng-content select="[title]" />{{ title() }}
         </h1>

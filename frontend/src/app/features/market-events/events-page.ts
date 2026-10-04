@@ -92,7 +92,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             <app-icon name="chevron_left" />
           </button>
           <h2
-            class="min-w-0 flex-1 truncate text-center text-base font-semibold sm:flex-none sm:px-2"
+            class="min-w-0 flex-1 truncate text-center app-title-card sm:flex-none sm:px-2"
             aria-live="polite"
           >
             <span class="sm:hidden">{{ shortTitle() }}</span

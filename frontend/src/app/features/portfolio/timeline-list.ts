@@ -33,14 +33,14 @@ import { dayIn } from './portfolio-model';
           @if (item.kind === 'trade') {
             @let t = item.trade;
             <span class="min-w-0 flex-1">
-              <span class="block text-[15px] font-medium">
+              <span class="block app-row-title">
                 {{ t.kind === 'TRADE' ? sideLabels[t.side] : kindLabels[t.kind] }}
                 {{ t.quantity | qty }}
                 @if (t.price !== null) {
                   × {{ t.price | price: t.priceCurrency }}
                 }
               </span>
-              <span class="mt-0.5 block text-[12.5px] font-semibold text-on-surface-variant">
+              <span class="mt-0.5 block app-row-meta">
                 {{ day(t.executedAt) | appDate }} ·
                 <ng-container i18n>held after: {{ t.positionAfter | qty }}</ng-container>
               </span>
@@ -50,7 +50,7 @@ import { dayIn } from './portfolio-model';
                 <span class="text-[15px] font-semibold">{{ t.value | price: currency() }}</span>
               }
               @if (t.realizedPnl !== null) {
-                <span class="mt-0.5 text-[12.5px] font-medium" [class]="tone(t.realizedPnl)">{{
+                <span class="mt-0.5 text-[13px] font-medium" [class]="tone(t.realizedPnl)">{{
                   t.realizedPnl | money: currency()
                 }}</span>
               }
@@ -58,8 +58,8 @@ import { dayIn } from './portfolio-model';
           } @else {
             @let v = item.dividend;
             <span class="min-w-0 flex-1">
-              <span class="block text-[15px] font-medium" i18n>Dividend</span>
-              <span class="mt-0.5 block text-[12.5px] font-semibold text-on-surface-variant">
+              <span class="block app-row-title" i18n>Dividend</span>
+              <span class="mt-0.5 block app-row-meta">
                 {{ day(v.paidAt) | appDate }} · {{ v.quantity | qty }}
                 <ng-container i18n>shares</ng-container>
               </span>

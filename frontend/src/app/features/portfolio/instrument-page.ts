@@ -169,7 +169,7 @@ export interface InstrumentDialogData {
         }
 
         <ng-template #heading>
-          <h2 class="px-1 text-lg font-bold" i18n>Trades and dividends</h2>
+          <h2 class="px-1 app-title-section" i18n>Trades and dividends</h2>
         </ng-template>
         @if (timeline().length > 0) {
           <app-instrument-filters

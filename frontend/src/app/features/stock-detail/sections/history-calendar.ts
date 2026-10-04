@@ -78,7 +78,7 @@ const MIX = [0, 14, 26, 42, 80];
       >
         <app-icon name="chevron_left" />
       </button>
-      <h3 class="text-[15px] font-bold" aria-live="polite">{{ title() }}</h3>
+      <h3 class="app-title-card" aria-live="polite">{{ title() }}</h3>
       <button
         matIconButton
         type="button"

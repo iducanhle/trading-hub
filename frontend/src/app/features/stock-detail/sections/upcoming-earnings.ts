@@ -33,10 +33,9 @@ import { fiscalLabel } from '../../../shared/utils/format';
             <h2 id="upcoming-title" class="app-label inline-flex items-center gap-1">
               <ng-container i18n>Upcoming earnings</ng-container><app-term-info term="earnings" />
             </h2>
-            <span
-              class="shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-extrabold text-on-primary"
-              >{{ e.date | relativeDay }}</span
-            >
+            <span class="shrink-0 app-pill bg-primary text-on-primary">{{
+              e.date | relativeDay
+            }}</span>
           </div>
           <p class="mt-2 text-[22px] font-semibold">{{ e.date | appDate: 'long' }}</p>
           <p class="mt-0.5 text-sm font-semibold text-on-surface-variant">

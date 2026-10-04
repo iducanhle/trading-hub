@@ -10,7 +10,7 @@ import { formatPlainPercent } from '../../../shared/utils/format';
   selector: 'app-key-stats',
   imports: [TermInfo, Skeleton, CompactPipe, PricePipe, NumberPipe],
   template: `
-    <h2 class="px-5 pt-9 pb-3.5 text-lg font-bold" i18n>Key stats</h2>
+    <h2 class="px-5 pt-9 pb-3.5 app-title-section" i18n>Key stats</h2>
     @if (overview(); as o) {
       <dl class="mx-4 rounded-[22px] border border-outline-variant px-5 py-2.5">
         <div class="flex items-baseline justify-between gap-3 py-2.5">

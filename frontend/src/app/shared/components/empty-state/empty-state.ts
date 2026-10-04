@@ -13,7 +13,7 @@ import { IconName } from '../../icon/icon-paths';
       >
         <app-icon [name]="icon()" [size]="32" />
       </span>
-      <h2 class="text-lg font-semibold">{{ title() }}</h2>
+      <h2 class="app-title-section">{{ title() }}</h2>
       @if (text()) {
         <p class="max-w-xs text-sm text-on-surface-variant">{{ text() }}</p>
       }

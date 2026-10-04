@@ -96,10 +96,8 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                       <app-icon name="savings" [size]="20" />
                     </span>
                     <span class="min-w-0 flex-1">
-                      <span class="block truncate text-[15px] font-medium">{{ x.name }}</span>
-                      <span
-                        class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                      >
+                      <span class="block truncate app-row-title">{{ x.name }}</span>
+                      <span class="mt-0.5 block truncate app-row-meta">
                         {{ day(x.paidAt) | appDate }} · {{ ticker(x) }} · {{ x.quantity | qty }}
                         <ng-container i18n>shares</ng-container>
                         @if (x.grossPerShare !== null) {
@@ -172,11 +170,8 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                     <app-icon [name]="x.amount < 0 ? 'trending_down' : 'payments'" [size]="20" />
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-[15px] font-medium">{{ label(x.type) }}</span>
-                    <span
-                      class="mt-0.5 block text-[12.5px] font-semibold text-on-surface-variant"
-                      >{{ day(x.at) | appDate }}</span
-                    >
+                    <span class="block truncate app-row-title">{{ label(x.type) }}</span>
+                    <span class="mt-0.5 block app-row-meta">{{ day(x.at) | appDate }}</span>
                   </span>
                   <span class="shrink-0 text-[15px] font-semibold" [class]="tone(x.amount)">{{
                     x.amount | money: x.currency

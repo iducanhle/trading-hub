@@ -77,7 +77,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="appearance-title" class="app-card">
-        <h2 id="appearance-title" class="app-label mb-3" i18n>Appearance</h2>
+        <h2 id="appearance-title" class="app-title-card mb-3" i18n>Appearance</h2>
         <app-segmented
           aria-labelledby="appearance-title"
           inset
@@ -98,7 +98,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="language-title" class="app-card">
-        <h2 id="language-title" class="app-label mb-3" i18n>Language</h2>
+        <h2 id="language-title" class="app-title-card mb-3" i18n>Language</h2>
         <app-segmented
           aria-labelledby="language-title"
           inset
@@ -116,7 +116,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="help-title" class="app-card">
-        <h2 id="help-title" class="app-label mb-2" i18n>Help</h2>
+        <h2 id="help-title" class="app-title-card mb-2" i18n>Help</h2>
         <mat-slide-toggle
           class="app-switch-row"
           labelPosition="before"
@@ -132,7 +132,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       </section>
 
       <section aria-labelledby="notifications-title" class="app-card">
-        <h2 id="notifications-title" class="app-label mb-2" i18n>Notifications</h2>
+        <h2 id="notifications-title" class="app-title-card mb-2" i18n>Notifications</h2>
         @if (settingsService.error()) {
           <app-error-state
             compact
@@ -210,7 +210,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
       <app-t212-settings id="trading212" class="block scroll-mt-20" />
 
       <section aria-labelledby="about-title" class="app-card text-sm font-semibold">
-        <h2 id="about-title" class="app-label mb-3" i18n>About</h2>
+        <h2 id="about-title" class="app-title-card mb-3" i18n>About</h2>
         <dl class="space-y-3 leading-relaxed">
           <div>
             <dt class="app-label text-[11px]" i18n>Version</dt>

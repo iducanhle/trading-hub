@@ -57,8 +57,8 @@ export interface EventsDaySheetData {
     <ng-template #row let-e>
       <app-event-badge [event]="e" [size]="44" [followed]="data.followed.has(e.symbol ?? '')" />
       <span class="min-w-0 flex-1">
-        <span class="block text-[15px] font-semibold">{{ e.title }}</span>
-        <span class="block text-sm text-on-surface-variant">{{ details(e) }}</span>
+        <span class="block app-row-title">{{ e.title }}</span>
+        <span class="block app-row-meta">{{ details(e) }}</span>
         @if (e.note) {
           <span class="mt-0.5 block text-xs text-on-surface-variant">{{ e.note }}</span>
         }

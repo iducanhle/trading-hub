@@ -46,10 +46,10 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
   template: `
     <section aria-labelledby="t212-title" class="app-card">
       <div class="mb-2 flex items-center justify-between gap-3">
-        <h2 id="t212-title" class="app-label">Trading 212</h2>
+        <h2 id="t212-title" class="app-title-card">Trading 212</h2>
         @if (status()?.connected) {
           <span
-            class="rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-[.04em] uppercase"
+            class="app-pill"
             [class]="
               status()!.credentialsValid === false
                 ? 'bg-error-container text-on-error-container'

@@ -182,7 +182,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                   <app-stock-logo
                     [symbol]="ticker(row.item)"
                     [logoUrl]="row.item.logoUrl"
-                    [size]="36"
+                    [size]="40"
                   />
                   <span class="line-clamp-2 min-w-0 text-sm leading-tight font-medium">{{
                     row.item.name
@@ -211,22 +211,22 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
               >
                 <app-stock-logo [symbol]="ticker(item)" [logoUrl]="item.logoUrl" [size]="40" />
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-[15px] font-medium">{{ item.name }}</span>
+                  <span class="block truncate app-row-title">{{ item.name }}</span>
                   <span class="mt-0.5 flex min-w-0 items-center gap-1.5">
                     @if (item.status === 'OPEN') {
                       <span
-                        class="shrink-0 rounded-full bg-primary-container px-[7px] py-[3px] text-[10.5px] font-extrabold tracking-[.04em] text-on-primary-container uppercase"
+                        class="shrink-0 app-tag bg-primary-container text-on-primary-container"
                         i18n="Position status|Shares still held"
                         >Open</span
                       >
                     } @else {
                       <span
-                        class="shrink-0 rounded-full bg-surface-container-high px-[7px] py-[3px] text-[10.5px] font-extrabold tracking-[.04em] text-on-surface-variant uppercase"
+                        class="shrink-0 app-tag bg-surface-container-high text-on-surface-variant"
                         i18n="Position status|Shares fully sold"
                         >Closed</span
                       >
                     }
-                    <span class="truncate text-[12.5px] font-semibold text-on-surface-variant">
+                    <span class="truncate app-row-meta">
                       {{ ticker(item) }}
                       @if (item.status === 'OPEN') {
                         · {{ item.quantity | qty }} <ng-container i18n>shares</ng-container> ·
@@ -240,7 +240,7 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
                     pnl(item) | money: data.value().accountCurrency
                   }}</span>
                   @if (allTime()) {
-                    <span class="mt-0.5 text-[12.5px] font-medium" [class]="tone(pnl(item))">{{
+                    <span class="mt-0.5 text-[13px] font-medium" [class]="tone(pnl(item))">{{
                       pct(item) | pct
                     }}</span>
                   }

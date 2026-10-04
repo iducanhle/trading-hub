@@ -172,7 +172,7 @@ const EMPTY: ListState = {
         @for (day of days(); track day.date) {
           <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
             @if (day.date) {
-              <h3 class="app-label">
+              <h3 class="app-title-card">
                 {{ day.date | appDate: 'long' }}
               </h3>
             }
@@ -206,10 +206,8 @@ const EMPTY: ListState = {
                       />
                     </span>
                     <span class="min-w-0 flex-1">
-                      <span class="block truncate text-[15px] font-medium">{{ t.name }}</span>
-                      <span
-                        class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                      >
+                      <span class="block truncate app-row-title">{{ t.name }}</span>
+                      <span class="block truncate app-row-meta">
                         {{ t.kind === 'TRADE' ? sideLabels[t.side] : kindLabels[t.kind] }} ·
                         {{ ticker(t) }} · {{ t.quantity | qty }}
                         @if (t.price !== null) {
@@ -223,7 +221,7 @@ const EMPTY: ListState = {
                       }}</span>
                       @if (t.realizedPnl !== null) {
                         <span
-                          class="mt-0.5 text-[12.5px] font-medium"
+                          class="mt-0.5 text-[13px] font-medium"
                           [class]="tone(t.realizedPnl)"
                           >{{ t.realizedPnl | money: state().currency }}</span
                         >

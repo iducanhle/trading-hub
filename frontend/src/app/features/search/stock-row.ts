@@ -21,15 +21,13 @@ import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
       <app-stock-logo [symbol]="stock().symbol" [logoUrl]="stock().logoUrl" [size]="48" />
       <span class="min-w-0 flex-1">
         <span class="flex items-center gap-2">
-          <span class="text-base font-bold">{{ stock().symbol }}</span>
+          <span class="app-row-title">{{ stock().symbol }}</span>
           <app-region-badge [region]="stock().region" />
         </span>
-        <span class="mt-0.5 block truncate text-[13px] font-semibold text-on-surface-variant">{{
-          stock().name
-        }}</span>
+        <span class="block truncate app-row-meta">{{ stock().name }}</span>
       </span>
       <span
-        class="max-w-[35%] truncate text-right text-[12.5px] font-bold text-on-surface-variant"
+        class="max-w-[35%] truncate text-right text-[13px] font-semibold text-on-surface-variant"
         >{{ stock().exchange }}</span
       >
     </a>

@@ -38,10 +38,8 @@ import { UnrealizedSheet, UnrealizedSheetData } from './unrealized-sheet';
           /></span>
           <div class="min-w-0 flex-1">
             <p class="flex items-baseline justify-between gap-3">
-              <span id="unrealized-title" class="text-[15px] font-bold" i18n
-                >Unrealized profit</span
-              >
-              <span class="app-label text-[11px]" i18n>As of now</span>
+              <span id="unrealized-title" class="app-title-card" i18n>Unrealized profit</span>
+              <span class="app-label" i18n>As of now</span>
             </p>
             <p class="mt-0.5 flex">
               <app-pnl
@@ -67,7 +65,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from './unrealized-sheet';
           ><app-icon name="account_balance_wallet" [size]="20"
         /></span>
         <div class="min-w-0 flex-1">
-          <p id="total-pnl-title" class="text-[15px] font-bold">
+          <p id="total-pnl-title" class="app-title-card">
             <ng-container i18n="Card title|Realized profit/loss of this stock"
               >Realized profit</ng-container
             >

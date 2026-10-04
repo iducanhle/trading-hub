@@ -7,8 +7,7 @@ import { resultLabel } from '../../utils/format';
   selector: 'app-result-badge',
   template: `{{ label() }}`,
   host: {
-    class:
-      'inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold uppercase tracking-wide',
+    class: 'app-pill uppercase tracking-[.03em]',
     '[class]': 'tone()',
   },
 })

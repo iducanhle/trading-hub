@@ -54,7 +54,7 @@ interface Tile {
             aria-controls="allocation-content"
             (click)="expanded.set(!expanded())"
           >
-            <span class="app-label flex-1" i18n>Asset allocation</span>
+            <span class="app-title-card flex-1" i18n>Asset allocation</span>
             <app-icon
               name="keyboard_arrow_down"
               class="text-on-surface-variant transition-transform duration-200"
@@ -99,7 +99,7 @@ interface Tile {
                         }}</span>
                       }
                       @if (t.fit === 'full' || t.fit === 'text') {
-                        <span class="text-[12.5px] font-medium" [class]="tone(item.dayChangePct)">{{
+                        <span class="text-[13px] font-medium" [class]="tone(item.dayChangePct)">{{
                           item.dayChangePct | pct
                         }}</span>
                       }

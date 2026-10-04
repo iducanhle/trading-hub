@@ -91,13 +91,13 @@ export class PositionHeader {
         </p>
         @if (includeUnrealized()) {
           <span
-            class="inline-flex items-center gap-1.5 rounded-full bg-primary-container px-3.5 py-1.5 text-[13px] font-bold text-primary"
+            class="app-pill bg-primary-container text-primary"
             i18n="Profit/loss basis badge|The total includes unrealized profit/loss"
             >Incl. unrealized</span
           >
         } @else {
           <span
-            class="inline-flex items-center gap-1.5 rounded-full bg-secondary-container px-3.5 py-1.5 text-[13px] font-bold text-on-secondary-container"
+            class="app-pill bg-secondary-container text-on-secondary-container"
             i18n="Profit/loss basis badge|The total leaves out unrealized profit/loss"
             >Realized only</span
           >

@@ -86,7 +86,7 @@ import { StockRow } from './stock-row';
         @if (recent.items().length) {
           <section class="app-card mt-4 pt-4 pb-1.5">
             <div class="flex items-center justify-between">
-              <h2 class="app-label" i18n="Recent searches">Recent</h2>
+              <h2 class="app-title-card" i18n="Recent searches">Recent</h2>
               <button
                 type="button"
                 class="-my-2 py-2 text-sm font-bold text-primary"
@@ -116,8 +116,9 @@ import { StockRow } from './stock-row';
         </div>
       } @else if (shown(); as list) {
         @if (list.length || results.isLoading()) {
-          <h2 class="app-label px-1 pt-5 pb-1">
-            <ng-container i18n>Results</ng-container> · {{ list.length }}
+          <h2 class="flex items-baseline gap-2 px-1 pt-7 pb-1 app-title-section">
+            <ng-container i18n>Results</ng-container>
+            <span class="text-[15px] font-semibold text-on-surface-variant">{{ list.length }}</span>
           </h2>
           <ul
             aria-live="polite"

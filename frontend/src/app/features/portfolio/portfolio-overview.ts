@@ -81,14 +81,14 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
         </div>
         <div class="mt-4 flex flex-wrap gap-2">
           <p
-            class="inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[12.5px] font-semibold"
+            class="inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-[13px] font-semibold"
           >
             <span class="size-[9px] rounded-full bg-on-surface-variant" aria-hidden="true"></span>
             {{ s.netDeposits | price: s.accountCurrency }}
-            <span class="app-label text-[11.5px]" i18n>net deposits</span>
+            <span class="app-label" i18n>net deposits</span>
           </p>
           <p
-            class="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[12.5px] font-semibold"
+            class="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold"
             [class]="unrealizedPill(s.unrealizedPnl)"
           >
             <span
@@ -97,7 +97,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
               aria-hidden="true"
             ></span>
             {{ s.unrealizedPnl | money: s.accountCurrency }}
-            <span class="app-label text-[11.5px]" i18n>unrealized profit</span>
+            <span class="app-label" i18n>unrealized profit</span>
           </p>
         </div>
       </section>

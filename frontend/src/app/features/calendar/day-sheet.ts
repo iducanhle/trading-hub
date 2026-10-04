@@ -42,14 +42,12 @@ export interface DaySheetData {
                 <app-stock-logo
                   [symbol]="e.symbol"
                   [logoUrl]="e.logoUrl"
-                  [size]="44"
+                  [size]="40"
                   [followed]="data.followed.has(e.symbol)"
                 />
                 <span class="min-w-0 flex-1">
-                  <span class="block text-[15px] font-bold">{{ e.symbol }}</span>
-                  <span class="block truncate text-[13px] font-semibold text-on-surface-variant">{{
-                    e.name
-                  }}</span>
+                  <span class="block app-row-title">{{ e.symbol }}</span>
+                  <span class="block truncate app-row-meta">{{ e.name }}</span>
                 </span>
                 <span class="shrink-0 text-right text-xs text-on-surface-variant tabular-nums">
                   <span class="block" i18n>EPS est. {{ e.epsEstimate | price: e.currency }}</span>

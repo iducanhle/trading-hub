@@ -109,23 +109,22 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             >
               <span class="flex items-center justify-between gap-3">
                 <span class="app-label" i18n>Next earnings</span>
-                <span
-                  class="shrink-0 rounded-full bg-primary-container px-2.5 py-1 text-[11px] font-extrabold text-on-primary-container"
-                  >{{ n.event.time | reportTime }}</span
-                >
+                <span class="shrink-0 app-pill bg-primary-container text-on-primary-container">{{
+                  n.event.time | reportTime
+                }}</span>
               </span>
               <span
                 class="mt-2 block text-[34px] leading-[1.05] font-light tracking-[-.02em] text-primary"
                 >{{ n.event.date | relativeDay }}</span
               >
-              <span class="mt-1 block text-[15px] font-semibold text-on-surface-variant">{{
+              <span class="mt-1 block text-sm font-medium text-on-surface-variant">{{
                 n.event.date | appDate: 'day'
               }}</span>
               <span class="mt-4 flex items-center gap-3 border-t border-outline-variant pt-3.5">
-                <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="36" />
+                <app-stock-logo [symbol]="n.event.symbol" [logoUrl]="n.event.logoUrl" [size]="40" />
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-[15px] font-medium">{{ n.event.name }}</span>
-                  <span class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
+                  <span class="block truncate app-row-title">{{ n.event.name }}</span>
+                  <span class="block truncate app-row-meta"
                     >{{ n.event.symbol }} ·
                     <ng-container i18n
                       >EPS est. {{ n.event.epsEstimate | price: n.event.currency }}</ng-container
@@ -137,8 +136,13 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             </a>
           }
           @for (group of view()!.groups; track group.title) {
-            <section class="mt-6" [attr.aria-label]="group.title">
-              <h2 class="app-label px-1">{{ group.title }} · {{ group.events.length }}</h2>
+            <section class="mt-7" [attr.aria-label]="group.title">
+              <h2 class="flex items-baseline gap-2 px-1 app-title-section">
+                {{ group.title }}
+                <span class="text-[15px] font-semibold text-on-surface-variant">{{
+                  group.events.length
+                }}</span>
+              </h2>
               <ul class="mt-1">
                 @for (e of group.events; track e.symbol) {
                   <li class="flex items-center">
@@ -148,14 +152,11 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                     >
                       <app-stock-logo [symbol]="e.symbol" [logoUrl]="e.logoUrl" [size]="40" />
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate text-[15px] font-medium">{{ e.name }}</span>
-                        <span
-                          class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
+                        <span class="block truncate app-row-title">{{ e.name }}</span>
+                        <span class="block truncate app-row-meta"
                           >{{ e.symbol }} · {{ e.time | reportTime }}</span
                         >
-                        <span
-                          class="block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                        >
+                        <span class="block truncate app-row-meta">
                           <ng-container i18n
                             >EPS est. {{ e.epsEstimate | price: e.currency }}</ng-container
                           >
@@ -165,7 +166,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                         <span class="block text-[15px] font-semibold">{{
                           e.date | appDate: 'day'
                         }}</span>
-                        <span class="mt-0.5 block text-[12.5px] font-bold text-primary">{{
+                        <span class="mt-0.5 block text-[13px] font-semibold text-primary">{{
                           e.date | relativeDay
                         }}</span>
                       </span>
@@ -187,9 +188,12 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             </section>
           }
           @if (view()!.noDate.length) {
-            <section class="mt-6" aria-label="No date announced" i18n-aria-label>
-              <h2 class="app-label px-1">
-                <ng-container i18n>No date announced</ng-container> · {{ view()!.noDate.length }}
+            <section class="mt-7" aria-label="No date announced" i18n-aria-label>
+              <h2 class="flex items-baseline gap-2 px-1 app-title-section">
+                <ng-container i18n>No date announced</ng-container>
+                <span class="text-[15px] font-semibold text-on-surface-variant">{{
+                  view()!.noDate.length
+                }}</span>
               </h2>
               <ul class="mt-1">
                 @for (s of view()!.noDate; track s.symbol) {
@@ -200,11 +204,8 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
                     >
                       <app-stock-logo [symbol]="s.symbol" [logoUrl]="s.logoUrl" [size]="40" />
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate text-[15px] font-medium">{{ s.name }}</span>
-                        <span
-                          class="mt-0.5 block truncate text-[12.5px] font-semibold text-on-surface-variant"
-                          >{{ s.symbol }}</span
-                        >
+                        <span class="block truncate app-row-title">{{ s.name }}</span>
+                        <span class="block truncate app-row-meta">{{ s.symbol }}</span>
                       </span>
                     </a>
                     <button

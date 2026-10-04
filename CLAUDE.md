@@ -76,6 +76,7 @@ Backend (run in `backend/`; `./mvnw` in Bash, `mvnw.cmd` in PowerShell):
 | Task | Read |
 |---|---|
 | Current state, decisions, known issues | `docs/PROGRESS-frontend.md` / `docs/PROGRESS-backend.md` (the **Decisions** and **Known issues** sections; update these after finishing a feature) |
+| Redesign: headings, stat rows, modals (implementation spec) | `docs/REDESIGN-SPEC.md` |
 | API shapes and error codes | `docs/CONTRACT.md` |
 | Provider quirks and data gaps | `docs/DATA-SOURCES.md` |
 | Original specs | `docs/PROMPT-frontend.md`, `docs/PROMPT-backend.md`, `docs/PROMPT-trading212.md` |
