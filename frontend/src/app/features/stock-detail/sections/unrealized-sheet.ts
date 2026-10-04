@@ -1,13 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { T212Instrument } from '../../../core/models/contract';
 import { Dialog } from '../../../shared/components/dialog/dialog';
-import { HeroAmount } from '../../../shared/components/hero-amount/hero-amount';
 import { StatList, StatRow } from '../../../shared/components/stat-list/stat-list';
-import { TERMS } from '../../../shared/components/term-info/terms';
 import { PercentPipe, PricePipe } from '../../../shared/pipes/format.pipes';
 import { formatPrice, toneClass } from '../../../shared/utils/format';
 import { Pnl } from '../../portfolio/pnl';
+import { PositionHeader } from '../../portfolio/position-summary';
 
 export interface UnrealizedSheetData {
   instrument: T212Instrument;
@@ -20,23 +19,26 @@ export interface UnrealizedSheetData {
  */
 @Component({
   selector: 'app-unrealized-sheet',
-  imports: [Dialog, HeroAmount, StatList, StatRow, Pnl, PercentPipe, PricePipe],
+  imports: [Dialog, PositionHeader, StatList, StatRow, Pnl, PercentPipe, PricePipe],
   template: `
     @let i = data.instrument;
     @let ccy = data.accountCurrency;
-    <app-dialog [title]="title">
-      <div class="flex flex-wrap items-baseline gap-x-2.5">
-        <app-hero-amount size="md" signed [value]="i.unrealizedPnl" [currency]="ccy" />
-        @if (pct() !== null) {
-          <span class="text-base font-semibold" [class]="tone()">{{ pct() | pct }}</span>
-        }
-      </div>
-
-      <dl appStatList card class="mt-3.5">
+    <app-dialog>
+      <app-position-header
+        dialogHeader
+        class="min-w-0 flex-1"
+        [instrument]="i"
+        linked
+        (opened)="ref.close()"
+      />
+      <dl appStatList card>
         <div appStatRow label="Value now" i18n-label>{{ money(i.value) }}</div>
-        <div appStatRow label="What you paid" i18n-label>− {{ money(i.costBasis) }}</div>
+        <div appStatRow label="Purchase cost" i18n-label>− {{ money(i.costBasis) }}</div>
         <div appStatRow total label="Unrealized" i18n-label term="unrealizedPnl">
           <app-pnl [value]="i.unrealizedPnl" [currency]="ccy" />
+          @if (pct() !== null) {
+            <span class="ml-1.5 text-sm font-semibold" [class]="tone()">({{ pct() | pct }})</span>
+          }
         </div>
         @if (fxEffect() !== null) {
           <div appStatRow sub label="Of which from the exchange rate" i18n-label>
@@ -62,8 +64,7 @@ export interface UnrealizedSheetData {
 })
 export class UnrealizedSheet {
   protected readonly data = inject<UnrealizedSheetData>(MAT_DIALOG_DATA);
-
-  protected readonly title = TERMS.unrealizedPnl.title;
+  protected readonly ref = inject(MatDialogRef);
 
   protected readonly pct = computed(() => {
     const { unrealizedPnl, costBasis } = this.data.instrument;
