@@ -213,15 +213,15 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
         <h2 id="about-title" class="app-title-card mb-3" i18n>About</h2>
         <dl class="space-y-3 leading-relaxed">
           <div>
-            <dt class="app-label text-[11px]" i18n>Version</dt>
+            <dt class="app-label" i18n>Version</dt>
             <dd>Earnings Tracker {{ version }}</dd>
           </div>
           <div>
-            <dt class="app-label text-[11px]" i18n>Data sources</dt>
+            <dt class="app-label" i18n>Data sources</dt>
             <dd i18n>Finnhub, Twelve Data, Yahoo Finance and Financial Modeling Prep.</dd>
           </div>
           <div>
-            <dt class="app-label text-[11px]" i18n>Charts</dt>
+            <dt class="app-label" i18n>Charts</dt>
             <dd>
               <a
                 href="https://www.tradingview.com/"
@@ -234,7 +234,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             </dd>
           </div>
           <div>
-            <dt class="app-label text-[11px]" i18n>Company logos</dt>
+            <dt class="app-label" i18n>Company logos</dt>
             <dd>
               <a
                 href="https://elbstream.com/logos"
@@ -247,7 +247,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
             </dd>
           </div>
           <div>
-            <dt class="app-label text-[11px]" i18n>Icons</dt>
+            <dt class="app-label" i18n>Icons</dt>
             <dd i18n>Lucide (ISC).</dd>
           </div>
         </dl>

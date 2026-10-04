@@ -4,7 +4,8 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { RouterLink } from '@angular/router';
 import { T212Trade } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
-import { TermInfo } from '../../shared/components/term-info/term-info';
+import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
+import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
 import { Icon } from '../../shared/icon/icon';
 import { DateTimePipe, NumberPipe, PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
 import { Pnl } from './pnl';
@@ -36,7 +37,9 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
     MatIconButton,
     StockLogo,
     Icon,
-    TermInfo,
+    HeroAmount,
+    StatList,
+    StatRow,
     Pnl,
     DateTimePipe,
     NumberPipe,
@@ -59,49 +62,38 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         </button>
       </div>
 
-      <div class="app-card mt-4 block">
-        <p class="app-label" i18n="Total value of a trade">Value</p>
-        <p class="mt-1 text-xl font-bold tabular-nums">{{ t.value | price: data.currency }}</p>
-        <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-[15px] font-semibold">
-          @if (t.realizedPnl !== null) {
-            <div>
-              <dt class="app-label flex items-center gap-1 text-[11px]">
-                <ng-container i18n="Profit/loss of one sell">Result</ng-container
-                ><app-term-info term="realizedPnl" />
-              </dt>
-              <dd>
-                <app-pnl
-                  [value]="result()"
-                  [currency]="data.currency"
-                  [pct]="resultPct() ?? undefined"
-                />
-              </dd>
-            </div>
-          }
-          <div>
-            <dt class="app-label text-[11px]" i18n>Shares</dt>
-            <dd class="tabular-nums">{{ t.quantity | qty }}</dd>
+      <p class="mt-5 app-label" i18n="Total value of a trade">Value</p>
+      <app-hero-amount class="mt-1" size="md" [value]="t.value" [currency]="data.currency" />
+      <dl appStatList card class="mt-3.5">
+        <div appStatRow label="Shares" i18n-label>{{ t.quantity | qty }}</div>
+        <div appStatRow label="Price per share" i18n-label>
+          {{ t.price | price: t.priceCurrency }}
+        </div>
+        @if (t.fxRate !== null && t.fxRate !== 1) {
+          <div appStatRow label="Exchange rate" i18n-label>{{ t.fxRate | num: 4 }}</div>
+        }
+        <div appStatRow label="Fees" i18n-label>{{ t.fees + t.taxes | price: data.currency }}</div>
+        @if (t.realizedPnl !== null) {
+          <div
+            appStatRow
+            total
+            label="Result"
+            i18n-label="Profit/loss of one sell"
+            term="realizedPnl"
+          >
+            <app-pnl
+              [value]="result()"
+              [currency]="data.currency"
+              [pct]="resultPct() ?? undefined"
+            />
           </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n="Price per share">Price</dt>
-            <dd class="tabular-nums">{{ t.price | price: t.priceCurrency }}</dd>
-          </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n>Fees</dt>
-            <dd class="tabular-nums">{{ t.fees + t.taxes | price: data.currency }}</dd>
-          </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n>Order type</dt>
-            <dd>{{ t.orderType ? orderLabels[t.orderType] : '—' }}</dd>
-          </div>
-          @if (t.fxRate !== null && t.fxRate !== 1) {
-            <div>
-              <dt class="app-label text-[11px]" i18n>Exchange rate</dt>
-              <dd class="tabular-nums">{{ t.fxRate | num: 4 }}</dd>
-            </div>
-          }
-        </dl>
-      </div>
+        }
+      </dl>
+      <dl appStatList class="mt-1.5">
+        <div appStatRow label="Order type" i18n-label>
+          {{ t.orderType ? orderLabels[t.orderType] : '—' }}
+        </div>
+      </dl>
 
       <div class="mt-4 flex flex-wrap justify-end gap-2">
         @if (t.symbol) {

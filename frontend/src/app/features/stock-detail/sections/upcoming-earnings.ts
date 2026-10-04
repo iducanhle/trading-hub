@@ -2,6 +2,7 @@ import { Component, input } from '@angular/core';
 import { EarningsEvent } from '../../../core/models/contract';
 import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
+import { StatList, StatRow } from '../../../shared/components/stat-list/stat-list';
 import {
   AppDatePipe,
   CompactPipe,
@@ -17,6 +18,8 @@ import { fiscalLabel } from '../../../shared/utils/format';
   imports: [
     TermInfo,
     Skeleton,
+    StatList,
+    StatRow,
     AppDatePipe,
     RelativeDayPipe,
     ReportTimePipe,
@@ -44,20 +47,12 @@ import { fiscalLabel } from '../../../shared/utils/format';
               · {{ label }}
             }
           </p>
-          <dl class="mt-4 grid grid-cols-2 gap-3">
-            <div class="rounded-[14px] bg-surface-container-high px-3.5 py-3">
-              <dt class="app-label inline-flex items-center gap-1 text-[11px]">
-                <span i18n>EPS estimate</span><app-term-info term="epsEstimate" />
-              </dt>
-              <dd class="mt-1 text-base font-semibold">{{ e.epsEstimate | price: e.currency }}</dd>
+          <dl appStatList class="mt-3.5 border-t border-outline-variant pt-1">
+            <div appStatRow label="EPS estimate" i18n-label term="epsEstimate">
+              {{ e.epsEstimate | price: e.currency }}
             </div>
-            <div class="rounded-[14px] bg-surface-container-high px-3.5 py-3">
-              <dt class="app-label inline-flex items-center gap-1 text-[11px]">
-                <span i18n>Revenue estimate</span><app-term-info term="revenueEstimate" />
-              </dt>
-              <dd class="mt-1 text-base font-semibold">
-                {{ e.revenueEstimate | compact: e.currency }}
-              </dd>
+            <div appStatRow label="Revenue estimate" i18n-label term="revenueEstimate">
+              {{ e.revenueEstimate | compact: e.currency }}
             </div>
           </dl>
         </div>

@@ -5,7 +5,10 @@ import { Icon } from '../../shared/icon/icon';
 import { T212Instrument } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { TermInfo } from '../../shared/components/term-info/term-info';
-import { PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
+import { PercentPipe, PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
+import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
+import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
+import { toneClass } from '../../shared/utils/format';
 import { Pnl } from './pnl';
 import { displayTicker, instrumentPnl, instrumentPnlPct } from './portfolio-model';
 
@@ -75,90 +78,75 @@ export class PositionHeader {
 }
 
 /**
- * The all-time profit/loss of one instrument and the position, as two cards: profit/loss with the shares held,
- * then value and prices. Extra cells for the second grid (a `<div>` with a `<dt>` and a `<dd>` each) can be
- * projected; they follow the standard ones.
+ * The profit/loss of one instrument and the position (docs/REDESIGN-SPEC.md): the basis pill (pills projected with
+ * `summaryPill` come first), the total as a hero figure, then the figures it adds up from as rows ending in the total,
+ * and the position facts as plain rows. Extra rows (`<div appStatRow>`) can be projected after the standard ones.
  */
 @Component({
   selector: 'app-position-summary',
-  imports: [TermInfo, PricePipe, QuantityPipe, Pnl],
+  imports: [TermInfo, PricePipe, QuantityPipe, PercentPipe, Pnl, HeroAmount, StatList, StatRow],
   template: `
     @let i = instrument();
-    <div class="app-card">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <p class="app-label flex items-center gap-1">
-          <ng-container i18n>Total profit/loss</ng-container><app-term-info term="totalPnl" />
-        </p>
-        @if (includeUnrealized()) {
-          <span
-            class="app-pill bg-primary-container text-primary"
-            i18n="Profit/loss basis badge|The total includes unrealized profit/loss"
-            >Incl. unrealized</span
-          >
-        } @else {
-          <span
-            class="app-pill bg-secondary-container text-on-secondary-container"
-            i18n="Profit/loss basis badge|The total leaves out unrealized profit/loss"
-            >Realized only</span
-          >
-        }
-      </div>
-      <app-pnl
-        strong
-        class="mt-1 text-xl"
-        [value]="total()"
-        [currency]="currency()"
-        [pct]="pct() ?? undefined"
-      />
-      <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-[15px] font-semibold">
-        @if (includeUnrealized()) {
-          <div>
-            <dt class="app-label flex items-center gap-1 text-[11px]">
-              <ng-container i18n>Unrealized</ng-container><app-term-info term="unrealizedPnl" />
-            </dt>
-            <dd><app-pnl [value]="i.unrealizedPnl" [currency]="currency()" /></dd>
-          </div>
-        }
-        <div>
-          <dt class="app-label flex items-center gap-1 text-[11px]">
-            <ng-container i18n>Realized</ng-container><app-term-info term="realizedPnl" />
-          </dt>
-          <dd><app-pnl [value]="i.realizedPnl" [currency]="currency()" /></dd>
-        </div>
-        <!-- Not deducted in Realized; the total subtracts them. -->
-        <div>
-          <dt class="app-label text-[11px]" i18n>Fees</dt>
-          <dd><app-pnl [value]="-i.fees" [currency]="currency()" /></dd>
-        </div>
-        <div>
-          <dt class="app-label text-[11px]" i18n>Dividends</dt>
-          <dd><app-pnl [value]="i.dividends" [currency]="currency()" /></dd>
-        </div>
-        <div>
-          <dt class="app-label text-[11px]" i18n>Shares held</dt>
-          <dd class="tabular-nums">{{ i.quantity | qty }}</dd>
-        </div>
-      </dl>
+    <div class="flex flex-wrap items-center gap-2">
+      <ng-content select="[summaryPill]" />
+      @if (includeUnrealized()) {
+        <span
+          class="app-pill bg-primary-container text-primary"
+          i18n="Profit/loss basis badge|The total includes unrealized profit/loss"
+          >Incl. unrealized</span
+        >
+      } @else {
+        <span
+          class="app-pill bg-secondary-container text-on-secondary-container"
+          i18n="Profit/loss basis badge|The total leaves out unrealized profit/loss"
+          >Realized only</span
+        >
+      }
     </div>
-    <dl class="app-card grid grid-cols-2 gap-x-4 gap-y-3 text-[15px] font-semibold">
-      <div>
-        <dt class="app-label text-[11px]" i18n>Value · as of now</dt>
-        <dd class="tabular-nums">{{ i.value | price: currency() }}</dd>
+    <p class="mt-4 app-label flex items-center gap-1">
+      <ng-container i18n>Total profit/loss</ng-container><app-term-info term="totalPnl" />
+    </p>
+    <div class="mt-1 flex flex-wrap items-baseline gap-x-2.5">
+      <app-hero-amount size="md" signed [value]="total()" [currency]="currency()" />
+      @if (pct() !== null) {
+        <span class="text-base font-semibold" [class]="tone()">{{ pct() | pct }}</span>
+      }
+    </div>
+    <dl appStatList card class="mt-3.5">
+      @if (includeUnrealized()) {
+        <div appStatRow label="Unrealized" i18n-label term="unrealizedPnl">
+          <app-pnl [value]="i.unrealizedPnl" [currency]="currency()" />
+        </div>
+      }
+      <div appStatRow label="Realized" i18n-label term="realizedPnl">
+        <app-pnl [value]="i.realizedPnl" [currency]="currency()" />
       </div>
-      <div>
-        <dt class="app-label flex items-center gap-1 text-[11px]">
-          <ng-container i18n>Average cost</ng-container><app-term-info term="averageCost" />
-        </dt>
-        <dd class="tabular-nums">{{ i.averageCost | price: i.instrumentCurrency }}</dd>
+      <div appStatRow label="Dividends" i18n-label>
+        <app-pnl [value]="i.dividends" [currency]="currency()" />
       </div>
-      <div>
-        <dt class="app-label text-[11px]" i18n>Current price</dt>
-        <dd class="tabular-nums">{{ i.currentPrice | price: i.instrumentCurrency }}</dd>
+      <!-- Not deducted in Realized; the total subtracts them. -->
+      <div appStatRow label="Fees" i18n-label>
+        <app-pnl [value]="-i.fees" [currency]="currency()" />
+      </div>
+      <div appStatRow total label="Total" i18n-label="Sum of the rows above">
+        <app-pnl [value]="total()" [currency]="currency()" />
+      </div>
+    </dl>
+    <dl appStatList class="mt-1.5">
+      <div appStatRow label="Shares held" i18n-label>{{ i.quantity | qty }}</div>
+      <div appStatRow label="Value now" i18n-label="Current value of the position">
+        {{ i.value | price: currency() }}
+      </div>
+      <div appStatRow label="Average cost" i18n-label term="averageCost">
+        {{ i.averageCost | price: i.instrumentCurrency }}
+      </div>
+      <div appStatRow label="Current price" i18n-label>
+        {{ i.currentPrice | price: i.instrumentCurrency }}
       </div>
       <ng-content />
     </dl>
   `,
-  host: { class: 'flex flex-col gap-3' },
+  host: { class: 'block' },
 })
 export class PositionSummary {
   readonly instrument = input.required<T212Instrument>();
@@ -174,4 +162,5 @@ export class PositionSummary {
   protected readonly pct = computed(() =>
     instrumentPnlPct(this.instrument(), this.includeUnrealized()),
   );
+  protected readonly tone = computed(() => toneClass(this.total()));
 }

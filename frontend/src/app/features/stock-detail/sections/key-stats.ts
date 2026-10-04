@@ -14,7 +14,7 @@ import { formatPlainPercent } from '../../../shared/utils/format';
     @if (overview(); as o) {
       <dl class="mx-4 rounded-[22px] border border-outline-variant px-5 py-2.5">
         <div class="flex items-baseline justify-between gap-3 py-2.5">
-          <dt class="app-label inline-flex items-center gap-1">
+          <dt class="inline-flex items-center gap-1 text-sm font-medium text-on-surface-variant">
             <span i18n>Market cap</span><app-term-info term="marketCap" />
           </dt>
           <dd class="text-right text-base font-semibold">
@@ -27,26 +27,26 @@ import { formatPlainPercent } from '../../../shared/utils/format';
           </dd>
         </div>
         <div class="flex items-baseline justify-between gap-3 py-2.5">
-          <dt class="app-label inline-flex items-center gap-1">
+          <dt class="inline-flex items-center gap-1 text-sm font-medium text-on-surface-variant">
             <span i18n="Price to earnings ratio">P/E</span><app-term-info term="pe" />
           </dt>
           <dd class="text-base font-semibold">{{ o.keyStats.peRatio | num: 1 }}</dd>
         </div>
         <div class="flex items-baseline justify-between gap-3 py-2.5">
-          <dt class="app-label inline-flex items-center gap-1">
+          <dt class="inline-flex items-center gap-1 text-sm font-medium text-on-surface-variant">
             <span i18n="Earnings per share, trailing 12 months"> EPS (TTM) </span
             ><app-term-info term="eps" />
           </dt>
           <dd class="text-base font-semibold">{{ o.keyStats.epsTtm | price: o.currency }}</dd>
         </div>
         <div class="flex items-baseline justify-between gap-3 py-2.5">
-          <dt class="app-label inline-flex items-center gap-1">
+          <dt class="inline-flex items-center gap-1 text-sm font-medium text-on-surface-variant">
             <span i18n>Avg volume</span><app-term-info term="avgVolume" />
           </dt>
           <dd class="text-base font-semibold">{{ o.keyStats.avgVolume | compact }}</dd>
         </div>
         <div class="pt-2.5 pb-3">
-          <dt class="app-label inline-flex items-center gap-1">
+          <dt class="inline-flex items-center gap-1 text-sm font-medium text-on-surface-variant">
             <span i18n>52-week range</span><app-term-info term="range52w" />
           </dt>
           <dd class="mt-3">

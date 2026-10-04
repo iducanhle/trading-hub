@@ -12,15 +12,9 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
-import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
-import {
-  AppDatePipe,
-  PricePipe,
-  QuantityPipe,
-  SignedMoneyPipe,
-} from '../../shared/pipes/format.pipes';
-import { toneClass } from '../../shared/utils/format';
+import { StatRow } from '../../shared/components/stat-list/stat-list';
+import { AppDatePipe, PricePipe } from '../../shared/pipes/format.pipes';
 import {
   DEFAULT_VIEW,
   InstrumentFilters,
@@ -30,6 +24,7 @@ import {
   buildTimeline,
 } from './instrument-filters';
 import { PositionHeader, PositionSummary } from './position-summary';
+import { Pnl } from './pnl';
 import { TimelineList } from './timeline-list';
 import { dayIn, displayTicker } from './portfolio-model';
 
@@ -55,7 +50,8 @@ export interface InstrumentDialogData {
     PageHeader,
     Skeleton,
     StaleChip,
-    TermInfo,
+    StatRow,
+    Pnl,
     Icon,
     InstrumentFilters,
     TimelineList,
@@ -63,8 +59,6 @@ export interface InstrumentDialogData {
     PositionSummary,
     AppDatePipe,
     PricePipe,
-    QuantityPipe,
-    SignedMoneyPipe,
   ],
   template: `
     @if (dialogRef) {
@@ -136,30 +130,17 @@ export interface InstrumentDialogData {
           <app-position-header class="mb-4" [instrument]="i" [named]="false" />
         }
         <app-position-summary [instrument]="i" [currency]="d.accountCurrency">
-          <div>
-            <dt class="app-label flex items-center gap-1 text-[11px]">
-              <ng-container i18n>FX fees</ng-container><app-term-info term="fxFees" />
-            </dt>
-            <dd class="tabular-nums" [class]="tone(-fxFees())">
-              {{ -fxFees() | money: d.accountCurrency }}
-            </dd>
+          <div appStatRow label="FX fees" i18n-label term="fxFees">
+            <app-pnl [value]="-fxFees()" [currency]="d.accountCurrency" />
           </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n>Bought</dt>
-            <dd class="tabular-nums">{{ i.bought.value | price: d.accountCurrency }}</dd>
+          <div appStatRow label="Bought" i18n-label>
+            {{ i.bought.value | price: d.accountCurrency }}
           </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n>Sold</dt>
-            <dd class="tabular-nums">{{ i.sold.value | price: d.accountCurrency }}</dd>
+          <div appStatRow label="Sold" i18n-label>
+            {{ i.sold.value | price: d.accountCurrency }}
           </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n>First trade</dt>
-            <dd>{{ day(i.firstTradeAt) | appDate }}</dd>
-          </div>
-          <div>
-            <dt class="app-label text-[11px]" i18n>Last trade</dt>
-            <dd>{{ day(i.lastTradeAt) | appDate }}</dd>
-          </div>
+          <div appStatRow label="First trade" i18n-label>{{ day(i.firstTradeAt) | appDate }}</div>
+          <div appStatRow label="Last trade" i18n-label>{{ day(i.lastTradeAt) | appDate }}</div>
         </app-position-summary>
         @if (i.symbol && !dialogRef) {
           <a matButton="tonal" class="mt-3.5 w-full" [routerLink]="['/stock', i.symbol]">
@@ -257,9 +238,5 @@ export class InstrumentPage {
 
   protected day(iso: string | null): string | null {
     return iso ? dayIn(iso) : null;
-  }
-
-  protected tone(value: number | null): string {
-    return toneClass(value);
   }
 }

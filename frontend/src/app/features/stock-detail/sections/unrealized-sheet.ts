@@ -3,10 +3,11 @@ import { MAT_BOTTOM_SHEET_DATA } from '@angular/material/bottom-sheet';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { T212Instrument } from '../../../core/models/contract';
 import { Sheet } from '../../../shared/components/sheet/sheet';
-import { TermInfo } from '../../../shared/components/term-info/term-info';
+import { HeroAmount } from '../../../shared/components/hero-amount/hero-amount';
+import { StatList, StatRow } from '../../../shared/components/stat-list/stat-list';
 import { TERMS } from '../../../shared/components/term-info/terms';
 import { PercentPipe, PricePipe } from '../../../shared/pipes/format.pipes';
-import { formatPrice } from '../../../shared/utils/format';
+import { formatPrice, toneClass } from '../../../shared/utils/format';
 import { Pnl } from '../../portfolio/pnl';
 
 export interface UnrealizedSheetData {
@@ -20,43 +21,42 @@ export interface UnrealizedSheetData {
  */
 @Component({
   selector: 'app-unrealized-sheet',
-  imports: [Sheet, TermInfo, Pnl, PercentPipe, PricePipe],
+  imports: [Sheet, HeroAmount, StatList, StatRow, Pnl, PercentPipe, PricePipe],
   template: `
     @let i = data.instrument;
     @let ccy = data.accountCurrency;
     <app-sheet [title]="title">
-      <p class="text-[28px] leading-tight">
-        <app-pnl strong [value]="i.unrealizedPnl" [currency]="ccy" [pct]="pct()" />
-      </p>
+      <div class="flex flex-wrap items-baseline gap-x-2.5">
+        <app-hero-amount size="md" signed [value]="i.unrealizedPnl" [currency]="ccy" />
+        @if (pct() !== null) {
+          <span class="text-base font-semibold" [class]="tone()">{{ pct() | pct }}</span>
+        }
+      </div>
 
-      <dl class="app-card mt-5 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2.5 text-[14px]">
-        <dt class="text-on-surface-variant" i18n>Value now</dt>
-        <dd class="text-right font-semibold">{{ money(i.value) }}</dd>
-        <dt class="text-on-surface-variant" i18n>What you paid</dt>
-        <dd class="text-right font-semibold">− {{ money(i.costBasis) }}</dd>
-        <dt class="flex items-center gap-1 border-t border-outline-variant pt-2.5 font-semibold">
-          <ng-container i18n>Unrealized</ng-container><app-term-info term="unrealizedPnl" />
-        </dt>
-        <dd class="border-t border-outline-variant pt-2.5 text-right">
-          <app-pnl strong [value]="i.unrealizedPnl" [currency]="ccy" />
-        </dd>
+      <dl appStatList card class="mt-3.5">
+        <div appStatRow label="Value now" i18n-label>{{ money(i.value) }}</div>
+        <div appStatRow label="What you paid" i18n-label>− {{ money(i.costBasis) }}</div>
+        <div appStatRow total label="Unrealized" i18n-label term="unrealizedPnl">
+          <app-pnl [value]="i.unrealizedPnl" [currency]="ccy" />
+        </div>
         @if (fxEffect() !== null) {
-          <dt class="text-[13px] text-on-surface-variant" i18n>Of which from the exchange rate</dt>
-          <dd class="text-right text-[13px]"><app-pnl [value]="fxEffect()" [currency]="ccy" /></dd>
+          <div appStatRow sub label="Of which from the exchange rate" i18n-label>
+            <app-pnl [value]="fxEffect()" [currency]="ccy" />
+          </div>
         }
       </dl>
 
-      <dl class="mt-4 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2.5 text-[14px]">
-        <dt class="text-on-surface-variant" i18n>Current price</dt>
-        <dd class="text-right font-semibold">{{ i.currentPrice | price: i.instrumentCurrency }}</dd>
-        <dt class="flex items-center gap-1 text-on-surface-variant">
-          <ng-container i18n>Break-even price</ng-container><app-term-info term="breakEven" />
-        </dt>
-        <dd class="text-right font-semibold">{{ i.averageCost | price: i.instrumentCurrency }}</dd>
-        <dt class="text-on-surface-variant" i18n>Price vs. break-even</dt>
-        <dd class="text-right font-semibold">{{ breakEvenMove() | pct }}</dd>
-        <dt class="text-on-surface-variant" i18n>A 1% price move is worth</dt>
-        <dd class="text-right font-semibold">± {{ money(onePercent()) }}</dd>
+      <dl appStatList class="mt-1.5">
+        <div appStatRow label="Current price" i18n-label>
+          {{ i.currentPrice | price: i.instrumentCurrency }}
+        </div>
+        <div appStatRow label="Break-even price" i18n-label term="breakEven">
+          {{ i.averageCost | price: i.instrumentCurrency }}
+        </div>
+        <div appStatRow label="Price vs. break-even" i18n-label>{{ breakEvenMove() | pct }}</div>
+        <div appStatRow label="A 1% price move is worth" i18n-label>
+          ± {{ money(onePercent()) }}
+        </div>
       </dl>
     </app-sheet>
   `,
@@ -72,6 +72,7 @@ export class UnrealizedSheet {
     const { unrealizedPnl, costBasis } = this.data.instrument;
     return unrealizedPnl !== null && costBasis ? (unrealizedPnl / costBasis) * 100 : null;
   });
+  protected readonly tone = computed(() => toneClass(this.data.instrument.unrealizedPnl));
   /** How far the price is above (or below) the average cost, in percent, before currency effects; null when unknown. */
   protected readonly breakEvenMove = computed(() => {
     const { averageCost, currentPrice } = this.data.instrument;

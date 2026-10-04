@@ -9,6 +9,7 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { Icon } from '../../shared/icon/icon';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
 import {
   AppDatePipe,
   PricePipe,
@@ -25,6 +26,8 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
 @Component({
   selector: 'app-portfolio-cash',
   imports: [
+    StatList,
+    StatRow,
     ErrorState,
     Skeleton,
     StaleChip,
@@ -122,37 +125,21 @@ import { PositionDialog, PositionDialogData } from './position-dialog';
         @if (transactions.error() && !transactions.hasValue()) {
           <app-error-state compact [error]="transactions.error()" (retry)="transactions.reload()" />
         } @else if (!transactions.hasValue()) {
-          <div class="grid grid-cols-2 gap-2.5" aria-hidden="true">
-            @for (i of [1, 2, 3, 4]; track i) {
-              <app-skeleton shape="card" class="h-[72px] rounded-[18px]" />
-            }
-          </div>
+          <app-skeleton shape="card" class="block h-44 rounded-[22px]" aria-hidden="true" />
         } @else {
           @let t = transactions.value();
-          <dl class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
-              <dt class="app-label text-[11px]" i18n>Deposits</dt>
-              <dd class="mt-1 text-[15px] font-semibold">
-                {{ t.totals.deposits | price: t.accountCurrency }}
-              </dd>
+          <dl appStatList card>
+            <div appStatRow label="Deposits" i18n-label>
+              {{ t.totals.deposits | price: t.accountCurrency }}
             </div>
-            <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
-              <dt class="app-label text-[11px]" i18n>Withdrawals</dt>
-              <dd class="mt-1 text-[15px] font-semibold">
-                {{ t.totals.withdrawals | price: t.accountCurrency }}
-              </dd>
+            <div appStatRow label="Withdrawals" i18n-label>
+              {{ t.totals.withdrawals | price: t.accountCurrency }}
             </div>
-            <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
-              <dt class="app-label text-[11px]" i18n>Account fees</dt>
-              <dd class="mt-1 text-[15px] font-semibold">
-                {{ t.totals.fees | price: t.accountCurrency }}
-              </dd>
+            <div appStatRow label="Account fees" i18n-label>
+              {{ t.totals.fees | price: t.accountCurrency }}
             </div>
-            <div class="rounded-[18px] bg-surface-container px-4 py-3.5">
-              <dt class="app-label text-[11px]" i18n>Interest</dt>
-              <dd class="mt-1 text-[15px] font-semibold">
-                {{ t.totals.interest | price: t.accountCurrency }}
-              </dd>
+            <div appStatRow label="Interest" i18n-label>
+              {{ t.totals.interest | price: t.accountCurrency }}
             </div>
           </dl>
           @if (t.items.length === 0) {
