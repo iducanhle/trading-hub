@@ -1,5 +1,6 @@
 import { Component, booleanAttribute, computed, input, linkedSignal } from '@angular/core';
 import { Icon } from '../../icon/icon';
+import { hasTransparency } from '../../utils/image-transparency';
 import { symbolColor, symbolInitials } from '../../utils/symbols';
 
 /**
@@ -24,6 +25,7 @@ const MIN_SHARP_PX = 32;
       <img
         class="size-full object-contain shadow-[0_0_3px_rgb(0_0_0/0.18)] transition-opacity duration-200"
         [class.opacity-0]="!loaded()"
+        [class.bg-white]="transparent()"
         [style.border-radius.px]="radius()"
         [src]="logoUrl()"
         [width]="size()"
@@ -77,6 +79,8 @@ export class StockLogo {
   /** Resets whenever the URL changes. */
   protected readonly failed = linkedSignal({ source: this.logoUrl, computation: () => false });
   protected readonly loaded = linkedSignal({ source: this.logoUrl, computation: () => false });
+  /** Transparent logos get a white tile so dark marks stay visible on the dark theme. */
+  protected readonly transparent = linkedSignal({ source: this.logoUrl, computation: () => false });
   protected readonly color = computed(() => symbolColor(this.symbol()));
   protected readonly initials = computed(() =>
     symbolInitials(this.symbol(), this.size() < 32 ? 1 : 2),
@@ -90,6 +94,14 @@ export class StockLogo {
   protected onLoad(event: Event): void {
     const img = event.target as HTMLImageElement;
     if (img.naturalWidth > 0 && img.naturalWidth < MIN_SHARP_PX) this.failed.set(true);
-    else this.loaded.set(true);
+    else {
+      this.loaded.set(true);
+      const url = this.logoUrl();
+      if (url) {
+        void hasTransparency(url).then((t) => {
+          if (this.logoUrl() === url) this.transparent.set(t);
+        });
+      }
+    }
   }
 }
