@@ -22,7 +22,7 @@ const TAB_ICONS: Record<PortfolioTab, IconName> = {
   imports: [RouterLink, Icon],
   host: {
     class:
-      'pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),12px)] lg:left-77',
+      'pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(calc(env(safe-area-inset-bottom)_-_20px),12px)] lg:left-77',
   },
   template: `
     <nav
