@@ -260,7 +260,7 @@ public class T212PortfolioService {
 
     /** How far back {@link #history} reaches, the intervals it offers (keeping the points to a few thousand). */
     public enum HistoryRange {
-        D1("1D", Duration.ofDays(1), HistoryInterval.M15, HistoryInterval.M5, HistoryInterval.M30,
+        D1("1D", Duration.ofDays(1), HistoryInterval.M5, HistoryInterval.M15, HistoryInterval.M30,
                 HistoryInterval.H1),
         W1("1W", Duration.ofDays(7), HistoryInterval.H1, HistoryInterval.M5, HistoryInterval.M15,
                 HistoryInterval.M30, HistoryInterval.H4),

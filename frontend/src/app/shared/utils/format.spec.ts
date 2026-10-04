@@ -29,9 +29,9 @@ describe('format', () => {
   });
 
   it('signs profit and loss amounts', () => {
-    expect(formatSignedMoney(123.4, 'EUR', 'en-US')).toBe('+€123.40');
-    expect(formatSignedMoney(-12, 'USD', 'en-US')).toBe(`${MINUS}$12.00`);
-    expect(formatSignedMoney(0, 'EUR', 'en-US')).toBe('€0.00');
+    expect(formatSignedMoney(123.4, 'EUR', 'en-US')).toBe('+123.40 €');
+    expect(formatSignedMoney(-12, 'USD', 'en-US')).toBe(MINUS + '12.00 $');
+    expect(formatSignedMoney(0, 'EUR', 'en-US')).toBe('0.00 €');
     expect(formatSignedMoney(1.5, 'EUR', 'cs-CZ')).toBe('+1,50 €');
     expect(formatSignedMoney(null, 'EUR')).toBe(DASH);
   });
@@ -44,10 +44,10 @@ describe('format', () => {
   });
 
   it('formats prices with 2 decimals and the currency symbol', () => {
-    expect(formatPrice(187.4, 'USD', 'en-US')).toBe('$187.40');
-    expect(formatPrice(45.1, 'EUR', 'en-GB')).toBe('€45.10');
-    expect(formatPrice(12.3456, 'GBP', 'en-GB')).toBe('£12.35');
-    expect(formatPrice(-3, 'USD', 'en-US')).toBe(`${MINUS}$3.00`);
+    expect(formatPrice(187.4, 'USD', 'en-US')).toBe('187.40 $');
+    expect(formatPrice(45.1, 'EUR', 'en-GB')).toBe('45.10 €');
+    expect(formatPrice(12.3456, 'GBP', 'en-GB')).toBe('12.35 £');
+    expect(formatPrice(-3, 'USD', 'en-US')).toBe(MINUS + '3.00 $');
   });
 
   it('falls back to a plain number for an unknown currency', () => {
@@ -55,9 +55,9 @@ describe('format', () => {
   });
 
   it('formats large numbers compactly', () => {
-    expect(formatCompact(8.4e9, 'USD', 'en-US')).toBe('$8.4B');
-    expect(formatCompact(312e6, 'EUR')).toBe('€312M');
-    expect(formatCompact(1_234e9, 'USD', 'en-US')).toBe('$1.23T');
+    expect(formatCompact(8.4e9, 'USD', 'en-US')).toBe('8.4B $');
+    expect(formatCompact(312e6, 'EUR')).toBe('312M €');
+    expect(formatCompact(1_234e9, 'USD', 'en-US')).toBe('1.23T $');
     expect(formatCompact(52_300_000, null, 'en-US')).toBe('52.3M');
   });
 
@@ -92,7 +92,7 @@ describe('format', () => {
     expect(splitMoney(1719.99, 'USD', {}, 'en-US')).toEqual({
       amount: '1,719.99',
       symbol: '$',
-      symbolFirst: true,
+      symbolFirst: false,
     });
     const czk = splitMoney(-30735.38, 'CZK', {}, 'cs-CZ');
     expect(czk.amount.replace(/\s/g, ' ')).toBe(MINUS + '30 735,38');

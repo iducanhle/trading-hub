@@ -61,42 +61,34 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
       </h2>
       @if (open()) {
         <div id="holdings-content">
-          @if (netDeposits() !== null || unrealizedPnl() !== null) {
-            <div class="mt-3.5 grid grid-cols-2 gap-2">
-              <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-3">
-                <p class="app-label">
-                  <ng-container i18n>Account value</ng-container>
-                </p>
-                <p class="mt-1 truncate text-[15px] font-semibold">
-                  {{ accountValue() | price: currency() }}
-                </p>
-              </div>
-              <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-3">
-                <p class="app-label">
-                  <ng-container i18n="Money in the account that is not invested">Cash</ng-container>
-                </p>
-                <p class="mt-1 truncate text-[15px] font-semibold">
-                  {{ cash() | price: currency() }}
-                </p>
-              </div>
-              <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-3">
-                <p class="app-label">
-                  <ng-container i18n>net deposits</ng-container>
-                </p>
-                <p class="mt-1 truncate text-[15px] font-semibold">
-                  {{ netDeposits() | price: currency() }}
-                </p>
-              </div>
-              <div
-                class="min-w-0 rounded-2xl px-3.5 py-3"
-                [class]="unrealizedTile(unrealizedPnl())"
-              >
-                <p class="app-label">
-                  <ng-container i18n>unrealized profit</ng-container>
-                </p>
-                <p class="mt-1 truncate text-[15px] font-semibold">
-                  {{ unrealizedPnl() | money: currency() }}
-                </p>
+          @if (accountValue() !== null) {
+            <div class="mt-3.5">
+              <div class="grid grid-cols-3 gap-2">
+                <div
+                  class="min-w-0 rounded-2xl px-2.5 py-2.5 text-center bg-surface-container-high"
+                >
+                  <p class="app-label" i18n>Account value</p>
+                  <p class="mt-1 truncate text-[13px] font-semibold">
+                    {{ accountValue() | price: currency() }}
+                  </p>
+                </div>
+                <div
+                  class="min-w-0 rounded-2xl px-2.5 py-2.5 text-center bg-surface-container-high"
+                >
+                  <p class="app-label" i18n="Money in the account that is not invested">Cash</p>
+                  <p class="mt-1 truncate text-[13px] font-semibold">
+                    {{ cash() | price: currency() }}
+                  </p>
+                </div>
+                <div
+                  class="min-w-0 rounded-2xl px-2.5 py-2.5 text-center"
+                  [class]="unrealizedTile(unrealizedPnl())"
+                >
+                  <p class="app-label" i18n>unrealized profit</p>
+                  <p class="mt-1 truncate text-[13px] font-semibold">
+                    {{ unrealizedPnl() | money: currency() }}
+                  </p>
+                </div>
               </div>
             </div>
           }
@@ -264,7 +256,6 @@ export class PortfolioHoldings {
   readonly currency = input<string | null>(null);
   readonly accountValue = input<number | null>(null);
   readonly cash = input<number | null>(null);
-  readonly netDeposits = input<number | null>(null);
   readonly unrealizedPnl = input<number | null>(null);
 
   protected readonly search = signal('');
@@ -352,7 +343,6 @@ export class PortfolioHoldings {
         return 'bg-surface-container-high';
     }
   }
-
 
   protected ticker(p: T212HoldingPosition): string {
     return displayTicker(p);

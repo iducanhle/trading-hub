@@ -97,7 +97,6 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
         [version]="version()"
         [accountValue]="s.totalValue"
         [cash]="s.cash"
-        [netDeposits]="s.netDeposits"
         [unrealizedPnl]="s.unrealizedPnl"
         [currency]="s.accountCurrency"
       />

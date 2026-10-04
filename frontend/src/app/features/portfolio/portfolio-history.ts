@@ -11,6 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import {
   AreaSeries,
   ColorType,
@@ -48,14 +49,14 @@ const RANGES: T212HistoryRange[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
 
 /** The intervals each range offers (the API's), default first. */
 const INTERVALS: Record<T212HistoryRange, T212HistoryInterval[]> = {
-  '1D': ['15m', '30m', '1h'],
-  '1W': ['1h', '15m', '30m', '4h'],
+  '1D': ['5m', '15m', '30m', '1h'],
+  '1W': ['1h', '5m', '15m', '30m', '4h'],
   '1M': ['1h', '15m', '30m', '4h', '1d'],
   '3M': ['4h', '30m', '1h', '1d'],
   '1Y': ['1d', '1h', '4h', '1w'],
   ALL: ['1d', '1h', '4h', '1w'],
 };
-const ORDER: T212HistoryInterval[] = ['15m', '30m', '1h', '4h', '1d', '1w'];
+const ORDER: T212HistoryInterval[] = ['5m', '15m', '30m', '1h', '4h', '1d', '1w'];
 
 const RANGE_LABELS: Record<T212HistoryRange, string> = {
   '1D': PERIOD_LABELS['1D'],
@@ -68,6 +69,7 @@ const RANGE_LABELS: Record<T212HistoryRange, string> = {
 
 /** Compact interval codes, the same in every language (as on the price chart). */
 const INTERVAL_LABELS: Record<T212HistoryInterval, string> = {
+  '5m': '5m',
   '15m': '15m',
   '30m': '30m',
   '1h': '1h',
@@ -129,7 +131,7 @@ function chartTime(iso: string): UTCTimestamp {
           @if (data.error() && !data.hasValue()) {
             <app-error-state class="mt-3 block" [error]="data.error()" (retry)="data.reload()" />
           } @else {
-            <div class="mt-2 min-h-[88px]">
+            <div class="mt-2 min-h-[112px]">
               @if (shown(); as p) {
                 <p class="app-label">
                   @if (hovered()) {
@@ -147,8 +149,14 @@ function chartTime(iso: string): UTCTimestamp {
                   }
                   <span class="app-label ms-1" i18n="Profit since the first deposit">all time</span>
                 </p>
+                <p class="mt-1.5 flex items-baseline gap-2 text-[15px]">
+                  <span class="font-semibold text-on-surface">{{
+                    p.netDeposits | price: currency()
+                  }}</span>
+                  <span class="app-label"><ng-container i18n>Net deposits</ng-container></span>
+                </p>
               } @else if (!data.hasValue()) {
-                <app-skeleton shape="card" class="block h-20" aria-hidden="true" />
+                <app-skeleton shape="card" class="block h-24" aria-hidden="true" />
               }
             </div>
 
@@ -177,11 +185,6 @@ function chartTime(iso: string): UTCTimestamp {
                   aria-hidden="true"
                 ></span>
                 <ng-container i18n>Net deposits</ng-container>
-                @if (shown()?.netDeposits; as deposits) {
-                  <span class="font-semibold text-on-surface">{{
-                    deposits | price: currency()
-                  }}</span>
-                }
               </span>
             </div>
 
@@ -299,6 +302,24 @@ export class PortfolioHistory {
       this.container();
       this.theme.dark(); // re-read the colours when the theme changes
       untracked(() => this.render(points));
+    });
+    // A snapshot is stored every 5 minutes: refetch quietly on every 5th live tick, keep the old points on failure.
+    let seen = this.t212.liveTick();
+    effect(() => {
+      const tick = this.t212.liveTick();
+      if (tick === seen || tick % 5 !== 0) return;
+      seen = tick;
+      untracked(() => {
+        if (!this.expanded() || !this.data.hasValue()) return;
+        firstValueFrom(
+          this.api.t212History(this.range(), this.validInterval(), { force: true }),
+        ).then(
+          (value) => {
+            if (this.data.hasValue()) this.data.set(value);
+          },
+          () => undefined,
+        );
+      });
     });
     inject(DestroyRef).onDestroy(() => this.removeChart());
   }

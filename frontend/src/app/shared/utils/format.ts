@@ -54,11 +54,26 @@ function withMinus(text: string): string {
   return text.replace('-', '−');
 }
 
+/**
+ * Formats with the currency symbol always after the amount (`100,642.54 Kč`, `+187.44 $`), even where the locale
+ * puts it first; a non-breaking space keeps the two together.
+ */
+function formatTrailingCurrency(format: Intl.NumberFormat, value: number): string {
+  const parts = format.formatToParts(value);
+  const symbolIndex = parts.findIndex((p) => p.type === 'currency');
+  if (symbolIndex < 0) return withMinus(format.format(value));
+  const amount = parts
+    .filter((p, i) => i !== symbolIndex && !(p.type === 'literal' && p.value.trim() === ''))
+    .map((p) => p.value)
+    .join('');
+  return withMinus(amount + ' ' + parts[symbolIndex]!.value);
+}
+
 function currencyOptions(currency: string | null | undefined): Intl.NumberFormatOptions {
   return currency ? { style: 'currency', currency, currencyDisplay: 'narrowSymbol' } : {};
 }
 
-/** `$187.44`, `€45.10`; 2 decimals in the stock's currency. */
+/** `187.44 $`, `45.10 €`; 2 decimals in the stock's currency. */
 export function formatPrice(
   value: number | null | undefined,
   currency?: string | null,
@@ -70,7 +85,7 @@ export function formatPrice(
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return withMinus(format.format(value));
+  return formatTrailingCurrency(format, value);
 }
 
 /**
@@ -92,7 +107,6 @@ export function splitMoney(
     signDisplay: options.signed ? 'exceptZero' : 'auto',
   }).formatToParts(value);
   const symbolIndex = parts.findIndex((p) => p.type === 'currency');
-  const firstDigit = parts.findIndex((p) => p.type === 'integer');
   const amount = parts
     .filter((p) => p.type !== 'currency' && p.type !== 'literal')
     .map((p) => p.value)
@@ -100,7 +114,7 @@ export function splitMoney(
   return {
     amount: withMinus(amount),
     symbol: symbolIndex >= 0 ? parts[symbolIndex]!.value : '',
-    symbolFirst: symbolIndex >= 0 && symbolIndex < firstDigit,
+    symbolFirst: false,
   };
 }
 
@@ -118,7 +132,7 @@ export function formatSignedNumber(
   return withMinus(format.format(value));
 }
 
-/** A signed amount of money, for profit and loss: `+€123.45`, `−$12.00`, `€0.00`. */
+/** A signed amount of money, for profit and loss: `+123.45 €`, `−12.00 $`, `0.00 €`. */
 export function formatSignedMoney(
   value: number | null | undefined,
   currency?: string | null,
@@ -131,7 +145,7 @@ export function formatSignedMoney(
     maximumFractionDigits: 2,
     signDisplay: 'exceptZero',
   });
-  return withMinus(format.format(value));
+  return formatTrailingCurrency(format, value);
 }
 
 /** Share quantities, fractional ones included: `10`, `0.5`, `1.234567`. */
@@ -140,7 +154,7 @@ export function formatQuantity(value: number | null | undefined, locale = NUMBER
   return withMinus(numberFormat(locale, { maximumFractionDigits: 6 }).format(value));
 }
 
-/** Large amounts: `$8.4B`, `€312M`, `1.23T`; without a currency for counts such as volume (`52.3M`). */
+/** Large amounts: `8.4B $`, `312M €`, `1.23T`; without a currency for counts such as volume (`52.3M`). */
 export function formatCompact(
   value: number | null | undefined,
   currency?: string | null,
@@ -152,7 +166,7 @@ export function formatCompact(
     notation: 'compact',
     maximumSignificantDigits: 3,
   });
-  return withMinus(format.format(value));
+  return formatTrailingCurrency(format, value);
 }
 
 /** Percent values as the API sends them (`3.25` = +3.25 %), always signed: `+3.20%`, `−1.05%`, `0.00%`. */
