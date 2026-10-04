@@ -6,11 +6,7 @@ import { T212Service } from '../../core/services/t212.service';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
-import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
-import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
-import { PercentPipe, SignedMoneyPipe } from '../../shared/pipes/format.pipes';
-import { toneClass } from '../../shared/utils/format';
 import { PortfolioAllocation } from './portfolio-allocation';
 import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioHistory } from './portfolio-history';
@@ -25,11 +21,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
     ErrorState,
     Skeleton,
     StaleChip,
-    TermInfo,
     Icon,
-    PercentPipe,
-    SignedMoneyPipe,
-    HeroAmount,
     PortfolioHoldings,
     PortfolioAllocation,
     PortfolioHistory,
@@ -55,32 +47,6 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
           >
         </p>
       }
-
-      <section aria-labelledby="account-value">
-        <p id="account-value" class="app-label" i18n>Account value</p>
-        <app-hero-amount class="mt-1" [value]="s.totalValue" [currency]="s.accountCurrency" />
-        <div class="mt-3.5 flex flex-wrap gap-x-8 gap-y-2">
-          <div>
-            <p class="app-label inline-flex items-center gap-1">
-              <ng-container i18n>Total profit/loss</ng-container>
-              <app-term-info term="totalPnl" />
-            </p>
-            <p class="mt-0.5 text-[15px] font-semibold" [class]="tone(s.totalPnl)">
-              {{ s.totalPnl | money: s.accountCurrency }}
-            </p>
-          </div>
-          @if (s.rateOfReturnPct !== null) {
-            <div>
-              <p class="app-label" i18n="Money-weighted return, as Trading 212 shows it">
-                Rate of return
-              </p>
-              <p class="mt-0.5 text-[15px] font-semibold" [class]="tone(s.rateOfReturnPct)">
-                {{ s.rateOfReturnPct | pct: 1 }}
-              </p>
-            </div>
-          }
-        </div>
-      </section>
 
       @if (!s.best && !t212.syncing()) {
         <p class="mt-6 text-center text-sm text-on-surface-variant" i18n>
@@ -134,9 +100,5 @@ export class PortfolioOverview {
         );
       });
     });
-  }
-
-  protected tone(value: number | null): string {
-    return toneClass(value);
   }
 }
