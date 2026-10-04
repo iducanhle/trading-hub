@@ -42,6 +42,7 @@ import {
   periodQuery,
 } from './portfolio-model';
 import { TradeDialog, TradeDialogData } from './trade-dialog';
+import { TradeTile } from './trade-tile';
 import {
   DEFAULT_TRADE_SORT,
   InstrumentOption,
@@ -93,6 +94,7 @@ const EMPTY: ListState = {
     StaleChip,
     InView,
     Icon,
+    TradeTile,
     AppDatePipe,
     PricePipe,
     QuantityPipe,
@@ -236,27 +238,9 @@ const EMPTY: ListState = {
                     (click)="openTrade(t)"
                     class="w-[calc(100%+1rem)] text-left -mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-[11px] hover:bg-surface-container-high"
                   >
-                    <span
-                      class="flex size-10 shrink-0 items-center justify-center rounded-xl"
-                      [class]="
-                        t.kind === 'TRADE' && t.side === 'BUY'
-                          ? 'bg-primary-container text-primary'
-                          : 'bg-surface-container-high text-on-surface'
-                      "
-                      aria-hidden="true"
-                    >
-                      <app-icon
-                        [name]="
-                          t.kind !== 'TRADE'
-                            ? 'swap_vert'
-                            : t.side === 'BUY'
-                              ? 'arrow_down'
-                              : 'arrow_up'
-                        "
-                        [size]="20"
-                        [strokeWidth]="2"
-                      />
-                    </span>
+                    <app-trade-tile
+                      [kind]="t.kind !== 'TRADE' ? 'transfer' : t.side === 'BUY' ? 'buy' : 'sell'"
+                    />
                     <span class="min-w-0 flex-1">
                       <span class="block truncate app-row-title">{{ t.name }}</span>
                       <span class="block truncate app-row-meta">
@@ -430,14 +414,13 @@ export class PortfolioTrades {
     stream: ({ params }) => {
       const query = params.query;
       if (!query) return of(null);
-      const page = (cursor: string | null) =>
-        this.api.t212Trades({ ...query, limit: 100, cursor });
+      const page = (cursor: string | null) => this.api.t212Trades({ ...query, limit: 100, cursor });
       return page(null).pipe(
         expand((p) => (p.nextCursor ? page(p.nextCursor) : NEVER_MORE)),
-        reduce(
-          (acc, p) => ({ items: [...acc.items, ...p.items], currency: p.accountCurrency }),
-          { items: [] as T212Trade[], currency: null as string | null },
-        ),
+        reduce((acc, p) => ({ items: [...acc.items, ...p.items], currency: p.accountCurrency }), {
+          items: [] as T212Trade[],
+          currency: null as string | null,
+        }),
       );
     },
   });

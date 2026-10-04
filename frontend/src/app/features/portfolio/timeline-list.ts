@@ -1,6 +1,4 @@
 import { Component, input } from '@angular/core';
-import { Icon } from '../../shared/icon/icon';
-import { IconName } from '../../shared/icon/icon-paths';
 import {
   AppDatePipe,
   PricePipe,
@@ -11,11 +9,12 @@ import { toneClass } from '../../shared/utils/format';
 import { TimelineItem } from './instrument-filters';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import { dayIn } from './portfolio-model';
+import { TradeTile, TradeTileKind } from './trade-tile';
 
 /** Trades and dividends of one instrument as a card list, with the shares held after each trade. */
 @Component({
   selector: 'app-timeline-list',
-  imports: [Icon, AppDatePipe, PricePipe, QuantityPipe, SignedMoneyPipe],
+  imports: [TradeTile, AppDatePipe, PricePipe, QuantityPipe, SignedMoneyPipe],
   template: `
     <ol class="app-card py-2">
       @for (
@@ -23,24 +22,18 @@ import { dayIn } from './portfolio-model';
         track item.kind + (item.kind === 'trade' ? item.trade.id : item.dividend.id)
       ) {
         <li class="flex items-center gap-3.5 py-3">
-          <span
-            class="flex size-10 shrink-0 items-center justify-center rounded-xl"
-            [class]="tileClass(item)"
-            aria-hidden="true"
-          >
-            <app-icon [name]="tileIcon(item)" [size]="20" [strokeWidth]="2" />
-          </span>
+          <app-trade-tile [kind]="tileKind(item)" />
           @if (item.kind === 'trade') {
             @let t = item.trade;
             <span class="min-w-0 flex-1">
-              <span class="block app-row-title">
+              <span class="block truncate app-row-title">
                 {{ t.kind === 'TRADE' ? sideLabels[t.side] : kindLabels[t.kind] }}
                 {{ t.quantity | qty }}
                 @if (t.price !== null) {
                   × {{ t.price | price: t.priceCurrency }}
                 }
               </span>
-              <span class="mt-0.5 block app-row-meta">
+              <span class="mt-0.5 block truncate app-row-meta">
                 {{ day(t.executedAt) | appDate }} ·
                 <ng-container i18n>held after: {{ t.positionAfter | qty }}</ng-container>
               </span>
@@ -59,7 +52,7 @@ import { dayIn } from './portfolio-model';
             @let v = item.dividend;
             <span class="min-w-0 flex-1">
               <span class="block app-row-title" i18n>Dividend</span>
-              <span class="mt-0.5 block app-row-meta">
+              <span class="mt-0.5 block truncate app-row-meta">
                 {{ day(v.paidAt) | appDate }} · {{ v.quantity | qty }}
                 <ng-container i18n>shares</ng-container>
               </span>
@@ -89,17 +82,9 @@ export class TimelineList {
     return toneClass(value);
   }
 
-  /** Buys on the accent tint with a down arrow, sells on card2 with an up arrow, dividends in the gain colour. */
-  protected tileClass(item: TimelineItem): string {
-    if (item.kind === 'dividend') return 'bg-surface-container-high text-gain';
-    if (item.trade.kind === 'TRADE' && item.trade.side === 'BUY')
-      return 'bg-primary-container text-primary';
-    return 'bg-surface-container-high text-on-surface';
-  }
-
-  protected tileIcon(item: TimelineItem): IconName {
-    if (item.kind === 'dividend') return 'savings';
-    if (item.trade.kind !== 'TRADE') return 'swap_vert';
-    return item.trade.side === 'BUY' ? 'arrow_down' : 'arrow_up';
+  protected tileKind(item: TimelineItem): TradeTileKind {
+    if (item.kind === 'dividend') return 'dividend';
+    if (item.trade.kind !== 'TRADE') return 'transfer';
+    return item.trade.side === 'BUY' ? 'buy' : 'sell';
   }
 }

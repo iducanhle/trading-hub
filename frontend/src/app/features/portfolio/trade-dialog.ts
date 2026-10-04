@@ -50,13 +50,18 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         [class]="
           t.kind === 'TRADE' && t.side === 'BUY'
             ? 'bg-primary-container text-primary'
-            : 'bg-surface-container-high text-on-surface'
+            : 'bg-on-surface/10 text-on-surface'
         "
         >{{ label() }}</span
       >
 
       <p class="app-label" i18n="Total value of a trade">Value</p>
-      <app-hero-amount class="mt-1" size="md" [value]="valueBeforeFees()" [currency]="data.currency" />
+      <app-hero-amount
+        class="mt-1"
+        size="md"
+        [value]="valueBeforeFees()"
+        [currency]="data.currency"
+      />
       <dl appStatList card class="mt-3.5">
         <div appStatRow label="Shares" i18n-label>{{ t.quantity | qty }}</div>
         <div appStatRow label="Price per share" i18n-label>
@@ -125,5 +130,4 @@ export class TradeDialog {
     const cost = t.value - t.realizedPnl;
     return cost > 0 ? Math.round((result / cost) * 10000) / 100 : null;
   });
-
 }

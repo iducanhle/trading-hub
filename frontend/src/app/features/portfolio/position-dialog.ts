@@ -92,7 +92,7 @@ export interface PositionDialogData {
 
         <button
           type="button"
-          class="mt-2 flex min-h-12 w-full items-center gap-2 border-t border-outline-variant px-1 text-left hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+          class="mt-5 flex min-h-12 w-full items-center gap-2 px-1 text-left hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
           [attr.aria-expanded]="tradesOpen()"
           aria-controls="position-trades"
           (click)="tradesOpen.set(!tradesOpen())"

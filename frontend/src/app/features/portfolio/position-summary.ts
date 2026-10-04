@@ -6,12 +6,10 @@ import { Icon } from '../../shared/icon/icon';
 import { T212Instrument } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { TermInfo } from '../../shared/components/term-info/term-info';
-import { PercentPipe, PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
-import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
+import { PricePipe, QuantityPipe } from '../../shared/pipes/format.pipes';
 import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
-import { toneClass } from '../../shared/utils/format';
 import { Pnl } from './pnl';
-import { displayTicker, instrumentPnl, instrumentPnlPct } from './portfolio-model';
+import { displayTicker, instrumentPnl } from './portfolio-model';
 
 /**
  * Logo, name, ticker and current price of one instrument. Shared by the position dialog (where the name is the
@@ -82,12 +80,12 @@ export class PositionHeader {
 
 /**
  * The profit/loss of one instrument and the position (docs/REDESIGN-SPEC.md): the basis pill (pills projected with
- * `summaryPill` come first), the total (including fees) as a hero figure, then the figures it adds up
- * from as rows ending in their sum before fees and the total including fees, and the position facts as plain rows. Extra rows (`<div appStatRow>`) can be projected after the standard ones.
+ * `summaryPill` come first), then the figures the profit/loss adds up from as rows ending in the total including
+ * fees, and the position facts in a second card. Extra rows (`<div appStatRow>`) can be projected after the standard ones.
  */
 @Component({
   selector: 'app-position-summary',
-  imports: [TermInfo, PricePipe, QuantityPipe, PercentPipe, Pnl, HeroAmount, StatList, StatRow],
+  imports: [TermInfo, PricePipe, QuantityPipe, Pnl, StatList, StatRow],
   template: `
     @let i = instrument();
     <div class="flex flex-wrap items-center gap-2">
@@ -106,16 +104,10 @@ export class PositionHeader {
         >
       }
     </div>
-    <p class="mt-4 app-label flex items-center gap-1">
-      <ng-container i18n>Total profit/loss</ng-container><app-term-info term="totalPnl" />
+    <p class="mt-4 mb-2 flex items-center gap-1 app-label">
+      <ng-container i18n>Profit/loss</ng-container><app-term-info term="totalPnl" />
     </p>
-    <div class="mt-1 flex flex-wrap items-baseline gap-x-2.5">
-      <app-hero-amount size="md" signed [value]="total()" [currency]="currency()" />
-      @if (pct() !== null) {
-        <span class="text-base font-semibold" [class]="tone()">{{ pct() | pct }}</span>
-      }
-    </div>
-    <dl appStatList card class="mt-3.5">
+    <dl appStatList card>
       @if (includeUnrealized()) {
         <div appStatRow label="Unrealized" i18n-label term="unrealizedPnl">
           <app-pnl [value]="i.unrealizedPnl" [currency]="currency()" />
@@ -127,13 +119,10 @@ export class PositionHeader {
       <div appStatRow label="Dividends" i18n-label>
         <app-pnl [value]="i.dividends" [currency]="currency()" />
       </div>
-      <div appStatRow divider label="Total" i18n-label="Sum of the rows above">
-        <app-pnl [value]="totalBeforeFees()" [currency]="currency()" />
-      </div>
       <div appStatRow label="Fees" i18n-label="Trading fees and taxes">
         <app-pnl [value]="-i.fees" [currency]="currency()" />
       </div>
-      <!-- Fees are not deducted in Realized; the hero total is this one. -->
+      <!-- Fees are not deducted in Realized; this total is. -->
       <div
         appStatRow
         total
@@ -144,7 +133,10 @@ export class PositionHeader {
         <app-pnl [value]="total()" [currency]="currency()" />
       </div>
     </dl>
-    <dl appStatList class="mt-1.5">
+    <p class="mt-5 mb-2 app-label" i18n="Heading of the current position facts">
+      Currently holding
+    </p>
+    <dl appStatList card>
       <div appStatRow label="Shares held" i18n-label>{{ i.quantity | qty }}</div>
       <div appStatRow label="Value now" i18n-label="Current value of the position">
         {{ i.value | price: currency() }}
@@ -170,12 +162,4 @@ export class PositionSummary {
   protected readonly total = computed(() =>
     instrumentPnl(this.instrument(), this.includeUnrealized()),
   );
-  protected readonly totalBeforeFees = computed(
-    () => Math.round((this.total() + this.instrument().fees) * 100) / 100,
-  );
-  /** All time only; hidden rather than shown as a dash in a shorter period. */
-  protected readonly pct = computed(() =>
-    instrumentPnlPct(this.instrument(), this.includeUnrealized()),
-  );
-  protected readonly tone = computed(() => toneClass(this.total()));
 }
