@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { AuthService } from '../../core/auth/auth.service';
 import { LANGUAGE, Language, switchLanguage } from '../../core/i18n/language';
@@ -25,7 +25,6 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 @Component({
   selector: 'app-settings-page',
   imports: [
-    MatButton,
     MatIconButton,
     Segmented,
     Segment,
