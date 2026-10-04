@@ -237,7 +237,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
 
     <ng-template #amounts let-value="value" let-pnl="pnl" let-pct="pct" let-currency="currency">
       <span class="flex shrink-0 flex-col items-end text-right">
-        <span class="text-[15px] font-semibold">{{ value | price: currency }}</span>
+        <span class="text-[14px] font-semibold">{{ value | price: currency }}</span>
         <span class="mt-0.5 text-[13px] font-medium" [class]="tone(pnl)"
           >{{ pnl | money: currency }} ({{ pct | pct }})</span
         >
