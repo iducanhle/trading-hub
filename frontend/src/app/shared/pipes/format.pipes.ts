@@ -12,8 +12,10 @@ import {
   reportTimeLabel,
 } from '../utils/format';
 
+// Number pipes are impure so they follow the `roundNumbers` setting (a signal) without new inputs.
+
 /** `{{ 187.44 | price: 'USD' }}` → `$187.44` */
-@Pipe({ name: 'price' })
+@Pipe({ name: 'price', pure: false })
 export class PricePipe implements PipeTransform {
   transform(value: number | null | undefined, currency?: string | null): string {
     return formatPrice(value, currency);
@@ -29,7 +31,7 @@ export class CompactPipe implements PipeTransform {
 }
 
 /** `{{ 3.2 | pct }}` → `+3.20%` */
-@Pipe({ name: 'pct' })
+@Pipe({ name: 'pct', pure: false })
 export class PercentPipe implements PipeTransform {
   transform(value: number | null | undefined, digits = 2): string {
     return formatPercent(value, digits);
@@ -37,7 +39,7 @@ export class PercentPipe implements PipeTransform {
 }
 
 /** `{{ 2.31 | signed }}` → `+2.31` */
-@Pipe({ name: 'signed' })
+@Pipe({ name: 'signed', pure: false })
 export class SignedNumberPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     return formatSignedNumber(value);
@@ -45,7 +47,7 @@ export class SignedNumberPipe implements PipeTransform {
 }
 
 /** `{{ 123.4 | money: 'EUR' }}` → `+€123.40` (always signed, for profit and loss) */
-@Pipe({ name: 'money' })
+@Pipe({ name: 'money', pure: false })
 export class SignedMoneyPipe implements PipeTransform {
   transform(value: number | null | undefined, currency?: string | null): string {
     return formatSignedMoney(value, currency);
@@ -61,7 +63,7 @@ export class QuantityPipe implements PipeTransform {
 }
 
 /** `{{ 28.4 | num: 1 }}` → `28.4` */
-@Pipe({ name: 'num' })
+@Pipe({ name: 'num', pure: false })
 export class NumberPipe implements PipeTransform {
   transform(value: number | null | undefined, digits = 2): string {
     return formatNumber(value, digits);

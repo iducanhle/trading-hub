@@ -279,7 +279,8 @@ users/{uid}
     notifyDaysBefore: number,                     // 1–7, default 1
     notificationEmail: string | null,             // null = use auth email
     language?: "en" | "cs" | null,                // optional; null/missing = not chosen (device language)
-    termHints?: boolean                           // optional; show the ⓘ term explanations, default true
+    termHints?: boolean,                          // optional; show the ⓘ term explanations, default true
+    roundNumbers?: boolean                        // optional; display amounts without decimals, default false
   }
 users/{uid}/follows/{symbol}   { symbol, name, exchange, region, logoUrl, followedAt: timestamp }
 users/{uid}/notes/{symbol}     { symbol, text, updatedAt: timestamp }
@@ -389,3 +390,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-04 | `GET /api/t212/history`: new `interval` parameter and response field (`15m`–`1w`, offered per range). Frontend and backend change together. |
 | 2026-10-04 | `t212-snapshot` runs every 5 minutes (was 15); `GET /api/t212/history` offers `interval=5m` for `1D` and `1W`. Additive. |
 | 2026-10-05 | `GET /api/t212/history`: the `1D` default interval is now `5m` (was `15m`). |
+| 2026-10-05 | Firestore `users/{uid}.settings.roundNumbers?: boolean` (display amounts without decimals; frontend only). Additive. |

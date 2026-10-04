@@ -4,6 +4,7 @@ import { AppUser } from '../auth/auth.service';
 import { LANGUAGE, switchLanguage } from '../i18n/language';
 import { UserDataGateway } from '../data/user-data.gateway';
 import { DEFAULT_SETTINGS, ThemePreference, UserSettings } from '../models/user-data';
+import { roundNumbers } from '../../shared/utils/format';
 import { ThemeService } from './theme.service';
 
 /** `users/{uid}.settings`, live. Creates the user document with the contract defaults on first login. */
@@ -47,6 +48,7 @@ export class SettingsService {
           return;
         }
         this.settings.set(doc.settings);
+        roundNumbers.set(doc.settings.roundNumbers);
         this.error.set(null);
         this.loaded.set(true);
         if (doc.settings.theme !== this.theme.preference())
@@ -77,6 +79,7 @@ export class SettingsService {
     this.error.set(null);
     this.loaded.set(false);
     this.settings.set(DEFAULT_SETTINGS);
+    roundNumbers.set(DEFAULT_SETTINGS.roundNumbers);
   }
 
   /** Optimistic: the UI updates at once, Firestore follows. */

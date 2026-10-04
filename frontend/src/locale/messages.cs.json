@@ -633,6 +633,9 @@
     "6292618623430064879": "Jak získám klíč?",
     "6319669491600035151": "Klíči chybí oprávnění, které aplikace potřebuje. Vygenerujte nový klíč s oprávněními podle návodu.",
     "5343399639849373196": "„Klíč byl odmítnut“: zkontrolujte, že jste zkopírovali celý klíč i tajný klíč a zadali IP adresu přesně jako výše.",
-    "1861422194509457479": "Trading 212 klíč odmítl. Zkontrolujte klíč, tajný klíč a omezení klíče podle IP."
+    "1861422194509457479": "Trading 212 klíč odmítl. Zkontrolujte klíč, tajný klíč a omezení klíče podle IP.",
+    "2441730191018504834": "Čísla",
+    "3093278034893169244": "Zaokrouhlovat čísla",
+    "4365031186896637127": " Zobrazovat částky a procenta bez desetinných míst. Zaokrouhluje se jen zobrazení, výpočty zůstávají přesné. "
   }
 }

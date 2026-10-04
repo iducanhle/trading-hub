@@ -17,6 +17,8 @@ export interface UserSettings {
   language: Language | null;
   /** Show the ⓘ buttons that explain trading terms. */
   termHints: boolean;
+  /** Show amounts without decimals. Display only; calculations keep full precision. */
+  roundNumbers: boolean;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -26,6 +28,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   notificationEmail: null,
   language: null,
   termHints: true,
+  roundNumbers: false,
 };
 
 /** users/{uid} */

@@ -131,6 +131,22 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
         </p>
       </section>
 
+      <section aria-labelledby="numbers-title" class="app-card">
+        <h2 id="numbers-title" class="app-title-card mb-4" i18n>Numbers</h2>
+        <mat-slide-toggle
+          class="app-switch-row"
+          labelPosition="before"
+          [checked]="settings().roundNumbers"
+          [disabled]="!settingsService.loaded()"
+          (change)="save({ roundNumbers: $event.checked })"
+        >
+          <ng-container i18n>Round numbers</ng-container>
+        </mat-slide-toggle>
+        <p class="mt-1 text-[13px] leading-relaxed font-medium text-on-surface-variant" i18n>
+          Show amounts and percentages without decimals. Only the display is rounded; calculations stay exact.
+        </p>
+      </section>
+
       <section aria-labelledby="notifications-title" class="app-card">
         <h2 id="notifications-title" class="app-title-card mb-4" i18n>Notifications</h2>
         @if (settingsService.error()) {

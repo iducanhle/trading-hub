@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { LANGUAGE } from '../../core/i18n/language';
 import { EarningsResult, ReportTime } from '../../core/models/contract';
 
@@ -26,6 +27,17 @@ export const PERIOD_LABELS = {
   '3Y': $localize`:Three years:3Y`,
   '5Y': $localize`:Five years:5Y`,
 } as const;
+
+/**
+ * The "Round numbers" setting: amounts and percentages show no decimals. Only the text is rounded; the values and
+ * every calculation keep full precision. Kept in sync with the user's settings by `SettingsService`.
+ */
+export const roundNumbers = signal(false);
+
+/** Fraction digits to show: none when rounding is on. */
+function shown(digits: number): number {
+  return roundNumbers() ? 0 : digits;
+}
 
 const formats = new Map<string, Intl.NumberFormat>();
 
@@ -82,8 +94,8 @@ export function formatPrice(
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
     ...currencyOptions(currency),
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: shown(2),
+    maximumFractionDigits: shown(2),
   });
   return formatTrailingCurrency(format, value);
 }
@@ -102,8 +114,8 @@ export function splitMoney(
   if (!isNumber(value)) return { amount: DASH, symbol: '', symbolFirst: false };
   const parts = numberFormat(locale, {
     ...currencyOptions(currency),
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: shown(2),
+    maximumFractionDigits: shown(2),
     signDisplay: options.signed ? 'exceptZero' : 'auto',
   }).formatToParts(value);
   const symbolIndex = parts.findIndex((p) => p.type === 'currency');
@@ -125,8 +137,8 @@ export function formatSignedNumber(
 ): string {
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: shown(2),
+    maximumFractionDigits: shown(2),
     signDisplay: 'exceptZero',
   });
   return withMinus(format.format(value));
@@ -141,8 +153,8 @@ export function formatSignedMoney(
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
     ...currencyOptions(currency),
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: shown(2),
+    maximumFractionDigits: shown(2),
     signDisplay: 'exceptZero',
   });
   return formatTrailingCurrency(format, value);
@@ -177,8 +189,8 @@ export function formatPercent(
 ): string {
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
+    minimumFractionDigits: shown(digits),
+    maximumFractionDigits: shown(digits),
     signDisplay: 'exceptZero',
   });
   return withMinus(format.format(value)) + PERCENT_SIGN;
@@ -192,8 +204,8 @@ export function formatPlainPercent(
 ): string {
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
+    minimumFractionDigits: shown(digits),
+    maximumFractionDigits: shown(digits),
   });
   return format.format(value) + PERCENT_SIGN;
 }
@@ -206,8 +218,8 @@ export function formatNumber(
 ): string {
   if (!isNumber(value)) return DASH;
   const format = numberFormat(locale, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
+    minimumFractionDigits: shown(digits),
+    maximumFractionDigits: shown(digits),
   });
   return withMinus(format.format(value));
 }
