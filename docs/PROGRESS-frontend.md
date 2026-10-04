@@ -166,7 +166,8 @@ Nothing. The **redesign** is done; what follows is its record.
    - Calendar and Events (shared layout): a 7-day strip (today on the accent, a dot for days with reports) that scrolls to the day's card; days as cards with 50 px tiles; the month grid as cards with narrow 32 px weekend columns on phones; uppercase filter labels; day sheets with 44 px logos. The Events page title is now "Events" (as in the menu), because "Tržní události" in capitals does not fit at 375 px.
    - Settings: account card (52 px avatar, sign-out icon button), cards with uppercase labels, switches as rows (label left, switch right: `app-switch-row`), Trading 212 card with a Connected pill, key-value rows, Sync (filled), Replace key (tonal) and Disconnect (red text).
    - Not built: the canvas's account value chart over time. Trading 212 data has no value history (only the current summary), so drawing one would invent data.
-4. New features from the design: none left. Chart "Measure" and best/worst stocks already existed; check the canvas again after step 3.
+4. ~~Redesign v2~~ (done 2026-10-04, [REDESIGN-SPEC.md](REDESIGN-SPEC.md)): type-scale utilities (`app-title-*`, `app-row-*`, `app-pill`, `app-tag`; `app-label` 12 / 700), stat rows (`appStatList` / `appStatRow`), the `app-dialog` shell with `DIALOG_CONFIG`, and every modal moved onto it except the term explanation. The former sheets keep their file and class names (`DaySheet`, `FilterSheet`, `UnrealizedSheet`, `ConfirmSheet` …) but are dialogs now. Still open: the stock-detail header (a title and Follow button instead of the ticker pill) is not decided.
+5. New features from the design: none left. Chart "Measure" and best/worst stocks already existed; check the canvas again after step 3.
 
 ## Next
 
@@ -201,6 +202,7 @@ Frontend:
 
 ## Decisions
 
+- **2026-10-04 — Every modal is a centred dialog; only the term explanation (ⓘ) is a bottom sheet**, on phones and desktop alike (the owner's choice after the "Tradiqo Redesign v2" canvas). Figures in dialogs and cards are stat rows (label left, value right, total under a divider), not two-column grids. One type scale of utilities replaces hand-written sizes. Spec: [REDESIGN-SPEC.md](REDESIGN-SPEC.md).
 - **2026-09-30 — The live values are known and used:** Firebase project `tradiqo`, backend `https://tradiqo.duckdns.org` (see PROGRESS-backend "Live deployment"). They go into `environment.prod.ts` and `.firebaserc` instead of `YOUR_SUBDOMAIN`/project placeholders. The Firebase web-app keys (`apiKey`, `appId`, `messagingSenderId`) do not exist until the web app is registered, so they stay `PLACEHOLDER`.
 - **2026-09-30 — Commits go straight to `main`, not pushed** (same as the backend). Pushing is left to the owner, because a push to `main` triggers the deploy workflows.
 - **2026-09-30 — Versions** (npm, 2026-09-30): Angular/CLI/Material 22.2.0, TypeScript 6.0, Tailwind 4.3, Firebase JS SDK 12.19, lightweight-charts 5.2.1, angular-eslint 22.5, Vitest 5 (the CLI default).

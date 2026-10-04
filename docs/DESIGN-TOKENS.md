@@ -42,15 +42,20 @@ Charts:
 
 Font **Poppins** for text, weights 400–800 (static files), self-hosted from `@fontsource/poppins`; digits use **Geist** (`@fontsource-variable/geist`) through the `App Numerals` face in `styles.css`, which covers only 0–9 and leads every font stack (not Google Fonts: offline, no third-party request). All numbers use `font-variant-numeric: tabular-nums`.
 
-| Role | Size / weight | Note |
-|---|---|---|
-| Hero value (account value, price) | 48–50 px / 300 | `letter-spacing: -.02em`; currency (`Kč`, `$`) 22 px / 700 |
-| Page title | 22 px / 800 | UPPERCASE |
-| Section heading | 20 px / 700 | |
-| List row name | 16 px / 600 | |
-| Label | 12 px / 700 | UPPERCASE, `letter-spacing: .05em`, `muted` |
-| Secondary text | 12.5–14 px / 600 | `muted` |
-| Chip / segmented button | 13 px / 700 | |
+Every heading and label uses a utility from `styles.css` (details and where each goes: [REDESIGN-SPEC.md](REDESIGN-SPEC.md)).
+
+| Role | Utility | Size / weight | Note |
+|---|---|---|---|
+| Hero value (account value, price) | `app-hero-amount` | 40 px / 300 (34 px `md` in dialogs) | `letter-spacing: -.02em`; currency (`Kč`, `$`) 18 px / 700 |
+| Page title | `app-title-page` | 22 px / 800 | UPPERCASE; pages with a back arrow use `app-title-page-back`, 20 px / 700 |
+| Dialog / sheet title | `app-title-modal` | 22 px / 700 | |
+| Section heading | `app-title-section` | 20 px / 700 | on the page, outside cards; a count follows in 15 px / 600 `muted` |
+| Card title | `app-title-card` | 15 px / 700 | inside cards, collapsible blocks, groups in a dialog |
+| Label | `app-label` | 12 px / 700 | UPPERCASE, `letter-spacing: .05em`, `muted`; only above a value, never a heading |
+| List row | `app-row-title` / `app-row-meta` | 16 px / 600 · 13 px / 500 `muted` | the meta line is never heavier than the title |
+| Stat row | `appStatRow` | label 14 px / 500 `muted`, value 15 px / 600 | total row 15 / 700 and 16 / 700 under a divider |
+| Pill / tag | `app-pill` / `app-tag` | 12 px / 700 · 11 px / 700 UPPERCASE | a tag sits inside a row's meta line |
+| Chip / segmented button | | 13 px / 700 | |
 
 ## Shape and spacing
 
@@ -72,7 +77,9 @@ Font **Poppins** for text, weights 400–800 (static files), self-hosted from `@
 - **Price reaction cells:** 4-column grid, `card2`, radius 12 px, label 11 px uppercase `muted`, value 14 px / 700 colored by sign.
 - **Net deposits pill:** `card2`, 9 px dot in `muted`, value 800 weight, label uppercase.
 - **Drawer:** 308 px wide, `bg` (+ glow in dark), right corners 28 px, `scrim` over the page. Account value card on top; items 52 px high, radius 16 px, 16 px / 600; active item `accentBg` with `accent` icon. Settings and the signed-in user sit at the bottom.
-- **Bottom sheet:** `sheet` background, top corners 28 px, 40×5 px handle in `card2`, title 22 px / 700. Footer: secondary (`card2`) and primary (`accent`) pill buttons side by side, 52 px high.
+- **Dialog (every modal):** `app-dialog` + `DIALOG_CONFIG`, centred on every screen size, `sheet` background, 28 px corners, 20 px padding (24 from `lg`), at most 480 px wide. Header: optional 44 px logo, title 22 px / 700 with an optional subtitle, optional pill or count, close button. The body scrolls on its own. Footer: secondary (`card2`) and primary (`accent`) pill buttons side by side, 52 px high; no Close button there.
+- **Bottom sheet (term explanation only):** `app-sheet`, `sheet` background, top corners 28 px, 40×5 px handle in `card2`, info badge + title 22 px / 700, one 52 px "Got it" button; at most 560 px wide on desktop.
+- **Stat rows:** figures one per line (`appStatList` / `appStatRow`): label left, value right, a total last under a divider. Never a two-column grid of label-over-value cells.
 - **Filter options:** pill buttons 40 px high on `card2`; selected = `accent` + `onAccent` with a check icon.
 - **Switch:** 52×32 px track; off = `card2` + `muted` knob, on = `accent` + `onAccent` knob.
 - **Calendar month:** 5 weekday columns + 2 narrow weekend columns (32 px); cells 96 px, radius 12 px, `card`; today = `accent` circle on the number; selected day = 1.5 px `accent` border; logos as 18 px tiles, overflow as "+N".
