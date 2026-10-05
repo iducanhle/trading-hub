@@ -8,6 +8,7 @@ import { APP_NAME } from '../../core/services/app-title.strategy';
 import { MenuService } from '../../core/services/menu.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { RecentSearchesService } from '../../core/services/recent-searches.service';
+import { T212Service } from '../../core/services/t212.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { FollowButton } from '../../shared/components/follow-button/follow-button';
@@ -19,6 +20,7 @@ import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
 import { PricePipe } from '../../shared/pipes/format.pipes';
+import { PortfolioNav } from '../portfolio/portfolio-nav';
 import { EarningsHistory } from './sections/earnings-history';
 import { EarningsStats } from './sections/earnings-stats';
 import { KeyStats } from './sections/key-stats';
@@ -64,6 +66,7 @@ import { StockContext } from './stock-context';
     News,
     Peers,
     Notes,
+    PortfolioNav,
   ],
   template: `
     <app-pull-to-refresh
@@ -117,7 +120,7 @@ import { StockContext } from './stock-context';
         </div>
       </header>
 
-      <div class="mx-auto max-w-4xl pb-10">
+      <div class="mx-auto max-w-4xl" [class]="t212.connected() ? 'pb-36' : 'pb-10'">
         @if (notFound()) {
           <app-empty-state
             icon="search_off"
@@ -220,6 +223,9 @@ import { StockContext } from './stock-context';
           }
         }
       </div>
+      @if (t212.connected()) {
+        <app-portfolio-nav tab="search" />
+      }
     </app-pull-to-refresh>
   `,
 })
@@ -232,7 +238,8 @@ export class StockDetailPage {
   private readonly api = inject(ApiService);
   private readonly recent = inject(RecentSearchesService);
   private readonly title = inject(Title);
-
+  /** Connected T212 users get the portfolio's bottom pill here too (with search active). */
+  protected readonly t212 = inject(T212Service);
 
   /** Route parameter (`/stock/:symbol`). */
   readonly symbol = input.required<string>();

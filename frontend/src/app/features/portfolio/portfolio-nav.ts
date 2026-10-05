@@ -1,21 +1,31 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { SearchService } from '../../core/services/search.service';
 import { Icon } from '../../shared/icon/icon';
 import { IconName } from '../../shared/icon/icon-paths';
 import { TAB_LABELS } from './portfolio-labels';
 import { PORTFOLIO_TABS, PortfolioTab } from './portfolio-model';
 
-const TAB_ICONS: Record<PortfolioTab, IconName> = {
+/** The portfolio sections plus search; `search` is the active item on a stock's detail page. */
+export type NavTab = PortfolioTab | 'search';
+const NAV_TABS: readonly NavTab[] = [...PORTFOLIO_TABS, 'search'];
+
+const TAB_ICONS: Record<NavTab, IconName> = {
   overview: 'pie_chart',
   stocks: 'candlestick_chart',
   trades: 'swap_vert',
   cash: 'payments',
+  search: 'search',
 };
+
+const NAV_LABELS: Record<NavTab, string> = { ...TAB_LABELS, search: $localize`Search` };
 
 /**
  * The portfolio's sections as a floating glass pill pinned to the bottom of the screen (like the iOS tab bar): an
  * icon over a label per section and a highlight that slides to the active one. It keeps clear of the home indicator
- * and, on wide screens, centres in the area right of the docked navigation. The tab lives in the URL (`?tab=`).
+ * and, on wide screens, centres in the area right of the docked navigation. The tab lives in the URL (`?tab=`). The
+ * last item opens the search overlay; it shows as active on a stock's detail page, where the portfolio items link
+ * back to `/portfolio`.
  */
 @Component({
   selector: 'app-portfolio-nav',
@@ -26,39 +36,67 @@ const TAB_ICONS: Record<PortfolioTab, IconName> = {
   },
   template: `
     <nav
-      class="pointer-events-auto relative grid w-full max-w-[22rem] grid-cols-4 rounded-full bg-surface-container-high/70 p-1.5 ring-1 ring-outline-variant backdrop-blur-xl backdrop-saturate-150 supports-not-[backdrop-filter]:bg-surface-container-high"
+      class="pointer-events-auto relative grid w-full max-w-[24rem] grid-cols-5 rounded-full bg-surface-container-high/70 p-1.5 ring-1 ring-outline-variant backdrop-blur-xl backdrop-saturate-150 supports-not-[backdrop-filter]:bg-surface-container-high"
       aria-label="Portfolio sections"
       i18n-aria-label
     >
       <span
-        class="pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-0.75rem)/4)] rounded-full bg-surface-container-highest ring-1 ring-outline-variant transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        class="pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-0.75rem)/5)] rounded-full bg-surface-container-highest ring-1 ring-outline-variant transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         [style.transform]="'translateX(' + index() * 100 + '%)'"
         aria-hidden="true"
       ></span>
       @for (t of tabs; track t) {
-        <a
-          [routerLink]="[]"
-          [queryParams]="{ tab: t === 'overview' ? null : t }"
-          queryParamsHandling="merge"
-          replaceUrl
-          [attr.aria-current]="tab() === t ? 'page' : null"
-          class="relative flex min-w-0 flex-col items-center gap-0.5 rounded-full px-1 pt-2 pb-1.5 text-[11px] leading-tight font-bold transition-colors duration-200"
-          [class]="
-            tab() === t ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
-          "
-        >
-          <app-icon [name]="icons[t]" [size]="22" />
-          <span class="max-w-full truncate">{{ labels[t] }}</span>
-        </a>
+        @if (t === 'search') {
+          <button
+            type="button"
+            (click)="search.open()"
+            [attr.aria-current]="tab() === t ? 'page' : null"
+            [class]="itemClass(t)"
+          >
+            <app-icon [name]="icons[t]" [size]="22" />
+            <span class="max-w-full truncate">{{ labels[t] }}</span>
+          </button>
+        } @else if (onPortfolio()) {
+          <a
+            [routerLink]="[]"
+            [queryParams]="{ tab: t === 'overview' ? null : t }"
+            queryParamsHandling="merge"
+            replaceUrl
+            [attr.aria-current]="tab() === t ? 'page' : null"
+            [class]="itemClass(t)"
+          >
+            <app-icon [name]="icons[t]" [size]="22" />
+            <span class="max-w-full truncate">{{ labels[t] }}</span>
+          </a>
+        } @else {
+          <a
+            routerLink="/portfolio"
+            [queryParams]="{ tab: t === 'overview' ? null : t }"
+            [class]="itemClass(t)"
+          >
+            <app-icon [name]="icons[t]" [size]="22" />
+            <span class="max-w-full truncate">{{ labels[t] }}</span>
+          </a>
+        }
       }
     </nav>
   `,
 })
 export class PortfolioNav {
-  readonly tab = input.required<PortfolioTab>();
+  readonly tab = input.required<NavTab>();
 
-  protected readonly tabs = PORTFOLIO_TABS;
-  protected readonly labels = TAB_LABELS;
+  protected readonly search = inject(SearchService);
+  protected readonly tabs = NAV_TABS;
+  protected readonly labels = NAV_LABELS;
   protected readonly icons = TAB_ICONS;
-  protected readonly index = computed(() => PORTFOLIO_TABS.indexOf(this.tab()));
+  protected readonly index = computed(() => NAV_TABS.indexOf(this.tab()));
+  /** On the portfolio page the items swap `?tab=`; elsewhere they navigate to it. */
+  protected readonly onPortfolio = computed(() => this.tab() !== 'search');
+
+  protected itemClass(t: NavTab): string {
+    return (
+      'relative flex min-w-0 flex-col items-center gap-0.5 rounded-full px-1 pt-2 pb-1.5 text-[11px] leading-tight font-bold transition-colors duration-200 ' +
+      (this.tab() === t ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface')
+    );
+  }
 }
