@@ -228,9 +228,13 @@ public class T212PortfolioService {
         return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
     }
 
-    /** One step of {@link #history}: the last point of each 5, 15 or 30 minutes, hour, 4 hours, day or week. */
+    /**
+     * One step of {@link #history}: the last point of each 5, 15 or 30 minutes, hour, 4 hours, day, week, month,
+     * half-year or year. {@code minutes} also orders them against a range (approximate for the calendar steps).
+     */
     public enum HistoryInterval {
-        M5("5m", 5), M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440), W1("1w", 0);
+        M5("5m", 5), M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440),
+        W1("1w", 10_080), MO1("1mo", 44_640), MO6("6mo", 263_520), Y1("1y", 527_040);
 
         private final String code;
         private final int minutes;
@@ -252,38 +256,50 @@ public class T212PortfolioService {
         Instant bucket(Instant at) {
             ZonedDateTime local = at.atZone(T212SnapshotStore.ZONE);
             ZonedDateTime day = local.truncatedTo(ChronoUnit.DAYS);
-            if (this == W1) {
-                return day.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant();
+            switch (this) {
+                case W1 -> {
+                    return day.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant();
+                }
+                case MO1 -> {
+                    return day.withDayOfMonth(1).toInstant();
+                }
+                case MO6 -> {
+                    return day.withDayOfYear(1).withMonth(local.getMonthValue() <= 6 ? 1 : 7).toInstant();
+                }
+                case Y1 -> {
+                    return day.withDayOfYear(1).toInstant();
+                }
+                default -> { }
             }
             int minuteOfDay = local.getHour() * 60 + local.getMinute();
             return day.plusMinutes(minuteOfDay / minutes * minutes).toInstant();
         }
     }
 
-    /** How far back {@link #history} reaches, the intervals it offers (keeping the points to a few thousand). */
+    /** How far back {@link #history} reaches; it offers every interval shorter than itself (ALL offers all). */
     public enum HistoryRange {
-        D1("1D", Duration.ofDays(1), HistoryInterval.M5, HistoryInterval.M15, HistoryInterval.M30,
-                HistoryInterval.H1),
-        W1("1W", Duration.ofDays(7), HistoryInterval.H1, HistoryInterval.M5, HistoryInterval.M15,
-                HistoryInterval.M30, HistoryInterval.H4),
-        M1("1M", Duration.ofDays(31), HistoryInterval.H1, HistoryInterval.M15, HistoryInterval.M30,
-                HistoryInterval.H4, HistoryInterval.D1),
-        M3("3M", Duration.ofDays(92), HistoryInterval.H4, HistoryInterval.M30, HistoryInterval.H1,
-                HistoryInterval.D1),
-        Y1("1Y", Duration.ofDays(366), HistoryInterval.D1, HistoryInterval.H1, HistoryInterval.H4,
-                HistoryInterval.W1),
-        ALL("ALL", null, HistoryInterval.D1, HistoryInterval.H1, HistoryInterval.H4, HistoryInterval.W1);
+        D1("1D", Duration.ofDays(1), HistoryInterval.M5),
+        W1("1W", Duration.ofDays(7), HistoryInterval.H1),
+        M1("1M", Duration.ofDays(31), HistoryInterval.H1),
+        M3("3M", Duration.ofDays(92), HistoryInterval.H4),
+        Y1("1Y", Duration.ofDays(366), HistoryInterval.D1),
+        ALL("ALL", null, HistoryInterval.D1);
 
         private final String code;
         private final Duration span;
         private final HistoryInterval defaultInterval;
         private final Set<HistoryInterval> intervals;
 
-        HistoryRange(String code, Duration span, HistoryInterval defaultInterval, HistoryInterval... others) {
+        HistoryRange(String code, Duration span, HistoryInterval defaultInterval) {
             this.code = code;
             this.span = span;
             this.defaultInterval = defaultInterval;
-            this.intervals = java.util.EnumSet.of(defaultInterval, others);
+            this.intervals = java.util.EnumSet.noneOf(HistoryInterval.class);
+            for (HistoryInterval i : HistoryInterval.values()) {
+                if (span == null || i.minutes < span.toMinutes()) {
+                    intervals.add(i);
+                }
+            }
         }
 
         public String code() {

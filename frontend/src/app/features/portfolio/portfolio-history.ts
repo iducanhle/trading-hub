@@ -20,6 +20,7 @@ import {
   ISeriesApi,
   LineSeries,
   LineStyle,
+  MismatchDirection,
   MouseEventParams,
   Time,
   UTCTimestamp,
@@ -47,16 +48,23 @@ import { readChartColors, withAlpha } from '../stock-detail/sections/price-chart
 
 const RANGES: T212HistoryRange[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
 
-/** The intervals each range offers (the API's), default first. */
-const INTERVALS: Record<T212HistoryRange, T212HistoryInterval[]> = {
-  '1D': ['5m', '15m', '30m', '1h'],
-  '1W': ['1h', '5m', '15m', '30m', '4h'],
-  '1M': ['1h', '15m', '30m', '4h', '1d'],
-  '3M': ['4h', '30m', '1h', '1d'],
-  '1Y': ['1d', '1h', '4h', '1w'],
-  ALL: ['1d', '1h', '4h', '1w'],
+const ORDER: T212HistoryInterval[] = ['5m', '15m', '30m', '1h', '4h', '1d', '1w', '1mo', '6mo', '1y'];
+/** Each range offers every interval shorter than itself (as the API does), default first. */
+const DEFAULT_INTERVAL: Record<T212HistoryRange, T212HistoryInterval> = {
+  '1D': '5m',
+  '1W': '1h',
+  '1M': '1h',
+  '3M': '4h',
+  '1Y': '1d',
+  ALL: '1d',
 };
-const ORDER: T212HistoryInterval[] = ['5m', '15m', '30m', '1h', '4h', '1d', '1w'];
+const SHORTER_THAN: Record<T212HistoryRange, number> = { '1D': 4, '1W': 6, '1M': 7, '3M': 8, '1Y': 9, ALL: 10 };
+const INTERVALS = Object.fromEntries(
+  RANGES.map((r) => [
+    r,
+    [DEFAULT_INTERVAL[r], ...ORDER.slice(0, SHORTER_THAN[r]).filter((i) => i !== DEFAULT_INTERVAL[r])],
+  ]),
+) as Record<T212HistoryRange, T212HistoryInterval[]>;
 
 const RANGE_LABELS: Record<T212HistoryRange, string> = {
   '1D': PERIOD_LABELS['1D'],
@@ -76,6 +84,9 @@ const INTERVAL_LABELS: Record<T212HistoryInterval, string> = {
   '4h': '4h',
   '1d': '1d',
   '1w': '1w',
+  '1mo': '1mo',
+  '6mo': '6mo',
+  '1y': '1y',
 };
 
 const amountFormat = new Intl.NumberFormat(NUMBER_LOCALE, { maximumFractionDigits: 0 });
@@ -280,6 +291,8 @@ export class PortfolioHistory {
   private value?: ISeriesApi<'Area'>;
   private deposits?: ISeriesApi<'Line'>;
   private byTime = new Map<number, T212HistoryPoint>();
+  /** The range and interval last fitted to the chart; a live refresh of the same keeps the user's pan and zoom. */
+  private fitted: string | null = null;
   private readonly whenFormat = new Intl.DateTimeFormat(APP_LOCALE, {
     day: 'numeric',
     month: 'numeric',
@@ -377,8 +390,8 @@ export class PortfolioHistory {
         secondsVisible: false,
       },
       crosshair: { mode: CrosshairMode.Magnet },
-      // Vertical drags scroll the page; horizontal drags pan, two fingers zoom.
-      handleScroll: { vertTouchDrag: false },
+      // Vertical drags scroll the page; one finger moves the crosshair (see below), two fingers zoom.
+      handleScroll: { vertTouchDrag: false, horzTouchDrag: false },
     });
     chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
       this.hovered.set(
@@ -397,12 +410,28 @@ export class PortfolioHistory {
       priceLineVisible: false,
       crosshairMarkerRadius: 4,
     });
+    // Touch: a tap or a one-finger drag shows the crosshair at once (the library's default needs a long press and
+    // drops it on the next tap). It stays on the touched point until the next touch.
+    const track = (e: TouchEvent) => {
+      const value = this.value;
+      if (e.touches.length !== 1 || !value) return;
+      const x = e.touches[0].clientX - el.getBoundingClientRect().left;
+      const logical = chart.timeScale().coordinateToLogical(x);
+      if (logical === null) return;
+      const bar = value.dataByIndex(Math.round(logical), MismatchDirection.NearestLeft);
+      if (!bar || !('value' in bar)) return;
+      chart.setCrosshairPosition(bar.value, bar.time, value);
+      this.hovered.set(this.byTime.get(bar.time as number) ?? null);
+    };
+    el.addEventListener('touchstart', track, { passive: true });
+    el.addEventListener('touchmove', track, { passive: true });
     this.chart = chart;
   }
 
   private removeChart(): void {
     this.chart?.remove();
     this.chart = undefined;
+    this.fitted = null;
     this.value = undefined;
     this.deposits = undefined;
     this.hovered.set(null);
@@ -442,6 +471,11 @@ export class PortfolioHistory {
         .filter((p) => p.netDeposits !== null)
         .map((p) => ({ time: chartTime(p.at), value: p.netDeposits as number })),
     );
-    chart.timeScale().fitContent();
+    const data = this.data.hasValue() ? this.data.value() : null;
+    const key = data ? `${data.range}/${data.interval}` : null;
+    if (key !== this.fitted) {
+      chart.timeScale().fitContent();
+      this.fitted = key;
+    }
   }
 }

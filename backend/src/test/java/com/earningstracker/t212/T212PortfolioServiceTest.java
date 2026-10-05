@@ -180,6 +180,14 @@ class T212PortfolioServiceTest {
                 .containsExactly(3.0); // 08:00–12:00
         assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.D1)).isFalse();
         assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.M5)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.Y1.offers(T212PortfolioService.HistoryInterval.M5)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.Y1.offers(T212PortfolioService.HistoryInterval.MO6)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.Y1.offers(T212PortfolioService.HistoryInterval.Y1)).isFalse();
+        assertThat(T212PortfolioService.HistoryRange.M1.offers(T212PortfolioService.HistoryInterval.MO1)).isFalse();
+        assertThat(T212PortfolioService.HistoryRange.ALL.offers(T212PortfolioService.HistoryInterval.Y1)).isTrue();
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.ALL,
+                T212PortfolioService.HistoryInterval.MO1).points()).extracting(T212Dtos.HistoryPoint::value)
+                .containsExactly(3.0);
     }
 
     @Test

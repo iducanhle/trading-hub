@@ -447,7 +447,7 @@ export class MockT212 {
       value = value / (1 + (seed / 2147483647 - 0.5) * 0.004);
     }
     const spanDays = { '1D': 1, '1W': 7, '1M': 31, '3M': 92, '1Y': 366, ALL: Infinity }[range];
-    const bucket = { '5m': 1 / 3, '15m': 1, '30m': 2, '1h': 4, '4h': 16, '1d': 96, '1w': 672 }[interval] * step;
+    const bucket = { '5m': 1 / 3, '15m': 1, '30m': 2, '1h': 4, '4h': 16, '1d': 96, '1w': 672, '1mo': 2976, '6mo': 17568, '1y': 35136 }[interval] * step;
     const byBucket = new Map<number, { at: number; value: number }>();
     values.forEach((v, i) => {
       const at = now - (count - 1 - i) * step;
