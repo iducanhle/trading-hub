@@ -32,7 +32,7 @@ import { GoogleLogo } from '../google-logo';
   ],
   template: `
     <app-auth-card
-      title="Earnings Tracker"
+      title="Tradiqo"
       subtitle="Sign in to see your stocks and earnings dates"
       i18n-subtitle
     >

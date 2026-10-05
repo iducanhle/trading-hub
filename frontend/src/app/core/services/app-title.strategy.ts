@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 
-export const APP_NAME = 'Earnings Tracker';
+export const APP_NAME = 'Tradiqo';
 
-/** "Calendar · Earnings Tracker" from each route's `title`. */
+/** "Calendar · Tradiqo" from each route's `title`. */
 @Injectable()
 export class AppTitleStrategy extends TitleStrategy {
   private readonly title = inject(Title);

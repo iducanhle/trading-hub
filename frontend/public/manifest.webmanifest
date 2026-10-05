@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Earnings Tracker",
-  "short_name": "Earnings",
+  "name": "Tradiqo",
+  "short_name": "Tradiqo",
   "description": "Earnings dates, results and price reactions for the stocks you follow.",
   "lang": "en",
   "display": "standalone",

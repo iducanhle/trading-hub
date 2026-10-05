@@ -16,7 +16,7 @@ import { AuthCard } from '../auth-card';
         <app-icon name="lock" class="text-on-surface-variant" [size]="32" />
         <p class="text-sm" i18n>
           Access not granted for <strong class="break-all">{{ email() }}</strong
-          >. Only invited accounts can use Earnings Tracker.
+          >. Only invited accounts can use Tradiqo.
         </p>
       </div>
       <button matButton="filled" type="button" class="h-12! w-full" (click)="signOut()">

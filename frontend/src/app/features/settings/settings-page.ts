@@ -170,7 +170,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
         <dl class="space-y-3 leading-relaxed">
           <div>
             <dt class="app-label" i18n>Version</dt>
-            <dd>Earnings Tracker {{ version }}</dd>
+            <dd>Tradiqo {{ version }}</dd>
           </div>
           <div>
             <dt class="app-label" i18n>Data sources</dt>
