@@ -105,12 +105,14 @@ import { TradeFilters } from './trades-filters';
             </a>
           </app-empty-state>
         } @else {
-          <p
-            class="mb-3 text-center text-xs text-on-surface-variant"
-            i18n="Portfolio page|Note under the header: live values refetch automatically"
-          >
-            Data are refreshed every minute.
-          </p>
+          @if (tab() === 'overview') {
+            <p
+              class="mb-3 text-center text-xs text-on-surface-variant"
+              i18n="Portfolio page|Note under the header: live values refetch automatically"
+            >
+              Data are refreshed every minute.
+            </p>
+          }
           @if (t212.status()?.credentialsValid === false) {
             <a
               routerLink="/settings"
