@@ -111,6 +111,12 @@ export function periodQuery(period: PortfolioPeriod, tz: string = DEVICE_TZ): T2
 }
 
 export type StockSort = 'pnl' | 'pnlPct' | 'value' | 'lastTrade' | 'name';
+export type SortDirection = 'asc' | 'desc';
+
+/** The direction a sort starts in: A–Z for names, highest / newest first otherwise. */
+export function defaultSortDirection(sort: StockSort): SortDirection {
+  return sort === 'name' ? 'asc' : 'desc';
+}
 
 /** A name/ticker/symbol search (case-insensitive). */
 export function filterInstruments(
@@ -146,12 +152,17 @@ export function instrumentPnlPct(i: T212Instrument, includeUnrealized: boolean):
     : null;
 }
 
-/** Highest first for numbers (missing values last), newest first for the last trade, A–Z for names. */
+/**
+ * Sorts by the key in the direction (by default highest / newest first, A–Z for names). Missing values stay last in
+ * both directions; ties go by name.
+ */
 export function sortInstruments(
   items: readonly T212Instrument[],
   sort: StockSort,
   includeUnrealized = true,
+  direction: SortDirection = defaultSortDirection(sort),
 ): T212Instrument[] {
+  const sign = direction === 'desc' ? 1 : -1;
   const desc =
     (pick: (i: T212Instrument) => number | null) => (a: T212Instrument, b: T212Instrument) => {
       const x = pick(a);
@@ -159,7 +170,7 @@ export function sortInstruments(
       if (x === null && y === null) return a.name.localeCompare(b.name);
       if (x === null) return 1;
       if (y === null) return -1;
-      return y - x || a.name.localeCompare(b.name);
+      return sign * (y - x) || a.name.localeCompare(b.name);
     };
   const sorted = [...items];
   switch (sort) {
@@ -172,7 +183,7 @@ export function sortInstruments(
     case 'lastTrade':
       return sorted.sort(desc((i) => (i.lastTradeAt ? Date.parse(i.lastTradeAt) : null)));
     case 'name':
-      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      return sorted.sort((a, b) => -sign * a.name.localeCompare(b.name));
   }
 }
 

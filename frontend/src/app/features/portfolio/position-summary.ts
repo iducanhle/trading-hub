@@ -99,7 +99,7 @@ export class PositionHeader {
         >
       } @else {
         <span
-          class="app-pill bg-secondary-container text-on-secondary-container"
+          class="app-pill bg-primary-container text-primary"
           i18n="Profit/loss basis badge|The total leaves out unrealized profit/loss"
           >Realized only</span
         >

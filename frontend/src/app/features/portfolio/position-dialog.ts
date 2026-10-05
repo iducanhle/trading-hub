@@ -88,7 +88,7 @@ export interface PositionDialogData {
               }
             </span>
             @for (c of settledIn(); track c) {
-              <span summaryPill class="app-pill bg-secondary-container text-on-secondary-container" i18n="Pill on a position whose trades settled in another currency than the account's; CURRENCY is a code like USD"
+              <span summaryPill class="app-pill bg-primary-container text-primary" i18n="Pill on a position whose trades settled in another currency than the account's; CURRENCY is a code like USD"
                 >Traded in {{ c }}</span
               >
             }

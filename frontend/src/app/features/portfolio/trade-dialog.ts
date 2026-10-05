@@ -67,7 +67,7 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
       @if (t.original; as o) {
         <p class="mt-1.5">
           <span
-            class="app-pill bg-secondary-container text-on-secondary-container"
+            class="app-pill bg-primary-container text-primary"
             i18n="
               Pill on a trade that settled in another currency than the account's; CURRENCY is a
               code like USD
@@ -93,6 +93,9 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         } @else if (t.fxRate !== null && t.fxRate !== 1) {
           <div appStatRow label="Exchange rate" i18n-label>{{ t.fxRate | num: 4 }}</div>
         }
+        <div appStatRow label="Fees" i18n-label="Trading fees and taxes">
+          <app-pnl [value]="-(t.fees + t.taxes)" [currency]="data.currency | acct" />
+        </div>
         <div appStatRow label="Including fees" i18n-label term="includingFees">
           {{ t.value | price: (data.currency | acct) }}
         </div>

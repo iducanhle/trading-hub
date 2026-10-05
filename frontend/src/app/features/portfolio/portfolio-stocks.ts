@@ -26,7 +26,9 @@ import { DEFAULT_STOCKS_VIEW, StocksFilterContext, StocksFilterSheet } from './s
 import { SORT_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
+  SortDirection,
   StockSort,
+  defaultSortDirection,
   displayTicker,
   filterInstruments,
   instrumentPnl,
@@ -254,6 +256,10 @@ export class PortfolioStocks {
     'portfolio.stocks.sort',
     DEFAULT_STOCKS_VIEW.sort,
   );
+  protected readonly direction = persistedSignal<SortDirection>(
+    'portfolio.stocks.direction',
+    DEFAULT_STOCKS_VIEW.direction,
+  );
   protected readonly search = signal('');
   /** Selected t212Tickers; empty = all stocks. */
   protected readonly tickers = signal<string[]>([]);
@@ -279,8 +285,11 @@ export class PortfolioStocks {
       const label = item ? displayTicker(item) : ticker;
       chips.push({ key: ticker, label, removeLabel: $localize`Remove filter ${label}:filter:` });
     }
-    if (this.sort() !== DEFAULT_STOCKS_VIEW.sort) {
-      const label = SORT_LABELS[this.sort()];
+    if (
+      this.sort() !== DEFAULT_STOCKS_VIEW.sort ||
+      this.direction() !== defaultSortDirection(this.sort())
+    ) {
+      const label = `${SORT_LABELS[this.sort()]} ${this.direction() === 'asc' ? '↑' : '↓'}`;
       chips.push({ key: 'sort', label, removeLabel: $localize`Remove filter ${label}:filter:` });
     }
     return chips;
@@ -288,11 +297,12 @@ export class PortfolioStocks {
 
   protected openFilters(): void {
     const context: StocksFilterContext = {
-      view: { tickers: this.tickers(), sort: this.sort() },
+      view: { tickers: this.tickers(), sort: this.sort(), direction: this.direction() },
       instruments: this.instrumentOptions,
       change: (view) => {
         this.tickers.set(view.tickers);
         this.sort.set(view.sort);
+        this.direction.set(view.direction);
       },
     };
     this.dialog.open(StocksFilterSheet, {
@@ -314,8 +324,10 @@ export class PortfolioStocks {
   }
 
   protected removeChip(key: string): void {
-    if (key === 'sort') this.sort.set(DEFAULT_STOCKS_VIEW.sort);
-    else this.tickers.update((tickers) => tickers.filter((t) => t !== key));
+    if (key === 'sort') {
+      this.sort.set(DEFAULT_STOCKS_VIEW.sort);
+      this.direction.set(DEFAULT_STOCKS_VIEW.direction);
+    } else this.tickers.update((tickers) => tickers.filter((t) => t !== key));
   }
 
   /** Stocks of the period for the filter, by ticker. */
@@ -343,6 +355,7 @@ export class PortfolioStocks {
           ),
           this.sort(),
           this.withUnrealized(),
+          this.direction(),
         )
       : [],
   );

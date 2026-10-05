@@ -45,7 +45,7 @@ export interface DividendDialogData {
       @if (x.original; as o) {
         <p class="mt-1.5">
           <span
-            class="app-pill bg-secondary-container text-on-secondary-container"
+            class="app-pill bg-primary-container text-primary"
             i18n="
               Pill on a dividend paid in another currency than the account's; CURRENCY is a code
               like USD
