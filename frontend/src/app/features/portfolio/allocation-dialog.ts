@@ -9,7 +9,7 @@ import { displayTicker } from './portfolio-model';
 
 export interface AllocationDialogData {
   items: T212AllocationItem[];
-  /** Today's change by `t212Ticker`, as far as loaded. */
+  /** Unrealized profit/loss in percent by `t212Ticker`, as far as loaded. */
   changes: Record<string, number>;
 }
 
