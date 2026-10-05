@@ -26,6 +26,7 @@ export type TermId =
   | 'totalPnl'
   | 'accountReturn'
   | 'breakEven'
+  | 'trueGain'
   | 'fxFees'
   | 'accountFees'
   | 'includingFees';
@@ -240,5 +241,13 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:Exchange rate changes move the value in your account currency too, so the result can change even when the price does not.`,
     ],
     example: $localize`:Term example:Average cost $110 and the price is $100: the price has to rise 10% to break even.`,
+  },
+  trueGain: {
+    title: $localize`:Term title:True gain`,
+    body: [
+      $localize`:Term text:What the stock's price move alone earned you, converted at today's exchange rate. It leaves out the effect of exchange rate changes since you bought.`,
+      $localize`:Term text:True gain plus FX impact equals the unrealized profit/loss.`,
+    ],
+    example: $localize`:Term example:The price rose from $100 to $110 on 10 shares: true gain is $100 in your account currency, whatever the dollar did.`,
   },
 };

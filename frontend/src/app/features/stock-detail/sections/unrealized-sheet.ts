@@ -41,7 +41,10 @@ export interface UnrealizedSheetData {
           }
         </div>
         @if (fxEffect() !== null) {
-          <div appStatRow sub label="Of which from the exchange rate" i18n-label>
+          <div appStatRow sub label="True gain" i18n-label term="trueGain">
+            <app-pnl [value]="trueGain()" [currency]="ccy" />
+          </div>
+          <div appStatRow sub label="FX impact" i18n-label>
             <app-pnl [value]="fxEffect()" [currency]="ccy" />
           </div>
         }
@@ -94,6 +97,12 @@ export class UnrealizedSheet {
       return null;
     const rate = value / (quantity * currentPrice);
     return unrealizedPnl - (currentPrice - averageCost) * quantity * rate;
+  });
+  /** The unrealized without the exchange-rate part: what the price move alone earned, at today's rate. */
+  protected readonly trueGain = computed(() => {
+    const fx = this.fxEffect();
+    const pnl = this.data.instrument.unrealizedPnl;
+    return fx === null || pnl === null ? null : pnl - fx;
   });
   protected readonly onePercent = computed(() => {
     const value = this.data.instrument.value;

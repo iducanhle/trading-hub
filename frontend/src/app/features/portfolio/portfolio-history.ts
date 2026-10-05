@@ -379,7 +379,8 @@ export class PortfolioHistory {
         locale: NUMBER_LOCALE,
         priceFormatter: (price: number) => amountFormat.format(price),
       },
-      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.08 } },
+      // No value axis: the header shows the exact amount of the latest or touched point.
+      rightPriceScale: { visible: false, borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.08 } },
       timeScale: {
         borderVisible: false,
         fixLeftEdge: true,

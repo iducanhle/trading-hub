@@ -34,9 +34,9 @@ export class StatList {
       class="inline-flex min-w-0 items-center gap-1"
       [class]="
         total()
-          ? 'text-[15px] font-bold'
+          ? 'text-sm font-bold'
           : sub()
-            ? 'text-[13px] font-medium text-on-surface-variant'
+            ? 'text-xs font-medium text-on-surface-variant'
             : 'text-sm font-medium text-on-surface-variant'
       "
     >
@@ -49,10 +49,10 @@ export class StatList {
       class="m-0 shrink-0 text-right whitespace-nowrap tabular-nums"
       [class]="
         total()
-          ? 'text-base font-bold'
+          ? 'text-sm font-bold'
           : sub()
-            ? 'text-sm font-semibold'
-            : 'text-[15px] font-semibold'
+            ? 'text-xs font-semibold'
+            : 'text-sm font-semibold'
       "
     >
       <ng-content />
