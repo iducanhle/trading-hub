@@ -185,6 +185,30 @@ function formatTickmarks(prices: readonly number[]): string[] {
               <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
             </app-segment>
           </app-segmented>
+          <!-- One-option track in the same style: shows or hides the price axis. -->
+          <span class="ml-1.5 inline-flex rounded-full bg-surface-container p-[3px]">
+            <button
+              type="button"
+              class="flex min-h-9 items-center justify-center rounded-full px-3 transition-colors"
+              [class]="
+                showAxis()
+                  ? 'bg-surface-container-high text-on-surface'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              "
+              [attr.aria-pressed]="showAxis()"
+              aria-label="Price axis"
+              i18n-aria-label="Toggles the chart's Y axis with prices"
+              title="Price axis"
+              i18n-title="Toggles the chart's Y axis with prices"
+              (click)="showAxis.set(!showAxis())"
+            >
+              <app-icon
+                [name]="showAxis() ? 'visibility' : 'visibility_off'"
+                [size]="20"
+                class="align-middle"
+              />
+            </button>
+          </span>
         </span>
       </div>
       <!-- The range's change, or in measure mode the change from A to B; the hovered bar on the right. -->
@@ -424,6 +448,8 @@ export class PriceChart {
   protected readonly intervals = computed(() => INTERVALS[this.range()]);
   protected readonly interval = signal<PriceInterval>(defaultInterval('6M'));
   protected readonly type = persistedSignal<ChartType>('et.chartType', 'line');
+  /** Whether the price axis (Y) shows on the chart's right edge. */
+  protected readonly showAxis = persistedSignal('et.chartAxis', true);
 
   protected readonly prices = rxResource({
     params: () =>
@@ -554,6 +580,10 @@ export class PriceChart {
     afterNextRender(() => {
       this.createChart();
       this.ready.set(true);
+    });
+    effect(() => {
+      const visible = this.showAxis();
+      if (this.ready()) this.chart?.applyOptions({ rightPriceScale: { visible } });
     });
     effect(() => {
       const data = this.data();
