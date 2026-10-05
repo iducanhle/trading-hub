@@ -180,6 +180,13 @@ html {
       filled-label-text-color: var(--mat-sys-on-surface-variant),
       filled-input-text-placeholder-color: var(--mat-sys-on-surface-variant),
       container-text-weight: 600,
+      // Compact fields: 48 px tall (Material default 56) with 14 px text.
+      container-text-size: 14px,
+      filled-label-text-size: 14px,
+      container-height: 48px,
+      container-vertical-padding: 12px,
+      filled-with-label-container-padding-top: 20px,
+      filled-with-label-container-padding-bottom: 4px,
     )
   );
 

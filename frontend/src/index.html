@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Tradiqo</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta
       name="description"
       content="Earnings dates, results and price reactions for the stocks you follow."
@@ -36,6 +36,10 @@
             .setAttribute('content', dark ? '#04080c' : '#ffffff');
         } catch (e) {}
       })();
+      // iOS Safari ignores user-scalable=no, so block pinch zoom through its gesture events.
+      document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
+      });
     </script>
   </head>
   <body class="app-glow">

@@ -6,6 +6,11 @@
  * and typography around them.
  */
 
+/* No double-tap zoom (and no 300 ms tap delay); scrolling still works. Pinch is blocked in index.html. */
+html {
+  touch-action: pan-x pan-y;
+}
+
 /* Class-based dark mode: ThemeService and the boot script in index.html put .dark on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
