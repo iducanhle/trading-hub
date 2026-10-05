@@ -11,6 +11,7 @@ import {
   HistoryPeriod,
   HistoryResponse,
   Importance,
+  FxLatestResponse,
   MarketEventsResponse,
   MeResponse,
   NewsItem,
@@ -50,6 +51,7 @@ const TTL = {
   t212: MINUTE,
   t212DayChanges: 45_000,
   t212Status: 10_000,
+  fx: 60 * MINUTE,
 } as const;
 
 export interface LoadOptions {
@@ -178,6 +180,11 @@ export class ApiService {
 
   marketEvents(query: MarketEventsQuery, options?: LoadOptions): Observable<MarketEventsResponse> {
     return this.get<MarketEventsResponse>('/market-events', { ...query }, options);
+  }
+
+  /** Today's exchange rates, for the approximate display currency. */
+  fxLatest(options?: LoadOptions): Observable<FxLatestResponse> {
+    return this.get<FxLatestResponse>('/fx/latest', {}, options, TTL.fx);
   }
 
   followedEarnings(options?: LoadOptions): Observable<FollowedEarningsResponse> {

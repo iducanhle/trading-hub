@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../../shared/pipes/format.pipes';
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +13,7 @@ import { PositionDialog, PositionDialogData } from '../../portfolio/position-dia
 import { StockContext } from '../stock-context';
 import { UnrealizedSheet, UnrealizedSheetData } from './unrealized-sheet';
 import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
+import { DisplayCurrencyService } from '../../../core/services/display-currency.service';
 
 /**
  * The user's Trading 212 result for this stock: an "Unrealized profit" card while shares are held (tap: what it means
@@ -21,7 +23,7 @@ import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
  */
 @Component({
   selector: 'app-your-position',
-  imports: [Icon, Pnl],
+  imports: [AccountCurrencyPipe, Icon, Pnl],
   template: `
     @if (position(); as p) {
       @if (p.status === 'OPEN') {
@@ -38,13 +40,15 @@ import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
           /></span>
           <div class="min-w-0 flex-1">
             <p class="flex items-baseline justify-between gap-3">
-              <span id="unrealized-title" class="text-sm leading-snug font-bold" i18n>Unrealized profit</span>
+              <span id="unrealized-title" class="text-sm leading-snug font-bold" i18n
+                >Unrealized profit</span
+              >
             </p>
             <p class="mt-0.5 flex text-sm">
               <app-pnl
                 strong
                 [value]="p.unrealizedPnl"
-                [currency]="currency()"
+                [currency]="currency() | acct"
                 [pct]="unrealizedPct(p)"
               />
             </p>
@@ -73,7 +77,12 @@ import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
             }
           </p>
           <p class="mt-0.5 flex text-sm">
-            <app-pnl strong [value]="realized(p)" [currency]="currency()" [pct]="realizedPct(p)" />
+            <app-pnl
+              strong
+              [value]="realized(p)"
+              [currency]="currency() | acct"
+              [pct]="realizedPct(p)"
+            />
           </p>
         </div>
         <app-icon name="chevron_right" class="shrink-0 text-on-surface-variant" />
@@ -85,6 +94,8 @@ export class YourPosition {
   private readonly ctx = inject(StockContext);
   private readonly api = inject(ApiService);
   private readonly t212 = inject(T212Service);
+  /** Applies the display currency picked on the Portfolio page to these amounts too. */
+  private readonly displayCurrency = inject(DisplayCurrencyService);
   private readonly dialog = inject(MatDialog);
 
   private readonly instruments = rxResource({

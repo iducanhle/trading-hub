@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatDialogTitle } from '@angular/material/dialog';
@@ -85,7 +86,7 @@ export class PositionHeader {
  */
 @Component({
   selector: 'app-position-summary',
-  imports: [TermInfo, PricePipe, QuantityPipe, Pnl, StatList, StatRow],
+  imports: [AccountCurrencyPipe, TermInfo, PricePipe, QuantityPipe, Pnl, StatList, StatRow],
   template: `
     @let i = instrument();
     <div class="flex flex-wrap items-center gap-2">
@@ -110,17 +111,17 @@ export class PositionHeader {
     <dl appStatList card>
       @if (includeUnrealized()) {
         <div appStatRow label="Unrealized" i18n-label term="unrealizedPnl">
-          <app-pnl [value]="i.unrealizedPnl" [currency]="currency()" />
+          <app-pnl [value]="i.unrealizedPnl" [currency]="currency() | acct" />
         </div>
       }
       <div appStatRow label="Realized" i18n-label term="realizedPnl">
-        <app-pnl [value]="i.realizedPnl" [currency]="currency()" />
+        <app-pnl [value]="i.realizedPnl" [currency]="currency() | acct" />
       </div>
       <div appStatRow label="Dividends" i18n-label>
-        <app-pnl [value]="i.dividends" [currency]="currency()" />
+        <app-pnl [value]="i.dividends" [currency]="currency() | acct" />
       </div>
       <div appStatRow label="Fees" i18n-label="Trading fees and taxes">
-        <app-pnl [value]="-i.fees" [currency]="currency()" />
+        <app-pnl [value]="-i.fees" [currency]="currency() | acct" />
       </div>
       <!-- Fees are not deducted in Realized; this total is. -->
       <div
@@ -130,7 +131,7 @@ export class PositionHeader {
         i18n-label="Total after fees and taxes"
         term="includingFees"
       >
-        <app-pnl [value]="total()" [currency]="currency()" />
+        <app-pnl [value]="total()" [currency]="currency() | acct" />
       </div>
     </dl>
     <p class="mt-5 mb-2 app-label" i18n="Heading of the current position facts">
@@ -139,7 +140,7 @@ export class PositionHeader {
     <dl appStatList card>
       <div appStatRow label="Shares held" i18n-label>{{ i.quantity | qty }}</div>
       <div appStatRow label="Value now" i18n-label="Current value of the position">
-        {{ i.value | price: currency() }}
+        {{ i.value | price: (currency() | acct) }}
       </div>
       <div appStatRow label="Average cost" i18n-label term="averageCost">
         {{ i.averageCost | price: i.instrumentCurrency }}

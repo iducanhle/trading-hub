@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { ReportTime } from '../../core/models/contract';
 import { DateStyle, formatDate, formatDateTime, relativeDay, timeAgo } from '../utils/dates';
 import {
+  accountCurrency,
   formatCompact,
   formatNumber,
   formatPercent,
@@ -107,5 +108,13 @@ export class TimeAgoPipe implements PipeTransform {
 export class DateTimePipe implements PipeTransform {
   transform(value: string | null | undefined): string {
     return value ? formatDateTime(value) : '—';
+  }
+}
+
+/** `{{ total | price: (accountCurrency | acct) }}`: the amount follows the user's display currency. */
+@Pipe({ name: 'acct' })
+export class AccountCurrencyPipe implements PipeTransform {
+  transform<T extends string | null | undefined>(currency: T): T {
+    return accountCurrency(currency);
   }
 }

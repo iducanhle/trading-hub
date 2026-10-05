@@ -1,10 +1,11 @@
+import { AccountCurrencyPipe } from '../../../shared/pipes/format.pipes';
 import { Component, computed, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { T212Instrument } from '../../../core/models/contract';
 import { Dialog } from '../../../shared/components/dialog/dialog';
 import { StatList, StatRow } from '../../../shared/components/stat-list/stat-list';
 import { PercentPipe, PricePipe } from '../../../shared/pipes/format.pipes';
-import { formatPrice, toneClass } from '../../../shared/utils/format';
+import { accountCurrency, formatPrice, toneClass } from '../../../shared/utils/format';
 import { Pnl } from '../../portfolio/pnl';
 import { PositionHeader } from '../../portfolio/position-summary';
 
@@ -19,7 +20,16 @@ export interface UnrealizedSheetData {
  */
 @Component({
   selector: 'app-unrealized-sheet',
-  imports: [Dialog, PositionHeader, StatList, StatRow, Pnl, PercentPipe, PricePipe],
+  imports: [
+    AccountCurrencyPipe,
+    Dialog,
+    PositionHeader,
+    StatList,
+    StatRow,
+    Pnl,
+    PercentPipe,
+    PricePipe,
+  ],
   template: `
     @let i = data.instrument;
     @let ccy = data.accountCurrency;
@@ -35,17 +45,17 @@ export interface UnrealizedSheetData {
         <div appStatRow label="Value now" i18n-label>{{ money(i.value) }}</div>
         <div appStatRow label="Purchase cost" i18n-label>− {{ money(i.costBasis) }}</div>
         <div appStatRow total label="Unrealized" i18n-label term="unrealizedPnl">
-          <app-pnl [value]="i.unrealizedPnl" [currency]="ccy" />
+          <app-pnl [value]="i.unrealizedPnl" [currency]="ccy | acct" />
           @if (pct() !== null) {
             <span class="ml-1.5 text-sm font-semibold" [class]="tone()">({{ pct() | pct }})</span>
           }
         </div>
         @if (fxEffect() !== null) {
           <div appStatRow sub label="True gain" i18n-label term="trueGain">
-            <app-pnl [value]="trueGain()" [currency]="ccy" />
+            <app-pnl [value]="trueGain()" [currency]="ccy | acct" />
           </div>
           <div appStatRow sub label="FX impact" i18n-label>
-            <app-pnl [value]="fxEffect()" [currency]="ccy" />
+            <app-pnl [value]="fxEffect()" [currency]="ccy | acct" />
           </div>
         }
       </dl>
@@ -110,6 +120,6 @@ export class UnrealizedSheet {
   });
 
   protected money(value: number | null): string {
-    return formatPrice(value, this.data.accountCurrency);
+    return formatPrice(value, accountCurrency(this.data.accountCurrency));
   }
 }

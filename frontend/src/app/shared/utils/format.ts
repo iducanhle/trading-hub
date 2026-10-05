@@ -39,6 +39,39 @@ function shown(digits: number): number {
   return roundNumbers() ? 0 : digits;
 }
 
+/**
+ * The display currency: amounts marked as being in the account currency (`accountCurrency()`, the `acct` pipe) are
+ * shown converted with today's rate when the user picked another currency. Only the text changes; every calculation
+ * stays in the account currency. Kept up to date by `DisplayCurrencyService`.
+ */
+export interface DisplayConversion {
+  from: string;
+  to: string;
+  rate: number;
+}
+
+export const displayConversion = signal<DisplayConversion | null>(null);
+
+const ACCOUNT_MARK = '@account';
+
+/** Marks an account-currency code, so its amounts follow the display currency. */
+export function accountCurrency<T extends string | null | undefined>(currency: T): T {
+  return (currency && !currency.endsWith(ACCOUNT_MARK) ? currency + ACCOUNT_MARK : currency) as T;
+}
+
+/** The value and currency to print: converted for a marked account currency, unchanged otherwise. */
+function resolveMoney(
+  value: number,
+  currency: string | null | undefined,
+): [number, string | null | undefined] {
+  if (!currency?.endsWith(ACCOUNT_MARK)) return [value, currency];
+  const code = currency.slice(0, -ACCOUNT_MARK.length);
+  const conversion = displayConversion();
+  return conversion && conversion.from === code && conversion.to !== code
+    ? [value * conversion.rate, conversion.to]
+    : [value, code];
+}
+
 const formats = new Map<string, Intl.NumberFormat>();
 
 function numberFormat(locale: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
@@ -92,6 +125,7 @@ export function formatPrice(
   locale = NUMBER_LOCALE,
 ): string {
   if (!isNumber(value)) return DASH;
+  [value, currency] = resolveMoney(value, currency);
   const format = numberFormat(locale, {
     ...currencyOptions(currency),
     minimumFractionDigits: shown(2),
@@ -112,6 +146,7 @@ export function splitMoney(
   locale = NUMBER_LOCALE,
 ): { amount: string; symbol: string; symbolFirst: boolean } {
   if (!isNumber(value)) return { amount: DASH, symbol: '', symbolFirst: false };
+  [value, currency] = resolveMoney(value, currency);
   const parts = numberFormat(locale, {
     ...currencyOptions(currency),
     minimumFractionDigits: shown(2),
@@ -151,6 +186,7 @@ export function formatSignedMoney(
   locale = NUMBER_LOCALE,
 ): string {
   if (!isNumber(value)) return DASH;
+  [value, currency] = resolveMoney(value, currency);
   const format = numberFormat(locale, {
     ...currencyOptions(currency),
     minimumFractionDigits: shown(2),
@@ -173,6 +209,7 @@ export function formatCompact(
   locale = NUMBER_LOCALE,
 ): string {
   if (!isNumber(value)) return DASH;
+  [value, currency] = resolveMoney(value, currency);
   const format = numberFormat(locale, {
     ...currencyOptions(currency),
     notation: 'compact',

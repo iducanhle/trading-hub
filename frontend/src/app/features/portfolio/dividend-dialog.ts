@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { T212Dividend } from '../../core/models/contract';
@@ -18,6 +19,7 @@ export interface DividendDialogData {
 @Component({
   selector: 'app-dividend-dialog',
   imports: [
+    AccountCurrencyPipe,
     Dialog,
     StockLogo,
     HeroAmount,
@@ -33,12 +35,21 @@ export interface DividendDialogData {
       <app-stock-logo dialogLeading [symbol]="ticker()" [size]="44" />
 
       <p class="app-label" i18n>Dividend</p>
-      <app-hero-amount class="mt-1" size="md" signed [value]="x.amount" [currency]="data.currency" />
+      <app-hero-amount
+        class="mt-1"
+        size="md"
+        signed
+        [value]="x.amount"
+        [currency]="data.currency | acct"
+      />
       @if (x.original; as o) {
         <p class="mt-1.5">
           <span
             class="app-pill bg-secondary-container text-on-secondary-container"
-            i18n="Pill on a dividend paid in another currency than the account's; CURRENCY is a code like USD"
+            i18n="
+              Pill on a dividend paid in another currency than the account's; CURRENCY is a code
+              like USD
+            "
             >Paid in {{ o.currency }}</span
           >
         </p>
@@ -70,6 +81,7 @@ export class DividendDialog {
   protected readonly ticker = computed(() => displayTicker(this.data.dividend));
   protected readonly day = computed(() => dayIn(this.data.dividend.paidAt));
   protected readonly originalLabel = computed(
-    () => $localize`:Trade value in the currency it settled in; CURRENCY is a code like USD:In ${this.data.dividend.original?.currency ?? ''}:CURRENCY:`,
+    () =>
+      $localize`:Trade value in the currency it settled in; CURRENCY is a code like USD:In ${this.data.dividend.original?.currency ?? ''}:CURRENCY:`,
   );
 }

@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import {
   Component,
   DestroyRef,
@@ -86,6 +87,7 @@ const EMPTY: ListState = {
 @Component({
   selector: 'app-portfolio-trades',
   imports: [
+    AccountCurrencyPipe,
     MatButton,
     EmptyState,
     ErrorState,
@@ -178,7 +180,9 @@ const EMPTY: ListState = {
             @if (filters().side === 'SELL') {
               <span class="text-[15px] font-semibold">—</span>
             } @else if (s) {
-              <span class="text-[15px] font-semibold">{{ s.bought | price: s.currency }}</span>
+              <span class="text-[15px] font-semibold">{{
+                s.bought | price: (s.currency | acct)
+              }}</span>
             } @else {
               <app-skeleton class="h-[22px] w-20" />
             }
@@ -188,7 +192,9 @@ const EMPTY: ListState = {
             @if (filters().side === 'BUY') {
               <span class="text-[15px] font-semibold">—</span>
             } @else if (s) {
-              <span class="text-[15px] font-semibold">{{ s.sold | price: s.currency }}</span>
+              <span class="text-[15px] font-semibold">{{
+                s.sold | price: (s.currency | acct)
+              }}</span>
             } @else {
               <app-skeleton class="h-[22px] w-20" />
             }
@@ -224,13 +230,13 @@ const EMPTY: ListState = {
                     </span>
                     <span class="flex shrink-0 flex-col items-end text-right">
                       <span class="text-[15px] font-semibold">{{
-                        t.value | price: state().currency
+                        t.value | price: (state().currency | acct)
                       }}</span>
                       @if (t.realizedPnl !== null) {
                         <span
                           class="mt-0.5 text-[13px] font-medium"
                           [class]="tone(t.realizedPnl)"
-                          >{{ t.realizedPnl | money: state().currency }}</span
+                          >{{ t.realizedPnl | money: (state().currency | acct) }}</span
                         >
                       }
                     </span>

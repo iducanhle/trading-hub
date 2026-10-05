@@ -3,6 +3,7 @@ package com.earningstracker.web.dto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import com.earningstracker.domain.EarningsResult;
 import com.earningstracker.market.EventCategory;
@@ -114,5 +115,9 @@ public final class Dtos {
     }
 
     public record FollowedEarnings(List<EarningsEvent> upcoming, List<SearchResult> noUpcomingDate) {
+    }
+
+    /** {@code usdPerUnit}: USD per one unit of each currency (USD itself is 1). */
+    public record FxLatest(String base, Map<String, Double> usdPerUnit) {
     }
 }

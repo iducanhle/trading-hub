@@ -75,6 +75,21 @@ const INTERVAL_MINUTES: Record<PriceInterval, number> = {
 const FIXTURE_WEEK = '2026-09-28';
 const FIXTURE_SYMBOLS = ['AAPL', 'SAP.DE'];
 const DAY_MS = 86_400_000;
+/** Rough rates of early October 2026; the display currency only needs plausible values. */
+const MOCK_FX = {
+  base: 'USD',
+  usdPerUnit: {
+    USD: 1,
+    EUR: 1.17,
+    GBP: 1.35,
+    CHF: 1.25,
+    SEK: 0.106,
+    NOK: 0.1,
+    DKK: 0.157,
+    PLN: 0.275,
+    CZK: 0.0477,
+  },
+};
 
 class MockError extends Error {
   constructor(
@@ -167,6 +182,7 @@ export class MockBackend {
       return this.search(params.get('q') ?? '', Number(params.get('limit') ?? 10));
     if (first === 'calendar') return this.calendar(params);
     if (first === 'market-events') return this.marketEvents(params);
+    if (first === 'fx' && second === 'latest') return MOCK_FX;
     if (first === 'followed' && second === 'earnings') return this.followedEarnings();
     if (first === 'stocks' && second) {
       const symbol = second.toUpperCase();

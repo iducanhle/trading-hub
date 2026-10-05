@@ -264,6 +264,7 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/calendar?from=&to=&minMarketCapUsd=0&region=ALL\|US\|EU&followedOnly=false` | `{ from, to, days: { date: string, events: EarningsEvent[] }[] }` | Every date in the range is present (possibly empty). Events are sorted by `marketCapUsd` desc, nulls last. `minMarketCapUsd > 0` excludes unknown caps. Max span 42 days. |
 | `GET /api/market-events?from=&to=&minImportance=LOW\|MEDIUM\|HIGH&region=ALL\|US\|EU\|OTHER&includeEarnings=true` | `{ from, to, days: { date: string, events: MarketEvent[] }[] }` | Every date in the range is present (possibly empty). Events with at least `minImportance` (default `LOW`), most important first, then all-day events, then by time. `region` filters by `country` (`OTHER` = not US or EU). `includeEarnings=false` leaves out the mega-cap reports. Max span 42 days. |
 | `GET /api/followed/earnings` | `{ upcoming: EarningsEvent[] /* date ≥ today, asc */, noUpcomingDate: SearchResult[] }` | Based on the caller's `users/{uid}/follows` |
+| `GET /api/fx/latest` | `{ base: "USD", usdPerUnit: Record<string /* ISO currency */, number> }` | Today's rates (daily) of USD, EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, only for the approximate display currency. A currency without a rate is missing |
 | `POST /api/notifications/test` | `202 { sentTo: string }` | |
 | `POST /api/admin/jobs/{jobName}/run` | `202 { jobName, startedAt }` | `calendar-refresh`, `market-events-refresh`, `eu-universe-refresh`, `prices-refresh`, `earnings-digest`, `t212-sync`, `t212-snapshot` |
 | `GET /api/t212/status` | `T212Status` | Works when not connected (`connected: false`) |
@@ -405,3 +406,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-05 | `GET /api/t212/history`: new intervals `1mo`, `6mo`, `1y`; every range offers every interval shorter than itself. Additive. |
 | 2026-10-05 | Firestore `users/{uid}.settings.roundNumbers?: boolean` (display amounts without decimals; frontend only). Additive. |
 | 2026-10-05 | Trading 212 multi-currency (additive): `T212Trade.original` and `T212Dividend.original` (`T212Original`) for trades and dividends settled in another currency than the account's. Their `value`, `fees`, `taxes`, `realizedPnl` and `amount` are now converted to the account currency at the close of the trade day, so all sums are in the account currency. |
+| 2026-10-05 | Added `GET /api/fx/latest` (additive): today's FX rates for the display currency. |

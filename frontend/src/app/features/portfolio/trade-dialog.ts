@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { T212Trade } from '../../core/models/contract';
@@ -29,6 +30,7 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
 @Component({
   selector: 'app-trade-dialog',
   imports: [
+    AccountCurrencyPipe,
     Dialog,
     StockLogo,
     HeroAmount,
@@ -60,13 +62,16 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         class="mt-1"
         size="md"
         [value]="valueBeforeFees()"
-        [currency]="data.currency"
+        [currency]="data.currency | acct"
       />
       @if (t.original; as o) {
         <p class="mt-1.5">
           <span
             class="app-pill bg-secondary-container text-on-secondary-container"
-            i18n="Pill on a trade that settled in another currency than the account's; CURRENCY is a code like USD"
+            i18n="
+              Pill on a trade that settled in another currency than the account's; CURRENCY is a
+              code like USD
+            "
             >Traded in {{ o.currency }}</span
           >
         </p>
@@ -89,7 +94,7 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
           <div appStatRow label="Exchange rate" i18n-label>{{ t.fxRate | num: 4 }}</div>
         }
         <div appStatRow label="Including fees" i18n-label term="includingFees">
-          {{ t.value | price: data.currency }}
+          {{ t.value | price: (data.currency | acct) }}
         </div>
         @if (t.realizedPnl !== null) {
           <div
@@ -101,7 +106,7 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
           >
             <app-pnl
               [value]="result()"
-              [currency]="data.currency"
+              [currency]="data.currency | acct"
               [pct]="resultPct() ?? undefined"
             />
           </div>
@@ -129,10 +134,12 @@ export class TradeDialog {
   protected readonly ticker = computed(() => displayTicker(this.data.trade));
   /** "In USD": the trade value as it settled, for a trade outside the account currency. */
   protected readonly originalValueLabel = computed(
-    () => $localize`:Trade value in the currency it settled in; CURRENCY is a code like USD:In ${this.data.trade.original?.currency ?? ''}:CURRENCY:`,
+    () =>
+      $localize`:Trade value in the currency it settled in; CURRENCY is a code like USD:In ${this.data.trade.original?.currency ?? ''}:CURRENCY:`,
   );
   protected readonly originalResultLabel = computed(
-    () => $localize`:Profit/loss of a sell in the currency it settled in; CURRENCY is a code like USD:Result in ${this.data.trade.original?.currency ?? ''}:CURRENCY:`,
+    () =>
+      $localize`:Profit/loss of a sell in the currency it settled in; CURRENCY is a code like USD:Result in ${this.data.trade.original?.currency ?? ''}:CURRENCY:`,
   );
   protected readonly label = computed(() => {
     const t = this.data.trade;

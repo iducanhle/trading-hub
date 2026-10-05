@@ -632,6 +632,13 @@
     "2761957284175779738": "Obchody v jiné měně",
     "5415742386319039477": "Trading 212 umí držet peníze ve více měnách, takže obchod může proběhnout v dolarech, i když je účet v jiné měně. Trading 212 ho pak jen zobrazuje přepočtený.",
     "6265368439758985828": "Aplikace dělá totéž: každá částka i součet se přepočítá na měnu účtu kurzem ze dne obchodu a dialog navíc ukazuje částku, jak skutečně proběhla.",
-    "8487642208134696": "Prodej se ziskem 224 USD v den, kdy 1 USD = 22 CZK, se započítá jako +4 928 CZK."
+    "8487642208134696": "Prodej se ziskem 224 USD v den, kdy 1 USD = 22 CZK, se započítá jako +4 928 CZK.",
+    "1837262941064281734": "Zobrazovací měna",
+    "2277978674484235895": " Měna účtu ",
+    "7316759956902681809": " Zobrazit částky v ",
+    "1791616369350599998": "Načítám směnné kurzy…",
+    "3928366788300122796": " Směnné kurzy teď nejsou k dispozici, takže částky zůstávají v měně účtu. ",
+    "3284248888120842702": " Přepočtené částky jsou jen orientační. Každá částka, včetně minulých obchodů a zisku, se přepočítá dnešním kurzem, takže se může lišit od toho, co by Trading 212 ukázal v této měně. Samotný účet zůstává v {$INTERPOLATION}. ",
+    "8298612418414367990": "Měny"
   }
 }

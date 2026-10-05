@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -41,6 +42,7 @@ export interface InstrumentDialogData {
 @Component({
   selector: 'app-instrument-page',
   imports: [
+    AccountCurrencyPipe,
     NgTemplateOutlet,
     RouterLink,
     MatButton,
@@ -131,13 +133,13 @@ export interface InstrumentDialogData {
         }
         <app-position-summary [instrument]="i" [currency]="d.accountCurrency">
           <div appStatRow label="FX fees" i18n-label term="fxFees">
-            <app-pnl [value]="-fxFees()" [currency]="d.accountCurrency" />
+            <app-pnl [value]="-fxFees()" [currency]="d.accountCurrency | acct" />
           </div>
           <div appStatRow label="Bought" i18n-label>
-            {{ i.bought.value | price: d.accountCurrency }}
+            {{ i.bought.value | price: (d.accountCurrency | acct) }}
           </div>
           <div appStatRow label="Sold" i18n-label>
-            {{ i.sold.value | price: d.accountCurrency }}
+            {{ i.sold.value | price: (d.accountCurrency | acct) }}
           </div>
           <div appStatRow label="First trade" i18n-label>{{ day(i.firstTradeAt) | appDate }}</div>
           <div appStatRow label="Last trade" i18n-label>{{ day(i.lastTradeAt) | appDate }}</div>

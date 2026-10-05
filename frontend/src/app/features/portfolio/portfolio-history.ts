@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import {
   Component,
   DestroyRef,
@@ -48,7 +49,18 @@ import { readChartColors, withAlpha } from '../stock-detail/sections/price-chart
 
 const RANGES: T212HistoryRange[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
 
-const ORDER: T212HistoryInterval[] = ['5m', '15m', '30m', '1h', '4h', '1d', '1w', '1mo', '6mo', '1y'];
+const ORDER: T212HistoryInterval[] = [
+  '5m',
+  '15m',
+  '30m',
+  '1h',
+  '4h',
+  '1d',
+  '1w',
+  '1mo',
+  '6mo',
+  '1y',
+];
 /** Each range offers every interval shorter than itself (as the API does), default first. */
 const DEFAULT_INTERVAL: Record<T212HistoryRange, T212HistoryInterval> = {
   '1D': '5m',
@@ -58,11 +70,21 @@ const DEFAULT_INTERVAL: Record<T212HistoryRange, T212HistoryInterval> = {
   '1Y': '1d',
   ALL: '1d',
 };
-const SHORTER_THAN: Record<T212HistoryRange, number> = { '1D': 4, '1W': 6, '1M': 7, '3M': 8, '1Y': 9, ALL: 10 };
+const SHORTER_THAN: Record<T212HistoryRange, number> = {
+  '1D': 4,
+  '1W': 6,
+  '1M': 7,
+  '3M': 8,
+  '1Y': 9,
+  ALL: 10,
+};
 const INTERVALS = Object.fromEntries(
   RANGES.map((r) => [
     r,
-    [DEFAULT_INTERVAL[r], ...ORDER.slice(0, SHORTER_THAN[r]).filter((i) => i !== DEFAULT_INTERVAL[r])],
+    [
+      DEFAULT_INTERVAL[r],
+      ...ORDER.slice(0, SHORTER_THAN[r]).filter((i) => i !== DEFAULT_INTERVAL[r]),
+    ],
   ]),
 ) as Record<T212HistoryRange, T212HistoryInterval[]>;
 
@@ -105,6 +127,7 @@ function chartTime(iso: string): UTCTimestamp {
 @Component({
   selector: 'app-portfolio-history',
   imports: [
+    AccountCurrencyPipe,
     ErrorState,
     HeroAmount,
     Icon,
@@ -151,9 +174,14 @@ function chartTime(iso: string): UTCTimestamp {
                     <ng-container i18n>Account value</ng-container>
                   }
                 </p>
-                <app-hero-amount class="mt-1" size="md" [value]="p.value" [currency]="currency()" />
+                <app-hero-amount
+                  class="mt-1"
+                  size="md"
+                  [value]="p.value"
+                  [currency]="currency() | acct"
+                />
                 <p class="mt-1 text-[15px] font-semibold" [class]="tone(p.profit)">
-                  {{ p.profit | money: currency() }}
+                  {{ p.profit | money: (currency() | acct) }}
                   @if (profitPct(p) !== null) {
                     <span class="font-medium">· {{ profitPct(p) | pct: 1 }}</span>
                     <app-term-info class="ml-0.5 inline-flex align-middle" term="accountReturn" />
@@ -162,7 +190,7 @@ function chartTime(iso: string): UTCTimestamp {
                 </p>
                 <p class="mt-1.5 flex items-baseline gap-2 text-[15px]">
                   <span class="font-semibold text-on-surface">{{
-                    p.netDeposits | price: currency()
+                    p.netDeposits | price: (currency() | acct)
                   }}</span>
                   <span class="app-label"><ng-container i18n>Net deposits</ng-container></span>
                 </p>
@@ -333,11 +361,11 @@ export class PortfolioHistory {
             ),
           )
           .then(
-          (value) => {
-            if (this.data.hasValue()) this.data.set(value);
-          },
-          () => undefined,
-        );
+            (value) => {
+              if (this.data.hasValue()) this.data.set(value);
+            },
+            () => undefined,
+          );
       });
     });
     inject(DestroyRef).onDestroy(() => this.removeChart());
@@ -386,7 +414,11 @@ export class PortfolioHistory {
         priceFormatter: (price: number) => amountFormat.format(price),
       },
       // No value axis: the header shows the exact amount of the latest or touched point.
-      rightPriceScale: { visible: false, borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.08 } },
+      rightPriceScale: {
+        visible: false,
+        borderVisible: false,
+        scaleMargins: { top: 0.1, bottom: 0.08 },
+      },
       timeScale: {
         borderVisible: false,
         fixLeftEdge: true,

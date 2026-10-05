@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, input } from '@angular/core';
 import {
   AppDatePipe,
@@ -14,7 +15,7 @@ import { TradeTile, TradeTileKind } from './trade-tile';
 /** Trades and dividends of one instrument as a card list, with the shares held after each trade. */
 @Component({
   selector: 'app-timeline-list',
-  imports: [TradeTile, AppDatePipe, PricePipe, QuantityPipe, SignedMoneyPipe],
+  imports: [AccountCurrencyPipe, TradeTile, AppDatePipe, PricePipe, QuantityPipe, SignedMoneyPipe],
   template: `
     <ol class="app-card py-2">
       @for (
@@ -43,11 +44,13 @@ import { TradeTile, TradeTileKind } from './trade-tile';
             </span>
             <span class="flex shrink-0 flex-col items-end text-right">
               @if (t.value > 0) {
-                <span class="text-[15px] font-semibold">{{ t.value | price: currency() }}</span>
+                <span class="text-[15px] font-semibold">{{
+                  t.value | price: (currency() | acct)
+                }}</span>
               }
               @if (t.realizedPnl !== null) {
                 <span class="mt-0.5 text-[13px] font-medium" [class]="tone(t.realizedPnl)">{{
-                  t.realizedPnl | money: currency()
+                  t.realizedPnl | money: (currency() | acct)
                 }}</span>
               }
             </span>
@@ -64,7 +67,7 @@ import { TradeTile, TradeTileKind } from './trade-tile';
               </span>
             </span>
             <span class="shrink-0 text-[15px] font-semibold" [class]="tone(v.amount)">{{
-              v.amount | money: currency()
+              v.amount | money: (currency() | acct)
             }}</span>
           }
         </li>

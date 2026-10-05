@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -44,6 +45,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 @Component({
   selector: 'app-portfolio-stocks',
   imports: [
+    AccountCurrencyPipe,
     EmptyState,
     ErrorState,
     Skeleton,
@@ -149,7 +151,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
           <div class="flex min-w-0 flex-col gap-2">
             <h2 class="app-label" i18n>Total profit/loss</h2>
             <span class="text-[15px] font-semibold" [class]="tone(total())">{{
-              total() | money: data.value().accountCurrency
+              total() | money: (data.value().accountCurrency | acct)
             }}</span>
           </div>
           @if (totalAfterFees(); as afterFees) {
@@ -159,7 +161,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                 <app-term-info class="ml-0.5 inline-flex align-middle" term="accountFees" />
               </h2>
               <span class="text-[15px] font-semibold" [class]="tone(afterFees.value)">{{
-                afterFees.value | money: data.value().accountCurrency
+                afterFees.value | money: (data.value().accountCurrency | acct)
               }}</span>
             </div>
           }
@@ -189,7 +191,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                   }}</span>
                 </span>
                 <span class="text-[15px] font-semibold" [class]="tone(pnl(row.item))">{{
-                  pnl(row.item) | money: data.value().accountCurrency
+                  pnl(row.item) | money: (data.value().accountCurrency | acct)
                 }}</span>
               </button>
             }
@@ -217,14 +219,14 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                       {{ ticker(item) }}
                       @if (item.status === 'OPEN') {
                         · {{ item.quantity | qty }} <ng-container i18n>shares</ng-container> ·
-                        {{ item.value | price: data.value().accountCurrency }}
+                        {{ item.value | price: (data.value().accountCurrency | acct) }}
                       }
                     </span>
                   </span>
                 </span>
                 <span class="flex max-w-[45%] shrink-0 flex-col items-end text-right">
                   <span class="text-[15px] font-semibold" [class]="tone(pnl(item))">{{
-                    pnl(item) | money: data.value().accountCurrency
+                    pnl(item) | money: (data.value().accountCurrency | acct)
                   }}</span>
                   @if (allTime()) {
                     <span class="mt-0.5 text-[13px] font-medium" [class]="tone(pnl(item))">{{

@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
@@ -28,6 +29,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 @Component({
   selector: 'app-portfolio-cash',
   imports: [
+    AccountCurrencyPipe,
     StatList,
     StatRow,
     ErrorState,
@@ -76,7 +78,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
             size="md"
             signed
             [value]="d.total"
-            [currency]="d.accountCurrency"
+            [currency]="d.accountCurrency | acct"
           />
           @if (d.stale) {
             <div class="mt-3"><app-stale-chip [asOf]="d.asOf" /></div>
@@ -112,7 +114,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
                       </span>
                     </span>
                     <span class="shrink-0 text-[15px] font-semibold" [class]="tone(x.amount)">{{
-                      x.amount | money: d.accountCurrency
+                      x.amount | money: (d.accountCurrency | acct)
                     }}</span>
                   </button>
                 </li>
@@ -132,16 +134,16 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
           @let t = transactions.value();
           <dl appStatList card>
             <div appStatRow label="Deposits" i18n-label>
-              {{ t.totals.deposits | price: t.accountCurrency }}
+              {{ t.totals.deposits | price: (t.accountCurrency | acct) }}
             </div>
             <div appStatRow label="Withdrawals" i18n-label>
-              {{ t.totals.withdrawals | price: t.accountCurrency }}
+              {{ t.totals.withdrawals | price: (t.accountCurrency | acct) }}
             </div>
             <div appStatRow label="Account fees" i18n-label>
-              {{ t.totals.fees | price: t.accountCurrency }}
+              {{ t.totals.fees | price: (t.accountCurrency | acct) }}
             </div>
             <div appStatRow label="Interest" i18n-label>
-              {{ t.totals.interest | price: t.accountCurrency }}
+              {{ t.totals.interest | price: (t.accountCurrency | acct) }}
             </div>
           </dl>
           @if (t.items.length === 0) {

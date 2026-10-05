@@ -256,6 +256,12 @@ export interface MarketEventDay {
   events: MarketEvent[];
 }
 
+/** `GET /api/fx/latest`: USD per one unit of each currency (USD is 1); a currency without a rate is missing. */
+export interface FxLatestResponse {
+  base: 'USD';
+  usdPerUnit: Record<string, number>;
+}
+
 export interface MarketEventsResponse {
   from: string;
   to: string;
@@ -536,7 +542,8 @@ export interface T212AllocationResponse {
 
 export type T212HistoryRange = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
 /** The chart step; each range offers some (docs/CONTRACT.md). */
-export type T212HistoryInterval = '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1mo' | '6mo' | '1y';
+export type T212HistoryInterval =
+  '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1mo' | '6mo' | '1y';
 
 /** The account value at one stored moment (snapshots every 5 minutes since the feature shipped). */
 export interface T212HistoryPoint {

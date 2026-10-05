@@ -1,3 +1,4 @@
+import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
@@ -31,6 +32,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
 @Component({
   selector: 'app-portfolio-holdings',
   imports: [
+    AccountCurrencyPipe,
     NgTemplateOutlet,
     ErrorState,
     Skeleton,
@@ -65,15 +67,17 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
             <div class="mt-3.5 space-y-2">
               <div class="rounded-2xl bg-surface-container-high px-3.5 py-3">
                 <p class="app-label" i18n>Account value</p>
-                <p class="mt-1 text-[22px] font-semibold leading-tight tabular-nums [overflow-wrap:anywhere]">
-                  {{ accountValue() | price: currency() }}
+                <p
+                  class="mt-1 text-[22px] font-semibold leading-tight tabular-nums [overflow-wrap:anywhere]"
+                >
+                  {{ accountValue() | price: (currency() | acct) }}
                 </p>
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <div class="min-w-0 rounded-2xl bg-surface-container-high px-3.5 py-2.5">
                   <p class="app-label" i18n="Money in the account that is not invested">Cash</p>
                   <p class="mt-1 text-[13px] font-semibold tabular-nums [overflow-wrap:anywhere]">
-                    {{ cash() | price: currency() }}
+                    {{ cash() | price: (currency() | acct) }}
                   </p>
                 </div>
                 <div
@@ -82,7 +86,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
                 >
                   <p class="app-label" i18n="Unrealized profit or loss of open positions">Unrealized</p>
                   <p class="mt-1 text-[13px] font-semibold tabular-nums [overflow-wrap:anywhere]">
-                    {{ unrealizedPnl() | money: currency() }}
+                    {{ unrealizedPnl() | money: (currency() | acct) }}
                   </p>
                 </div>
               </div>
@@ -233,9 +237,9 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
 
     <ng-template #amounts let-value="value" let-pnl="pnl" let-pct="pct" let-currency="currency">
       <span class="flex shrink-0 flex-col items-end text-right">
-        <span class="text-[14px] font-semibold">{{ value | price: currency }}</span>
+        <span class="text-[14px] font-semibold">{{ value | price: (currency | acct) }}</span>
         <span class="mt-0.5 text-[13px] font-medium" [class]="tone(pnl)"
-          >{{ pnl | money: currency }} ({{ pct | pct }})</span
+          >{{ pnl | money: (currency | acct) }} ({{ pct | pct }})</span
         >
       </span>
     </ng-template>

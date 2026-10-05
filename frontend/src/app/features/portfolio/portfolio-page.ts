@@ -1,11 +1,15 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/api/api-error';
 import { T212Side } from '../../core/models/contract';
+import { DisplayCurrencyService } from '../../core/services/display-currency.service';
 import { NotifierService } from '../../core/services/notifier.service';
 import { T212Service } from '../../core/services/t212.service';
+import { CurrencyFlag } from '../../shared/components/currency-flag/currency-flag';
+import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
@@ -13,6 +17,7 @@ import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-r
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
+import { DisplayCurrencyDialog } from './display-currency-dialog';
 import { PeriodSelector } from './period-selector';
 import { PortfolioCash } from './portfolio-cash';
 import { PortfolioNav } from './portfolio-nav';
@@ -52,24 +57,45 @@ import { TradeFilters } from './trades-filters';
     PortfolioStocks,
     PortfolioTrades,
     PortfolioCash,
+    CurrencyFlag,
   ],
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="sync()">
       <app-page-header title="Portfolio" i18n-title maxWidth="max-w-3xl">
         @if (t212.connected()) {
-          <!-- Search lives in the bottom pill here. -->
+          <div actions class="flex items-center">
+            <!-- Search lives in the bottom pill here. -->
+            @if (currency.accountCurrency()) {
+              <button
+                matIconButton
+                type="button"
+                class="currency-button"
+                [class.converted]="currency.converted()"
+                [attr.aria-label]="labels.currency + ' ' + currency.current()"
+                (click)="openCurrency()"
+              >
+                <app-currency-flag [currency]="currency.current()" [size]="24" />
+              </button>
+            }
+            <button
+              matIconButton
+              type="button"
+              [attr.aria-label]="t212.syncing() ? labels.syncing : labels.sync"
+              [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
+              (click)="sync()"
+            >
+              <app-icon name="refresh" [class.animate-spin]="refreshing()" />
+            </button>
+          </div>
+        } @else {
           <button
             actions
             matIconButton
             type="button"
-            [attr.aria-label]="t212.syncing() ? labels.syncing : labels.sync"
-            [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
-            (click)="sync()"
+            appOpenSearch
+            aria-label="Search"
+            i18n-aria-label
           >
-            <app-icon name="refresh" [class.animate-spin]="refreshing()" />
-          </button>
-        } @else {
-          <button actions matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
             <app-icon name="search" />
           </button>
         }
@@ -160,12 +186,26 @@ import { TradeFilters } from './trades-filters';
       }
     </app-pull-to-refresh>
   `,
+  styles: `
+    /* A converted view rings the flag in the primary colour, so it is clear the amounts are not the account's own. */
+    .currency-button app-currency-flag {
+      border-radius: 9999px;
+      outline: 1.5px solid transparent;
+      outline-offset: 2px;
+      transition: outline-color 0.2s;
+    }
+    .currency-button.converted app-currency-flag {
+      outline-color: var(--mat-sys-primary);
+    }
+  `,
 })
 export class PortfolioPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly notifier = inject(NotifierService);
   protected readonly t212 = inject(T212Service);
+  protected readonly currency = inject(DisplayCurrencyService);
+  private readonly dialog = inject(MatDialog);
 
   private readonly query = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -197,11 +237,16 @@ export class PortfolioPage {
   protected readonly labels = {
     sync: $localize`Sync with Trading 212`,
     syncing: $localize`Syncing with Trading 212`,
+    currency: $localize`:Header button that opens the display currency picker; the current currency code follows:Display currency`,
   };
 
   constructor() {
     void this.t212.syncIfStale();
     inject(DestroyRef).onDestroy(this.t212.watchLive());
+  }
+
+  protected openCurrency(): void {
+    this.dialog.open(DisplayCurrencyDialog, DIALOG_CONFIG);
   }
 
   protected setPeriod(period: PortfolioPeriod): void {
