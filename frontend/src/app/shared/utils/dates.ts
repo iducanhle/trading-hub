@@ -109,13 +109,15 @@ function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.D
 }
 
 export type DateStyle =
-  'day' | 'dayMonth' | 'medium' | 'long' | 'monthYear' | 'weekday' | 'weekdayShort';
+  'day' | 'dayMonth' | 'month' | 'medium' | 'long' | 'monthYear' | 'weekday' | 'weekdayShort';
 
 const DATE_STYLES: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   /** Fri 25 Sep */
   day: { weekday: 'short', day: 'numeric', month: 'short' },
   /** 25 Sep */
   dayMonth: { day: 'numeric', month: 'short' },
+  /** Sep */
+  month: { month: 'short' },
   /** 25 Sep 2026 */
   medium: { day: 'numeric', month: 'short', year: 'numeric' },
   /** Friday 25 September 2026 */

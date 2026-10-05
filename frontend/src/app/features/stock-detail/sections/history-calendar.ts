@@ -95,7 +95,43 @@ const MIX = [0, 14, 26, 42, 80];
       </button>
     </div>
 
-    @if (period() === 'WEEKLY') {
+    @if (period() === 'MONTHLY') {
+      <div class="grid grid-cols-3 gap-1 tabular-nums">
+        @if (page.error()) {
+          <div class="col-span-3">
+            <app-error-state compact [error]="page.error()" (retry)="page.reload()" />
+          </div>
+        } @else if (!page.hasValue()) {
+          @for (i of monthSkeletons; track i) {
+            <app-skeleton class="h-[46px] rounded-[10px]" />
+          }
+        } @else {
+          @for (m of months(); track m.date) {
+            <button
+              type="button"
+              class="relative flex h-[46px] items-center justify-center rounded-[10px] transition-shadow"
+              [style.background]="m.row ? tint(m.row) : null"
+              [style.color]="m.row ? ink(m.row) : 'var(--mat-sys-on-surface-variant)'"
+              [class.bg-surface-container-high]="!m.row"
+              [class.ring-2]="selected() === m.date"
+              [class.ring-primary]="selected() === m.date"
+              [disabled]="!m.row"
+              [attr.aria-label]="m.row ? rowAriaLabel(m.row) : null"
+              [attr.aria-pressed]="m.row ? selected() === m.date : null"
+              (click)="selected.set(m.date)"
+            >
+              <span class="absolute top-0.5 left-1.5 text-[10px] opacity-75">{{ m.label }}</span>
+              @if (m.row; as row) {
+                @if (row.hasEarnings) {
+                  <span class="absolute top-0.5 right-1.5 text-[10px] font-bold">E</span>
+                }
+                <span class="mt-2 text-sm font-semibold">{{ percentOf(row) }}</span>
+              }
+            </button>
+          }
+        }
+      </div>
+    } @else if (period() === 'WEEKLY') {
       <div class="grid grid-cols-5 gap-1 tabular-nums">
         @for (weekday of weekdays; track weekday) {
           <span class="app-label pb-1.5 text-center text-[11px]">{{ weekday }}</span>
@@ -204,6 +240,8 @@ const MIX = [0, 14, 26, 42, 80];
             >partial</span
           >
         }
+      } @else if (page.hasValue() && period() === 'MONTHLY') {
+        <span class="text-xs text-on-surface-variant" i18n>Tap a month to see its close.</span>
       } @else if (page.hasValue() && period() === 'WEEKLY') {
         <span class="text-xs text-on-surface-variant" i18n>Tap a week to see its close.</span>
       } @else if (page.hasValue()) {
@@ -217,17 +255,22 @@ export class HistoryCalendar {
   private readonly api = inject(ApiService);
 
   readonly currency = input<string | null>(null);
-  /** Daily squares or weekly pills. */
-  readonly period = input<Extract<HistoryPeriod, 'DAILY' | 'WEEKLY'>>('DAILY');
+  /** Daily squares, weekly pills (a month per page) or monthly pills (a year per page). */
+  readonly period = input<HistoryPeriod>('DAILY');
 
   protected readonly weekdays = WEEKDAYS;
   protected readonly skeletonCells = Array.from({ length: 20 }, (_, i) => i);
+  protected readonly monthSkeletons = Array.from({ length: 12 }, (_, i) => i);
   private readonly currentMonth = startOfMonth(todayIso());
   /** First day of the shown month; back to the current month for another stock. */
   protected readonly month = linkedSignal({
     source: this.ctx.symbol,
     computation: () => this.currentMonth,
   });
+  /** First day of the shown page: the month, or January of its year in the monthly view. */
+  private readonly start = computed(() =>
+    this.period() === 'MONTHLY' ? `${this.month().slice(0, 4)}-01-01` : this.month(),
+  );
   protected readonly selected = linkedSignal<string, string | null>({
     source: () => `${this.period()} ${this.month()}`,
     computation: () => null,
@@ -238,7 +281,7 @@ export class HistoryCalendar {
       this.ctx.symbol()
         ? {
             symbol: this.ctx.symbol(),
-            month: this.month(),
+            start: this.start(),
             period: this.period(),
             version: this.ctx.version(),
           }
@@ -247,16 +290,20 @@ export class HistoryCalendar {
       this.api.history(
         params.symbol,
         params.period,
-        addMonths(params.month, 1),
-        params.period === 'WEEKLY' ? WEEK_LIMIT : MONTH_LIMIT,
+        addMonths(params.start, params.period === 'MONTHLY' ? 12 : 1),
+        params.period === 'MONTHLY' ? 12 : params.period === 'WEEKLY' ? WEEK_LIMIT : MONTH_LIMIT,
         { force: params.version > 0 },
       ),
   });
 
-  /** The month's days, or the weeks touching it (oldest first, like the calendar). */
+  /** The month's days, the weeks touching it (oldest first, like the calendar) or the year's months. */
   protected readonly rows = computed(() => {
     if (!this.page.hasValue()) return [];
     const rows = this.page.value().rows;
+    if (this.period() === 'MONTHLY') {
+      const year = this.start().slice(0, 4);
+      return rows.filter((r) => r.periodStart.startsWith(year));
+    }
     if (this.period() === 'DAILY') {
       const prefix = this.month().slice(0, 7);
       return rows.filter((r) => r.periodStart.startsWith(prefix));
@@ -282,20 +329,35 @@ export class HistoryCalendar {
     }
     return weeks;
   });
-  protected readonly title = computed(() => formatMonthTitle(this.month()));
+  /** January to December of the shown year, each with its monthly row (null when not traded yet). */
+  protected readonly months = computed(() =>
+    Array.from({ length: 12 }, (_, i) => {
+      const date = addMonths(this.start(), i);
+      const row = this.rows().find((r) => r.periodStart.slice(0, 7) === date.slice(0, 7)) ?? null;
+      return { date: row?.periodStart ?? date, label: formatDate(date, 'month'), row };
+    }),
+  );
+  protected readonly title = computed(() =>
+    this.period() === 'MONTHLY' ? this.start().slice(0, 4) : formatMonthTitle(this.month()),
+  );
   protected readonly selectedRow = computed(
     () => this.rows().find((row) => row.periodStart === this.selected()) ?? null,
   );
-  /** Older data exists: the page has rows before this month or more pages. */
+  /** Older data exists: the page has rows before this month (or year) or more pages. */
   protected readonly canGoBack = computed(() => {
     if (!this.page.hasValue()) return false;
     const page = this.page.value();
-    return page.nextBefore !== null || page.rows.some((row) => row.periodStart < this.month());
+    return page.nextBefore !== null || page.rows.some((row) => row.periodStart < this.start());
   });
-  protected readonly canGoForward = computed(() => this.month() < this.currentMonth);
+  protected readonly canGoForward = computed(() =>
+    this.period() === 'MONTHLY'
+      ? this.start().slice(0, 4) < this.currentMonth.slice(0, 4)
+      : this.month() < this.currentMonth,
+  );
 
   protected shiftMonth(step: number): void {
-    this.month.update((month) => addMonths(month, step));
+    const months = this.period() === 'MONTHLY' ? 12 : 1;
+    this.month.update((month) => addMonths(month, step * months));
   }
 
   protected percent(cell: CalendarCell): string {
@@ -330,9 +392,14 @@ export class HistoryCalendar {
   }
 
   protected rowLabel(row: HistoryRow): string {
-    return this.period() === 'WEEKLY'
-      ? formatDateRange(row.periodStart, row.periodEnd)
-      : formatDate(row.periodStart, 'day');
+    switch (this.period()) {
+      case 'WEEKLY':
+        return formatDateRange(row.periodStart, row.periodEnd);
+      case 'MONTHLY':
+        return formatMonthTitle(row.periodStart);
+      default:
+        return formatDate(row.periodStart, 'day');
+    }
   }
 
   protected rowAriaLabel(row: HistoryRow): string {

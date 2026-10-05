@@ -19,8 +19,7 @@ import { Segment, Segmented } from '../../../shared/components/segmented/segment
 type HistoryView = HistoryPeriod | 'CALENDAR';
 
 const PERIODS: { value: HistoryView; label: string }[] = [
-  { value: 'CALENDAR', label: $localize`:History shown as a month calendar:Calendar` },
-  { value: 'DAILY', label: $localize`Daily` },
+  { value: 'CALENDAR', label: $localize`Daily` },
   { value: 'WEEKLY', label: $localize`Weekly` },
   { value: 'MONTHLY', label: $localize`Monthly` },
 ];
@@ -39,8 +38,8 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
 }
 
 /**
- * Section 5: a month calendar of daily changes, a month of weekly changes as one pill per week, then closes and
- * changes per day or month, newest first,
+ * Section 5: a month calendar of daily changes, a month of weekly changes as one pill per week, a year of monthly
+ * changes as one pill per month, then closes and changes per day, newest first,
  * with an "E" badge for periods with an earnings report and a "partial" hint for the running period (more rows load
  * on scroll). Swipe between the tabs.
  */
@@ -84,6 +83,8 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
           <app-history-calendar [currency]="currency()" />
         } @else if (view() === 'WEEKLY') {
           <app-history-calendar period="WEEKLY" [currency]="currency()" />
+        } @else if (view() === 'MONTHLY') {
+          <app-history-calendar period="MONTHLY" [currency]="currency()" />
         } @else if (error() && !rows().length) {
           <app-error-state compact [error]="error()" (retry)="loadMore()" />
         } @else if (!rows().length && loading()) {
@@ -158,9 +159,9 @@ export class PerformanceHistory {
   protected readonly periods = PERIODS;
   protected readonly expanded = persistedSignal('et.section.history', true);
   protected readonly view = persistedSignal<HistoryView>('et.history.view', 'CALENDAR');
-  /** The list's period; null on the calendars (daily and weekly), which load their own months. */
+  /** The list's period (only the daily list is left); null on the calendars, which load their own pages. */
   protected readonly period = computed(() =>
-    this.view() === 'CALENDAR' || this.view() === 'WEEKLY' ? null : (this.view() as HistoryPeriod),
+    this.view() === 'DAILY' ? ('DAILY' as HistoryPeriod) : null,
   );
   protected readonly rows = signal<HistoryRow[]>([]);
   protected readonly nextBefore = signal<string | null>(null);
@@ -172,6 +173,8 @@ export class PerformanceHistory {
   private force = false;
 
   constructor() {
+    // The daily list is hidden; a view saved before then opens the daily calendar.
+    if (this.view() === 'DAILY') this.view.set('CALENDAR');
     // A new symbol, period or refresh starts over from the newest rows.
     effect(() => {
       const symbol = this.ctx.symbol();
