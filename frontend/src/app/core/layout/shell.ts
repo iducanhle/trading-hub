@@ -231,7 +231,7 @@ export class Shell {
   private readonly sections: Tab[] = [
     {
       path: '/portfolio',
-      label: $localize`:Bottom navigation tab:Portfolio`,
+      label: $localize`:Bottom navigation tab:Trading212`,
       icon: 'account_balance_wallet',
       activeIcon: 'account_balance_wallet',
     },
@@ -247,10 +247,15 @@ export class Shell {
   /** The drawer lists the sections; Settings sits at the bottom, next to the user. */
   protected readonly tabs = this.sections.filter((t) => t.path !== '/settings');
 
-  /** The tab whose section is showing; none on a stock page or Search (opened from the page headers). */
-  protected readonly activeTab = computed(
-    () => this.sections.find((t) => this.url().startsWith(t.path))?.path ?? null,
-  );
+  /**
+   * The tab whose section is showing. A stock page counts as Trading212 for connected users (it carries that
+   * section's bottom pill); otherwise it, like Search, has none.
+   */
+  protected readonly activeTab = computed(() => {
+    const url = this.url();
+    if (url.startsWith('/stock/') && this.t212.connected()) return '/portfolio';
+    return this.sections.find((t) => url.startsWith(t.path))?.path ?? null;
+  });
 
   constructor() {
     inject(SessionService).start();

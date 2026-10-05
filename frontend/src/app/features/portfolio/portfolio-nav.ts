@@ -1,5 +1,15 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  Component,
+  DestroyRef,
+  Injectable,
+  afterNextRender,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
 import { SearchService } from '../../core/services/search.service';
 import { Icon } from '../../shared/icon/icon';
 import { IconName } from '../../shared/icon/icon-paths';
@@ -19,6 +29,12 @@ const TAB_ICONS: Record<NavTab, IconName> = {
 };
 
 const NAV_LABELS: Record<NavTab, string> = { ...TAB_LABELS, search: $localize`Search` };
+
+/** The last stock detail URL the pill was on (in memory only), so Search can lead back to it. */
+@Injectable({ providedIn: 'root' })
+class LastStockMemory {
+  url: string | null = null;
+}
 
 /**
  * The portfolio's sections as a floating glass pill pinned to the bottom of the screen (like the iOS tab bar): an
@@ -49,7 +65,7 @@ const NAV_LABELS: Record<NavTab, string> = { ...TAB_LABELS, search: $localize`Se
         @if (t === 'search') {
           <button
             type="button"
-            (click)="search.open()"
+            (click)="onSearch()"
             [attr.aria-current]="tab() === t ? 'page' : null"
             [class]="itemClass(t)"
           >
@@ -85,13 +101,43 @@ const NAV_LABELS: Record<NavTab, string> = { ...TAB_LABELS, search: $localize`Se
 export class PortfolioNav {
   readonly tab = input.required<NavTab>();
 
-  protected readonly search = inject(SearchService);
+  private readonly search = inject(SearchService);
+  private readonly router = inject(Router);
+  private readonly memory = inject(LastStockMemory);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly tabs = NAV_TABS;
   protected readonly labels = NAV_LABELS;
   protected readonly icons = TAB_ICONS;
   protected readonly index = computed(() => NAV_TABS.indexOf(this.tab()));
   /** On the portfolio page the items swap `?tab=`; elsewhere they navigate to it. */
   protected readonly onPortfolio = computed(() => this.tab() !== 'search');
+
+  constructor() {
+    // On a detail page, remember it (and each stock opened from there) so Search can return to it.
+    afterNextRender(() => {
+      if (this.onPortfolio()) return;
+      this.memory.url = this.router.url;
+      this.router.events
+        .pipe(
+          filter((e) => e instanceof NavigationEnd),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => {
+          if (this.router.url.startsWith('/stock/')) this.memory.url = this.router.url;
+        });
+    });
+  }
+
+  /** From the portfolio, Search returns to the last stock; on a stock, it forgets it and opens search. */
+  protected onSearch(): void {
+    const last = this.memory.url;
+    if (this.onPortfolio() && last) {
+      void this.router.navigateByUrl(last);
+      return;
+    }
+    this.memory.url = null;
+    void this.search.open();
+  }
 
   protected itemClass(t: NavTab): string {
     return (

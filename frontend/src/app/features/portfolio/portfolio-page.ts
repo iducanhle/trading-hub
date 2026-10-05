@@ -57,20 +57,17 @@ import { TradeFilters } from './trades-filters';
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="sync()">
       <app-page-header title="Portfolio" i18n-title maxWidth="max-w-3xl">
         @if (t212.connected()) {
-          <div actions class="flex items-center">
-            <button
-              matIconButton
-              type="button"
-              [attr.aria-label]="t212.syncing() ? labels.syncing : labels.sync"
-              [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
-              (click)="sync()"
-            >
-              <app-icon name="refresh" [class.animate-spin]="refreshing()" />
-            </button>
-            <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
-              <app-icon name="search" />
-            </button>
-          </div>
+          <!-- Search lives in the bottom pill here. -->
+          <button
+            actions
+            matIconButton
+            type="button"
+            [attr.aria-label]="t212.syncing() ? labels.syncing : labels.sync"
+            [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
+            (click)="sync()"
+          >
+            <app-icon name="refresh" [class.animate-spin]="refreshing()" />
+          </button>
         } @else {
           <button actions matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
             <app-icon name="search" />

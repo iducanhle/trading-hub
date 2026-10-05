@@ -104,9 +104,15 @@ import { StockContext } from './stock-context';
               </span>
             </h1>
           </div>
-          <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
-            <app-icon name="search" />
-          </button>
+          <!-- T212 users search from the bottom pill. -->
+          @if (!t212.connected()) {
+            <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
+              <app-icon name="search" />
+            </button>
+          } @else {
+            <!-- Balances the menu button so the title pill stays centred on phones. -->
+            <span class="w-12 shrink-0 lg:hidden" aria-hidden="true"></span>
+          }
           <button
             matIconButton
             type="button"
@@ -139,26 +145,29 @@ import { StockContext } from './stock-context';
           </div>
         } @else {
           <section class="px-5 pt-3" aria-label="Price" i18n-aria-label>
-            <!-- Back sits here, at the top of the content; the header's left corner holds the menu. -->
-            <div class="mb-2.5 flex items-center justify-between">
-              <button
-                type="button"
-                class="-ml-2 inline-flex h-8 items-center gap-1 rounded-full pr-3 pl-1.5 text-[13px] font-bold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-                (click)="navigation.back('/followed')"
-              >
-                <app-icon name="arrow_back" [size]="18" />
-                <ng-container i18n>Back</ng-container>
-              </button>
-              <app-follow-button class="-mr-2" compact [target]="followTarget()" />
-            </div>
+            <!-- Back sits here, at the top of the content; the header's left corner holds the menu. T212 users
+                 get the bottom pill instead. -->
+            @if (!t212.connected()) {
+              <div class="mb-2.5 flex items-center">
+                <button
+                  type="button"
+                  class="-ml-2 inline-flex h-8 items-center gap-1 rounded-full pr-3 pl-1.5 text-[13px] font-bold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+                  (click)="navigation.back('/followed')"
+                >
+                  <app-icon name="arrow_back" [size]="18" />
+                  <ng-container i18n>Back</ng-container>
+                </button>
+              </div>
+            }
             <!-- The change sits right below, above the chart (it follows the chart's range). -->
             <div class="flex min-w-0 items-center gap-2">
               <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="24" />
               @if (stock(); as s) {
-                <p class="truncate text-[17px] font-semibold">{{ s.name }}</p>
+                <p class="min-w-0 flex-1 truncate text-[17px] font-semibold">{{ s.name }}</p>
               } @else {
-                <app-skeleton class="h-5 w-40" />
+                <app-skeleton class="mr-auto h-5 w-40" />
               }
+              <app-follow-button class="-mr-2 shrink-0" compact [target]="followTarget()" />
             </div>
             @if (stock(); as s) {
               <app-hero-amount class="mt-1" [value]="s.quote.price" [currency]="s.currency" />
