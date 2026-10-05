@@ -105,8 +105,8 @@ Map tokens onto `--mat-sys-*` so Material components pick them up without restyl
 
 Define each with `light-dark(<light>, <dark>)` (`mat.theme-overrides` in `frontend/src/material-theme.scss`). The rest are
 custom properties in `frontend/src/styles.css`: `up` = `--app-gain`, `down` = `--app-loss`, `upBg` / `downBg` =
-`--app-gain-container` / `--app-loss-container`, `--app-sheet`, `--app-scrim` and the analyst scale `--app-rec-*`. The glow
-is the `app-glow` utility (dark theme only). Tailwind exposes the same colours (`bg-surface-container`, `text-gain`,
+`--app-gain-container` / `--app-loss-container`, `--app-sheet`, `--app-scrim` and the analyst scale `--app-rec-*`. No background
+gradient (the dark-theme glow was removed). Tailwind exposes the same colours (`bg-surface-container`, `text-gain`,
 `bg-sheet`, `bg-scrim`, …).
 
 ## Accessibility notes

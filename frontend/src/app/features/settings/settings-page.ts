@@ -1,5 +1,7 @@
-import { Component, computed, inject } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
+import { DOCUMENT } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { SwUpdate } from '@angular/service-worker';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { AuthService } from '../../core/auth/auth.service';
 import { LANGUAGE, Language, switchLanguage } from '../../core/i18n/language';
@@ -25,6 +27,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
 @Component({
   selector: 'app-settings-page',
   imports: [
+    MatButton,
     MatIconButton,
     Segmented,
     Segment,
@@ -171,6 +174,16 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
           <div>
             <dt class="app-label" i18n>Version</dt>
             <dd>Tradiqo {{ version }}</dd>
+            <button
+              matButton="outlined"
+              type="button"
+              class="mt-2"
+              [disabled]="updating()"
+              (click)="forceUpdate()"
+              i18n
+            >
+              Update now
+            </button>
           </div>
           <div>
             <dt class="app-label" i18n>Data sources</dt>
@@ -224,7 +237,11 @@ export class SettingsPage {
   protected readonly settingsService = inject(SettingsService);
   protected readonly theme = inject(ThemeService);
 
+  private readonly swUpdate = inject(SwUpdate);
+  private readonly document = inject(DOCUMENT);
+
   protected readonly version = APP_VERSION;
+  protected readonly updating = signal(false);
   protected readonly language = LANGUAGE;
   protected readonly user = this.auth.user;
   protected readonly settings = this.settingsService.settings;
@@ -251,6 +268,29 @@ export class SettingsPage {
     this.settingsService
       .update(patch)
       .catch(() => void this.notifier.show($localize`Couldn't save the setting`));
+  }
+
+  /**
+   * Fetches the newest deploy right away instead of waiting for the background check, then reloads into it. Without
+   * a service worker (dev, mock mode) a plain reload already gets the newest files.
+   */
+  protected async forceUpdate(): Promise<void> {
+    if (!this.swUpdate.isEnabled) {
+      this.document.location.reload();
+      return;
+    }
+    this.updating.set(true);
+    try {
+      if (await this.swUpdate.checkForUpdate()) {
+        await this.swUpdate.activateUpdate();
+        this.document.location.reload();
+        return;
+      }
+      void this.notifier.show($localize`You have the latest version.`);
+    } catch {
+      void this.notifier.show($localize`Couldn't check for updates`);
+    }
+    this.updating.set(false);
   }
 
   protected signOut(): void {

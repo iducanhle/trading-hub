@@ -118,20 +118,6 @@ body {
   }
 }
 
-/* Dark theme only: a blue glow at the top of the page that scrolls away with the content. */
-@utility app-glow {
-  html.dark & {
-    background-image: radial-gradient(
-      /* Fixed px centre: a % y-position scales with page height, so long pages got a weaker glow. */
-      140% 600px at 85% -32px,
-      #0e3b54 0%,
-      #071520 40%,
-      transparent 72%
-    );
-    background-repeat: no-repeat;
-  }
-}
-
 /*
  * Type scale (docs/REDESIGN-SPEC.md): every heading uses one of these. Page titles: caps on section pages,
  * plain on pages with a back arrow.

@@ -179,7 +179,7 @@ interface Tab {
           aria-modal="true"
           aria-label="Main"
           i18n-aria-label="Main navigation"
-          class="app-glow absolute inset-y-0 left-0 flex w-77 max-w-[85vw] flex-col rounded-r-[28px] border-r border-outline-variant bg-surface pt-safe pb-safe"
+          class="absolute inset-y-0 left-0 flex w-77 max-w-[85vw] flex-col rounded-r-[28px] border-r border-outline-variant bg-surface pt-safe pb-safe"
         >
           <ng-container *ngTemplateOutlet="navContent; context: { $implicit: false }" />
         </nav>
