@@ -29,6 +29,7 @@ const trade = (
   fxRate: null,
   realizedPnl,
   orderType: 'MARKET' as const,
+  original: null,
 });
 
 const fixture: T212Fixture = {
@@ -69,6 +70,7 @@ const fixture: T212Fixture = {
       grossPerShare: 0.25,
       grossPerShareCurrency: 'USD',
       type: 'ORDINARY',
+      original: null,
     },
   ],
   transactions: [

@@ -624,6 +624,14 @@
     "1861422194509457479": "Trading 212 klíč odmítl. Zkontrolujte klíč, tajný klíč a omezení klíče podle IP.",
     "2441730191018504834": "Čísla",
     "3093278034893169244": "Zaokrouhlovat čísla",
-    "4365031186896637127": " Zobrazovat částky a procenta bez desetinných míst. Zaokrouhluje se jen zobrazení, výpočty zůstávají přesné. "
+    "4365031186896637127": " Zobrazovat částky a procenta bez desetinných míst. Zaokrouhluje se jen zobrazení, výpočty zůstávají přesné. ",
+    "5306697671805034543": "Vyplaceno v {$INTERPOLATION}",
+    "4931599494620096935": "V {$CURRENCY}",
+    "9127136189807694678": "Obchodováno v {$INTERPOLATION}",
+    "9167786201016205636": "Výsledek v {$CURRENCY}",
+    "2761957284175779738": "Obchody v jiné měně",
+    "5415742386319039477": "Trading 212 umí držet peníze ve více měnách, takže obchod může proběhnout v dolarech, i když je účet v jiné měně. Trading 212 ho pak jen zobrazuje přepočtený.",
+    "6265368439758985828": "Aplikace dělá totéž: každá částka i součet se přepočítá na měnu účtu kurzem ze dne obchodu a dialog navíc ukazuje částku, jak skutečně proběhla.",
+    "8487642208134696": "Prodej se ziskem 224 USD v den, kdy 1 USD = 22 CZK, se započítá jako +4 928 CZK."
   }
 }

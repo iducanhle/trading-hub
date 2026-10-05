@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -158,7 +159,9 @@ public class T212SyncService {
                     continue;
                 }
                 T212Normalizer.instrument(item).ifPresent(info -> seen.put(info.ticker(), info));
-                if (current.fills().containsKey(fill.get().id())) {
+                T212Fill stored = current.fills().get(fill.get().id());
+                // Fills stored before the trade currency was recorded are rewritten once when it differs.
+                if (stored != null && Objects.equals(stored.currency(), fill.get().currency())) {
                     known++;
                 } else {
                     fresh.add(fill.get());
@@ -179,12 +182,13 @@ public class T212SyncService {
             List<T212DividendPayment> fresh = new ArrayList<>();
             int known = 0;
             for (JsonNode item : items) {
-                Optional<T212DividendPayment> dividend = T212Normalizer.dividend(item);
+                Optional<T212DividendPayment> dividend = T212Normalizer.dividend(item, currency);
                 if (dividend.isEmpty()) {
                     continue;
                 }
                 T212Normalizer.instrument(item).ifPresent(info -> seen.putIfAbsent(info.ticker(), info));
-                if (current.dividends().containsKey(dividend.get().id())) {
+                T212DividendPayment stored = current.dividends().get(dividend.get().id());
+                if (stored != null && Objects.equals(stored.currency(), dividend.get().currency())) {
                     known++;
                 } else {
                     fresh.add(dividend.get());

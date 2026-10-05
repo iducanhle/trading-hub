@@ -162,6 +162,9 @@ public class T212DataStore {
         doc.put("fx", f.fxRate());
         doc.put("pnl", f.realizedPnl());
         doc.put("orderType", f.orderType());
+        if (f.currency() != null) {
+            doc.put("ccy", f.currency());
+        }
         return doc;
     }
 
@@ -169,7 +172,8 @@ public class T212DataStore {
         return new T212Fill(str(d, "id"), str(d, "orderId"), instant(d, "at"), str(d, "ticker"),
                 "SELL".equals(d.get("side")) ? T212Fill.Side.SELL : T212Fill.Side.BUY, str(d, "kind"),
                 str(d, "fillType"), num(d, "qty", 0), numOrNull(d, "price"), str(d, "priceCcy"), num(d, "value", 0),
-                num(d, "fees", 0), num(d, "taxes", 0), numOrNull(d, "fx"), numOrNull(d, "pnl"), str(d, "orderType"));
+                num(d, "fees", 0), num(d, "taxes", 0), numOrNull(d, "fx"), numOrNull(d, "pnl"), str(d, "orderType"),
+                str(d, "ccy"));
     }
 
     private static Map<String, Object> dividendDoc(T212DividendPayment p) {
@@ -182,12 +186,16 @@ public class T212DataStore {
         doc.put("perShare", p.grossPerShare());
         doc.put("perShareCcy", p.grossPerShareCurrency());
         doc.put("type", p.type());
+        if (p.currency() != null) {
+            doc.put("ccy", p.currency());
+        }
         return doc;
     }
 
     private static T212DividendPayment dividend(Map<String, Object> d) {
         return new T212DividendPayment(str(d, "id"), instant(d, "at"), str(d, "ticker"), num(d, "qty", 0),
-                num(d, "amount", 0), numOrNull(d, "perShare"), str(d, "perShareCcy"), str(d, "type"));
+                num(d, "amount", 0), numOrNull(d, "perShare"), str(d, "perShareCcy"), str(d, "type"),
+                str(d, "ccy"));
     }
 
     private static Map<String, Object> transactionDoc(T212CashTransaction t) {

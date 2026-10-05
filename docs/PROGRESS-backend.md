@@ -251,6 +251,7 @@ Engineering:
 
 ## Decisions
 
+- **2026-10-05 — Trading 212 multi-currency trades are converted at the close of their day.** Multi-currency accounts settle some trades and dividends in another wallet (e.g. USD in a CZK account); `walletImpact` is then in that currency. Fills and dividends store that currency (`ccy`, only when it is not the account currency), and the portfolio service converts them with Yahoo daily FX closes (`FxService.rateOn`, cached per currency in `fx-history`; today's rate if a day has none) before any sum, so all totals are in the account currency. The DTOs keep the settled amounts in `original`. Fills stored before this are rewritten by the next sync when their currency differs (only pages the sync reads again; a reconnect rereads everything).
 - **2026-09-26 — Versions: Spring Boot 4.1.1, Java 25.** Latest stable Boot (start.spring.io metadata) and latest LTS (Adoptium API `most_recent_lts`), checked on this date.
 - **2026-09-26 — Commits go straight to `main`, not pushed.** Solo repo; the Phase 5 CI workflow triggers on pushes to `main`. Pushing is left to the owner.
 - **2026-09-26 — `.gitattributes` forces LF line endings.** This machine has `core.autocrlf=true`, which would check out `mvnw` and `*.sh` with CRLF and break them inside Linux containers built from the Windows working tree. `*.cmd`/`*.bat` stay CRLF.

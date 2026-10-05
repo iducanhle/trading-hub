@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.earningstracker.market.CompanyProfile;
@@ -121,5 +123,10 @@ public class FakeProvider implements QuoteProvider, ProfileProvider, PriceHistor
     @Override
     public double usdPerUnit(String currency) {
         return answer(Map.of("EUR", 1.14, "GBP", 1.32).get(currency), currency);
+    }
+
+    @Override
+    public NavigableMap<LocalDate, Double> dailyUsdPerUnit(String currency, LocalDate from) {
+        return new TreeMap<>(Map.of(from, usdPerUnit(currency)));
     }
 }

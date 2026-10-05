@@ -9,6 +9,7 @@ import static com.earningstracker.provider.t212.T212TestSupport.API_SECRET;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -63,6 +64,7 @@ class T212PortfolioServiceTest {
     private T212StateStore states;
     private T212Encryption encryption;
     private final QuoteService quotes = mock(QuoteService.class);
+    private final FxService fx = mock(FxService.class);
 
     @BeforeEach
     void start() throws Exception {
@@ -89,7 +91,6 @@ class T212PortfolioServiceTest {
         given(profiles.logos(any())).willReturn(Map.of("AAPL", "https://logos.example/aapl.png"));
         given(quotes.quote("AAPL")).willReturn(new Cached<>(
                 Quote.of("AAPL", 170.0, 172.0, "USD", clock.instant()), clock.instant(), false));
-        FxService fx = mock(FxService.class);
         given(fx.toUsd(any(), any())).willAnswer(call -> switch ((String) call.getArgument(1)) {
             case "EUR" -> (Double) call.getArgument(0) * 1.10;
             case "USD" -> call.getArgument(0);
@@ -439,6 +440,25 @@ class T212PortfolioServiceTest {
         assertThat(list.totals().deposits()).isEqualTo(5100); // 110 USD = 100 EUR at 1.10
         assertThat(list.items().getFirst().currency()).isEqualTo("USD"); // the item keeps its own currency
         assertThat(portfolio.summary(UID, T212Period.ALL_TIME).netDeposits()).isEqualTo(4900);
+    }
+
+    @Test
+    void tradesSettledInAnotherCurrencyAreConvertedAtTheRateOfTheirDay() {
+        routes.on("/api/v0/equity/history/orders", request -> request.getUrl().queryParameter("cursor") == null
+                ? body(200, fixture("t212/orders-page1.json").replace("\"currency\": \"EUR\", \"fxRate\": 0.9",
+                        "\"currency\": \"USD\", \"fxRate\": 1"))
+                : json("t212/orders-page2.json"));
+        given(fx.rateOn("USD", "EUR", LocalDate.of(2026, 9, 20))).willReturn(0.8);
+        sync.runNow(UID).orElseThrow(); // the stored fill is rewritten with its currency
+
+        T212Dtos.Trade sell = portfolio.trades(UID, T212Period.ALL_TIME, T212PortfolioService.SideFilter.SELL,
+                Set.of(), null, 50).items().getFirst();
+        assertThat(sell.value()).isCloseTo(720.0, within(1e-9)); // 900 USD at 0.8
+        assertThat(sell.realizedPnl()).isEqualTo(72.4); // 90.5 USD
+        assertThat(sell.original()).isEqualTo(new T212Dtos.Original("USD", 900.0, 1.35, 0.0, 90.5, 0.8));
+        assertThat(portfolio.summary(UID, T212Period.ALL_TIME).realizedPnl()).isEqualTo(72.4);
+        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, T212PortfolioService.SideFilter.BUY, Set.of(), null, 50)
+                .items()).allSatisfy(t -> assertThat(t.original()).isNull());
     }
 
     @Test

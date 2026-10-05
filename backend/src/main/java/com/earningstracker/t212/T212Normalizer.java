@@ -116,10 +116,10 @@ public final class T212Normalizer {
         Double realized = side == T212Fill.Side.SELL ? Json.number(wallet.path("realisedProfitLoss")) : null;
         return Optional.of(new T212Fill(id, orderId, executedAt, ticker, side, kind, fillType, quantity, price,
                 priceCurrency, value, round(fees), round(taxes), Json.number(wallet.path("fxRate")), realized,
-                Json.text(order.path("type"))));
+                Json.text(order.path("type")), sameCurrency(walletCurrency, accountCurrency) ? null : walletCurrency));
     }
 
-    public static Optional<T212DividendPayment> dividend(JsonNode item) {
+    public static Optional<T212DividendPayment> dividend(JsonNode item, String accountCurrency) {
         String ticker = firstText(item.path("ticker"), item.path("instrument").path("ticker"));
         Instant paidAt = firstInstant(item.path("paidOn"));
         Double amount = Json.number(item.path("amount"));
@@ -135,8 +135,11 @@ public final class T212Normalizer {
             perShareCurrency = "GBP";
         }
         Double quantity = Json.number(item.path("quantity"));
+        // Multi-currency accounts pay into the wallet of the dividend currency; the amount is then in that currency.
+        String currency = Json.text(item.path("currency"));
         return Optional.of(new T212DividendPayment(id, paidAt, ticker, quantity == null ? 0 : Math.abs(quantity),
-                amount, perShare, perShareCurrency, Json.text(item.path("type"))));
+                amount, perShare, perShareCurrency, Json.text(item.path("type")),
+                currency == null || sameCurrency(currency, accountCurrency) ? null : currency));
     }
 
     public static Optional<T212CashTransaction> transaction(JsonNode item, String accountCurrency) {

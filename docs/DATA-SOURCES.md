@@ -94,7 +94,7 @@ Read from the official OpenAPI file (`https://docs.trading212.com/_bundle/api.ya
 
 **Basics**
 - **Base URLs:** live `https://live.trading212.com/api/v0`, demo (paper trading) `https://demo.trading212.com/api/v0`. A key belongs to one environment.
-- **Accounts:** only Invest and Stocks ISA. Multi-currency is not supported: every account, position and result value is in the account's **primary currency** (`AccountSummary.currency`).
+- **Accounts:** only Invest and Stocks ISA. Account totals and positions are in the account's **primary currency** (`AccountSummary.currency`), but on multi-currency accounts a fill's or dividend's `walletImpact`/amount can be in another wallet currency (e.g. USD in a CZK account). The backend converts those at the daily close of the trade day (see PROGRESS-backend Decisions).
 - **Auth:** HTTP Basic, `Authorization: Basic base64(API_KEY:API_SECRET)`. The spec still lists a second scheme, `legacyApiKeyHeader`: the raw key as the `Authorization` header (older keys without a secret).
 - **Key generation** (help centre): ☰ → Settings → **API (Beta)** → Generate API key. The user picks permissions and IP access: "Unrestricted" or "Restrict access to trusted IPs" (IPs or CIDR ranges; recommended). **The secret is shown only once.** No expiry is documented.
 - **Permissions (scopes)** named in the spec's 403 answers: `account`, `portfolio`, `history:orders`, `history:dividends`, `history:transactions`, `metadata`, `orders:read`, `orders:execute`, `pies:read`, `pies:write`. Earnings Tracker needs the first six. Recommend leaving `orders:execute` and `pies:write` off; the app never calls them.

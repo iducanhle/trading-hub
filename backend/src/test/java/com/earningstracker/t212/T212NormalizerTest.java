@@ -75,11 +75,21 @@ class T212NormalizerTest {
     }
 
     @Test
+    void tradesSettledInAnotherWalletKeepTheirCurrency() {
+        JsonNode item = JSON.readTree(fixture("t212/orders-page1.json")
+                .replace("\"currency\": \"EUR\", \"fxRate\": 0.9", "\"currency\": \"USD\", \"fxRate\": 1"))
+                .path("items").get(0);
+
+        assertThat(T212Normalizer.fill(item, "EUR").orElseThrow().currency()).isEqualTo("USD");
+        assertThat(T212Normalizer.fill(items("orders-page1.json").get(0), "EUR").orElseThrow().currency()).isNull();
+    }
+
+    @Test
     void readsInstrumentsDividendsAndTransactions() {
         assertThat(T212Normalizer.instrument(items("orders-page1.json").get(2))).contains(
                 new T212InstrumentInfo("AZNl_EQ", "AstraZeneca", "GB0009895292", "GBX", null));
 
-        T212DividendPayment dividend = T212Normalizer.dividend(items("dividends.json").get(0)).orElseThrow();
+        T212DividendPayment dividend = T212Normalizer.dividend(items("dividends.json").get(0), "EUR").orElseThrow();
         assertThat(dividend).isEqualTo(new T212DividendPayment("div-1", Instant.parse("2026-08-15T00:00:00Z"),
                 "AAPL_US_EQ", 10, 2.1, 0.26, "USD", "ORDINARY"));
 

@@ -5,12 +5,14 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,11 +30,15 @@ import com.earningstracker.t212.T212PortfolioEngine.InstrumentResult;
 import com.earningstracker.web.dto.T212Dtos;
 import com.earningstracker.web.error.ApiException;
 import com.earningstracker.web.error.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /** The Trading 212 read endpoints: stored history plus live values, through {@link T212PortfolioEngine}. */
 @Service
 public class T212PortfolioService {
+
+    private static final Logger log = LoggerFactory.getLogger(T212PortfolioService.class);
 
     public enum StatusFilter {
         OPEN, CLOSED, ALL
@@ -73,7 +79,8 @@ public class T212PortfolioService {
     }
 
     /** What every response needs; {@code live} is null when not asked for or not available. */
-    private record Context(T212State state, T212UserData data, T212Live live, Instant asOf, boolean stale) {
+    private record Context(T212State state, T212UserData data, T212UserData raw, Map<String, Double> fillRates,
+            Map<String, Double> dividendRates, T212Live live, Instant asOf, boolean stale) {
 
         Map<String, T212Live.Position> positions() {
             return live == null ? null : live.positions();
@@ -89,13 +96,63 @@ public class T212PortfolioService {
 
     private Context context(String uid, boolean withLive) {
         T212State state = connection.requireConnected(uid);
-        T212UserData data = store.load(uid);
+        T212UserData raw = store.load(uid);
         T212Live live = withLive ? liveService.live(uid).orElse(null) : null;
         Instant asOf = Stream.of(state.lastSyncAt(), live == null ? null : live.fetchedAt()).filter(Objects::nonNull)
                 .min(Comparator.naturalOrder()).orElse(clock.instant());
         boolean stale = state.syncState() == T212State.SyncState.FAILED || connection.credentialsUnusable(uid)
                 || (withLive && (live == null || live.stale()));
-        return new Context(state, data, live, asOf, stale);
+        String currency = state.accountCurrency() != null ? state.accountCurrency()
+                : live != null ? live.account().currency() : null;
+        Map<String, Double> fillRates = new HashMap<>();
+        Map<String, Double> dividendRates = new HashMap<>();
+        T212UserData data = inAccountCurrency(raw, currency, fillRates, dividendRates);
+        return new Context(state, data, raw, fillRates, dividendRates, live, asOf, stale);
+    }
+
+    /**
+     * Multi-currency accounts settle some trades and dividends in another currency; every sum is in the account
+     * currency, so those are converted at the close of their day. The rates used are recorded by id.
+     */
+    private T212UserData inAccountCurrency(T212UserData raw, String accountCurrency, Map<String, Double> fillRates,
+            Map<String, Double> dividendRates) {
+        if (accountCurrency == null || (raw.fills().values().stream().allMatch(f -> f.currency() == null)
+                && raw.dividends().values().stream().allMatch(d -> d.currency() == null))) {
+            return raw;
+        }
+        List<T212Fill> fills = raw.fills().values().stream().map(f -> {
+            Double rate = rateOn(f.currency(), accountCurrency, f.executedAt());
+            if (rate == null) {
+                return f;
+            }
+            fillRates.put(f.id(), rate);
+            return f.converted(rate);
+        }).toList();
+        List<T212DividendPayment> dividends = raw.dividends().values().stream().map(d -> {
+            Double rate = rateOn(d.currency(), accountCurrency, d.paidAt());
+            if (rate == null) {
+                return d;
+            }
+            dividendRates.put(d.id(), rate);
+            return d.converted(rate);
+        }).toList();
+        return raw.withFills(fills).withDividends(dividends);
+    }
+
+    /** Account currency per unit of {@code currency} on the day of {@code at}; null when there is nothing to do. */
+    private Double rateOn(String currency, String accountCurrency, Instant at) {
+        if (currency == null || currency.equalsIgnoreCase(accountCurrency)) {
+            return null;
+        }
+        Double rate = fx.rateOn(currency, accountCurrency, at.atZone(ZoneOffset.UTC).toLocalDate());
+        if (rate == null) {
+            // No rate for that day: today's rate keeps the sums in one currency (better than mixing currencies).
+            rate = inAccountCurrency(1.0, currency, accountCurrency);
+            if (rate == null) {
+                log.warn("No {}→{} rate; amounts left unconverted", currency, accountCurrency);
+            }
+        }
+        return rate;
     }
 
     public T212Dtos.Summary summary(String uid, T212Period period) {
@@ -557,20 +614,38 @@ public class T212PortfolioService {
         return new T212Dtos.Trade(fill.id(), fill.executedAt(), fill.ticker(), info.symbol(), name(info),
                 fill.side().name(), fill.kind(), fill.quantity(), fill.price(), fill.priceCurrency(), fill.value(),
                 fill.fees(), fill.taxes(), fill.fxRate(), f.realizedPnl() == null ? null : round(f.realizedPnl()),
-                fill.orderType());
+                fill.orderType(), original(ctx, fill.id()));
+    }
+
+    /** What a trade settled as when that was not the account currency; null otherwise. */
+    private static T212Dtos.Original original(Context ctx, String fillId) {
+        T212Fill raw = ctx.raw().fills().get(fillId);
+        if (raw == null || raw.currency() == null) {
+            return null;
+        }
+        return new T212Dtos.Original(raw.currency(), raw.value(), raw.fees(), raw.taxes(),
+                raw.realizedPnl() == null ? null : round(raw.realizedPnl()), ctx.fillRates().get(fillId));
     }
 
     private T212Dtos.DetailTrade detailTrade(Context ctx, FillResult f) {
         T212Dtos.Trade t = trade(ctx, f);
         return new T212Dtos.DetailTrade(t.id(), t.executedAt(), t.t212Ticker(), t.symbol(), t.name(), t.side(),
                 t.kind(), t.quantity(), t.price(), t.priceCurrency(), t.value(), t.fees(), t.taxes(), t.fxRate(),
-                t.realizedPnl(), t.orderType(), f.positionAfter());
+                t.realizedPnl(), t.orderType(), t.original(), f.positionAfter());
     }
 
     private T212Dtos.Dividend dividend(Context ctx, T212DividendPayment d) {
         T212InstrumentInfo info = info(ctx, d.ticker());
         return new T212Dtos.Dividend(d.id(), d.paidAt(), d.ticker(), info.symbol(), name(info), d.quantity(),
-                d.amount(), d.grossPerShare(), d.grossPerShareCurrency(), d.type());
+                d.amount(), d.grossPerShare(), d.grossPerShareCurrency(), d.type(), dividendOriginal(ctx, d.id()));
+    }
+
+    private static T212Dtos.Original dividendOriginal(Context ctx, String id) {
+        T212DividendPayment raw = ctx.raw().dividends().get(id);
+        if (raw == null || raw.currency() == null) {
+            return null;
+        }
+        return new T212Dtos.Original(raw.currency(), raw.amount(), null, null, null, ctx.dividendRates().get(id));
     }
 
     /** Stored instrument data, else what the live position says, else the ticker alone. */

@@ -93,7 +93,8 @@
       "taxes": 0,
       "fxRate": 0.86,
       "realizedPnl": null,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     },
     {
       "id": "t-02",
@@ -109,7 +110,8 @@
       "taxes": 0,
       "fxRate": 0.86,
       "realizedPnl": null,
-      "orderType": "LIMIT"
+      "orderType": "LIMIT",
+      "original": null
     },
     {
       "id": "t-03",
@@ -125,7 +127,8 @@
       "taxes": 0,
       "fxRate": null,
       "realizedPnl": null,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     },
     {
       "id": "t-04",
@@ -141,7 +144,8 @@
       "taxes": 0,
       "fxRate": 0.86,
       "realizedPnl": null,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     },
     {
       "id": "t-05",
@@ -157,7 +161,8 @@
       "taxes": 0,
       "fxRate": 1.1,
       "realizedPnl": null,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     },
     {
       "id": "t-06",
@@ -173,7 +178,8 @@
       "taxes": 0,
       "fxRate": 0.86,
       "realizedPnl": null,
-      "orderType": "LIMIT"
+      "orderType": "LIMIT",
+      "original": null
     },
     {
       "id": "t-07",
@@ -189,7 +195,8 @@
       "taxes": 0,
       "fxRate": null,
       "realizedPnl": null,
-      "orderType": null
+      "orderType": null,
+      "original": null
     },
     {
       "id": "t-08",
@@ -205,7 +212,8 @@
       "taxes": 0,
       "fxRate": null,
       "realizedPnl": -70,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     },
     {
       "id": "t-09",
@@ -221,7 +229,8 @@
       "taxes": 0,
       "fxRate": 1.1,
       "realizedPnl": null,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     },
     {
       "id": "t-10",
@@ -235,9 +244,10 @@
       "value": 1702.8,
       "fees": 2.55,
       "taxes": 0,
-      "fxRate": 0.86,
+      "fxRate": 1,
       "realizedPnl": 252.8,
-      "orderType": "LIMIT"
+      "orderType": "LIMIT",
+      "original": { "currency": "USD", "value": 1980, "fees": 2.97, "taxes": 0, "realizedPnl": 293.95, "rate": 0.86 }
     },
     {
       "id": "t-11",
@@ -253,7 +263,8 @@
       "taxes": 0,
       "fxRate": 0.86,
       "realizedPnl": 101.47,
-      "orderType": "MARKET"
+      "orderType": "MARKET",
+      "original": null
     }
   ],
   "dividends": [
@@ -265,7 +276,8 @@
       "amount": 1.95,
       "grossPerShare": 0.26,
       "grossPerShareCurrency": "USD",
-      "type": "ORDINARY"
+      "type": "ORDINARY",
+      "original": null
     },
     {
       "id": "d-2",
@@ -275,7 +287,8 @@
       "amount": 2.43,
       "grossPerShare": 0.83,
       "grossPerShareCurrency": "USD",
-      "type": "ORDINARY"
+      "type": "ORDINARY",
+      "original": null
     },
     {
       "id": "d-3",
@@ -285,7 +298,8 @@
       "amount": 4.62,
       "grossPerShare": 0.21,
       "grossPerShareCurrency": "USD",
-      "type": "DIVIDEND"
+      "type": "DIVIDEND",
+      "original": null
     },
     {
       "id": "d-4",
@@ -295,7 +309,8 @@
       "amount": 2.92,
       "grossPerShare": 0.26,
       "grossPerShareCurrency": "USD",
-      "type": "ORDINARY"
+      "type": "ORDINARY",
+      "original": null
     },
     {
       "id": "d-5",
@@ -305,7 +320,8 @@
       "amount": 6.95,
       "grossPerShare": 0.21,
       "grossPerShareCurrency": "USD",
-      "type": "DIVIDEND"
+      "type": "DIVIDEND",
+      "original": null
     }
   ],
   "transactions": [

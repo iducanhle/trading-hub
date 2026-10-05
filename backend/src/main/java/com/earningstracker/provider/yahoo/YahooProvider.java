@@ -23,9 +23,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -337,6 +339,27 @@ public class YahooProvider implements SymbolSearchProvider, QuoteProvider, Profi
             throw new ProviderException(ID, Kind.BAD_RESPONSE, "no FX rate for " + currency);
         }
         return rate;
+    }
+
+    @Override
+    public NavigableMap<LocalDate, Double> dailyUsdPerUnit(String currency, LocalDate from) {
+        long start = from.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
+        JsonNode result = chart(currency + "USD=X",
+                "period1=" + start + "&period2=" + clock.instant().getEpochSecond());
+        JsonNode closes = result.path("indicators").path("quote").path(0).path("close");
+        JsonNode timestamps = result.path("timestamp");
+        NavigableMap<LocalDate, Double> rates = new TreeMap<>();
+        for (int i = 0; i < timestamps.size(); i++) {
+            Double close = Json.number(closes.path(i));
+            Long time = Json.longNumber(timestamps.path(i));
+            if (close != null && close > 0 && time != null) {
+                rates.put(Instant.ofEpochSecond(time).atZone(ZoneOffset.UTC).toLocalDate(), close);
+            }
+        }
+        if (rates.isEmpty()) {
+            throw new ProviderException(ID, Kind.BAD_RESPONSE, "no FX history for " + currency);
+        }
+        return rates;
     }
 
     /** Symbols Yahoo knows, checked with batch quotes; unknown symbols are simply missing from the answer. */

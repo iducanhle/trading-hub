@@ -5,7 +5,10 @@ import static com.earningstracker.provider.ProviderTestSupport.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+import java.time.LocalDate;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.earningstracker.cache.InMemoryDocumentStore;
@@ -38,6 +41,19 @@ class FxServiceTest {
                 }
                 return RATES.get(currency);
             }
+
+            @Override
+            public NavigableMap<LocalDate, Double> dailyUsdPerUnit(String currency, LocalDate from) {
+                calls.incrementAndGet();
+                if (failing) {
+                    throw new ProviderException("fake", Kind.UNAVAILABLE, "down");
+                }
+                NavigableMap<LocalDate, Double> rates = new TreeMap<>();
+                // Friday 2 October and Monday 5 October 2026
+                rates.put(LocalDate.of(2026, 10, 2), RATES.get(currency) * 0.98);
+                rates.put(LocalDate.of(2026, 10, 5), RATES.get(currency));
+                return rates;
+            }
         };
         return new FxService(new TieredCache(store, JSON, CLOCK), provider);
     }
@@ -66,5 +82,25 @@ class FxServiceTest {
     @Test
     void unavailableRatesGiveNullInsteadOfFailing() {
         assertThat(service(true).toUsd(1.0, "EUR")).isNull();
+    }
+
+    @Test
+    void historicalRatesUseTheCloseOfTheDayOrTheLastOneBefore() {
+        FxService fx = service(false);
+        double usdCzkMonday = 1 / 0.0468;
+
+        assertThat(fx.rateOn("USD", "CZK", LocalDate.of(2026, 10, 5))).isCloseTo(usdCzkMonday, within(1e-9));
+        // Sunday: Friday's close
+        assertThat(fx.rateOn("USD", "CZK", LocalDate.of(2026, 10, 4)))
+                .isCloseTo(1 / (0.0468 * 0.98), within(1e-9));
+        assertThat(fx.rateOn("EUR", "CZK", LocalDate.of(2026, 10, 5))).isCloseTo(1.1401 / 0.0468, within(1e-9));
+        assertThat(fx.rateOn("CZK", "CZK", LocalDate.of(2026, 10, 5))).isEqualTo(1.0);
+        // Long before the history starts there is no rate
+        assertThat(fx.rateOn("USD", "CZK", LocalDate.of(2020, 1, 1))).isNull();
+    }
+
+    @Test
+    void missingHistoryGivesNull() {
+        assertThat(service(true).rateOn("USD", "CZK", LocalDate.of(2026, 10, 5))).isNull();
     }
 }

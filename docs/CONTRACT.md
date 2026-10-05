@@ -205,6 +205,17 @@ type T212Trade = {
   fxRate: number | null;
   realizedPnl: number | null;          // SELL only, before fees and taxes
   orderType: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT" | null;
+  original: T212Original | null;       // set when the trade settled in another currency than the account's
+};
+
+// Multi-currency accounts settle some trades and dividends in another wallet (e.g. USD in a CZK account). The
+// main amounts are then converted to the account currency at the close of that day, so every sum stays in one
+// currency; this keeps the amounts as they settled.
+type T212Original = {
+  currency: string;                    // the currency it settled in
+  value: number;                       // trade value, or the net dividend amount
+  fees: number | null; taxes: number | null; realizedPnl: number | null;   // trades only
+  rate: number | null;                 // account currency per unit used for the conversion; null if none was found
 };
 
 type T212Dividend = {
@@ -214,6 +225,7 @@ type T212Dividend = {
   amount: number;                      // net, account currency
   grossPerShare: number | null; grossPerShareCurrency: string | null;
   type: string;                        // Trading 212's dividend type, e.g. "ORDINARY"
+  original: T212Original | null;       // set when paid in another currency than the account's
 };
 
 type T212HoldingPosition = {         // money as of now
@@ -392,3 +404,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-05 | `GET /api/t212/history`: the `1D` default interval is now `5m` (was `15m`). |
 | 2026-10-05 | `GET /api/t212/history`: new intervals `1mo`, `6mo`, `1y`; every range offers every interval shorter than itself. Additive. |
 | 2026-10-05 | Firestore `users/{uid}.settings.roundNumbers?: boolean` (display amounts without decimals; frontend only). Additive. |
+| 2026-10-05 | Trading 212 multi-currency (additive): `T212Trade.original` and `T212Dividend.original` (`T212Original`) for trades and dividends settled in another currency than the account's. Their `value`, `fees`, `taxes`, `realizedPnl` and `amount` are now converted to the account currency at the close of the trade day, so all sums are in the account currency. |

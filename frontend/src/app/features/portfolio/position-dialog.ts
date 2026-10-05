@@ -87,6 +87,11 @@ export interface PositionDialogData {
                 <ng-container i18n="Period without limits">All time</ng-container>
               }
             </span>
+            @for (c of settledIn(); track c) {
+              <span summaryPill class="app-pill bg-secondary-container text-on-secondary-container" i18n="Pill on a position whose trades settled in another currency than the account's; CURRENCY is a code like USD"
+                >Traded in {{ c }}</span
+              >
+            }
           </app-position-summary>
         }
 
@@ -157,6 +162,14 @@ export class PositionDialog {
         : this.api
             .t212Instruments({ ...periodQuery(params.period), status: 'ALL' })
             .pipe(map((r) => r.items.find((x) => x.t212Ticker === this.data.t212Ticker) ?? null)),
+  });
+
+  /** Currencies other than the account's that trades or dividends of this position settled in. */
+  protected readonly settledIn = computed(() => {
+    if (!this.detail.hasValue()) return [];
+    const { trades, dividends } = this.detail.value();
+    const codes = [...trades, ...dividends].flatMap((x) => (x.original ? [x.original.currency] : []));
+    return [...new Set(codes)].sort();
   });
 
   /** Trades and dividends inside the period (its days are inclusive, in the device time zone), newest first. */

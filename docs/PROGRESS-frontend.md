@@ -203,6 +203,7 @@ Frontend:
 
 ## Decisions
 
+- **2026-10-05 — Trades in another currency than the account's** (Trading 212 multi-currency) show converted amounts everywhere, like Trading 212 does. The trade, dividend and position dialogs add a "Traded in USD" pill, the amount as it settled ("In USD"), the trade-day exchange rate (with the `tradeDayRate` ⓘ) and the result in that currency; timeline rows add the settled amount to the meta line.
 - **2026-10-04 — Every modal is a centred dialog; only the term explanation (ⓘ) is a bottom sheet**, on phones and desktop alike (the owner's choice after the "Tradiqo Redesign v2" canvas). Figures in dialogs and cards are stat rows (label left, value right, total under a divider), not two-column grids. One type scale of utilities replaces hand-written sizes. Spec: [REDESIGN-SPEC.md](REDESIGN-SPEC.md).
 - **2026-09-30 — The live values are known and used:** Firebase project `tradiqo`, backend `https://tradiqo.duckdns.org` (see PROGRESS-backend "Live deployment"). They go into `environment.prod.ts` and `.firebaserc` instead of `YOUR_SUBDOMAIN`/project placeholders. The Firebase web-app keys (`apiKey`, `appId`, `messagingSenderId`) do not exist until the web app is registered, so they stay `PLACEHOLDER`.
 - **2026-09-30 — Commits go straight to `main`, not pushed** (same as the backend). Pushing is left to the owner, because a push to `main` triggers the deploy workflows.

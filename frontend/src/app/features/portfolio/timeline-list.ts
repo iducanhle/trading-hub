@@ -36,6 +36,9 @@ import { TradeTile, TradeTileKind } from './trade-tile';
               <span class="mt-0.5 block truncate app-row-meta">
                 {{ day(t.executedAt) | appDate }} ·
                 <ng-container i18n>held after: {{ t.positionAfter | qty }}</ng-container>
+                @if (t.original; as o) {
+                  · {{ o.value | price: o.currency }}
+                }
               </span>
             </span>
             <span class="flex shrink-0 flex-col items-end text-right">
@@ -55,6 +58,9 @@ import { TradeTile, TradeTileKind } from './trade-tile';
               <span class="mt-0.5 block truncate app-row-meta">
                 {{ day(v.paidAt) | appDate }} · {{ v.quantity | qty }}
                 <ng-container i18n>shares</ng-container>
+                @if (v.original; as o) {
+                  · {{ o.value | price: o.currency }}
+                }
               </span>
             </span>
             <span class="shrink-0 text-[15px] font-semibold" [class]="tone(v.amount)">{{

@@ -29,7 +29,8 @@ export type TermId =
   | 'trueGain'
   | 'fxFees'
   | 'accountFees'
-  | 'includingFees';
+  | 'includingFees'
+  | 'tradeDayRate';
 
 export interface Term {
   title: string;
@@ -208,6 +209,14 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:Trading 212 charges no commission, so this is mostly the 0.15% currency conversion fee.`,
     ],
     example: $localize`:Term example:Realized +$100 and $3 of fees on the trades: including fees, +$97.`,
+  },
+  tradeDayRate: {
+    title: $localize`:Term title:Trades in another currency`,
+    body: [
+      $localize`:Term text:Trading 212 can keep money in more currencies, so a trade can be bought and sold in dollars even when the account is in another currency. Trading 212 then only shows it converted.`,
+      $localize`:Term text:The app does the same: every amount and total is converted to the account currency at the exchange rate of the day of the trade, and the dialog also shows the amount as it really was.`,
+    ],
+    example: $localize`:Term example:A sell with a 224 USD gain on a day when 1 USD = 22 CZK counts as +4,928 CZK.`,
   },
   unrealizedPnl: {
     title: $localize`:Term title:Unrealized profit/loss`,

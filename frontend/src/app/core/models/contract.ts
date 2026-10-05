@@ -422,6 +422,24 @@ export interface T212Trade {
   /** SELL only, before fees and taxes. */
   realizedPnl: number | null;
   orderType: 'MARKET' | 'LIMIT' | 'STOP' | 'STOP_LIMIT' | null;
+  /** Set when the trade settled in another currency than the account's. */
+  original: T212Original | null;
+}
+
+/**
+ * Money as it settled in another wallet of a multi-currency account (e.g. USD in a CZK account). The main amounts
+ * are then converted to the account currency at the close of that day.
+ */
+export interface T212Original {
+  currency: string;
+  /** Trade value, or the net dividend amount. */
+  value: number;
+  /** Trades only. */
+  fees: number | null;
+  taxes: number | null;
+  realizedPnl: number | null;
+  /** Account currency per unit used for the conversion; null if none was found. */
+  rate: number | null;
 }
 
 export interface T212DetailTrade extends T212Trade {
@@ -442,6 +460,8 @@ export interface T212Dividend {
   grossPerShare: number | null;
   grossPerShareCurrency: string | null;
   type: string;
+  /** Set when paid in another currency than the account's. */
+  original: T212Original | null;
 }
 
 export interface T212Transaction {

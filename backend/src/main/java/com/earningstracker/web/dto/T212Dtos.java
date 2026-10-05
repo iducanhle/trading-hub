@@ -88,13 +88,23 @@ public final class T212Dtos {
 
     public record Trade(String id, Instant executedAt, String t212Ticker, String symbol, String name, String side,
             String kind, double quantity, Double price, String priceCurrency, double value, double fees, double taxes,
-            Double fxRate, Double realizedPnl, String orderType) {
+            Double fxRate, Double realizedPnl, String orderType, Original original) {
+    }
+
+    /**
+     * The money of a trade or dividend as it settled, when that was not in the account currency (multi-currency
+     * accounts); the main amounts are then converted at {@code rate} (account currency per unit, the close of the
+     * trade day).
+     */
+    public record Original(String currency, double value, Double fees, Double taxes, Double realizedPnl,
+            Double rate) {
     }
 
     /** A trade in the instrument detail: {@code T212Trade & { positionAfter }}. */
     public record DetailTrade(String id, Instant executedAt, String t212Ticker, String symbol, String name,
             String side, String kind, double quantity, Double price, String priceCurrency, double value, double fees,
-            double taxes, Double fxRate, Double realizedPnl, String orderType, double positionAfter) {
+            double taxes, Double fxRate, Double realizedPnl, String orderType, Original original,
+            double positionAfter) {
     }
 
     public record TradePage(List<Trade> items, String nextCursor, String accountCurrency, Instant asOf,
@@ -102,7 +112,7 @@ public final class T212Dtos {
     }
 
     public record Dividend(String id, Instant paidAt, String t212Ticker, String symbol, String name, double quantity,
-            double amount, Double grossPerShare, String grossPerShareCurrency, String type) {
+            double amount, Double grossPerShare, String grossPerShareCurrency, String type, Original original) {
     }
 
     public record InstrumentDetail(String accountCurrency, Instrument instrument, List<DetailTrade> trades,

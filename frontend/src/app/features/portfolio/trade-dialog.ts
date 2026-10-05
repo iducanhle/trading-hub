@@ -62,12 +62,30 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         [value]="valueBeforeFees()"
         [currency]="data.currency"
       />
+      @if (t.original; as o) {
+        <p class="mt-1.5">
+          <span
+            class="app-pill bg-secondary-container text-on-secondary-container"
+            i18n="Pill on a trade that settled in another currency than the account's; CURRENCY is a code like USD"
+            >Traded in {{ o.currency }}</span
+          >
+        </p>
+      }
       <dl appStatList card class="mt-3.5">
         <div appStatRow label="Shares" i18n-label>{{ t.quantity | qty }}</div>
         <div appStatRow label="Price per share" i18n-label>
           {{ t.price | price: t.priceCurrency }}
         </div>
-        @if (t.fxRate !== null && t.fxRate !== 1) {
+        @if (t.original; as o) {
+          <div appStatRow [label]="originalValueLabel()">{{ o.value | price: o.currency }}</div>
+          <div appStatRow label="Exchange rate" i18n-label term="tradeDayRate">
+            @if (o.rate !== null) {
+              1 {{ o.currency }} = {{ o.rate | price: data.currency }}
+            } @else {
+              —
+            }
+          </div>
+        } @else if (t.fxRate !== null && t.fxRate !== 1) {
           <div appStatRow label="Exchange rate" i18n-label>{{ t.fxRate | num: 4 }}</div>
         }
         <div appStatRow label="Including fees" i18n-label term="includingFees">
@@ -87,6 +105,13 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
               [pct]="resultPct() ?? undefined"
             />
           </div>
+          @if (t.original; as o) {
+            @if (o.realizedPnl !== null) {
+              <div appStatRow sub [label]="originalResultLabel()">
+                <app-pnl [value]="o.realizedPnl" [currency]="o.currency" />
+              </div>
+            }
+          }
         }
       </dl>
       <dl appStatList class="mt-1.5">
@@ -102,6 +127,13 @@ export class TradeDialog {
 
   protected readonly orderLabels = ORDER_LABELS;
   protected readonly ticker = computed(() => displayTicker(this.data.trade));
+  /** "In USD": the trade value as it settled, for a trade outside the account currency. */
+  protected readonly originalValueLabel = computed(
+    () => $localize`:Trade value in the currency it settled in; CURRENCY is a code like USD:In ${this.data.trade.original?.currency ?? ''}:CURRENCY:`,
+  );
+  protected readonly originalResultLabel = computed(
+    () => $localize`:Profit/loss of a sell in the currency it settled in; CURRENCY is a code like USD:Result in ${this.data.trade.original?.currency ?? ''}:CURRENCY:`,
+  );
   protected readonly label = computed(() => {
     const t = this.data.trade;
     return t.kind === 'TRADE' ? SIDE_LABELS[t.side] : KIND_LABELS[t.kind];
