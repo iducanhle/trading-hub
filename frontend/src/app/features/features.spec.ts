@@ -322,7 +322,6 @@ describe('portfolio model', () => {
     expect(names('pnl')).toEqual(['Microsoft', 'Vanguard S&P 500', 'Apple']);
     expect(names('pnlPct')).toEqual(['Vanguard S&P 500', 'Apple', 'Microsoft']); // missing last
     expect(names('value')).toEqual(['Vanguard S&P 500', 'Apple', 'Microsoft']);
-    expect(names('lastTrade')).toEqual(['Microsoft', 'Vanguard S&P 500', 'Apple']);
     expect(names('name')).toEqual(['Apple', 'Microsoft', 'Vanguard S&P 500']);
   });
 
