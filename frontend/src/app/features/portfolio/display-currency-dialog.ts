@@ -44,6 +44,17 @@ const rateFormat = new Intl.NumberFormat(NUMBER_LOCALE, { maximumSignificantDigi
         </div>
       </div>
 
+      <div
+        class="mt-3 flex gap-3 rounded-[22px] bg-surface-container px-[18px] py-3.5 text-[13px] leading-relaxed text-on-surface-variant"
+      >
+        <app-icon name="info" [size]="18" class="mt-0.5 shrink-0" />
+        <p class="m-0" i18n>
+          Converted amounts are only approximate. Every amount, past trades and profit included, is
+          converted at today's exchange rate, so it can differ from what Trading 212 would show in
+          that currency. The account itself stays in {{ account }}.
+        </p>
+      </div>
+
       <p class="app-label mt-5 mb-1.5 px-1" i18n="Label above the list of currencies">
         Show amounts in
       </p>
@@ -96,17 +107,6 @@ const rateFormat = new Intl.NumberFormat(NUMBER_LOCALE, { maximumSignificantDigi
           Exchange rates aren't available right now, so amounts stay in the account currency.
         </p>
       }
-
-      <div
-        class="mt-5 flex gap-3 rounded-[22px] bg-surface-container px-[18px] py-3.5 text-[13px] leading-relaxed text-on-surface-variant"
-      >
-        <app-icon name="info" [size]="18" class="mt-0.5 shrink-0" />
-        <p class="m-0" i18n>
-          Converted amounts are only approximate. Every amount, past trades and profit included, is
-          converted at today's exchange rate, so it can differ from what Trading 212 would show in
-          that currency. The account itself stays in {{ account }}.
-        </p>
-      </div>
     </app-dialog>
   `,
 })

@@ -21,13 +21,13 @@ import {
   ISeriesApi,
   LineSeries,
   LineStyle,
-  MismatchDirection,
   MouseEventParams,
   Time,
   UTCTimestamp,
   createChart,
 } from 'lightweight-charts';
 import { ApiService } from '../../core/api/api.service';
+import { TOUCH_HANDLE_SCROLL, enableTouchCrosshair } from '../../shared/utils/chart-touch';
 import {
   T212HistoryInterval,
   T212HistoryPoint,
@@ -429,8 +429,7 @@ export class PortfolioHistory {
         secondsVisible: false,
       },
       crosshair: { mode: CrosshairMode.Magnet },
-      // Vertical drags scroll the page; one finger moves the crosshair (see below), two fingers zoom.
-      handleScroll: { vertTouchDrag: false, horzTouchDrag: false },
+      handleScroll: TOUCH_HANDLE_SCROLL,
     });
     chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
       this.hovered.set(
@@ -449,21 +448,9 @@ export class PortfolioHistory {
       priceLineVisible: false,
       crosshairMarkerRadius: 4,
     });
-    // Touch: a tap or a one-finger drag shows the crosshair at once (the library's default needs a long press and
-    // drops it on the next tap). It stays on the touched point until the next touch.
-    const track = (e: TouchEvent) => {
-      const value = this.value;
-      if (e.touches.length !== 1 || !value) return;
-      const x = e.touches[0].clientX - el.getBoundingClientRect().left;
-      const logical = chart.timeScale().coordinateToLogical(x);
-      if (logical === null) return;
-      const bar = value.dataByIndex(Math.round(logical), MismatchDirection.NearestLeft);
-      if (!bar || !('value' in bar)) return;
-      chart.setCrosshairPosition(bar.value, bar.time, value);
-      this.hovered.set(this.byTime.get(bar.time as number) ?? null);
-    };
-    el.addEventListener('touchstart', track, { passive: true });
-    el.addEventListener('touchmove', track, { passive: true });
+    enableTouchCrosshair(chart, el, () => this.value, (time) =>
+      this.hovered.set(this.byTime.get(time as number) ?? null),
+    );
     this.chart = chart;
   }
 

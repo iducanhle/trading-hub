@@ -4,8 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { SORT_LABELS } from './portfolio-labels';
-import { SortDirection, StockSort, defaultSortDirection, displayTicker } from './portfolio-model';
-import { Segment, Segmented } from '../../shared/components/segmented/segmented';
+import { SortDirection, StockSort, displayTicker } from './portfolio-model';
 import { InstrumentOption } from './trades-filters';
 import { Dialog } from '../../shared/components/dialog/dialog';
 
@@ -13,12 +12,14 @@ export interface StocksView {
   /** t212Tickers; empty = all stocks. */
   tickers: string[];
   sort: StockSort;
-  direction: SortDirection;
 }
 
-export const DEFAULT_STOCKS_VIEW: StocksView = { tickers: [], sort: 'pnl', direction: 'desc' };
+export const DEFAULT_STOCKS_VIEW: StocksView = { tickers: [], sort: 'pnl' };
 
-export const STOCK_SORTS: readonly StockSort[] = ['pnl', 'pnlPct', 'value', 'lastTrade', 'name'];
+/** The direction toggle beside the Filters button starts ascending. */
+export const DEFAULT_STOCKS_DIRECTION: SortDirection = 'asc';
+
+export const STOCK_SORTS: readonly StockSort[] = ['pnl', 'pnlPct', 'value', 'name'];
 
 export interface StocksFilterContext {
   view: StocksView;
@@ -29,7 +30,7 @@ export interface StocksFilterContext {
 /** Stocks (multi-select, as on the Trades tab) and sort of the Stocks tab in a bottom sheet; a draft until Done. */
 @Component({
   selector: 'app-stocks-filter-sheet',
-  imports: [Dialog, Segmented, Segment, MatButton, MatFormField, MatLabel, MatSelect, MatSelectTrigger, MatOption],
+  imports: [Dialog, MatButton, MatFormField, MatLabel, MatSelect, MatSelectTrigger, MatOption],
   template: `
     <app-dialog title="Filters" i18n-title>
       <div class="flex flex-col gap-3">
@@ -53,23 +54,12 @@ export interface StocksFilterContext {
         </mat-form-field>
         <mat-form-field appearance="fill" subscriptSizing="dynamic" class="w-full">
           <mat-label i18n>Sort</mat-label>
-          <mat-select [value]="draft().sort" (selectionChange)="setSort($event.value)">
+          <mat-select [value]="draft().sort" (selectionChange)="patch({ sort: $event.value })">
             @for (option of sorts; track option) {
               <mat-option [value]="option">{{ sortLabels[option] }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
-        <app-segmented
-          inset
-          stretch
-          aria-label="Sort direction"
-          i18n-aria-label
-          [value]="draft().direction"
-          (valueChange)="patch({ direction: $event })"
-        >
-          <app-segment value="desc" i18n="Sort direction: highest, newest or Z first">Descending</app-segment>
-          <app-segment value="asc" i18n="Sort direction: lowest, oldest or A first">Ascending</app-segment>
-        </app-segmented>
       </div>
       <button dialogActions matButton="tonal" type="button" (click)="draft.set(defaults)">
         <ng-container i18n>Reset</ng-container>
@@ -115,11 +105,6 @@ export class StocksFilterSheet {
 
   protected patch(patch: Partial<StocksView>): void {
     this.draft.update((view) => ({ ...view, ...patch }));
-  }
-
-  /** A new sort starts in its natural direction. */
-  protected setSort(sort: StockSort): void {
-    this.patch({ sort, direction: defaultSortDirection(sort) });
   }
 
   protected done(): void {

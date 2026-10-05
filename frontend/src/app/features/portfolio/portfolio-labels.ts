@@ -24,7 +24,6 @@ export const SORT_LABELS: Record<StockSort, string> = {
   pnl: $localize`:Sort by:Profit/loss`,
   pnlPct: $localize`:Sort by:Profit/loss %`,
   value: $localize`:Sort by:Value`,
-  lastTrade: $localize`:Sort by:Last trade`,
   name: $localize`:Sort by:Name`,
 };
 

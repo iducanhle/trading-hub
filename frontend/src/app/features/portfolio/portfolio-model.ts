@@ -110,7 +110,7 @@ export function periodQuery(period: PortfolioPeriod, tz: string = DEVICE_TZ): T2
   return { from: period.from, to: period.to, tz };
 }
 
-export type StockSort = 'pnl' | 'pnlPct' | 'value' | 'lastTrade' | 'name';
+export type StockSort = 'pnl' | 'pnlPct' | 'value' | 'name';
 export type SortDirection = 'asc' | 'desc';
 
 /** The direction a sort starts in: A–Z for names, highest / newest first otherwise. */
@@ -180,8 +180,6 @@ export function sortInstruments(
       return sorted.sort(desc((i) => instrumentPnlPct(i, includeUnrealized)));
     case 'value':
       return sorted.sort(desc((i) => i.value));
-    case 'lastTrade':
-      return sorted.sort(desc((i) => (i.lastTradeAt ? Date.parse(i.lastTradeAt) : null)));
     case 'name':
       return sorted.sort((a, b) => -sign * a.name.localeCompare(b.name));
   }

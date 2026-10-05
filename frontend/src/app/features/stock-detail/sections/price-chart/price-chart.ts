@@ -57,6 +57,7 @@ import {
 import { NUMBER_LOCALE, PERIOD_LABELS } from '../../../../shared/utils/format';
 import { APP_LOCALE } from '../../../../shared/utils/locale';
 import { persistedSignal } from '../../../../shared/utils/persisted-signal';
+import { TOUCH_HANDLE_SCROLL, enableTouchCrosshair } from '../../../../shared/utils/chart-touch';
 import { StockContext } from '../../stock-context';
 import { readChartColors, withAlpha } from './chart-colors';
 import { ChartType, futureSessions, placeMarkers } from './chart-data';
@@ -682,14 +683,16 @@ export class PriceChart {
         minBarSpacing: 0.1,
       },
       crosshair: { mode: CrosshairMode.Magnet },
-      // Vertical drags scroll the page; horizontal drags pan, two fingers zoom.
-      handleScroll: { vertTouchDrag: false },
+      handleScroll: TOUCH_HANDLE_SCROLL,
     });
     chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
       this.hovered.set(
         param.time && param.point ? (this.legendBars().get(timeKey(param.time)) ?? null) : null,
       );
     });
+    enableTouchCrosshair(chart, this.container().nativeElement, () => this.main, (time) =>
+      this.hovered.set(this.legendBars().get(timeKey(time)) ?? null),
+    );
     chart.subscribeClick((param: MouseEventParams<Time>) => {
       if (this.measuring()) {
         this.pick(param);
