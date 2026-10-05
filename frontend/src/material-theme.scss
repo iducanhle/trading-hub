@@ -74,30 +74,30 @@ html {
   // Visible focus rings for keyboard users on every Material component.
   @include mat.strong-focus-indicators();
 
-  // Pill buttons, bold labels; no shadows anywhere (depth comes from the two surface levels).
+  // Compact pill buttons (32 px tall, 13 px bold labels); no shadows anywhere (depth comes from the two surface levels).
   @include mat.button-overrides(
     (
       filled-container-shape: 999px,
-      filled-container-height: 44px,
-      filled-horizontal-padding: 20px,
-      filled-label-text-size: 15px,
+      filled-container-height: 32px,
+      filled-horizontal-padding: 14px,
+      filled-label-text-size: 13px,
       filled-label-text-weight: 700,
       tonal-container-shape: 999px,
-      tonal-container-height: 44px,
-      tonal-horizontal-padding: 18px,
+      tonal-container-height: 32px,
+      tonal-horizontal-padding: 14px,
       tonal-container-color: var(--mat-sys-surface-container-high),
       tonal-label-text-color: var(--mat-sys-on-surface),
-      tonal-label-text-size: 15px,
+      tonal-label-text-size: 13px,
       tonal-label-text-weight: 700,
       outlined-container-shape: 999px,
-      outlined-container-height: 44px,
+      outlined-container-height: 32px,
       outlined-outline-color: var(--mat-sys-outline-variant),
       outlined-label-text-color: var(--mat-sys-on-surface),
-      outlined-label-text-size: 15px,
+      outlined-label-text-size: 13px,
       outlined-label-text-weight: 700,
       text-container-shape: 999px,
-      text-container-height: 44px,
-      text-label-text-size: 15px,
+      text-container-height: 32px,
+      text-label-text-size: 13px,
       text-label-text-weight: 700,
       protected-container-shape: 999px,
       protected-container-elevation-shadow: none,
@@ -182,7 +182,7 @@ html {
       container-text-weight: 600,
       // Compact fields: 40 px tall (Material default 56) with 12 px text and placeholder.
       container-text-size: 12px,
-      filled-label-text-size: 12px,
+      filled-label-text-size: 13px,
       container-height: 40px,
       container-vertical-padding: 10px,
       filled-with-label-container-padding-top: 16px,
@@ -216,12 +216,31 @@ html {
       container-shape: 16px,
       container-color: var(--mat-sys-surface-container-high),
       container-elevation-shadow: none,
+      item-label-text-size: 12px,
+      item-label-text-weight: 600,
     )
   );
+  // Selects, their options and menu items use the same 12 px text as the compact fields.
   @include mat.select-overrides(
     (
       panel-background-color: var(--mat-sys-surface-container-high),
       container-elevation-shadow: none,
+      trigger-text-size: 12px,
+      trigger-text-weight: 600,
+    )
+  );
+  @include mat.option-overrides(
+    (
+      label-text-size: 12px,
+      label-text-weight: 600,
+      // The selected option is marked by accent text and check, not a white label on a grey layer.
+      selected-state-label-text-color: var(--mat-sys-primary),
+      selected-state-layer-color: transparent,
+    )
+  );
+  @include mat.pseudo-checkbox-overrides(
+    (
+      minimal-selected-checkmark-color: var(--mat-sys-primary),
     )
   );
   @include mat.snack-bar-overrides(
@@ -273,4 +292,17 @@ html.dark {
 // Overlays (dialogs, sheets, menus) dim the page with the design's scrim.
 .cdk-overlay-dark-backdrop {
   background: var(--app-scrim);
+}
+
+// Select options: Material paints the selected option in the accent only while it is not the active (highlighted)
+// one, and when a panel opens the selected option is always active, so it showed white text on a grey layer with
+// the white strong-focus ring. Keep the selected option accent text with no layer or ring in every state.
+.mat-mdc-option.mdc-list-item.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background-color: transparent;
+  .mdc-list-item__primary-text {
+    color: var(--mat-sys-primary);
+  }
+  &::before {
+    display: none;
+  }
 }

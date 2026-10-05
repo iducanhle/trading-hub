@@ -50,7 +50,7 @@ export const DIALOG_CONFIG: MatDialogConfig = {
           <app-icon name="close" />
         </button>
       </div>
-      <div class="min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-5 lg:px-6 lg:pb-6">
+      <div class="dialog-body min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-5 lg:px-6 lg:pb-6">
         <ng-content />
       </div>
       <div class="dialog-actions flex gap-2.5 px-5 pb-5 empty:hidden lg:px-6 lg:pb-6">
@@ -67,6 +67,10 @@ export const DIALOG_CONFIG: MatDialogConfig = {
       --mat-button-tonal-container-height: 52px;
       --mat-button-outlined-container-height: 52px;
       --mat-button-text-container-height: 52px;
+    }
+    /* With buttons below, the body ends 12 px above them instead of the full 20-24 px bottom padding. */
+    .dialog-body:has(+ .dialog-actions:not(:empty)) {
+      padding-bottom: 12px;
     }
     .dialog-actions > ::ng-deep * {
       flex: 1 1 0;
