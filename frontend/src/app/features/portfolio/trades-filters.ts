@@ -6,7 +6,7 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { T212Side } from '../../core/models/contract';
 import { Dialog } from '../../shared/components/dialog/dialog';
-import { displayTicker } from './portfolio-model';
+import { SortDirection, displayTicker } from './portfolio-model';
 
 export interface TradeFilters {
   side: T212Side | null;
@@ -14,16 +14,21 @@ export interface TradeFilters {
   tickers: string[];
 }
 
-/** Order of the Trades list; anything but newest first loads every trade of the period to sort them. */
-export type TradeSort = 'newest' | 'oldest' | 'value' | 'result';
+/**
+ * Order of the Trades list, with its direction on the toggle beside the Filters button. Anything but date descending
+ * (newest first) loads every trade of the period to sort them.
+ */
+export type TradeSort = 'date' | 'value' | 'result';
 
-export const DEFAULT_TRADE_SORT: TradeSort = 'newest';
+export const DEFAULT_TRADE_SORT: TradeSort = 'date';
 
-export const TRADE_SORTS: readonly TradeSort[] = ['newest', 'oldest', 'value', 'result'];
+/** Trades start newest first, the order the server pages in. */
+export const DEFAULT_TRADE_DIRECTION: SortDirection = 'desc';
+
+export const TRADE_SORTS: readonly TradeSort[] = ['date', 'value', 'result'];
 
 export const TRADE_SORT_LABELS: Record<TradeSort, string> = {
-  newest: $localize`:Sort by:Newest`,
-  oldest: $localize`:Sort by:Oldest`,
+  date: $localize`:Sort by:Date`,
   value: $localize`:Sort by:Value`,
   result: $localize`:Sort by:Result`,
 };

@@ -36,6 +36,7 @@ import { toneClass } from '../../shared/utils/format';
 import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
+  SortDirection,
   displayTicker,
   filterInstruments,
   groupTradesByDay,
@@ -44,7 +45,9 @@ import {
 import { TradeDialog, TradeDialogData } from './trade-dialog';
 import { TradeTile } from './trade-tile';
 import {
+  DEFAULT_TRADE_DIRECTION,
   DEFAULT_TRADE_SORT,
+  TRADE_SORTS,
   InstrumentOption,
   TRADE_SORT_LABELS,
   TradeFilters,
@@ -121,6 +124,14 @@ const EMPTY: ListState = {
           (input)="search.set($any($event.target).value)"
         />
       </label>
+      <button
+        type="button"
+        class="flex size-[46px] shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+        [attr.aria-label]="direction() === 'desc' ? descendingLabel : ascendingLabel"
+        (click)="direction.set(direction() === 'desc' ? 'asc' : 'desc')"
+      >
+        <app-icon [name]="direction() === 'desc' ? 'sort_desc' : 'sort_asc'" />
+      </button>
       <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
     </div>
     @if (chips().length) {
@@ -304,6 +315,14 @@ export class PortfolioTrades {
 
   protected readonly search = signal('');
   protected readonly sort = persistedSignal<TradeSort>('portfolio.trades.sort', DEFAULT_TRADE_SORT);
+  protected readonly direction = persistedSignal<SortDirection>(
+    'portfolio.trades.direction',
+    DEFAULT_TRADE_DIRECTION,
+  );
+  protected readonly descendingLabel = $localize`Descending, tap for ascending`;
+  protected readonly ascendingLabel = $localize`Ascending, tap for descending`;
+  /** Newest first: the server's order, so the list pages in as it scrolls. */
+  private readonly paged = computed(() => this.sort() === 'date' && this.direction() === 'desc');
 
   /** A chip for each picked stock and a non-default sort; removing one drops it. */
   protected readonly chips = computed(() => {
@@ -378,7 +397,7 @@ export class PortfolioTrades {
       ...periodQuery(this.period()),
       side: this.filters().side,
       ticker: tickers?.join(',') || null,
-      limit: this.sort() === 'newest' ? PAGE_SIZE : 100,
+      limit: this.paged() ? PAGE_SIZE : 100,
     };
   });
 
@@ -422,9 +441,9 @@ export class PortfolioTrades {
     return { bought, sold, realized, afterFees, currency: all.currency };
   });
 
-  /** Sorts other than newest first wait for the whole period. */
+  /** Orders other than newest first wait for the whole period. */
   protected readonly ready = computed(
-    () => this.state().loaded && (this.sort() === 'newest' || !this.state().next),
+    () => this.state().loaded && (this.paged() || !this.state().next),
   );
 
   protected readonly filtered = computed(
@@ -434,21 +453,23 @@ export class PortfolioTrades {
   /** Day sections when sorted by date; one section without a date otherwise. */
   protected readonly days = computed<{ date: string | null; items: T212Trade[] }[]>(() => {
     const items = this.state().items;
+    const sign = this.direction() === 'desc' ? 1 : -1;
     switch (this.sort()) {
-      case 'newest':
-        return groupTradesByDay(items);
-      case 'oldest':
-        return groupTradesByDay([...items].reverse());
+      case 'date':
+        return groupTradesByDay(sign > 0 ? items : [...items].reverse());
       case 'value':
-        return [{ date: null, items: [...items].sort((a, b) => b.value - a.value) }];
+        return [{ date: null, items: [...items].sort((a, b) => sign * (b.value - a.value)) }];
       case 'result':
+        // Trades without a result (buys) stay last either way.
         return [
           {
             date: null,
-            items: [...items].sort(
-              (a, b) =>
-                (b.realizedPnl ?? -Infinity) - (a.realizedPnl ?? -Infinity) || b.value - a.value,
-            ),
+            items: [...items].sort((a, b) => {
+              if (a.realizedPnl === null || b.realizedPnl === null) {
+                return (a.realizedPnl === null ? 1 : 0) - (b.realizedPnl === null ? 1 : 0);
+              }
+              return sign * (b.realizedPnl - a.realizedPnl || b.value - a.value);
+            }),
           },
         ];
     }
@@ -461,6 +482,12 @@ export class PortfolioTrades {
   );
 
   constructor() {
+    // Sorts saved before the direction toggle: newest / oldest become date with a direction.
+    const saved = this.sort() as string;
+    if (!TRADE_SORTS.includes(saved as TradeSort)) {
+      this.sort.set(DEFAULT_TRADE_SORT);
+      if (saved === 'oldest') this.direction.set('asc');
+    }
     effect(() => {
       const query = this.query();
       this.version();
@@ -516,7 +543,7 @@ export class PortfolioTrades {
           asOf: page.asOf,
           loaded: true,
         }));
-        if (page.nextCursor && this.sort() !== 'newest') {
+        if (page.nextCursor && !this.paged()) {
           this.fetch({ ...query, cursor: page.nextCursor }, true);
         }
       },

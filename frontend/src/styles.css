@@ -11,6 +11,14 @@ html {
   touch-action: pan-x pan-y;
 }
 
+/* Nothing may stick out sideways. With maximum-scale=1 (index.html) iOS can't zoom out to fit wider content, so it
+   enlarges the layout viewport instead (width and height together): the page's end and the fixed bottom pill then
+   sit below the real screen. Both elements need it, as iOS ignores it on body alone. */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* Class-based dark mode: ThemeService and the boot script in index.html put .dark on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
