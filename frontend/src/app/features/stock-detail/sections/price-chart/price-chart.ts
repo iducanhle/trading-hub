@@ -153,7 +153,7 @@ function formatTickmarks(prices: readonly number[]): string[] {
     <section class="pt-2 pb-2" aria-labelledby="price-chart-title">
       <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
       <!-- Chart type and the measure tool share a row and a height (42 px, the segmented track). -->
-      <div class="flex items-center justify-between gap-2 px-4 pt-1">
+      <div class="mb-3 flex items-center justify-between gap-2 px-4 pt-1">
         <button
           type="button"
           class="flex h-[42px] shrink-0 items-center gap-1.5 rounded-full border border-outline-variant px-3.5 text-[13px] font-bold"
