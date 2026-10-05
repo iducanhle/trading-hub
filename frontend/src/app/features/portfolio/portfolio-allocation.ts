@@ -3,16 +3,11 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
-import {
-  T212AllocationItem,
-  T212HoldingPosition,
-  T212HoldingsResponse,
-} from '../../core/models/contract';
+import { T212AllocationItem } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
-import { PercentPipe } from '../../shared/pipes/format.pipes';
-import { formatPercent, formatPlainPercent, toneClass, toneOf } from '../../shared/utils/format';
+import { formatPlainPercent } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { AllocationDialog, AllocationDialogData } from './allocation-dialog';
 import { displayTicker } from './portfolio-model';
@@ -43,13 +38,12 @@ interface Tile {
 }
 
 /**
- * Portfolio → Overview: the open positions as a treemap (area = share of the value, colour = unrealized
- * profit/loss). A tile opens the position's unrealized profit/loss; the "…" tile lists every position in a dialog.
+ * Portfolio → Overview: the open positions as a treemap; area and label = share of the portfolio's value. A tile opens the position's unrealized profit/loss; the "…" tile lists every position in a dialog.
  * The card collapses to its title; the choice is remembered.
  */
 @Component({
   selector: 'app-portfolio-allocation',
-  imports: [StockLogo, Icon, PercentPipe],
+  imports: [StockLogo, Icon],
   template: `
     @if (data.hasValue() && data.value().items.length) {
       <section class="app-card" aria-labelledby="allocation-title">
@@ -73,7 +67,7 @@ interface Tile {
         @if (expanded()) {
           <div id="allocation-content">
             <p class="mt-1 text-[13px] text-on-surface-variant" i18n>
-              Each position's share of your portfolio and its unrealized profit or loss.
+              How much of your portfolio each position takes up.
             </p>
             <div class="relative mt-3.5 aspect-[31/34] w-full" role="list">
               @for (t of tiles(); track t.item?.t212Ticker ?? 'others') {
@@ -88,8 +82,7 @@ interface Tile {
                   @if (t.item; as item) {
                     <button
                       type="button"
-                      class="flex size-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[14px] px-1 text-center"
-                      [class]="tileClass(change(item))"
+                      class="flex size-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[14px] bg-surface-container-high px-1 text-center"
                       [attr.aria-label]="tileLabel(item)"
                       (click)="open(item)"
                     >
@@ -107,8 +100,8 @@ interface Tile {
                         }}</span>
                       }
                       @if (t.fit === 'full' || t.fit === 'text') {
-                        <span class="text-[13px] font-medium" [class]="tone(change(item))">{{
-                          change(item) | pct
+                        <span class="text-[13px] font-medium text-on-surface-variant">{{
+                          share(item)
                         }}</span>
                       }
                     </button>
@@ -148,17 +141,6 @@ export class PortfolioAllocation {
     stream: () => this.api.t212Allocation(),
   });
 
-  /** The open positions with their unrealized result; the same cached request as the holdings card. */
-  private readonly holdings = rxResource({
-    params: () => ({ version: this.version() + this.t212.dataVersion() }),
-    stream: () => this.api.t212Holdings(),
-  });
-
-  /** Unrealized profit/loss in percent by `t212Ticker`, an instrument's pie and own parts together. */
-  private readonly unrealized = computed(() =>
-    this.holdings.hasValue() ? unrealizedPcts(this.holdings.value()) : {},
-  );
-
   protected readonly tiles = computed((): Tile[] => {
     if (!this.data.hasValue()) return [];
     const items = this.data.value().items.filter((i) => i.weightPct > 0);
@@ -194,36 +176,12 @@ export class PortfolioAllocation {
           },
           () => undefined,
         );
-        firstValueFrom(this.api.t212Holdings()).then(
-          (value) => this.holdings.set(value),
-          () => undefined,
-        );
       });
     });
   }
 
-  /** Unrealized profit/loss in percent; null while loading and for positions without a known cost. */
-  protected change(item: T212AllocationItem): number | null {
-    return this.unrealized()[item.t212Ticker] ?? null;
-  }
-
   protected ticker(item: T212AllocationItem): string {
     return displayTicker(item);
-  }
-
-  protected tone(value: number | null): string {
-    return toneClass(value);
-  }
-
-  protected tileClass(change: number | null): string {
-    switch (toneOf(change)) {
-      case 'gain':
-        return 'bg-gain-container';
-      case 'loss':
-        return 'bg-loss-container';
-      default:
-        return 'bg-surface-container-high';
-    }
   }
 
   protected share(item: T212AllocationItem): string {
@@ -233,11 +191,7 @@ export class PortfolioAllocation {
   protected tileLabel(item: T212AllocationItem): string {
     const ticker = this.ticker(item);
     const share = this.share(item);
-    const unrealized = this.change(item);
-    if (unrealized === null)
-      return $localize`:Treemap tile; ticker, share of the portfolio:${ticker}:ticker:, ${share}:share: of the portfolio`;
-    const change = formatPercent(unrealized);
-    return $localize`:Treemap tile; ticker, share of the portfolio, unrealized profit/loss:${ticker}:ticker:, ${share}:share: of the portfolio, unrealized ${change}:change:`;
+    return $localize`:Treemap tile; ticker, share of the portfolio:${ticker}:ticker:, ${share}:share: of the portfolio`;
   }
 
   protected openAll(): void {
@@ -246,7 +200,6 @@ export class PortfolioAllocation {
       .open<AllocationDialog, AllocationDialogData, T212AllocationItem>(AllocationDialog, {
         data: {
           items: this.data.value().items,
-          changes: this.unrealized(),
         },
         ...DIALOG_CONFIG,
       })
@@ -279,25 +232,4 @@ function fitOf(width: number, height: number): Tile['fit'] {
   if (width >= 52 && height >= 44) return 'text';
   if (width >= 40 && height >= 24) return 'ticker';
   return 'none';
-}
-
-/** Unrealized percent per instrument; a position split across pies and outside them is summed first. */
-function unrealizedPcts(holdings: T212HoldingsResponse): Record<string, number> {
-  const sums: Record<string, { value: number; pnl: number }> = {};
-  const add = (p: T212HoldingPosition) => {
-    if (p.value === null || p.pnl === null) return;
-    const sum = (sums[p.t212Ticker] ??= { value: 0, pnl: 0 });
-    sum.value += p.value;
-    sum.pnl += p.pnl;
-  };
-  for (const h of holdings.items) {
-    if (h.kind === 'PIE') h.pie.positions.forEach(add);
-    else add(h.position);
-  }
-  const pcts: Record<string, number> = {};
-  for (const [ticker, { value, pnl }] of Object.entries(sums)) {
-    const cost = value - pnl;
-    if (cost > 0) pcts[ticker] = (pnl / cost) * 100;
-  }
-  return pcts;
 }
