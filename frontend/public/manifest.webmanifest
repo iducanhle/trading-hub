@@ -6,7 +6,7 @@
   "lang": "en",
   "display": "standalone",
   "scope": "/",
-  "start_url": "/followed",
+  "start_url": "/",
   "background_color": "#faf9fd",
   "theme_color": "#1b5fb8",
   "icons": [
