@@ -87,6 +87,8 @@ export class Segmented<T = unknown> {
   readonly appearance = input<'track' | 'chips'>('track');
   readonly inset = input(false, { transform: booleanAttribute });
   readonly stretch = input(false, { transform: booleanAttribute });
+  /** Options that don't fit flow onto another line instead of scrolling sideways (long period rows). */
+  readonly wrap = input(false, { transform: booleanAttribute });
 
   private readonly segments = contentChildren(Segment, { descendants: true });
   readonly first = computed(() => this.segments()[0]);
@@ -108,7 +110,7 @@ export class Segmented<T = unknown> {
   }
 
   protected readonly hostClass = computed(() => {
-    const layout = this.stretch() ? 'flex w-full' : 'inline-flex';
+    const layout = this.wrap() ? 'flex flex-wrap' : this.stretch() ? 'flex w-full' : 'inline-flex';
     if (this.appearance() === 'chips') return `${layout} gap-0.5`;
     const track = this.inset() ? 'bg-surface-container-high' : 'bg-surface-container';
     return `${layout} rounded-full p-[3px] ${track}`;

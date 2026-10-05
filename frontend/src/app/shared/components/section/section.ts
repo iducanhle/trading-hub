@@ -11,18 +11,19 @@ let nextId = 0;
   selector: 'app-section',
   imports: [Icon],
   template: `
-    <section class="pt-7" [attr.aria-labelledby]="headingId">
+    <!-- Same card and disclosure header as the portfolio cards (Asset allocation, Open positions). -->
+    <section class="app-section-card app-card mx-4 mt-4 block" [attr.aria-labelledby]="headingId">
       @if (collapsible()) {
         <h2 class="m-0">
           <button
             type="button"
             [id]="headingId"
-            class="flex min-h-12 w-full items-center gap-2 rounded-2xl px-5 text-left app-title-section hover:bg-surface-container"
+            class="-m-2 flex w-[calc(100%+16px)] items-center gap-2 rounded-2xl p-2 text-left hover:bg-surface-container-high"
             [attr.aria-expanded]="expanded()"
             [attr.aria-controls]="contentId"
             (click)="expanded.set(!expanded())"
           >
-            <span class="flex-1">{{ title() }}</span>
+            <span class="app-title-card min-w-0 flex-1">{{ title() }}</span>
             <ng-content select="[sectionMeta]" />
             <app-icon
               name="keyboard_arrow_down"
@@ -32,13 +33,13 @@ let nextId = 0;
           </button>
         </h2>
       } @else {
-        <h2 [id]="headingId" class="flex min-h-12 items-center gap-2 px-5 app-title-section">
-          <span class="flex-1">{{ title() }}</span>
+        <h2 [id]="headingId" class="m-0 flex items-center gap-2">
+          <span class="app-title-card min-w-0 flex-1">{{ title() }}</span>
           <ng-content select="[sectionMeta]" />
         </h2>
       }
       @if (expanded() || !collapsible()) {
-        <div [id]="contentId" class="px-4 pt-2 pb-2">
+        <div [id]="contentId" class="pt-3">
           <ng-content />
         </div>
       }

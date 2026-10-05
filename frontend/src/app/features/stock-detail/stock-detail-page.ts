@@ -28,7 +28,6 @@ import { News } from './sections/news';
 import { Notes } from './sections/notes';
 import { Peers } from './sections/peers';
 import { PerformanceHistory } from './sections/performance-history';
-import { PerformanceSummary } from './sections/performance-summary';
 import { YourPosition } from './sections/your-position';
 import { PriceChart } from './sections/price-chart/price-chart';
 import { Recommendations } from './sections/recommendations';
@@ -68,7 +67,6 @@ const TABS: { id: StockTab; label: string }[] = [
     ErrorState,
     PricePipe,
     KeyStats,
-    PerformanceSummary,
     YourPosition,
     PriceChart,
     PerformanceHistory,
@@ -199,7 +197,6 @@ const TABS: { id: StockTab; label: string }[] = [
             }
           </section>
 
-          <app-performance-summary class="mt-4 block" [performance]="stock()?.performance" />
           @defer (on viewport; prefetch on idle) {
             <app-price-chart class="mt-4 block" />
           } @placeholder {

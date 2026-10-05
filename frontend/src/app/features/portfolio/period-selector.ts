@@ -17,6 +17,7 @@ import {
   template: `
     <app-segmented
       appearance="chips"
+      wrap
       aria-label="Period"
       i18n-aria-label
       [value]="period().preset"

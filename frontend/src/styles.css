@@ -289,8 +289,10 @@
 /* Cards inside dialogs and bottom sheets sit one step lighter so they stand out from the sheet background. */
 .mat-mdc-dialog-surface .app-card,
 .mat-bottom-sheet-container .app-card,
+.app-section-card .app-card,
 .mat-mdc-dialog-surface .app-stat-card,
-.mat-bottom-sheet-container .app-stat-card {
+.mat-bottom-sheet-container .app-stat-card,
+.app-section-card .app-stat-card {
   background: var(--mat-sys-surface-container-high);
 }
 

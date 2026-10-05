@@ -223,6 +223,8 @@ function chartTime(iso: string): UTCTimestamp {
             <div class="flex justify-center pt-1.5">
               <app-segmented
                 appearance="chips"
+                wrap
+                class="justify-center"
                 aria-label="Interval"
                 i18n-aria-label="History chart interval selector"
                 [value]="interval()"

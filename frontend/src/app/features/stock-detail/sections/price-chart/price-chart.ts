@@ -116,6 +116,13 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+const wholePriceFormat = new Intl.NumberFormat(NUMBER_LOCALE, { maximumFractionDigits: 0 });
+
+/** Y-axis ticks without decimals (narrower scale); keeps decimals when rounding would repeat a label (cheap stocks). */
+function formatTickmarks(prices: readonly number[]): string[] {
+  const whole = prices.map((p) => wholePriceFormat.format(p));
+  return new Set(whole).size === whole.length ? whole : prices.map((p) => priceFormat.format(p));
+}
 
 /**
  * Section 4: line or candlestick chart of daily bars with volume, earnings markers on the reaction days, a touch
@@ -278,6 +285,19 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
           </div>
         }
       </div>
+      <!-- Buy/sell marker legend, right under the chart it explains. -->
+      @if (hasTrades() && showTrades()) {
+        <div class="flex justify-center gap-x-3 px-5 pt-2 text-xs text-on-surface-variant">
+          <span class="inline-flex items-center gap-1" aria-hidden="true"
+            ><span class="text-primary">▲</span>
+            <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
+          >
+          <span class="inline-flex items-center gap-1" aria-hidden="true"
+            ><span class="text-on-surface">▼</span>
+            <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
+          >
+        </div>
+      }
       <div class="px-2.5 pt-3">
         <app-segmented
           appearance="chips"
@@ -311,25 +331,11 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
         </app-segmented>
       </div>
 
-      <!-- Buy/sell marker legend next to the measure tool. -->
-      <div class="flex min-h-14 items-center gap-2 px-5 pt-1">
-        <div
-          class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 text-xs text-on-surface-variant"
-        >
-          @if (hasTrades() && showTrades()) {
-            <span class="inline-flex items-center gap-1" aria-hidden="true"
-              ><span class="text-primary">▲</span>
-              <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
-            >
-            <span class="inline-flex items-center gap-1" aria-hidden="true"
-              ><span class="text-on-surface">▼</span>
-              <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
-            >
-          }
-        </div>
+      <!-- Chart type and the measure tool share a row and a height (42 px, the segmented track). -->
+      <div class="flex items-center justify-end gap-2 px-4 pt-3">
         <button
           type="button"
-          class="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-outline-variant px-3.5 text-[13px] font-bold"
+          class="flex h-[42px] shrink-0 items-center gap-1.5 rounded-full border border-outline-variant px-3.5 text-[13px] font-bold"
           [class.invisible]="intraday()"
           [attr.aria-hidden]="intraday() || null"
           [disabled]="intraday()"
@@ -348,6 +354,21 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
             <ng-container i18n="Measure the change between two points">Measure</ng-container>
           }
         </button>
+        <span class="flex items-center">
+          <app-segmented
+            aria-label="Chart type"
+            i18n-aria-label
+            [value]="type()"
+            (valueChange)="setType($event)"
+          >
+            <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
+              <app-icon name="show_chart" [size]="20" class="align-middle" />
+            </app-segment>
+            <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
+              <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
+            </app-segment>
+          </app-segmented>
+        </span>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 px-4 pt-2 text-xs text-on-surface-variant">
@@ -387,21 +408,6 @@ const priceFormat = new Intl.NumberFormat(NUMBER_LOCALE, {
             <ng-container i18n>My trades</ng-container>
           </button>
         }
-        <span class="ml-auto flex items-center gap-1">
-          <app-segmented
-            aria-label="Chart type"
-            i18n-aria-label
-            [value]="type()"
-            (valueChange)="setType($event)"
-          >
-            <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
-              <app-icon name="show_chart" [size]="20" class="align-middle" />
-            </app-segment>
-            <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
-              <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
-            </app-segment>
-          </app-segmented>
-        </span>
       </div>
 
       @if (data()?.stale) {
@@ -636,6 +642,7 @@ export class PriceChart {
       localization: {
         locale: NUMBER_LOCALE,
         priceFormatter: (price: number) => priceFormat.format(price),
+        tickmarksPriceFormatter: formatTickmarks,
       },
       rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.08, bottom: 0.08 } },
       timeScale: {
