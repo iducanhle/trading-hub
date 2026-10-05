@@ -228,6 +228,14 @@ html {
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+/* Page end padding that also clears the home indicator, so the last content can scroll fully into view. */
+@utility pb-end {
+  padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+}
+/* The same for pages with the floating portfolio pill (app-portfolio-nav) pinned over the bottom. */
+@utility pb-nav {
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom));
+}
 @utility pl-safe {
   padding-left: env(safe-area-inset-left);
 }

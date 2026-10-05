@@ -62,7 +62,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
         </button>
       </app-page-header>
 
-      <div class="mx-auto max-w-3xl px-3 pt-2 pb-10">
+      <div class="mx-auto max-w-3xl px-3 pt-2 pb-end">
         @if (follows.error()) {
           <div class="px-2 pt-4">
             <app-error-state

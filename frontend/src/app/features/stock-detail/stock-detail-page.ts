@@ -126,7 +126,7 @@ import { StockContext } from './stock-context';
         </div>
       </header>
 
-      <div class="mx-auto max-w-4xl" [class]="t212.connected() ? 'pb-36' : 'pb-10'">
+      <div class="mx-auto max-w-4xl" [class]="t212.connected() ? 'pb-nav' : 'pb-end'">
         @if (notFound()) {
           <app-empty-state
             icon="search_off"

@@ -38,7 +38,7 @@ import { Segment, Segmented } from '../../shared/components/segmented/segmented'
   ],
   template: `
     <app-page-header title="Settings" i18n-title />
-    <div class="mx-auto max-w-2xl space-y-5 px-3 pt-2 pb-10">
+    <div class="mx-auto max-w-2xl space-y-5 px-3 pt-2 pb-end">
       <section aria-labelledby="account-title" class="app-card flex items-center gap-3.5">
         <h2 id="account-title" class="sr-only" i18n>Account</h2>
         <app-user-avatar [user]="user()" [size]="52" />

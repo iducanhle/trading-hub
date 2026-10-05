@@ -123,7 +123,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
         </div>
       </app-page-header>
 
-      <div class="mx-auto max-w-6xl pb-8" appSwipe (swipeLeft)="step(1)" (swipeRight)="step(-1)">
+      <div class="mx-auto max-w-6xl pb-end" appSwipe (swipeLeft)="step(1)" (swipeRight)="step(-1)">
         @if (data.error() && !days()) {
           <div class="p-4"><app-error-state [error]="data.error()" (retry)="data.reload()" /></div>
         } @else if (!days()) {

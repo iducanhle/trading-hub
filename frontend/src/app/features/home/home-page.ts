@@ -9,7 +9,7 @@ import { Icon } from '../../shared/icon/icon';
   imports: [RouterLink, Icon, PageHeader],
   template: `
     <app-page-header title="Tradiqo" maxWidth="max-w-3xl" />
-    <ul class="mx-auto max-w-3xl space-y-2 px-3 pt-2 pb-10">
+    <ul class="mx-auto max-w-3xl space-y-2 px-3 pt-2 pb-end">
       <li>
         <a routerLink="/followed" class="app-card flex h-16 items-center gap-4 px-5 font-semibold">
           <app-icon name="star" class="text-primary" />
