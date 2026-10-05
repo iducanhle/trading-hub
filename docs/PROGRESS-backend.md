@@ -251,6 +251,8 @@ Engineering:
 
 ## Decisions
 
+- **2026-10-06 — Alpaca as the US intraday fallback.** Intraday bars were Yahoo-only (unofficial API). `AlpacaProvider` (free paper account, IEX feed, keys in `APCA-API-KEY-ID`/`APCA-API-SECRET-KEY` headers) is the second `IntradayProvider`; order is fixed with `@Order` (Yahoo 0, Alpaca 1). EU symbols stay Yahoo-only (no usable free EU intraday source). IEX volume is only part of market volume, so a fallback chart shows lower volume.
+
 - **2026-10-05 — Trading 212 multi-currency trades are converted at the close of their day.** Multi-currency accounts settle some trades and dividends in another wallet (e.g. USD in a CZK account); `walletImpact` is then in that currency. Fills and dividends store that currency (`ccy`, only when it is not the account currency), and the portfolio service converts them with Yahoo daily FX closes (`FxService.rateOn`, cached per currency in `fx-history`; today's rate if a day has none) before any sum, so all totals are in the account currency. The DTOs keep the settled amounts in `original`. Fills stored before this are rewritten by the next sync when their currency differs (only pages the sync reads again; a reconnect rereads everything).
 - **2026-10-05 — `GET /api/fx/latest`** returns `FxService.rates()` (Yahoo, daily, cached in `fx/latest`) plus USD = 1, for the frontend's approximate display currency. Trading 212 has no FX-rate endpoint.
 - **2026-09-26 — Versions: Spring Boot 4.1.1, Java 25.** Latest stable Boot (start.spring.io metadata) and latest LTS (Adoptium API `most_recent_lts`), checked on this date.

@@ -109,6 +109,11 @@ app:
       base-url: https://financialmodelingprep.com/stable
       min-interval: 1s
       daily-limit: 240          # free tier: 250/day
+    alpaca:                     # US intraday fallback behind Yahoo (free paper account, IEX feed)
+      key-id: ${ALPACA_KEY_ID:}
+      secret-key: ${ALPACA_SECRET_KEY:}
+      base-url: https://data.alpaca.markets
+      min-interval: 350ms       # free plan: 200 calls/min
     compass:                    # US market-moving dates: static JSON, no key
       base-url: https://compasseconomiccalendar.github.io
       min-interval: 1s

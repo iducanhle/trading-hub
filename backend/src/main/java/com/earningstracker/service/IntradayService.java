@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 /**
  * Intraday bars for the chart: the latest session (1D) or a longer range, in the chosen interval. Kept in memory only (they change every few minutes and
  * are cheap to fetch again): reused for {@link #TTL}, and when every provider fails the last good copy is served
- * as stale. Providers are tried in order.
+ * as stale. Providers are tried in their {@code @Order}: Yahoo, then Alpaca (US only).
  */
 @Service
 public class IntradayService {

@@ -10,6 +10,7 @@ What the free data providers really return, from live probes run on **2026-09-27
 | **Twelve Data** | US only (EU: `404 … available starting with the Grow plan`) | US daily OHLCV | 8 credits/min, 800/day, 1 credit per call, including `/api_usage` |
 | **Yahoo Finance** (unofficial) | US + all supported EU exchanges | Everything for EU; fallback for US; FX; EU universe validation | Self-limited to ≤ 1 req/s (Yahoo's real threshold is **UNVERIFIED**) |
 | **FMP** (stable API) | **Some** US symbols only: AAPL works; BRK-B, SNOW and all EU symbols answer `402 Premium Query Parameter` | Historical US earnings: report dates, EPS and revenue, estimate vs actual | 250 calls/day (from FMP's docs; not exhausted in the probe) |
+| **Alpaca** (market data, free paper account) | US only, IEX feed (prices match the market; volume is only IEX's share) | US intraday fallback behind Yahoo | 200 calls/min (from Alpaca's docs; not probed) |
 
 ## Finnhub (`https://finnhub.io/api/v1`, header `X-Finnhub-Token`)
 
@@ -184,6 +185,7 @@ Configured in `application.yml` (`app.providers.chains`). Providers without a ke
 | Quote | Finnhub → Yahoo | Yahoo |
 | Profile + key stats | Finnhub → Yahoo | Yahoo |
 | Daily price history | Twelve Data → Yahoo | Yahoo |
+| Intraday bars (1D/1W, 5m–1h intervals) | Yahoo → Alpaca (IEX feed; volume is IEX only) | Yahoo |
 | Earnings history (merged, preference in this order) | Finnhub calendar → FMP → Yahoo → Finnhub EPS surprises (`finnhub-eps`, fills gaps such as fiscal periods) | Yahoo |
 | Market-wide earnings calendar | Finnhub | none; built from the EU universe + followed/viewed symbols |
 | Recommendations | Finnhub → Yahoo | Yahoo |

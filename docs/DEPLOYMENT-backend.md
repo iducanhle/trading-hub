@@ -88,8 +88,9 @@ All free, no card needed. Each key goes into the server's `.env` file (section 6
 | Finnhub | <https://finnhub.io/register> | Dashboard home: **API Key** | `FINNHUB_API_KEY` | 60 calls/min |
 | Twelve Data | <https://twelvedata.com/register> | Dashboard → **API Keys** | `TWELVEDATA_API_KEY` | 8 calls/min, 800/day |
 | FMP (optional) | <https://site.financialmodelingprep.com/register> | Dashboard → **API Keys** | `FMP_API_KEY` | 250 calls/day |
+| Alpaca (optional) | <https://alpaca.markets> (free **Paper** account, no deposit) | Paper dashboard → **API Keys** → **Generate New Keys** (the secret is shown once) | `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY` | 200 calls/min |
 
-Yahoo Finance needs no key. If a key is missing, the backend still starts, logs a warning and falls back to the next provider (usually Yahoo). FMP only adds US revenue data, so you can leave it empty.
+Yahoo Finance needs no key. If a key is missing, the backend still starts, logs a warning and falls back to the next provider (usually Yahoo). FMP only adds US revenue data, so you can leave it empty. Alpaca is only a US intraday-chart fallback behind Yahoo, so it can stay empty too.
 
 ---
 
@@ -275,7 +276,7 @@ Fill in every line (the arrow keys move the cursor; paste with right-click or Ct
 
 | Variable | Value |
 |---|---|
-| `FINNHUB_API_KEY`, `TWELVEDATA_API_KEY`, `FMP_API_KEY` | from section 2 (`FMP_API_KEY` may stay empty) |
+| `FINNHUB_API_KEY`, `TWELVEDATA_API_KEY`, `FMP_API_KEY`, `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY` | from section 2 (FMP and Alpaca may stay empty) |
 | `FIREBASE_PROJECT_ID` | `PROJECT_ID` from 1.1 |
 | `GOOGLE_APPLICATION_CREDENTIALS` | leave as `/run/secrets/firebase-sa.json` (Compose mounts the key there) |
 | `ALLOWED_EMAILS` | the two Google/email accounts that may use the app, comma-separated, e.g. `you@gmail.com,friend@gmail.com` |

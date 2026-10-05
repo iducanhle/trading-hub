@@ -14,6 +14,8 @@ import com.earningstracker.config.DotenvPropertySourceLoader;
 import com.earningstracker.market.EarningsReport;
 import com.earningstracker.market.Region;
 import com.earningstracker.market.SymbolMatch;
+import com.earningstracker.provider.alpaca.AlpacaProperties;
+import com.earningstracker.provider.alpaca.AlpacaProvider;
 import com.earningstracker.provider.finnhub.FinnhubProperties;
 import com.earningstracker.provider.finnhub.FinnhubProvider;
 import com.earningstracker.provider.fmp.FmpProperties;
@@ -102,6 +104,16 @@ class LiveProvidersTest {
                 CLOCK);
         if (twelveData.isEnabled()) {
             assertThat(twelveData.dailyBars("AAPL", TODAY.minusDays(10))).isNotEmpty();
+        }
+    }
+
+    @Test
+    void alpaca() {
+        AlpacaProvider alpaca = new AlpacaProvider(new AlpacaProperties(key("ALPACA_KEY_ID"),
+                key("ALPACA_SECRET_KEY"), "https://data.alpaca.markets", Duration.ofMillis(350)),
+                ProviderTestSupport.httpFactory(CLOCK), CLOCK);
+        if (alpaca.isEnabled()) {
+            assertThat(alpaca.intradayBars("AAPL", Duration.ofMinutes(5), java.time.Period.ZERO)).isNotEmpty();
         }
     }
 

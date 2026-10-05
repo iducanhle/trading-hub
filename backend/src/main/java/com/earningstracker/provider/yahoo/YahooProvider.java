@@ -68,6 +68,7 @@ import com.earningstracker.provider.http.ProviderHttpFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
@@ -82,6 +83,7 @@ import tools.jackson.databind.json.JsonMapper;
  * are already in pounds).
  */
 @Component
+@Order(0) // first intraday provider; Alpaca follows
 public class YahooProvider implements SymbolSearchProvider, QuoteProvider, ProfileProvider, PriceHistoryProvider,
         EarningsProvider, RecommendationProvider, NewsProvider, PeersProvider, FxRateProvider, SymbolValidator, ListingProvider,
         IntradayProvider {

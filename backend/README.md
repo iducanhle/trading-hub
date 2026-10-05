@@ -119,7 +119,7 @@ Real environment variables always win over `.env`.
 
 | Variable | Used for |
 |---|---|
-| `FINNHUB_API_KEY`, `TWELVEDATA_API_KEY`, `FMP_API_KEY` | Market data; a missing key disables that provider (with a warning), and requests fall back to the next provider (usually Yahoo) |
+| `FINNHUB_API_KEY`, `TWELVEDATA_API_KEY`, `FMP_API_KEY`, `ALPACA_KEY_ID`/`ALPACA_SECRET_KEY` | Market data; a missing key disables that provider (with a warning), and requests fall back to the next provider (usually Yahoo) |
 | `FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS` | Firebase Admin SDK (token checks, Firestore) |
 | `ALLOWED_EMAILS` | Comma-separated emails allowed to use the API (they must also be verified) |
 | `CORS_ALLOWED_ORIGINS` | Frontend origins allowed to call `/api/**` |
@@ -147,7 +147,7 @@ Swagger UI: <http://localhost:8080/swagger-ui.html>. The UI itself is public; it
 | `firebase`, `security` | Admin SDK setup (incl. emulator mode), token filter, allowlist, CORS |
 | `web` | Controllers, contract DTOs, the error format |
 | `market` | Exchanges, symbols, money, the shared value records |
-| `provider` | Capability interfaces, `ProviderRouter` (fallback chains), rate-limited HTTP, the Finnhub / Twelve Data / FMP / Yahoo / Compass adapters, the read-only Trading 212 client |
+| `provider` | Capability interfaces, `ProviderRouter` (fallback chains), rate-limited HTTP, the Finnhub / Twelve Data / FMP / Yahoo / Alpaca / Compass adapters, the read-only Trading 212 client |
 | `t212` | Trading 212 portfolio: key encryption (AES-256-GCM) and storage, connection state, sync |
 | `cache` | `TieredCache` (Caffeine in memory + Firestore documents) |
 | `fx`, `universe` | USD exchange rates; the EU seed universe (`eu-universe.csv`) |
