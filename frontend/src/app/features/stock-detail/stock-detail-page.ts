@@ -1,8 +1,6 @@
-import { Location } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
 import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { FollowTarget } from '../../core/services/follows.service';
@@ -31,23 +29,13 @@ import { PerformanceHistory } from './sections/performance-history';
 import { YourPosition } from './sections/your-position';
 import { PriceChart } from './sections/price-chart/price-chart';
 import { Recommendations } from './sections/recommendations';
-import { UpcomingEarnings } from './sections/upcoming-earnings';
 import { StockContext } from './stock-context';
 
-type StockTab = 'overview' | 'results' | 'analysts' | 'news';
-
-const TABS: { id: StockTab; label: string }[] = [
-  { id: 'overview', label: $localize`:Stock page tab:Overview` },
-  { id: 'results', label: $localize`:Stock page tab|Earnings results:Results` },
-  { id: 'analysts', label: $localize`:Stock page tab:Analysts` },
-  { id: 'news', label: $localize`:Stock page tab:News` },
-];
-
 /**
- * `/stock/:symbol` (deep-linkable; the digest email links here). Price, chart, your position and then tabs: Overview
- * (upcoming earnings, key stats, performance, peers, notes), Results (performance history, earnings stats and
- * history), Analysts and News. The tab is in the URL (`?tab=results`). The overview response fills the header and
- * the overview tab at once; the other sections load as they are shown, each with its own loading and error state.
+ * `/stock/:symbol` (deep-linkable; the digest email links here). One scrolling page: price, chart, your position, key
+ * stats, performance, analyst recommendations, earnings stats and history, peers, news and notes.
+ * The overview response fills the header at once; the other sections load as they are shown, each with its own
+ * loading and error state.
  */
 @Component({
   selector: 'app-stock-detail-page',
@@ -70,7 +58,6 @@ const TABS: { id: StockTab; label: string }[] = [
     YourPosition,
     PriceChart,
     PerformanceHistory,
-    UpcomingEarnings,
     EarningsHistory,
     EarningsStats,
     Recommendations,
@@ -203,90 +190,34 @@ const TABS: { id: StockTab; label: string }[] = [
             <div class="mt-4 h-[27rem] sm:h-[29rem] lg:h-[33rem]"></div>
           }
 
-          <!-- Above the tabs, so the user's profit stays in view whichever tab is open. -->
           <app-your-position class="block" />
+          <app-key-stats class="mt-4 block" [overview]="stock()" />
+          @defer (on viewport; prefetch on idle) {
+            <app-performance-history class="mt-4 block" />
+          } @placeholder {
+            <div class="h-14"></div>
+          }
+          @defer (on viewport; prefetch on idle) {
+            <app-recommendations class="mt-5 block" />
+            <app-earnings-stats
+              class="mt-4 block"
+              [stats]="stock()?.earningsStats"
+              [nextEarnings]="stock()?.nextEarnings"
+            />
+            <app-earnings-history class="mt-2 block" [nextEarnings]="stock()?.nextEarnings" />
+            <app-peers class="block" />
+            <app-news class="block" />
+          } @placeholder {
+            <div class="h-14"></div>
+          }
 
-          <div
-            role="tablist"
-            aria-label="Stock sections"
-            i18n-aria-label
-            class="no-scrollbar sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 mt-5 flex justify-center-safe gap-1 overflow-x-auto border-b border-outline-variant bg-surface/90 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
-          >
-            <!-- Same pills as the portfolio sub-tabs. -->
-            @for (t of tabs; track t.id) {
-              <button
-                type="button"
-                role="tab"
-                [id]="'stock-tab-' + t.id"
-                aria-controls="stock-tab-panel"
-                [attr.aria-selected]="activeTab() === t.id"
-                [tabIndex]="activeTab() === t.id ? 0 : -1"
-                class="shrink-0 rounded-full px-3.5 py-[9px] text-[13px] font-bold whitespace-nowrap transition-colors"
-                [class]="
-                  activeTab() === t.id
-                    ? 'bg-surface-container-high text-on-surface'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                "
-                (click)="selectTab(t.id)"
-                (keydown)="onTabKey($event)"
-              >
-                {{ t.label }}
-              </button>
+          @if (showNotes) {
+            @defer (on viewport; prefetch on idle) {
+              <app-notes />
+            } @placeholder {
+              <div class="h-14"></div>
             }
-          </div>
-
-          <div
-            id="stock-tab-panel"
-            role="tabpanel"
-            class="pt-2"
-            [attr.aria-labelledby]="'stock-tab-' + activeTab()"
-          >
-            @switch (activeTab()) {
-              @case ('results') {
-                <app-earnings-stats [stats]="stock()?.earningsStats" />
-                @defer (on viewport; prefetch on idle) {
-                  <app-earnings-history />
-                } @placeholder {
-                  <div class="h-14"></div>
-                }
-              }
-              @case ('analysts') {
-                @defer (on viewport; prefetch on idle) {
-                  <app-recommendations />
-                } @placeholder {
-                  <div class="h-14"></div>
-                }
-              }
-              @case ('news') {
-                @defer (on viewport; prefetch on idle) {
-                  <app-news />
-                } @placeholder {
-                  <div class="h-14"></div>
-                }
-              }
-              @default {
-                <app-upcoming-earnings [event]="stock()?.nextEarnings" [loading]="!stock()" />
-                @defer (on viewport; prefetch on idle) {
-                  <app-performance-history />
-                } @placeholder {
-                  <div class="h-14"></div>
-                }
-                <app-key-stats [overview]="stock()" />
-                @defer (on viewport; prefetch on idle) {
-                  <app-peers />
-                } @placeholder {
-                  <div class="h-14"></div>
-                }
-                @if (showNotes) {
-                  @defer (on viewport; prefetch on idle) {
-                    <app-notes />
-                  } @placeholder {
-                    <div class="h-14"></div>
-                  }
-                }
-              }
-            }
-          </div>
+          }
         }
       </div>
     </app-pull-to-refresh>
@@ -302,20 +233,9 @@ export class StockDetailPage {
   private readonly recent = inject(RecentSearchesService);
   private readonly title = inject(Title);
 
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly location = inject(Location);
 
   /** Route parameter (`/stock/:symbol`). */
   readonly symbol = input.required<string>();
-  /** Query parameter (`?tab=`). */
-  readonly tab = input<string>();
-
-  protected readonly tabs = TABS;
-  /** Starts from the URL; switching tabs only rewrites the URL (no navigation, so the page title stays). */
-  protected readonly activeTab = linkedSignal<StockTab>(
-    () => TABS.find((t) => t.id === this.tab())?.id ?? 'overview',
-  );
 
   protected readonly overview = this.ctx.resource((symbol, options) =>
     this.api.overview(symbol, options),
@@ -345,35 +265,6 @@ export class StockDetailPage {
     if (change === null || change === undefined || change === 0) return 'bg-on-surface-variant';
     return change > 0 ? 'bg-gain' : 'bg-loss';
   });
-
-  protected selectTab(tab: StockTab): void {
-    this.activeTab.set(tab);
-    const url = this.router.createUrlTree([], {
-      relativeTo: this.route,
-      queryParams: { tab: tab === 'overview' ? null : tab },
-      queryParamsHandling: 'merge',
-    });
-    this.location.replaceState(url.toString());
-  }
-
-  /** Arrow keys, Home and End move between the tabs (and show them). */
-  protected onTabKey(event: KeyboardEvent): void {
-    const index = TABS.findIndex((t) => t.id === this.activeTab());
-    const next =
-      event.key === 'ArrowRight'
-        ? (index + 1) % TABS.length
-        : event.key === 'ArrowLeft'
-          ? (index - 1 + TABS.length) % TABS.length
-          : event.key === 'Home'
-            ? 0
-            : event.key === 'End'
-              ? TABS.length - 1
-              : -1;
-    if (next < 0) return;
-    event.preventDefault();
-    this.selectTab(TABS[next]!.id);
-    document.getElementById('stock-tab-' + TABS[next]!.id)?.focus();
-  }
 
   constructor() {
     effect(() => {

@@ -76,7 +76,7 @@ export class News {
   private readonly ctx = inject(StockContext);
   private readonly api = inject(ApiService);
 
-  protected readonly expanded = persistedSignal('et.section.news', true);
+  protected readonly expanded = persistedSignal('et.section.news-v2', false);
   protected readonly news = this.ctx.resource(
     (symbol, options) => this.api.news(symbol, 10, options),
     () => this.expanded(),

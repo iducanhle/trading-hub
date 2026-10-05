@@ -157,6 +157,14 @@ describe('stock sections', () => {
     expect(m.percent).toBeCloseTo(10);
     expect(m.amount).toBeCloseTo(10);
     expect(m.days).toBe(10);
+    expect(m.minutes).toBeNull();
+    const intraday = measure(
+      { date: '2026-09-25', price: 110, time: '2026-09-25T15:45:00Z' },
+      { date: '2026-09-25', price: 100, time: '2026-09-25T13:30:00Z' },
+    );
+    expect(intraday.from.price).toBe(100);
+    expect(intraday.minutes).toBe(135);
+    expect(intraday.days).toBe(0);
     expect(rangeChange([bar('2026-09-01', 50), bar('2026-09-02', 40)])?.percent).toBeCloseTo(-20);
     expect(rangeChange([bar('2026-09-01', 50)])).toBeNull();
     expect(rangeChange([bar('2026-09-01', 50), bar('2026-09-02', 60)], 40)?.percent).toBeCloseTo(

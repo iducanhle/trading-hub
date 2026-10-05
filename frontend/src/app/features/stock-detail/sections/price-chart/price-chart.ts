@@ -151,26 +151,72 @@ function formatTickmarks(prices: readonly number[]): string[] {
   template: `
     <section class="pt-2 pb-2" aria-labelledby="price-chart-title">
       <h2 id="price-chart-title" class="sr-only" i18n>Price chart</h2>
+      <!-- Chart type and the measure tool share a row and a height (42 px, the segmented track). -->
+      <div class="flex items-center justify-between gap-2 px-4 pt-1">
+        <button
+          type="button"
+          class="flex h-[42px] shrink-0 items-center gap-1.5 rounded-full border border-outline-variant px-3.5 text-[13px] font-bold"
+          [class.bg-secondary-container]="measuring()"
+          [class.text-on-secondary-container]="measuring()"
+          [class.border-transparent]="measuring()"
+          [attr.aria-pressed]="measuring()"
+          title="Tap two points on the chart to see the change between them"
+          i18n-title
+          (click)="toggleMeasuring()"
+        >
+          <app-icon [name]="measuring() ? 'close' : 'straighten'" [size]="18" />
+          @if (measuring()) {
+            <ng-container i18n>Done</ng-container>
+          } @else {
+            <ng-container i18n="Measure the change between two points">Measure</ng-container>
+          }
+        </button>
+        <span class="flex items-center">
+          <app-segmented
+            aria-label="Chart type"
+            i18n-aria-label
+            [value]="type()"
+            (valueChange)="setType($event)"
+          >
+            <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
+              <app-icon name="show_chart" [size]="20" class="align-middle" />
+            </app-segment>
+            <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
+              <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
+            </app-segment>
+          </app-segmented>
+        </span>
+      </div>
       <!-- The range's change, or in measure mode the change from A to B; the hovered bar on the right. -->
-      <div class="flex min-h-10 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 pt-1">
+      <div class="flex min-h-10 flex-col items-start gap-y-1 px-4 pt-1">
         <div
           class="flex min-w-0 flex-wrap items-center gap-x-2 text-sm font-semibold"
           aria-live="polite"
         >
           @if (measuring()) {
             @if (measurement(); as m) {
-              <span class="text-on-surface-variant"
-                >{{ m.from.date | appDate: 'dayMonth' }} →
-                {{ m.to.date | appDate: 'dayMonth' }}</span
-              >
+              @if (m.minutes !== null) {
+                <span class="text-on-surface-variant"
+                  >{{ clock(m.from.time!) }} → {{ clock(m.to.time!) }}</span
+                >
+              } @else {
+                <span class="text-on-surface-variant"
+                  >{{ m.from.date | appDate: 'dayMonth' }} →
+                  {{ m.to.date | appDate: 'dayMonth' }}</span
+                >
+              }
               <app-change pill [value]="m.percent" />
               <span [class]="m.amount >= 0 ? 'text-gain' : 'text-loss'">{{
                 m.amount | signed
               }}</span>
-              <span class="text-on-surface-variant" i18n>{m.days, plural,
-                =1 {1 day}
-                other {{{ m.days }} days}
-              }</span>
+              @if (m.minutes !== null) {
+                <span class="text-on-surface-variant">{{ duration(m.minutes) }}</span>
+              } @else {
+                <span class="text-on-surface-variant" i18n>{m.days, plural,
+                  =1 {1 day}
+                  other {{{ m.days }} days}
+                }</span>
+              }
             } @else if (points().length) {
               <span class="text-on-surface-variant" i18n>Now tap the end point</span>
             } @else {
@@ -183,7 +229,7 @@ function formatTickmarks(prices: readonly number[]): string[] {
           }
         </div>
         <div
-          class="ml-auto flex flex-wrap items-center justify-end gap-x-3 text-xs tabular-nums text-on-surface-variant"
+          class="flex flex-wrap items-center gap-x-3 text-xs tabular-nums text-on-surface-variant"
         >
           @if (legend(); as bar) {
             <span class="font-medium text-on-surface">{{
@@ -285,19 +331,6 @@ function formatTickmarks(prices: readonly number[]): string[] {
           </div>
         }
       </div>
-      <!-- Buy/sell marker legend, right under the chart it explains. -->
-      @if (hasTrades() && showTrades()) {
-        <div class="flex justify-center gap-x-3 px-5 pt-2 text-xs text-on-surface-variant">
-          <span class="inline-flex items-center gap-1" aria-hidden="true"
-            ><span class="text-primary">▲</span>
-            <ng-container i18n="Trade direction|Kind of trade">Buy</ng-container></span
-          >
-          <span class="inline-flex items-center gap-1" aria-hidden="true"
-            ><span class="text-on-surface">▼</span>
-            <ng-container i18n="Trade direction|Kind of trade">Sell</ng-container></span
-          >
-        </div>
-      }
       <div class="px-2.5 pt-3">
         <app-segmented
           appearance="chips"
@@ -331,47 +364,7 @@ function formatTickmarks(prices: readonly number[]): string[] {
         </app-segmented>
       </div>
 
-      <!-- Chart type and the measure tool share a row and a height (42 px, the segmented track). -->
-      <div class="flex items-center justify-end gap-2 px-4 pt-3">
-        <button
-          type="button"
-          class="flex h-[42px] shrink-0 items-center gap-1.5 rounded-full border border-outline-variant px-3.5 text-[13px] font-bold"
-          [class.invisible]="intraday()"
-          [attr.aria-hidden]="intraday() || null"
-          [disabled]="intraday()"
-          [class.bg-secondary-container]="measuring()"
-          [class.text-on-secondary-container]="measuring()"
-          [class.border-transparent]="measuring()"
-          [attr.aria-pressed]="measuring()"
-          title="Tap two points on the chart to see the change between them"
-          i18n-title
-          (click)="toggleMeasuring()"
-        >
-          <app-icon [name]="measuring() ? 'close' : 'straighten'" [size]="18" />
-          @if (measuring()) {
-            <ng-container i18n>Done</ng-container>
-          } @else {
-            <ng-container i18n="Measure the change between two points">Measure</ng-container>
-          }
-        </button>
-        <span class="flex items-center">
-          <app-segmented
-            aria-label="Chart type"
-            i18n-aria-label
-            [value]="type()"
-            (valueChange)="setType($event)"
-          >
-            <app-segment value="line" aria-label="Line" i18n-aria-label="Line chart">
-              <app-icon name="show_chart" [size]="20" class="align-middle" />
-            </app-segment>
-            <app-segment value="candles" aria-label="Candles" i18n-aria-label="Candlestick chart">
-              <app-icon name="candlestick_chart" [size]="20" class="align-middle" />
-            </app-segment>
-          </app-segmented>
-        </span>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2 px-4 pt-2 text-xs text-on-surface-variant">
+      <div class="flex flex-wrap items-center justify-center gap-2 px-4 pt-2 text-xs text-on-surface-variant">
         @if (positionPrices()) {
           <button
             type="button"
@@ -477,8 +470,6 @@ export class PriceChart {
   protected readonly toggleOff = 'bg-surface-container text-on-surface ring-transparent';
   protected readonly showEarnings = persistedSignal('et.chartEarnings', true);
   protected readonly showLines = persistedSignal('et.chartPositionLines', true);
-  /** Bars shorter than a day: no measuring, earnings or trade markers (they mark days). */
-  protected readonly intraday = computed(() => !['1d', '1wk'].includes(this.interval()));
 
   /** Average cost and current price of an open Trading 212 position, when in the chart's currency. */
   protected readonly positionPrices = computed<PositionPrices | null>(() => {
@@ -610,7 +601,15 @@ export class PriceChart {
   private resetSelection(): void {
     this.selected.set(null);
     this.points.set([]);
-    if (this.intraday()) this.measuring.set(false);
+  }
+
+  /** Length of an intraday measurement: minutes under an hour, else hours (and minutes). */
+  protected duration(minutes: number): string {
+    const h = Math.floor(minutes / 60);
+    const min = minutes % 60;
+    if (!h) return $localize`:Measured length in minutes, e.g. 45 min:${min}:minutes: min`;
+    if (!min) return $localize`:Measured length in hours, e.g. 3 h:${h}:hours: h`;
+    return $localize`:Measured length in hours and minutes, e.g. 3 h 15 min:${h}:hours: h ${min}:minutes: min`;
   }
 
   protected clock(time: string): string {
@@ -824,9 +823,12 @@ export class PriceChart {
   private pick(param: MouseEventParams<Time>): void {
     const bar = param.time && param.point ? this.legendBars().get(timeKey(param.time)) : undefined;
     if (!bar) return;
-    const point: MeasurePoint = { date: bar.date, price: bar.close };
+    const point: MeasurePoint = bar.time
+      ? { date: bar.date, price: bar.close, time: bar.time, at: barTime(bar) }
+      : { date: bar.date, price: bar.close };
+    const key = (p: MeasurePoint) => p.time ?? p.date;
     this.points.update((points) =>
-      points.length === 1 && points[0].date !== point.date ? [points[0], point] : [point],
+      points.length === 1 && key(points[0]) !== key(point) ? [points[0], point] : [point],
     );
   }
 

@@ -11,10 +11,14 @@ import type {
 import { PriceBar } from '../../../../core/models/contract';
 import { withAlpha } from './chart-colors';
 
-/** A point picked on the chart: a bar's date and its close. */
+/** A point picked on the chart: a bar's date (and start time for intraday bars) and its close. */
 export interface MeasurePoint {
   date: string;
   price: number;
+  /** Start of an intraday bar (ISO); absent for daily and weekly bars. */
+  time?: string | null;
+  /** Where the point sits on the chart's time axis, when it is not the date (intraday bars). */
+  at?: Time;
 }
 
 export interface Measurement {
@@ -26,19 +30,25 @@ export interface Measurement {
   amount: number;
   /** Calendar days between the two dates. */
   days: number;
+  /** Minutes between two intraday points; null when either point is a whole day. */
+  minutes: number | null;
 }
 
 const DAY_MS = 86_400_000;
 
 /** Change between two picked points, in date order whichever was tapped first. */
 export function measure(a: MeasurePoint, b: MeasurePoint): Measurement {
-  const [from, to] = a.date <= b.date ? [a, b] : [b, a];
+  const intraday = !!a.time && !!b.time;
+  const [from, to] = (intraday ? Date.parse(a.time!) <= Date.parse(b.time!) : a.date <= b.date)
+    ? [a, b]
+    : [b, a];
   return {
     from,
     to,
     percent: ((to.price - from.price) / from.price) * 100,
     amount: to.price - from.price,
     days: Math.round((Date.parse(to.date) - Date.parse(from.date)) / DAY_MS),
+    minutes: intraday ? Math.round((Date.parse(to.time!) - Date.parse(from.time!)) / 60_000) : null,
   };
 }
 
@@ -104,7 +114,7 @@ export class MeasurePrimitive implements ISeriesPrimitive<Time> {
     this.placed = [];
     if (!chart || !series) return;
     for (const point of this.points) {
-      const x = chart.timeScale().timeToCoordinate(point.date);
+      const x = chart.timeScale().timeToCoordinate(point.at ?? point.date);
       const y = series.priceToCoordinate(point.price);
       if (x === null || y === null) continue;
       this.placed.push({ x, y });

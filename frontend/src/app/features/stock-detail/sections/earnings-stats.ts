@@ -1,15 +1,14 @@
 import { Component, computed, input } from '@angular/core';
-import { EarningsStats as Stats } from '../../../core/models/contract';
+import { EarningsEvent, EarningsStats as Stats } from '../../../core/models/contract';
 import { TermInfo } from '../../../shared/components/term-info/term-info';
-import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
+import { AppDatePipe, RelativeDayPipe } from '../../../shared/pipes/format.pipes';
 import {
   PERCENT_SIGN,
   formatNumber,
   formatPlainPercent,
   resultLabel,
 } from '../../../shared/utils/format';
-import { persistedSignal } from '../../../shared/utils/persisted-signal';
 
 /** "6 of 8 quarters · 75%", or null without data. */
 export function beatRateText(stats: Stats): string | null {
@@ -22,16 +21,34 @@ export function beatRateText(stats: Stats): string | null {
     : $localize`${beats}:beats: of ${quarters}:quarters: quarters · ${rate}:rate:`;
 }
 
-/** Section 9: beat rate, current streak and average absolute reaction (from the overview). */
+/**
+ * Under the analyst recommendations: the next report's date and countdown, beat rate, current streak and average
+ * absolute reaction (from the overview).
+ */
 @Component({
   selector: 'app-earnings-stats',
-  imports: [TermInfo, Section, Skeleton],
+  imports: [TermInfo, Skeleton, AppDatePipe, RelativeDayPipe],
   template: `
-    <app-section title="Earnings stats" i18n-title [(expanded)]="expanded">
+    <div class="mx-4">
       @if (stats(); as s) {
         <dl
           class="divide-y divide-outline-variant rounded-[22px] border border-outline-variant px-5 py-1.5"
         >
+          <div class="flex items-center justify-between gap-3 py-3">
+            <dt class="app-label inline-flex items-center gap-1">
+              <span i18n>Upcoming earnings</span><app-term-info term="earnings" />
+            </dt>
+            <dd class="text-right text-[15px] font-semibold">
+              @if (nextEarnings(); as e) {
+                <span class="block whitespace-nowrap">{{ e.date | appDate }}</span>
+                <span class="block text-[13px] whitespace-nowrap text-on-surface-variant">{{
+                  e.date | relativeDay
+                }}</span>
+              } @else {
+                —
+              }
+            </dd>
+          </div>
           <div class="flex items-baseline justify-between gap-3 py-3">
             <dt class="app-label inline-flex items-center gap-1">
               <span i18n>Beat rate</span><app-term-info term="beatRate" />
@@ -64,12 +81,13 @@ export function beatRateText(stats: Stats): string | null {
       } @else {
         <app-skeleton shape="card" class="block h-40 rounded-[22px]" />
       }
-    </app-section>
+    </div>
   `,
 })
 export class EarningsStats {
   readonly stats = input<Stats | undefined>();
-  protected readonly expanded = persistedSignal('et.section.stats', true);
+  /** The next report (from the overview); null when no date is announced. */
+  readonly nextEarnings = input<EarningsEvent | null | undefined>();
 
   protected readonly beatRate = computed(() => {
     const stats = this.stats();

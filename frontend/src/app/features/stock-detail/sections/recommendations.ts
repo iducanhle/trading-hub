@@ -3,10 +3,8 @@ import { ApiService } from '../../../core/api/api.service';
 import { RecommendationPeriod } from '../../../core/models/contract';
 import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { formatDate } from '../../../shared/utils/dates';
-import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { StockContext } from '../stock-context';
 
 const SCALE = [
@@ -88,13 +86,13 @@ export function recommendationConsensus(p: RecommendationPeriod) {
   return { label: SCALE[2].label, tone: 'text-on-surface', count: p.hold, total, month };
 }
 
-/** Section 10: analyst recommendations per month as stacked bars (hidden when there are none). */
+/** Analyst recommendations per month as stacked bars, under the performance calendar (hidden when there are none). */
 @Component({
   selector: 'app-recommendations',
-  imports: [TermInfo, Section, ErrorState, Skeleton],
+  imports: [TermInfo, ErrorState, Skeleton],
   template: `
     @if (!recs.hasValue() || bars().length) {
-      <app-section title="Analyst recommendations" i18n-title [(expanded)]="expanded">
+      <section class="mx-4">
         @if (recs.error()) {
           <app-error-state compact [error]="recs.error()" (retry)="recs.reload()" />
         } @else if (!recs.hasValue()) {
@@ -156,7 +154,7 @@ export function recommendationConsensus(p: RecommendationPeriod) {
             </ul>
           </div>
         }
-      </app-section>
+      </section>
     }
   `,
 })
@@ -165,10 +163,8 @@ export class Recommendations {
   private readonly api = inject(ApiService);
 
   protected readonly scale = SCALE;
-  protected readonly expanded = persistedSignal('et.section.recommendations', true);
-  protected readonly recs = this.ctx.resource(
-    (symbol, options) => this.api.recommendations(symbol, options),
-    () => this.expanded(),
+  protected readonly recs = this.ctx.resource((symbol, options) =>
+    this.api.recommendations(symbol, options),
   );
   protected readonly bars = computed(() =>
     recommendationBars(this.recs.hasValue() ? (this.recs.value() ?? []) : []),

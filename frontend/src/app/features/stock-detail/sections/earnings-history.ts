@@ -1,6 +1,6 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ApiService } from '../../../core/api/api.service';
-import { EarningsQuarter } from '../../../core/models/contract';
+import { EarningsEvent, EarningsQuarter } from '../../../core/models/contract';
 import { TermInfo } from '../../../shared/components/term-info/term-info';
 import { Change } from '../../../shared/components/change/change';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
@@ -12,6 +12,7 @@ import {
   AppDatePipe,
   CompactPipe,
   PricePipe,
+  RelativeDayPipe,
   ReportTimePipe,
 } from '../../../shared/pipes/format.pipes';
 import { formatDate } from '../../../shared/utils/dates';
@@ -20,7 +21,7 @@ import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { StockContext } from '../stock-context';
 
 /**
- * Sections 7 + 8: the last 12 reported quarters with EPS and revenue (estimate → actual, surprise), the result, and
+ * The upcoming report (date, countdown, time and estimates, from the overview) and the last 12 reported quarters with EPS and revenue (estimate → actual, surprise), the result, and
  * the price reaction (5-day run-up, gap, reaction day, 5-day drift). One card per quarter on phones; a table from `md`.
  */
 @Component({
@@ -36,6 +37,7 @@ import { StockContext } from '../stock-context';
     AppDatePipe,
     CompactPipe,
     PricePipe,
+    RelativeDayPipe,
     ReportTimePipe,
   ],
   template: `
@@ -48,7 +50,7 @@ import { StockContext } from '../stock-context';
             <app-skeleton shape="card" class="h-36" />
           }
         </div>
-      } @else if (!quarters().length) {
+      } @else if (!quarters().length && !nextEarnings()) {
         <p class="text-sm text-on-surface-variant" i18n>No reported quarters yet.</p>
       } @else {
         @if (earnings.value()!.stale) {
@@ -56,6 +58,37 @@ import { StockContext } from '../stock-context';
         }
         <!-- Phones: one card per quarter, results on top and the price reaction below. -->
         <ul class="space-y-3 md:hidden">
+          @if (nextEarnings(); as e) {
+            <!-- Tinted with the primary colour so the coming report stands apart from the past ones. -->
+            <li class="app-card border border-primary/40 bg-primary/10! text-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="text-base font-bold text-primary">{{ upcomingLabel(e) }}</p>
+                  <p class="mt-0.5 text-[13px] font-semibold text-on-surface-variant">
+                    {{ e.date | appDate: 'medium' }} · {{ e.time | reportTime }}
+                    <app-term-info term="reportTime" />
+                  </p>
+                </div>
+                <span class="app-pill shrink-0 bg-primary text-on-primary">{{
+                  e.date | relativeDay
+                }}</span>
+              </div>
+              <dl class="mt-3 space-y-1.5 text-[15px] font-semibold">
+                <div class="flex items-baseline justify-between gap-2">
+                  <dt class="app-label inline-flex items-center gap-1">
+                    <span i18n>EPS estimate</span><app-term-info term="epsEstimate" />
+                  </dt>
+                  <dd class="text-right">{{ e.epsEstimate | price: e.currency }}</dd>
+                </div>
+                <div class="flex items-baseline justify-between gap-2">
+                  <dt class="app-label inline-flex items-center gap-1">
+                    <span i18n>Revenue estimate</span><app-term-info term="revenueEstimate" />
+                  </dt>
+                  <dd class="text-right">{{ e.revenueEstimate | compact: e.currency }}</dd>
+                </div>
+              </dl>
+            </li>
+          }
           @for (q of quarters(); track q.date) {
             <li class="app-card text-sm">
               <div class="flex items-start justify-between gap-2">
@@ -160,6 +193,33 @@ import { StockContext } from '../stock-context';
               </tr>
             </thead>
             <tbody>
+              @if (nextEarnings(); as e) {
+                <tr class="border-b border-outline-variant/60 bg-primary/10">
+                  <th scope="row" class="py-2 pr-3 text-left font-normal">
+                    <span class="flex items-center gap-2 font-medium"
+                      >{{ upcomingLabel(e) }}
+                      <span class="app-pill bg-primary text-on-primary">{{
+                        e.date | relativeDay
+                      }}</span></span
+                    >
+                    <span class="text-xs text-on-surface-variant">
+                      {{ e.date | appDate: 'medium' }} · {{ e.time | reportTime }}
+                    </span>
+                  </th>
+                  <td class="px-2 py-2 text-right whitespace-nowrap">
+                    {{ e.epsEstimate | price: e.currency }} → —
+                  </td>
+                  <td class="px-2 py-2 text-right">—</td>
+                  <td class="px-2 py-2 text-right whitespace-nowrap">
+                    {{ e.revenueEstimate | compact: e.currency }} → —
+                  </td>
+                  <td class="px-2 py-2 text-right">—</td>
+                  <td class="px-2 py-2">—</td>
+                  @for (i of [1, 2, 3, 4]; track i) {
+                    <td class="px-2 py-2 text-right last:pr-0">—</td>
+                  }
+                </tr>
+              }
               @for (q of quarters(); track q.date) {
                 <tr class="border-b border-outline-variant/60">
                   <th scope="row" class="py-2 pr-3 text-left font-normal">
@@ -204,7 +264,10 @@ export class EarningsHistory {
   private readonly ctx = inject(StockContext);
   private readonly api = inject(ApiService);
 
-  protected readonly expanded = persistedSignal('et.section.earnings', true);
+  /** The next report (from the overview); null when no date is announced. */
+  readonly nextEarnings = input<EarningsEvent | null | undefined>();
+
+  protected readonly expanded = persistedSignal('et.section.earnings-history', false);
   protected readonly earnings = this.ctx.resource(
     (symbol, options) => this.api.earnings(symbol, options),
     () => this.expanded(),
@@ -221,8 +284,11 @@ export class EarningsHistory {
     drift: $localize`:Price change in the 5 sessions after the reaction day:Drift`,
   };
 
+  protected upcomingLabel(e: EarningsEvent): string {
+    return fiscalLabel(e.fiscalQuarter, e.fiscalYear) ?? $localize`Upcoming earnings`;
+  }
+
   protected label(q: EarningsQuarter): string {
-    // Sources without a fiscal period: name the report by its month.
     // Sources without a fiscal period: name the report by its month.
     return (
       fiscalLabel(q.fiscalQuarter, q.fiscalYear) ??

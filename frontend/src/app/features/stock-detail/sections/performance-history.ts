@@ -5,7 +5,6 @@ import { ApiService } from '../../../core/api/api.service';
 import { HistoryPeriod, HistoryRow } from '../../../core/models/contract';
 import { Change } from '../../../shared/components/change/change';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { Section } from '../../../shared/components/section/section';
 import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { InView } from '../../../shared/directives/in-view';
 import { Swipe } from '../../../shared/directives/swipe';
@@ -49,7 +48,6 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
     Segmented,
     Segment,
     MatButton,
-    Section,
     HistoryCalendar,
     Change,
     ErrorState,
@@ -59,25 +57,28 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
     PricePipe,
   ],
   template: `
-    <app-section title="Performance history" i18n-title [(expanded)]="expanded">
-      <app-segmented
-        class="mb-3"
-        stretch
-        aria-label="Period"
-        i18n-aria-label
-        [value]="view()"
-        (valueChange)="view.set($event)"
-      >
-        @for (p of periods; track p.value) {
-          <app-segment [value]="p.value">{{ p.label }}</app-segment>
-        }
-      </app-segmented>
+    <!-- One card: the period switch is its header, split from the content by a hairline. -->
+    <div class="app-card mx-4 overflow-hidden">
+      <div class="border-b border-outline-variant/60 p-2">
+        <app-segmented
+          appearance="chips"
+          stretch
+          aria-label="Period"
+          i18n-aria-label
+          [value]="view()"
+          (valueChange)="view.set($event)"
+        >
+          @for (p of periods; track p.value) {
+            <app-segment [value]="p.value">{{ p.label }}</app-segment>
+          }
+        </app-segmented>
+      </div>
 
       <div
         appSwipe
         (swipeLeft)="shift(1)"
         (swipeRight)="shift(-1)"
-        class="app-card min-h-40 px-3.5"
+        class="min-h-40 px-1.5"
       >
         @if (view() === 'CALENDAR') {
           <app-history-calendar [currency]="currency()" />
@@ -149,7 +150,7 @@ export function periodLabel(row: HistoryRow, period: HistoryPeriod): string {
           </div>
         }
       </div>
-    </app-section>
+    </div>
   `,
 })
 export class PerformanceHistory {
@@ -157,7 +158,6 @@ export class PerformanceHistory {
   private readonly api = inject(ApiService);
 
   protected readonly periods = PERIODS;
-  protected readonly expanded = persistedSignal('et.section.history', true);
   protected readonly view = persistedSignal<HistoryView>('et.history.view', 'CALENDAR');
   /** The list's period (only the daily list is left); null on the calendars, which load their own pages. */
   protected readonly period = computed(() =>
@@ -180,14 +180,13 @@ export class PerformanceHistory {
       const symbol = this.ctx.symbol();
       const period = this.period();
       const version = this.ctx.version();
-      const expanded = this.expanded();
       untracked(() => {
         this.request?.unsubscribe();
         this.rows.set([]);
         this.nextBefore.set(null);
         this.error.set(null);
         this.force = version > 0;
-        if (symbol && expanded && period) this.load(null);
+        if (symbol && period) this.load(null);
       });
     });
     // The overview is cached, so this reads the currency without another request.
