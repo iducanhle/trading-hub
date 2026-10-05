@@ -31,7 +31,7 @@ import { TradeFilters } from './trades-filters';
 /**
  * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Dividends & cash (a floating
  * pill at the bottom, `app-portfolio-nav`) share one period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
- * down starts a sync. Without a connection it explains the feature and links to Settings.
+ * down starts a sync; live values refetch every minute, with the same indicator. Without a connection it explains the feature and links to Settings.
  */
 @Component({
   selector: 'app-portfolio-page',
@@ -54,7 +54,7 @@ import { TradeFilters } from './trades-filters';
     PortfolioCash,
   ],
   template: `
-    <app-pull-to-refresh [refreshing]="t212.syncing()" (refresh)="sync()">
+    <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="sync()">
       <app-page-header title="Portfolio" i18n-title maxWidth="max-w-3xl">
         @if (t212.connected()) {
           <div actions class="flex items-center">
@@ -65,7 +65,7 @@ import { TradeFilters } from './trades-filters';
               [disabled]="t212.syncing() || t212.status()?.credentialsValid === false"
               (click)="sync()"
             >
-              <app-icon name="refresh" [class.animate-spin]="t212.syncing()" />
+              <app-icon name="refresh" [class.animate-spin]="refreshing()" />
             </button>
             <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
               <app-icon name="search" />
@@ -108,6 +108,12 @@ import { TradeFilters } from './trades-filters';
             </a>
           </app-empty-state>
         } @else {
+          <p
+            class="mb-3 text-center text-xs text-on-surface-variant"
+            i18n="Portfolio page|Note under the header: live values refetch automatically"
+          >
+            Data are refreshed every minute.
+          </p>
           @if (t212.status()?.credentialsValid === false) {
             <a
               routerLink="/settings"
@@ -167,6 +173,8 @@ export class PortfolioPage {
   });
 
   protected readonly version = signal(0);
+  /** A sync or the quiet once-a-minute refetch is running: both show the pull-to-refresh indicator. */
+  protected readonly refreshing = computed(() => this.t212.syncing() || this.t212.liveRefreshing());
 
   protected readonly tab = computed<PortfolioTab>(() => {
     const value = this.query().get('tab') as PortfolioTab | null;

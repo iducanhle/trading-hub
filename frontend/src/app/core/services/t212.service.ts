@@ -9,6 +9,8 @@ const POLL_MS = 3000;
 const LIVE_POLL_MS = 60_000;
 /** Opening the portfolio starts a history sync when the last one is older than this. */
 const STALE_SYNC_MS = 15 * 60_000;
+/** A live refetch keeps the refresh indicator up at least this long, so a fast answer doesn't just flicker. */
+const MIN_LIVE_INDICATOR_MS = 600;
 
 /**
  * The caller's Trading 212 connection: status (polled while a sync runs), connect, disconnect and sync. When a
@@ -27,10 +29,13 @@ export class T212Service {
   readonly dataVersion = signal(0);
   /** Bumped about once a minute while `watchLive` runs; live views refetch quietly (no skeleton). */
   readonly liveTick = signal(0);
+  private readonly liveRequests = signal(0);
 
   readonly loaded = computed(() => this.status() !== null || this.error() !== null);
   readonly connected = computed(() => this.status()?.connected === true);
   readonly syncing = computed(() => this.status()?.syncState === 'RUNNING');
+  /** A live view is refetching after a `liveTick`; the page shows the pull-to-refresh indicator meanwhile. */
+  readonly liveRefreshing = computed(() => this.liveRequests() > 0);
   /** The server has no T212_ENCRYPTION_KEY: the feature is off there. */
   readonly notConfigured = computed(() => isApiError(this.error(), 'T212_NOT_CONFIGURED'));
 
@@ -105,6 +110,14 @@ export class T212Service {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
     };
+  }
+
+  /** Runs a live refetch while `liveRefreshing` reports it (held for at least MIN_LIVE_INDICATOR_MS). */
+  trackLive<T>(request: Promise<T>): Promise<T> {
+    this.liveRequests.update((n) => n + 1);
+    const minimum = new Promise((resolve) => setTimeout(resolve, MIN_LIVE_INDICATOR_MS));
+    void Promise.allSettled([request, minimum]).then(() => this.liveRequests.update((n) => n - 1));
+    return request;
   }
 
   /** Sign-out: forget everything about the previous user. */

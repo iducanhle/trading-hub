@@ -324,9 +324,13 @@ export class PortfolioHistory {
       seen = tick;
       untracked(() => {
         if (!this.expanded() || !this.data.hasValue()) return;
-        firstValueFrom(
-          this.api.t212History(this.range(), this.validInterval(), { force: true }),
-        ).then(
+        this.t212
+          .trackLive(
+            firstValueFrom(
+              this.api.t212History(this.range(), this.validInterval(), { force: true }),
+            ),
+          )
+          .then(
           (value) => {
             if (this.data.hasValue()) this.data.set(value);
           },

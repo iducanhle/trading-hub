@@ -92,7 +92,7 @@ export class PortfolioOverview {
       if (tick === seen) return;
       seen = tick;
       untracked(() => {
-        firstValueFrom(this.api.t212Summary(periodQuery(ALL_TIME), { force: true })).then(
+        this.t212.trackLive(firstValueFrom(this.api.t212Summary(periodQuery(ALL_TIME), { force: true }))).then(
           (value) => {
             if (this.data.hasValue()) this.data.set(value);
           },

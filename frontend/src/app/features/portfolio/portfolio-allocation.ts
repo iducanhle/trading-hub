@@ -170,7 +170,7 @@ export class PortfolioAllocation {
       if (tick === seen) return;
       seen = tick;
       untracked(() => {
-        firstValueFrom(this.api.t212Allocation({ force: true })).then(
+        this.t212.trackLive(firstValueFrom(this.api.t212Allocation({ force: true }))).then(
           (value) => {
             if (this.data.hasValue()) this.data.set(value);
           },
