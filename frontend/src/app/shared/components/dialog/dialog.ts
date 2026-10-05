@@ -5,12 +5,13 @@ import { Icon } from '../../icon/icon';
 
 /**
  * How every dialog opens (docs/REDESIGN-SPEC.md): full width less 16 px a side on phones, 480 px from there up, never
- * taller than the screen. Spread it into `MatDialog.open` and add `data`.
+ * taller than the screen less its safe areas (status bar, home indicator). Spread it into `MatDialog.open` and add
+ * `data`.
  */
 export const DIALOG_CONFIG: MatDialogConfig = {
   width: 'calc(100vw - 32px)',
   maxWidth: '30rem',
-  maxHeight: 'calc(100dvh - 32px)',
+  maxHeight: 'calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
   autoFocus: 'dialog',
   restoreFocus: true,
 };
@@ -25,7 +26,7 @@ export const DIALOG_CONFIG: MatDialogConfig = {
   selector: 'app-dialog',
   imports: [MatIconButton, MatDialogClose, MatDialogTitle, Icon],
   template: `
-    <div class="flex max-h-[calc(100dvh-32px)] flex-col">
+    <div class="flex max-h-[calc(100dvh-32px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col">
       <div class="flex items-center gap-3 px-5 pt-5 lg:px-6 lg:pt-6">
         <ng-content select="[dialogHeader]" />
         <ng-content select="[dialogLeading]" />

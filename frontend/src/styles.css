@@ -264,6 +264,18 @@
   }
 }
 
+/* iOS standalone PWAs (viewport-fit=cover, translucent status bar) size fixed `height: 100%` boxes short of the
+   screen, so CDK overlays left a band at the bottom: size them by the large viewport instead. */
+.cdk-overlay-container,
+.cdk-global-overlay-wrapper {
+  height: 100lvh;
+}
+
+/* Bottom sheets reach the screen edge, so their content keeps clear of the home indicator. */
+.mat-bottom-sheet-container {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
 /* The term explanation's bottom sheet stays a readable width on desktop. */
 .mat-bottom-sheet-container.app-sheet-panel {
   max-width: 560px;
