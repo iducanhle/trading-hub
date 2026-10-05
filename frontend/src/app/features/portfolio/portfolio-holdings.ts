@@ -93,12 +93,12 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
             </div>
           }
           <label
-            class="mt-3.5 flex h-[46px] items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
+            class="mt-3.5 flex h-10 items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
           >
-            <app-icon name="search" [size]="20" />
+            <app-icon name="search" [size]="18" />
             <input
               type="search"
-              class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
+              class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
               placeholder="Search the portfolio"
               i18n-placeholder
               aria-label="Search the portfolio"

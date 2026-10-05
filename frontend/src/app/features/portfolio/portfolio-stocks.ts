@@ -68,12 +68,12 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
   template: `
     <div class="flex items-center gap-2.5">
       <label
-        class="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
+        class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
       >
-        <app-icon name="search" [size]="20" />
+        <app-icon name="search" [size]="18" />
         <input
           type="search"
-          class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
+          class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
           placeholder="Search by name or ticker"
           i18n-placeholder
           aria-label="Search by name or ticker"
@@ -84,7 +84,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
       </label>
       <button
         type="button"
-        class="flex size-[46px] shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+        class="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
         [attr.aria-label]="direction() === 'desc' ? descendingLabel : ascendingLabel"
         (click)="direction.set(direction() === 'desc' ? 'asc' : 'desc')"
       >
@@ -141,14 +141,14 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
     @if (data.error() && !data.hasValue()) {
       <app-error-state [error]="data.error()" (retry)="data.reload()" />
     } @else if (!data.hasValue()) {
-      <div class="mt-5 space-y-3" aria-hidden="true">
+      <div class="mt-4 space-y-3" aria-hidden="true">
         @for (i of [1, 2, 3, 4, 5]; track i) {
           <app-skeleton shape="card" class="block h-14" />
         }
       </div>
     } @else {
       @if (data.value().stale) {
-        <div class="mb-3"><app-stale-chip [asOf]="data.value().asOf" /></div>
+        <div class="mt-4 mb-3"><app-stale-chip [asOf]="data.value().asOf" /></div>
       }
       @if (items().length === 0) {
         <app-empty-state
@@ -158,7 +158,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
         />
       } @else {
         <section
-          class="app-card mt-5 grid gap-3.5"
+          class="app-card mt-4 grid gap-3.5"
           [class]="totalAfterFees() ? 'grid-cols-2' : 'grid-cols-1'"
         >
           <div class="flex min-w-0 flex-col gap-2">
@@ -181,7 +181,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
         </section>
         @if (extremes().length) {
           <section
-            class="app-card mt-3.5 grid grid-cols-2 gap-3.5"
+            class="app-card mt-4 grid grid-cols-2 gap-3.5"
             aria-label="Best and worst"
             i18n-aria-label
           >
@@ -210,7 +210,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
             }
           </section>
         }
-        <div class="mt-5 flex justify-between px-1">
+        <div class="mt-4 flex justify-between px-1">
           <span class="app-label"
             ><ng-container i18n>Stocks</ng-container> · {{ items().length }}</span
           >

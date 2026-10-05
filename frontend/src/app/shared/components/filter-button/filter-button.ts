@@ -8,13 +8,13 @@ import { Icon } from '../../icon/icon';
   template: `
     <button
       type="button"
-      class="relative flex size-[46px] items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+      class="relative flex size-10 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
       [attr.aria-label]="label()"
       (click)="pressed.emit()"
     >
       <app-icon name="tune" />
       @if (active()) {
-        <span class="absolute top-[9px] right-[9px] size-2 rounded-full bg-primary"></span>
+        <span class="absolute top-2 right-2 size-2 rounded-full bg-primary"></span>
       }
     </button>
   `,

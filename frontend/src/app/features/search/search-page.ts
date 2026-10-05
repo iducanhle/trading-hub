@@ -47,7 +47,7 @@ import { StockRow } from './stock-row';
             <app-icon
               name="search"
               class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-on-surface-variant"
-              [size]="20"
+              [size]="18"
             />
             <input
               #input
@@ -60,7 +60,7 @@ import { StockRow } from './stock-row';
               i18n-aria-label
               placeholder="Symbol or company, e.g. AAPL, SAP.DE"
               i18n-placeholder
-              class="h-[50px] w-full rounded-2xl bg-surface-container pr-12 pl-11 text-base font-semibold text-on-surface outline-none placeholder:font-medium placeholder:text-on-surface-variant focus:ring-[1.5px] focus:ring-primary [&::-webkit-search-cancel-button]:hidden"
+              class="h-10 w-full rounded-[14px] bg-surface-container pr-12 pl-10 text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant focus:ring-[1.5px] focus:ring-primary [&::-webkit-search-cancel-button]:hidden"
               [value]="query()"
               (input)="onInput(input.value)"
               (keydown.enter)="openFirst()"
@@ -85,7 +85,7 @@ import { StockRow } from './stock-row';
     <div class="mx-auto w-full max-w-2xl min-w-0 px-4 pb-6">
       @if (!term()) {
         @if (recent.items().length) {
-          <section class="app-card mt-4 pt-4 pb-1.5">
+          <section class="app-card mt-1 pt-4 pb-1.5">
             <div class="flex items-center justify-between">
               <h2 class="app-title-card" i18n="Recent searches">Recent</h2>
               <button
@@ -117,7 +117,7 @@ import { StockRow } from './stock-row';
         </div>
       } @else if (shown(); as list) {
         @if (list.length || results.isLoading()) {
-          <h2 class="flex items-baseline gap-2 px-1 pt-7 pb-1 app-title-section">
+          <h2 class="flex items-baseline gap-2 px-1 pt-4 pb-1 app-title-section">
             <ng-container i18n>Results</ng-container>
             <span class="text-[15px] font-semibold text-on-surface-variant">{{ list.length }}</span>
           </h2>
@@ -139,7 +139,7 @@ import { StockRow } from './stock-row';
           />
         }
       } @else {
-        <ul aria-busy="true" aria-label="Searching" i18n-aria-label>
+        <ul class="mt-4" aria-busy="true" aria-label="Searching" i18n-aria-label>
           @for (i of [1, 2, 3, 4, 5]; track i) {
             <li class="flex items-center gap-3 py-[11px]">
               <app-skeleton class="size-10 rounded-xl" />

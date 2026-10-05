@@ -110,12 +110,12 @@ const EMPTY: ListState = {
   template: `
     <div class="flex items-center gap-2.5">
       <label
-        class="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
+        class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
       >
-        <app-icon name="search" [size]="20" />
+        <app-icon name="search" [size]="18" />
         <input
           type="search"
-          class="min-w-0 flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant"
+          class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
           placeholder="Search by name or ticker"
           i18n-placeholder
           aria-label="Search by name or ticker"
@@ -126,7 +126,7 @@ const EMPTY: ListState = {
       </label>
       <button
         type="button"
-        class="flex size-[46px] shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+        class="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
         [attr.aria-label]="direction() === 'desc' ? descendingLabel : ascendingLabel"
         (click)="direction.set(direction() === 'desc' ? 'asc' : 'desc')"
       >
@@ -151,7 +151,7 @@ const EMPTY: ListState = {
     }
 
     <app-segmented
-      class="mt-3 mb-5"
+      class="mt-3 mb-4"
       aria-label="Trade side"
       i18n-aria-label
       stretch

@@ -74,9 +74,25 @@ public class SearchService {
         return rank(query, usResults == null ? List.of() : usResults, euResults == null ? List.of() : euResults, limit);
     }
 
+    /**
+     * An empty answer moves on to the next provider too: Finnhub's search misses some names (e.g. "hynix" for the
+     * SKHY listing) that Yahoo finds. Empty when every provider answered with no match.
+     */
     private List<SymbolMatch> region(String query, Region region, int limit) {
-        return router.<SymbolSearchProvider, List<SymbolMatch>>first(Capability.SEARCH, region,
-                p -> p.search(query, region, limit)).value();
+        try {
+            return router.<SymbolSearchProvider, List<SymbolMatch>>first(Capability.SEARCH, region, p -> {
+                List<SymbolMatch> matches = p.search(query, region, limit);
+                if (matches.isEmpty()) {
+                    throw new ProviderException(p.id(), ProviderException.Kind.NOT_FOUND, "no match");
+                }
+                return matches;
+            }).value();
+        } catch (ProviderException e) {
+            if (e.kind() == ProviderException.Kind.NOT_FOUND) {
+                return List.of();
+            }
+            throw e;
+        }
     }
 
     /** Null when that region's search failed (the other region may still answer). */
