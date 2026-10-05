@@ -105,17 +105,17 @@ export function recommendationConsensus(p: RecommendationPeriod) {
           <div class="app-card">
             @if (consensus(); as c) {
               <p class="flex flex-wrap items-baseline gap-x-2.5">
-                <span class="text-[22px] font-bold" [class]="c.tone">{{ c.label }}</span>
-                <span class="text-sm font-semibold text-on-surface-variant" i18n
+                <span class="text-[19px] font-bold" [class]="c.tone">{{ c.label }}</span>
+                <span class="text-[13px] font-semibold text-on-surface-variant" i18n
                   >{{ c.count }} of {{ c.total }} analysts · {{ c.month }}</span
                 >
               </p>
             }
             <ul class="mt-4 space-y-3">
               @for (bar of bars(); track bar.period) {
-                <li class="flex items-center gap-2.5 text-sm">
+                <li class="flex items-center gap-2.5 text-[13px]">
                   <span
-                    class="w-[74px] shrink-0 text-[13px] font-semibold text-on-surface-variant"
+                    class="w-[74px] shrink-0 text-xs font-semibold text-on-surface-variant"
                     >{{ bar.label }}</span
                   >
                   <span
@@ -126,7 +126,7 @@ export function recommendationConsensus(p: RecommendationPeriod) {
                     @for (s of bar.segments; track s.label) {
                       @if (s.count) {
                         <span
-                          class="flex items-center justify-center text-xs font-extrabold"
+                          class="flex items-center justify-center text-[11px] font-extrabold"
                           [style.width.%]="s.percent"
                           [style.background]="s.color"
                           [style.color]="s.text"
@@ -135,12 +135,12 @@ export function recommendationConsensus(p: RecommendationPeriod) {
                       }
                     }
                   </span>
-                  <span class="w-6 shrink-0 text-right text-[13px] font-bold">{{ bar.total }}</span>
+                  <span class="w-6 shrink-0 text-right text-xs font-bold">{{ bar.total }}</span>
                 </li>
               }
             </ul>
             <ul
-              class="mt-4 flex flex-wrap gap-x-3.5 gap-y-2 text-[12.5px] font-semibold text-on-surface-variant"
+              class="mt-4 flex flex-wrap gap-x-3.5 gap-y-2 text-xs font-semibold text-on-surface-variant"
               aria-label="Legend"
               i18n-aria-label="Chart legend"
             >

@@ -125,7 +125,7 @@ const MIX = [0, 14, 26, 42, 80];
                 @if (row.hasEarnings) {
                   <span class="absolute top-0.5 right-1.5 text-[10px] font-bold">E</span>
                 }
-                <span class="mt-2 text-sm font-semibold">{{ percentOf(row) }}</span>
+                <span class="mt-2 text-[13px] font-semibold">{{ percentOf(row) }}</span>
               }
             </button>
           }
@@ -174,7 +174,7 @@ const MIX = [0, 14, 26, 42, 80];
                   <span class="absolute top-0.5 right-1 text-[10px] font-bold">E</span>
                 }
                 <span
-                  class="absolute inset-x-0 bottom-0 top-2 flex items-center justify-center text-sm font-semibold"
+                  class="absolute inset-x-0 bottom-0 top-2 flex items-center justify-center text-[13px] font-semibold"
                   >{{ percentOf(row) }}</span
                 >
               }

@@ -368,7 +368,7 @@ function formatTickmarks(prices: readonly number[]): string[] {
         @if (positionPrices()) {
           <button
             type="button"
-            class="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold ring-1 ring-inset transition-colors"
+            class="flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold ring-1 ring-inset transition-colors"
             [class]="showLines() ? toggleOn : toggleOff"
             [attr.aria-pressed]="showLines()"
             (click)="showLines.set(!showLines())"
@@ -381,7 +381,7 @@ function formatTickmarks(prices: readonly number[]): string[] {
         }
         <button
           type="button"
-          class="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold ring-1 ring-inset transition-colors"
+          class="flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold ring-1 ring-inset transition-colors"
           [class]="showEarnings() ? toggleOn : toggleOff"
           [attr.aria-pressed]="showEarnings()"
           (click)="showEarnings.set(!showEarnings())"
@@ -392,7 +392,7 @@ function formatTickmarks(prices: readonly number[]): string[] {
         @if (hasTrades()) {
           <button
             type="button"
-            class="flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold ring-1 ring-inset transition-colors"
+            class="flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold ring-1 ring-inset transition-colors"
             [class]="showTrades() ? toggleOn : toggleOff"
             [attr.aria-pressed]="showTrades()"
             (click)="showTrades.set(!showTrades())"

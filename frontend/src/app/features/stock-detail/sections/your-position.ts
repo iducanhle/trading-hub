@@ -27,21 +27,20 @@ import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
       @if (p.status === 'OPEN') {
         <button
           type="button"
-          class="app-card mx-4 mt-3.5 flex w-[calc(100%-2rem)] items-center gap-3.5 text-left hover:bg-surface-container-high"
+          class="app-card mx-4 mt-3 flex w-[calc(100%-2rem)] items-center gap-3 px-4! py-3! text-left hover:bg-surface-container-high"
           aria-labelledby="unrealized-title"
           (click)="openUnrealized(p)"
         >
           <span
-            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
+            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
             aria-hidden="true"
             ><app-icon name="trending_up" [size]="20"
           /></span>
           <div class="min-w-0 flex-1">
             <p class="flex items-baseline justify-between gap-3">
-              <span id="unrealized-title" class="app-title-card" i18n>Unrealized profit</span>
-              <span class="app-label" i18n>As of now</span>
+              <span id="unrealized-title" class="text-sm leading-snug font-bold" i18n>Unrealized profit</span>
             </p>
-            <p class="mt-0.5 flex">
+            <p class="mt-0.5 flex text-sm">
               <app-pnl
                 strong
                 [value]="p.unrealizedPnl"
@@ -55,17 +54,17 @@ import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
       }
       <button
         type="button"
-        class="app-card mx-4 mt-3.5 flex w-[calc(100%-2rem)] items-center gap-3.5 text-left hover:bg-surface-container-high"
+        class="app-card mx-4 mt-3 flex w-[calc(100%-2rem)] items-center gap-3 px-4! py-3! text-left hover:bg-surface-container-high"
         aria-labelledby="total-pnl-title"
         (click)="openRealized(p.t212Ticker)"
       >
         <span
-          class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
+          class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary"
           aria-hidden="true"
           ><app-icon name="account_balance_wallet" [size]="20"
         /></span>
         <div class="min-w-0 flex-1">
-          <p id="total-pnl-title" class="app-title-card">
+          <p id="total-pnl-title" class="text-sm leading-snug font-bold">
             <ng-container i18n="Card title|Realized profit/loss of this stock"
               >Realized profit</ng-container
             >
@@ -73,7 +72,7 @@ import { DIALOG_CONFIG } from '../../../shared/components/dialog/dialog';
               · <ng-container i18n="Position status|Shares fully sold">Closed</ng-container>
             }
           </p>
-          <p class="mt-0.5 flex">
+          <p class="mt-0.5 flex text-sm">
             <app-pnl strong [value]="realized(p)" [currency]="currency()" [pct]="realizedPct(p)" />
           </p>
         </div>

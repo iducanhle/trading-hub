@@ -35,13 +35,13 @@ export function beatRateText(stats: Stats): string | null {
           class="divide-y divide-outline-variant rounded-[22px] border border-outline-variant px-5 py-1.5"
         >
           <div class="flex items-center justify-between gap-3 py-3">
-            <dt class="app-label inline-flex items-center gap-1">
+            <dt class="app-label inline-flex items-center gap-1 text-[11px]!">
               <span i18n>Upcoming earnings</span><app-term-info term="earnings" />
             </dt>
-            <dd class="text-right text-[15px] font-semibold">
+            <dd class="text-right text-sm font-semibold">
               @if (nextEarnings(); as e) {
                 <span class="block whitespace-nowrap">{{ e.date | appDate }}</span>
-                <span class="block text-[13px] whitespace-nowrap text-on-surface-variant">{{
+                <span class="block text-xs whitespace-nowrap text-on-surface-variant">{{
                   e.date | relativeDay
                 }}</span>
               } @else {
@@ -50,16 +50,16 @@ export function beatRateText(stats: Stats): string | null {
             </dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-3">
-            <dt class="app-label inline-flex items-center gap-1">
+            <dt class="app-label inline-flex items-center gap-1 text-[11px]!">
               <span i18n>Beat rate</span><app-term-info term="beatRate" />
             </dt>
-            <dd class="text-right text-[15px] font-semibold">{{ beatRate() ?? '—' }}</dd>
+            <dd class="text-right text-sm font-semibold">{{ beatRate() ?? '—' }}</dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-3">
-            <dt class="app-label inline-flex items-center gap-1">
+            <dt class="app-label inline-flex items-center gap-1 text-[11px]!">
               <span i18n>Current streak</span><app-term-info term="streak" />
             </dt>
-            <dd class="text-right text-[15px] font-semibold">
+            <dd class="text-right text-sm font-semibold">
               @if (s.streak; as streak) {
                 <span
                   [class.text-gain]="streak.result === 'BEAT'"
@@ -72,10 +72,10 @@ export function beatRateText(stats: Stats): string | null {
             </dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-3">
-            <dt class="app-label inline-flex items-center gap-1">
+            <dt class="app-label inline-flex items-center gap-1 text-[11px]!">
               <span i18n>Avg. reaction (absolute)</span><app-term-info term="avgReaction" />
             </dt>
-            <dd class="text-right text-[15px] font-semibold">{{ avgReaction() }}</dd>
+            <dd class="text-right text-sm font-semibold">{{ avgReaction() }}</dd>
           </div>
         </dl>
       } @else {
