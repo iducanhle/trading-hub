@@ -34,10 +34,10 @@ export class StatList {
       class="inline-flex min-w-0 items-center gap-1"
       [class]="
         total()
-          ? 'text-sm font-bold'
+          ? 'text-[13px] font-bold'
           : sub()
             ? 'text-xs font-medium text-on-surface-variant'
-            : 'text-sm font-medium text-on-surface-variant'
+            : 'text-[13px] font-medium text-on-surface-variant'
       "
     >
       <span>{{ label() }}</span>
@@ -49,7 +49,7 @@ export class StatList {
       class="m-0 shrink-0 text-right whitespace-nowrap tabular-nums"
       [class]="
         total()
-          ? 'text-sm font-bold'
+          ? 'text-[13px] font-bold'
           : sub()
             ? 'text-xs font-semibold'
             : 'text-sm font-semibold'

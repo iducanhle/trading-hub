@@ -115,11 +115,9 @@ const TABS: { id: StockTab; label: string }[] = [
               </span>
             </h1>
           </div>
-          @if (!notFound()) {
-            <app-follow-button compact [target]="followTarget()" />
-          } @else {
-            <span class="w-11"></span>
-          }
+          <a matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+            <app-icon name="search" />
+          </a>
           <button
             matIconButton
             type="button"
@@ -153,14 +151,17 @@ const TABS: { id: StockTab; label: string }[] = [
         } @else {
           <section class="px-5 pt-3" aria-label="Price" i18n-aria-label>
             <!-- Back sits here, at the top of the content; the header's left corner holds the menu. -->
-            <button
-              type="button"
-              class="-ml-2 mb-2.5 inline-flex h-8 items-center gap-1 rounded-full pr-3 pl-1.5 text-[13px] font-bold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-              (click)="navigation.back('/followed')"
-            >
-              <app-icon name="arrow_back" [size]="18" />
-              <ng-container i18n>Back</ng-container>
-            </button>
+            <div class="mb-2.5 flex items-center justify-between">
+              <button
+                type="button"
+                class="-ml-2 inline-flex h-8 items-center gap-1 rounded-full pr-3 pl-1.5 text-[13px] font-bold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+                (click)="navigation.back('/followed')"
+              >
+                <app-icon name="arrow_back" [size]="18" />
+                <ng-container i18n>Back</ng-container>
+              </button>
+              <app-follow-button class="-mr-2" compact [target]="followTarget()" />
+            </div>
             <!-- The change sits right below, above the chart (it follows the chart's range). -->
             <div class="flex min-w-0 items-center gap-2">
               <app-stock-logo [symbol]="ctx.symbol()" [logoUrl]="stock()?.logoUrl" [size]="24" />
@@ -197,6 +198,7 @@ const TABS: { id: StockTab; label: string }[] = [
             }
           </section>
 
+          <app-performance-summary class="mt-4 block" [performance]="stock()?.performance" />
           @defer (on viewport; prefetch on idle) {
             <app-price-chart class="mt-4 block" />
           } @placeholder {
@@ -243,11 +245,6 @@ const TABS: { id: StockTab; label: string }[] = [
           >
             @switch (activeTab()) {
               @case ('results') {
-                @defer (on viewport; prefetch on idle) {
-                  <app-performance-history />
-                } @placeholder {
-                  <div class="h-14"></div>
-                }
                 <app-earnings-stats [stats]="stock()?.earningsStats" />
                 @defer (on viewport; prefetch on idle) {
                   <app-earnings-history />
@@ -271,8 +268,12 @@ const TABS: { id: StockTab; label: string }[] = [
               }
               @default {
                 <app-upcoming-earnings [event]="stock()?.nextEarnings" [loading]="!stock()" />
+                @defer (on viewport; prefetch on idle) {
+                  <app-performance-history />
+                } @placeholder {
+                  <div class="h-14"></div>
+                }
                 <app-key-stats [overview]="stock()" />
-                <app-performance-summary [performance]="stock()?.performance" />
                 @defer (on viewport; prefetch on idle) {
                   <app-peers />
                 } @placeholder {

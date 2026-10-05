@@ -10,19 +10,14 @@ import { PERIOD_LABELS } from '../../../shared/utils/format';
   imports: [Change, Skeleton],
   template: `
     <h2 class="sr-only" i18n>Performance</h2>
-    <ul
-      class="no-scrollbar mt-5 flex gap-2.5 overflow-x-auto px-4"
-      tabindex="0"
-      aria-label="Performance"
-      i18n-aria-label
-    >
+    <ul class="grid grid-cols-4 gap-1.5 px-4" aria-label="Performance" i18n-aria-label>
       @for (item of items(); track item.label) {
-        <li class="min-w-[104px] flex-1 shrink-0 rounded-2xl bg-surface-container px-3.5 py-3">
-          <span class="app-label block text-[11px]">{{ item.label }}</span>
+        <li class="min-w-0 rounded-xl bg-surface-container px-2 py-2">
+          <span class="app-label block truncate text-[10px]">{{ item.label }}</span>
           @if (performance()) {
-            <app-change [value]="item.value" class="mt-1 block text-base font-bold" />
+            <app-change [value]="item.value" class="mt-0.5 block truncate text-[13px] font-bold" />
           } @else {
-            <app-skeleton class="mt-1.5 h-5 w-14" />
+            <app-skeleton class="mt-1 h-4 w-12" />
           }
         </li>
       }
