@@ -11,6 +11,7 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
+import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
 import { PeriodSelector } from './period-selector';
 import { PortfolioCash } from './portfolio-cash';
@@ -35,6 +36,7 @@ import { TradeFilters } from './trades-filters';
 @Component({
   selector: 'app-portfolio-page',
   imports: [
+    OpenSearch,
     RouterLink,
     MatButton,
     MatIconButton,
@@ -65,14 +67,14 @@ import { TradeFilters } from './trades-filters';
             >
               <app-icon name="refresh" [class.animate-spin]="t212.syncing()" />
             </button>
-            <a matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+            <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
               <app-icon name="search" />
-            </a>
+            </button>
           </div>
         } @else {
-          <a actions matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+          <button actions matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
             <app-icon name="search" />
-          </a>
+          </button>
         }
       </app-page-header>
 

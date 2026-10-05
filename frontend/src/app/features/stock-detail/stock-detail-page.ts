@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, untracked } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { FollowTarget } from '../../core/services/follows.service';
@@ -18,6 +18,7 @@ import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
+import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
 import { PricePipe } from '../../shared/pipes/format.pipes';
 import { EarningsHistory } from './sections/earnings-history';
@@ -53,7 +54,7 @@ const TABS: { id: StockTab; label: string }[] = [
   selector: 'app-stock-detail-page',
   providers: [StockContext],
   imports: [
-    RouterLink,
+    OpenSearch,
     MatButton,
     MatIconButton,
     Icon,
@@ -115,9 +116,9 @@ const TABS: { id: StockTab; label: string }[] = [
               </span>
             </h1>
           </div>
-          <a matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+          <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
             <app-icon name="search" />
-          </a>
+          </button>
           <button
             matIconButton
             type="button"
@@ -142,7 +143,7 @@ const TABS: { id: StockTab; label: string }[] = [
             }}. Check the ticker, e.g. SAP.DE for SAP in Frankfurt."
             i18n-text
           >
-            <a matButton="filled" routerLink="/search" i18n>Search stocks</a>
+            <button matButton="filled" type="button" appOpenSearch i18n>Search stocks</button>
           </app-empty-state>
         } @else if (overview.error() && !stock()) {
           <div class="p-4">

@@ -4,17 +4,17 @@ import {
   afterNextRender,
   computed,
   inject,
-  input,
   linkedSignal,
+  signal,
   viewChild,
 } from '@angular/core';
-import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconButton } from '@angular/material/button';
-import { Router } from '@angular/router';
-import { distinctUntilChanged, map, of, switchMap, timer } from 'rxjs';
+import { MatDialogRef } from '@angular/material/dialog';
+import { NavigationStart, Router } from '@angular/router';
+import { distinctUntilChanged, filter, map, of, switchMap, timer } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { SearchResult } from '../../core/models/contract';
-import { NavigationService } from '../../core/services/navigation.service';
 import { RecentSearchesService } from '../../core/services/recent-searches.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
@@ -22,12 +22,13 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Icon } from '../../shared/icon/icon';
 import { StockRow } from './stock-row';
 
+/** Stock search, opened over the current page by SearchService (the `/search` route is disabled). */
 @Component({
   selector: 'app-search-page',
   imports: [MatIconButton, Icon, StockRow, Skeleton, EmptyState, ErrorState],
   template: `
     <header
-      class="sticky top-0 z-20 bg-surface/90 pt-safe pr-4 pb-2 pl-2 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
+      class="sticky top-0 z-20 min-w-0 bg-surface/90 pt-safe pr-4 pb-2 pl-2 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
     >
       <div class="mx-auto max-w-2xl pt-3">
         <h1 class="sr-only" i18n>Search</h1>
@@ -38,7 +39,7 @@ import { StockRow } from './stock-row';
             class="shrink-0"
             aria-label="Back"
             i18n-aria-label
-            (click)="navigation.back('/followed')"
+            (click)="close()"
           >
             <app-icon name="arrow_back" [size]="26" />
           </button>
@@ -81,7 +82,7 @@ import { StockRow } from './stock-row';
       </div>
     </header>
 
-    <div class="mx-auto max-w-2xl px-4 pb-6">
+    <div class="mx-auto w-full max-w-2xl min-w-0 px-4 pb-6">
       @if (!term()) {
         @if (recent.items().length) {
           <section class="app-card mt-4 pt-4 pb-1.5">
@@ -140,8 +141,8 @@ import { StockRow } from './stock-row';
       } @else {
         <ul aria-busy="true" aria-label="Searching" i18n-aria-label>
           @for (i of [1, 2, 3, 4, 5]; track i) {
-            <li class="flex items-center gap-3.5 py-[13px]">
-              <app-skeleton class="size-12 rounded-[14px]" />
+            <li class="flex items-center gap-3 py-[11px]">
+              <app-skeleton class="size-10 rounded-xl" />
               <span class="flex-1 space-y-2">
                 <app-skeleton class="h-4 w-20" />
                 <app-skeleton class="h-3 w-48" />
@@ -156,15 +157,13 @@ import { StockRow } from './stock-row';
 export class SearchPage {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  protected readonly navigation = inject(NavigationService);
   protected readonly recent = inject(RecentSearchesService);
+  private readonly dialogRef = inject<MatDialogRef<SearchPage>>(MatDialogRef);
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
 
-  /** `?q=` from the URL, so going back from a stock page restores the results. */
-  readonly q = input<string>();
-  protected readonly query = linkedSignal(() => this.q() ?? '');
+  protected readonly query = signal('');
 
-  /** The query after 300 ms without typing (the first value, e.g. from the URL, applies at once). */
+  /** The query after 300 ms without typing (the first, empty value applies at once). */
   protected readonly term = toSignal(
     toObservable(this.query).pipe(
       map((q) => q.trim()),
@@ -193,11 +192,21 @@ export class SearchPage {
 
   constructor() {
     afterNextRender(() => this.input().nativeElement.focus());
+    // Opening a result (or any other navigation) closes the overlay.
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationStart),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.dialogRef.close());
+  }
+
+  protected close(): void {
+    this.dialogRef.close();
   }
 
   protected onInput(value: string): void {
     this.query.set(value);
-    void this.router.navigate([], { queryParams: { q: value.trim() || null }, replaceUrl: true });
   }
 
   protected clear(): void {

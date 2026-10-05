@@ -42,6 +42,8 @@ export const routes: Routes = [
     children: [
       {
         path: 'search',
+        // Hidden: search opens as an overlay (SearchService). Kept so it can be re-enabled; never matches.
+        canMatch: [() => false],
         title: $localize`Search`,
         loadComponent: () => import('./features/search/search-page').then((m) => m.SearchPage),
       },

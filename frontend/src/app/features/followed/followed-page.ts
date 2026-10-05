@@ -12,6 +12,7 @@ import { PageHeader } from '../../shared/components/page-header/page-header';
 import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
+import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
 import {
   AppDatePipe,
@@ -33,6 +34,7 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
 @Component({
   selector: 'app-followed-page',
   imports: [
+    OpenSearch,
     RouterLink,
     MatButton,
     MatIconButton,
@@ -55,9 +57,9 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="refresh()">
       <app-page-header title="Followed" i18n-title maxWidth="max-w-3xl">
-        <a actions matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+        <button actions matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
           <app-icon name="search" />
-        </a>
+        </button>
       </app-page-header>
 
       <div class="mx-auto max-w-3xl px-3 pt-2 pb-10">
@@ -95,10 +97,10 @@ const AUTO_REFETCH_DELAYS_MS = [1500, 65_000];
             text="Follow stocks from their page to see their next earnings dates here."
             i18n-text
           >
-            <a matButton="filled" routerLink="/search">
+            <button matButton="filled" type="button" appOpenSearch>
               <app-icon matButtonIcon name="search" [size]="18" />
               <ng-container i18n>Find stocks</ng-container>
-            </a>
+            </button>
           </app-empty-state>
         } @else {
           <!-- Same building blocks as Portfolio: a summary card on top, then labelled plain lists. -->

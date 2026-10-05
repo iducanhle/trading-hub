@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { RouterLink } from '@angular/router';
 import { CalendarQuery } from '../../core/api/api.service';
 import { CalendarDay } from '../../core/models/contract';
 import { FollowsService } from '../../core/services/follows.service';
@@ -12,6 +11,7 @@ import { PageHeader } from '../../shared/components/page-header/page-header';
 import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { Swipe } from '../../shared/directives/swipe';
+import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
 import { formatDateRange, formatMonthTitle, todayIso } from '../../shared/utils/dates';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
@@ -40,7 +40,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 @Component({
   selector: 'app-calendar-page',
   imports: [
-    RouterLink,
+    OpenSearch,
     MatButton,
     MatIconButton,
     Segmented,
@@ -81,9 +81,9 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
               }
             </span>
           </button>
-          <a matIconButton routerLink="/search" aria-label="Search" i18n-aria-label>
+          <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
             <app-icon name="search" />
-          </a>
+          </button>
         </div>
         <div class="mx-auto flex max-w-6xl items-center gap-1 px-2 pb-2">
           <button

@@ -281,3 +281,14 @@
 .mat-bottom-sheet-container .app-stat-card {
   background: var(--mat-sys-surface-container-high);
 }
+
+/* Search overlay (SearchService): full screen on phones, a rounded dialog from 640 px. */
+.app-search-panel .mat-mdc-dialog-surface {
+  background: var(--mat-sys-surface);
+  overflow-x: hidden;
+}
+@media (max-width: 639.98px) {
+  .app-search-panel .mat-mdc-dialog-surface {
+    border-radius: 0;
+  }
+}

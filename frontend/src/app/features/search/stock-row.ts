@@ -16,9 +16,9 @@ import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
   template: `
     <a
       [routerLink]="['/stock', stock().symbol]"
-      class="-mx-1 flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl px-1 py-[13px] hover:bg-surface-container-high focus-visible:bg-surface-container-high"
+      class="-mx-1 flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1 py-[11px] hover:bg-surface-container-high focus-visible:bg-surface-container-high"
     >
-      <app-stock-logo [symbol]="stock().symbol" [logoUrl]="stock().logoUrl" [size]="48" />
+      <app-stock-logo [symbol]="stock().symbol" [logoUrl]="stock().logoUrl" [size]="40" />
       <span class="min-w-0 flex-1">
         <span class="flex items-center gap-2">
           <span class="app-row-title">{{ stock().symbol }}</span>
