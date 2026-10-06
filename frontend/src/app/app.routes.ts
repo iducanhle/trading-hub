@@ -1,5 +1,6 @@
 import { ActivatedRouteSnapshot, Routes } from '@angular/router';
 import { allowedGuard, authGuard, guestGuard, signedInGuard } from './core/auth/auth.guards';
+import { launchRedirectGuard } from './core/layout/launch-redirect.guard';
 import { Shell } from './core/layout/shell';
 import { displayTicker } from './features/portfolio/portfolio-model';
 
@@ -95,6 +96,7 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         title: 'Tradiqo',
+        canActivate: [launchRedirectGuard],
         loadComponent: () => import('./features/home/home-page').then((m) => m.HomePage),
       },
       { path: '**', redirectTo: 'followed' },
