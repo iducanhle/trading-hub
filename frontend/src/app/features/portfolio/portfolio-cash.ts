@@ -1,5 +1,5 @@
 import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
@@ -21,8 +21,25 @@ import {
 import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { transactionLabel } from './portfolio-labels';
-import { PortfolioPeriod, dayIn, displayTicker, periodQuery } from './portfolio-model';
+import {
+  PortfolioPeriod,
+  SortDirection,
+  dayIn,
+  displayTicker,
+  periodQuery,
+} from './portfolio-model';
 import { DividendDialog, DividendDialogData } from './dividend-dialog';
+import {
+  DEFAULT_DIVIDEND_DIRECTION,
+  DEFAULT_DIVIDEND_SORT,
+  DIVIDEND_SORTS,
+  DIVIDEND_SORT_LABELS,
+  DividendSort,
+  DividendsFilterContext,
+  DividendsFilterSheet,
+} from './dividends-filters';
+import { InstrumentOption } from './trades-filters';
+import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
 /** Portfolio → Dividends & cash: dividends with their total, or (switch) deposits, withdrawals, fees and interest. */
@@ -43,6 +60,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
     HeroAmount,
     Segmented,
     Segment,
+    FilterButton,
   ],
   template: `
     <app-segmented
@@ -57,6 +75,47 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
     </app-segmented>
 
     @if (view() === 'dividends') {
+      <div class="mt-3 flex items-center gap-2.5">
+        <label
+          class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
+        >
+          <app-icon name="search" [size]="18" />
+          <input
+            type="search"
+            class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
+            placeholder="Search by name or ticker"
+            i18n-placeholder
+            aria-label="Search by name or ticker"
+            i18n-aria-label
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </label>
+        <button
+          type="button"
+          class="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+          [attr.aria-label]="direction() === 'desc' ? descendingLabel : ascendingLabel"
+          (click)="direction.set(direction() === 'desc' ? 'asc' : 'desc')"
+        >
+          <app-icon [name]="direction() === 'desc' ? 'sort_desc' : 'sort_asc'" />
+        </button>
+        <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
+      </div>
+      @if (chips().length) {
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          @for (chip of chips(); track chip.key) {
+            <button
+              type="button"
+              class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
+              [attr.aria-label]="chip.removeLabel"
+              (click)="remove(chip.key)"
+            >
+              {{ chip.label }}
+              <app-icon name="close" [size]="16" />
+            </button>
+          }
+        </div>
+      }
       <section aria-labelledby="dividends-title" class="mt-5">
         <h2 id="dividends-title" class="app-label px-1" i18n>Total dividends</h2>
         @if (dividends.error() && !dividends.hasValue()) {
@@ -77,7 +136,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
             class="mt-1 px-1"
             size="md"
             signed
-            [value]="d.total"
+            [value]="filtered() ? filteredTotal() : d.total"
             [currency]="d.accountCurrency | acct"
           />
           @if (d.stale) {
@@ -87,9 +146,13 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
             <p class="app-card mt-3.5 text-sm text-on-surface-variant" i18n>
               No dividends in this period.
             </p>
+          } @else if (shownDividends().length === 0) {
+            <p class="app-card mt-3.5 text-sm text-on-surface-variant" i18n>
+              No dividends match the filters in this period.
+            </p>
           } @else {
             <ul class="app-card mt-3.5 py-2">
-              @for (x of d.items; track x.id) {
+              @for (x of shownDividends(); track x.id) {
                 <li>
                   <button
                     type="button"
@@ -201,6 +264,99 @@ export class PortfolioCash {
     params: () => this.params(),
     stream: ({ params }) => this.api.t212Transactions(params.query),
   });
+
+  protected readonly search = signal('');
+  protected readonly tickers = signal<string[]>([]);
+  protected readonly sort = persistedSignal<DividendSort>(
+    'portfolio.dividends.sort',
+    DEFAULT_DIVIDEND_SORT,
+  );
+  protected readonly direction = persistedSignal<SortDirection>(
+    'portfolio.dividends.direction',
+    DEFAULT_DIVIDEND_DIRECTION,
+  );
+  protected readonly descendingLabel = $localize`Descending, tap for ascending`;
+  protected readonly ascendingLabel = $localize`Ascending, tap for descending`;
+
+  /** Stocks that paid a dividend in the period, for the stock filter. */
+  protected readonly instruments = computed<InstrumentOption[]>(() => {
+    if (!this.dividends.hasValue()) return [];
+    const byTicker = new Map<string, InstrumentOption>();
+    for (const d of this.dividends.value().items) {
+      if (!byTicker.has(d.t212Ticker)) {
+        byTicker.set(d.t212Ticker, { t212Ticker: d.t212Ticker, symbol: d.symbol, name: d.name });
+      }
+    }
+    return [...byTicker.values()].sort((a, b) => displayTicker(a).localeCompare(displayTicker(b)));
+  });
+
+  protected readonly filtered = computed(() => this.tickers().length > 0 || !!this.search().trim());
+
+  /** Dividends matching the stocks and the search, in the chosen order. */
+  protected readonly shownDividends = computed<T212Dividend[]>(() => {
+    if (!this.dividends.hasValue()) return [];
+    const selected = this.tickers();
+    const q = this.search().trim().toLowerCase();
+    const items = this.dividends
+      .value()
+      .items.filter(
+        (d) =>
+          (!selected.length || selected.includes(d.t212Ticker)) &&
+          (!q ||
+            d.name.toLowerCase().includes(q) ||
+            d.t212Ticker.toLowerCase().includes(q) ||
+            (d.symbol ?? '').toLowerCase().includes(q)),
+      );
+    const sign = this.direction() === 'desc' ? 1 : -1;
+    return this.sort() === 'amount'
+      ? items.sort((a, b) => sign * (b.amount - a.amount))
+      : items.sort((a, b) => sign * b.paidAt.localeCompare(a.paidAt));
+  });
+
+  protected readonly filteredTotal = computed(
+    () => Math.round(this.shownDividends().reduce((sum, d) => sum + d.amount, 0) * 100) / 100,
+  );
+
+  /** A chip for each picked stock and a non-default sort; removing one drops it. */
+  protected readonly chips = computed(() => {
+    const chips: { key: string; label: string; removeLabel: string }[] = [];
+    for (const ticker of this.tickers()) {
+      const option = this.instruments().find((i) => i.t212Ticker === ticker);
+      const label = option ? displayTicker(option) : ticker;
+      chips.push({ key: ticker, label, removeLabel: $localize`Remove filter ${label}:filter:` });
+    }
+    if (this.sort() !== DEFAULT_DIVIDEND_SORT) {
+      const label = DIVIDEND_SORT_LABELS[this.sort()];
+      chips.push({ key: 'sort', label, removeLabel: $localize`Remove filter ${label}:filter:` });
+    }
+    return chips;
+  });
+
+  constructor() {
+    if (!DIVIDEND_SORTS.includes(this.sort())) this.sort.set(DEFAULT_DIVIDEND_SORT);
+  }
+
+  protected openFilters(): void {
+    const context: DividendsFilterContext = {
+      view: { tickers: this.tickers(), sort: this.sort() },
+      instruments: this.instruments,
+      change: (view) => {
+        this.sort.set(view.sort);
+        this.tickers.set(view.tickers);
+      },
+    };
+    this.dialog.open(DividendsFilterSheet, {
+      ...DIALOG_CONFIG,
+      data: context,
+      ariaLabel: $localize`Filters`,
+    });
+  }
+
+  /** Resets the sort (`sort`) or drops one stock (its t212Ticker). */
+  protected remove(key: string): void {
+    if (key === 'sort') this.sort.set(DEFAULT_DIVIDEND_SORT);
+    else this.tickers.update((tickers) => tickers.filter((t) => t !== key));
+  }
 
   protected openDividend(dividend: T212Dividend, currency: string | null): void {
     this.dialog.open<DividendDialog, DividendDialogData>(DividendDialog, {
