@@ -370,6 +370,8 @@ function formatTickmarks(prices: readonly number[]): string[] {
           }
         </app-segmented>
       </div>
+      <!-- Faint hairline between the range row and the bar-size row. -->
+      <div class="mx-auto mt-1.5 h-px w-32 bg-outline-variant/70" aria-hidden="true"></div>
       <!-- Not stretched: three options spread over the width read as giant pills next to the range row. -->
       <div class="flex justify-center px-2.5 pt-1.5">
         <app-segmented

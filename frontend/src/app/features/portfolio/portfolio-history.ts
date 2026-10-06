@@ -248,6 +248,8 @@ function chartTime(iso: string): UTCTimestamp {
                 }
               </app-segmented>
             </div>
+            <!-- Faint hairline between the range row and the bar-size row. -->
+            <div class="mx-auto mt-1.5 h-px w-32 bg-outline-variant/70" aria-hidden="true"></div>
             <div class="flex justify-center pt-1.5">
               <app-segmented
                 appearance="chips"
