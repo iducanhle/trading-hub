@@ -153,12 +153,12 @@ const EMPTY: ListState = {
           @for (chip of chips(); track chip.key) {
             <button
               type="button"
-              class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
+              class="app-filter-chip"
               [attr.aria-label]="chip.removeLabel"
               (click)="remove(chip.key)"
             >
               {{ chip.label }}
-              <app-icon name="close" [size]="16" />
+              <app-icon name="close" [size]="14" />
             </button>
           }
         </div>
