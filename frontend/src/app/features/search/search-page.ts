@@ -82,7 +82,8 @@ import { StockRow } from './stock-row';
       </div>
     </header>
 
-    <div class="mx-auto w-full max-w-2xl min-w-0 px-4 pb-6">
+    <!-- Bottom padding keeps results clear of the portfolio pill, which stays above the overlay. -->
+    <div class="mx-auto w-full max-w-2xl min-w-0 px-4 pb-28">
       @if (!term()) {
         @if (recent.items().length) {
           <section class="app-card mt-1 pt-4 pb-1.5">

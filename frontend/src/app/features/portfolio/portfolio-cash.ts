@@ -1,5 +1,5 @@
 import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
@@ -20,13 +20,14 @@ import {
 } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
-import { transactionLabel } from './portfolio-labels';
+import { PERIOD_CHIP, customPeriodLabel, transactionLabel } from './portfolio-labels';
 import {
   PortfolioPeriod,
   SortDirection,
   dayIn,
   displayTicker,
   periodQuery,
+  presetRange,
 } from './portfolio-model';
 import { DividendDialog, DividendDialogData } from './dividend-dialog';
 import {
@@ -245,6 +246,8 @@ export class PortfolioCash {
   private readonly dialog = inject(MatDialog);
 
   readonly period = input.required<PortfolioPeriod>();
+  /** Removing the custom-period chip goes back to all time. */
+  readonly periodChange = output<PortfolioPeriod>();
   readonly version = input(0);
 
   protected readonly view = persistedSignal<'dividends' | 'cash'>(
@@ -320,6 +323,11 @@ export class PortfolioCash {
   /** A chip for each picked stock and a non-default sort; removing one drops it. */
   protected readonly chips = computed(() => {
     const chips: { key: string; label: string; removeLabel: string }[] = [];
+    const periodLabel = customPeriodLabel(this.period());
+    if (periodLabel) {
+      const removeLabel = $localize`Remove filter ${periodLabel}:filter:`;
+      chips.push({ key: PERIOD_CHIP, label: periodLabel, removeLabel });
+    }
     for (const ticker of this.tickers()) {
       const option = this.instruments().find((i) => i.t212Ticker === ticker);
       const label = option ? displayTicker(option) : ticker;
@@ -354,6 +362,10 @@ export class PortfolioCash {
 
   /** Resets the sort (`sort`) or drops one stock (its t212Ticker). */
   protected remove(key: string): void {
+    if (key === PERIOD_CHIP) {
+      this.periodChange.emit({ preset: 'ALL', ...presetRange('ALL') });
+      return;
+    }
     if (key === 'sort') this.sort.set(DEFAULT_DIVIDEND_SORT);
     else this.tickers.update((tickers) => tickers.filter((t) => t !== key));
   }

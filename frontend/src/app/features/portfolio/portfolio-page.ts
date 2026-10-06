@@ -162,7 +162,11 @@ import { TradeFilters } from './trades-filters';
           }
           @switch (tab()) {
             @case ('stocks') {
-              <app-portfolio-stocks [period]="period()" [version]="version()" />
+              <app-portfolio-stocks
+                [period]="period()"
+                [version]="version()"
+                (periodChange)="setPeriod($event)"
+              />
             }
             @case ('trades') {
               <app-portfolio-trades
@@ -170,10 +174,15 @@ import { TradeFilters } from './trades-filters';
                 [version]="version()"
                 [filters]="tradeFilters()"
                 (filtersChange)="setTradeFilters($event)"
+                (periodChange)="setPeriod($event)"
               />
             }
             @case ('cash') {
-              <app-portfolio-cash [period]="period()" [version]="version()" />
+              <app-portfolio-cash
+                [period]="period()"
+                [version]="version()"
+                (periodChange)="setPeriod($event)"
+              />
             }
             @default {
               <app-portfolio-overview [version]="version()" />

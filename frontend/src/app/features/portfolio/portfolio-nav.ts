@@ -1,9 +1,12 @@
 import {
   Component,
   DestroyRef,
+  ElementRef,
   Injectable,
+  Injector,
   afterNextRender,
   computed,
+  effect,
   inject,
   input,
 } from '@angular/core';
@@ -49,6 +52,17 @@ class LastStockMemory {
   host: {
     class:
       'pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(calc(env(safe-area-inset-bottom)_-_20px),12px)] lg:left-77',
+    // While searching, the pill is a manual popover shown after the search dialog (itself a top-layer popover), so
+    // it sits above it; these undo the popover's default box.
+    '[attr.popover]': "search.isOpen() ? 'manual' : null",
+    '[style.top]': "search.isOpen() ? 'auto' : null",
+    '[style.margin]': 'search.isOpen() ? 0 : null',
+    '[style.border]': 'search.isOpen() ? 0 : null',
+    '[style.background]': "search.isOpen() ? 'transparent' : null",
+    '[style.width]': "search.isOpen() ? 'auto' : null",
+    '[style.height]': "search.isOpen() ? 'auto' : null",
+    '[style.overflow]': "search.isOpen() ? 'visible' : null",
+    '[style.color]': "search.isOpen() ? 'inherit' : null",
   },
   template: `
     <nav
@@ -66,7 +80,7 @@ class LastStockMemory {
           <button
             type="button"
             (click)="onSearch()"
-            [attr.aria-current]="tab() === t ? 'page' : null"
+            [attr.aria-current]="current() === t ? 'page' : null"
             [class]="itemClass(t)"
           >
             <app-icon [name]="icons[t]" [size]="22" />
@@ -78,8 +92,9 @@ class LastStockMemory {
             [queryParams]="{ tab: t === 'overview' ? null : t }"
             queryParamsHandling="merge"
             replaceUrl
-            [attr.aria-current]="tab() === t ? 'page' : null"
+            [attr.aria-current]="current() === t ? 'page' : null"
             [class]="itemClass(t)"
+            (click)="search.close()"
           >
             <app-icon [name]="icons[t]" [size]="22" />
             <span class="max-w-full truncate">{{ labels[t] }}</span>
@@ -89,6 +104,7 @@ class LastStockMemory {
             routerLink="/portfolio"
             [queryParams]="{ tab: t === 'overview' ? null : t }"
             [class]="itemClass(t)"
+            (click)="search.close()"
           >
             <app-icon [name]="icons[t]" [size]="22" />
             <span class="max-w-full truncate">{{ labels[t] }}</span>
@@ -101,18 +117,34 @@ class LastStockMemory {
 export class PortfolioNav {
   readonly tab = input.required<NavTab>();
 
-  private readonly search = inject(SearchService);
+  protected readonly search = inject(SearchService);
   private readonly router = inject(Router);
   private readonly memory = inject(LastStockMemory);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
   protected readonly tabs = NAV_TABS;
   protected readonly labels = NAV_LABELS;
   protected readonly icons = TAB_ICONS;
-  protected readonly index = computed(() => NAV_TABS.indexOf(this.tab()));
+  /** The highlighted item: Search while the overlay is open, else the page's tab. */
+  protected readonly current = computed<NavTab>(() =>
+    this.search.isOpen() ? 'search' : this.tab(),
+  );
+  protected readonly index = computed(() => NAV_TABS.indexOf(this.current()));
   /** On the portfolio page the items swap `?tab=`; elsewhere they navigate to it. */
   protected readonly onPortfolio = computed(() => this.tab() !== 'search');
 
   constructor() {
+    const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    effect(() => {
+      if (!this.search.isOpen()) return;
+      // After the popover attribute is bound, raise the pill into the top layer above the dialog.
+      afterNextRender(
+        () => {
+          if (host.hasAttribute('popover') && !host.matches(':popover-open')) host.showPopover();
+        },
+        { injector: this.injector },
+      );
+    });
     // On a detail page, remember it (and each stock opened from there) so Search can return to it.
     afterNextRender(() => {
       if (this.onPortfolio()) return;
@@ -130,6 +162,7 @@ export class PortfolioNav {
 
   /** From the portfolio, Search returns to the last stock; on a stock, it forgets it and opens search. */
   protected onSearch(): void {
+    if (this.search.isOpen()) return;
     const last = this.memory.url;
     if (this.onPortfolio() && last) {
       void this.router.navigateByUrl(last);
@@ -142,7 +175,7 @@ export class PortfolioNav {
   protected itemClass(t: NavTab): string {
     return (
       'relative flex min-w-0 flex-col items-center gap-0.5 rounded-full px-1 pt-2 pb-1.5 text-[11px] leading-tight font-bold transition-colors duration-200 ' +
-      (this.tab() === t ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface')
+      (this.current() === t ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface')
     );
   }
 }

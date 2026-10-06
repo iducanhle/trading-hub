@@ -33,7 +33,7 @@ import {
   SignedMoneyPipe,
 } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
-import { KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
+import { PERIOD_CHIP, customPeriodLabel, KIND_LABELS, SIDE_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
   SortDirection,
@@ -41,6 +41,7 @@ import {
   filterInstruments,
   groupTradesByDay,
   periodQuery,
+  presetRange,
 } from './portfolio-model';
 import { TradeDialog, TradeDialogData } from './trade-dialog';
 import { TradeTile } from './trade-tile';
@@ -289,6 +290,8 @@ export class PortfolioTrades {
   }
 
   readonly period = input.required<PortfolioPeriod>();
+  /** Removing the custom-period chip goes back to all time. */
+  readonly periodChange = output<PortfolioPeriod>();
   readonly version = input(0);
   readonly filters = input<TradeFilters>({ side: null, tickers: [] });
   readonly filtersChange = output<TradeFilters>();
@@ -327,6 +330,11 @@ export class PortfolioTrades {
   /** A chip for each picked stock and a non-default sort; removing one drops it. */
   protected readonly chips = computed(() => {
     const chips: { key: string; label: string; removeLabel: string }[] = [];
+    const periodLabel = customPeriodLabel(this.period());
+    if (periodLabel) {
+      const removeLabel = $localize`Remove filter ${periodLabel}:filter:`;
+      chips.push({ key: PERIOD_CHIP, label: periodLabel, removeLabel });
+    }
     for (const ticker of this.filters().tickers) {
       const option = this.instruments().find((i) => i.t212Ticker === ticker);
       const label = option ? displayTicker(option) : ticker;
@@ -360,6 +368,10 @@ export class PortfolioTrades {
 
   /** Resets the sort (`sort`) or drops one stock (its t212Ticker). */
   protected remove(key: string): void {
+    if (key === PERIOD_CHIP) {
+      this.periodChange.emit({ preset: 'ALL', ...presetRange('ALL') });
+      return;
+    }
     if (key === 'sort') {
       this.sort.set(DEFAULT_TRADE_SORT);
       return;

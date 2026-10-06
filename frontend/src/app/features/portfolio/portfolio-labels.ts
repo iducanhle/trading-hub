@@ -1,5 +1,6 @@
 import { T212Side, T212TradeKind, T212TransactionType } from '../../core/models/contract';
-import { PeriodPreset, PortfolioTab, StockSort } from './portfolio-model';
+import { formatDate, formatDateRange } from '../../shared/utils/dates';
+import { PeriodPreset, PortfolioPeriod, PortfolioTab, StockSort } from './portfolio-model';
 
 export const PRESET_LABELS: Record<PeriodPreset, string> = {
   '1D': $localize`:Period of one day:1D`,
@@ -49,4 +50,17 @@ export const TRANSACTION_LABELS: Record<T212TransactionType, string> = {
 
 export function transactionLabel(type: string): string {
   return TRANSACTION_LABELS[type as T212TransactionType] ?? type;
+}
+
+/** Key of the custom-period chip among a tab's filter chips (tickers never start with "@"). */
+export const PERIOD_CHIP = '@period';
+
+/** The chip of a custom period (`7 Sep – 6 Oct 2026`, `From 7 Sep 2026`); null for a preset. */
+export function customPeriodLabel(period: PortfolioPeriod): string | null {
+  const { preset, from, to } = period;
+  if (preset !== 'CUSTOM') return null;
+  if (from && to) return formatDateRange(from, to, true);
+  if (from) return $localize`:Custom period with only a start day:From ${formatDate(from)}:date:`;
+  if (to) return $localize`:Custom period with only an end day:Until ${formatDate(to)}:date:`;
+  return null;
 }

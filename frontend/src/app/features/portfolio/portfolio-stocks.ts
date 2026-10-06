@@ -1,5 +1,5 @@
 import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../core/api/api.service';
@@ -26,8 +26,10 @@ import {
   DEFAULT_STOCKS_DIRECTION,
   DEFAULT_STOCKS_VIEW,
   STOCK_SORTS,
-  StocksFilterContext, StocksFilterSheet } from './stocks-filters';
-import { SORT_LABELS } from './portfolio-labels';
+  StocksFilterContext,
+  StocksFilterSheet,
+} from './stocks-filters';
+import { PERIOD_CHIP, customPeriodLabel, SORT_LABELS } from './portfolio-labels';
 import {
   PortfolioPeriod,
   SortDirection,
@@ -39,6 +41,7 @@ import {
   isAllTime,
   periodQuery,
   sortInstruments,
+  presetRange,
 } from './portfolio-model';
 import { PositionDialog, PositionDialogData } from './position-dialog';
 import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
@@ -260,6 +263,8 @@ export class PortfolioStocks {
   private readonly t212 = inject(T212Service);
 
   readonly period = input.required<PortfolioPeriod>();
+  /** Removing the custom-period chip goes back to all time. */
+  readonly periodChange = output<PortfolioPeriod>();
   readonly version = input(0);
 
   protected readonly unrealized = persistedSignal<boolean>('portfolio.stocks.unrealized', false);
@@ -296,6 +301,11 @@ export class PortfolioStocks {
   /** A chip for each setting that differs from the default; removing it resets that setting. */
   protected readonly chips = computed(() => {
     const chips: { key: string; label: string; removeLabel: string }[] = [];
+    const periodLabel = customPeriodLabel(this.period());
+    if (periodLabel) {
+      const removeLabel = $localize`Remove filter ${periodLabel}:filter:`;
+      chips.push({ key: PERIOD_CHIP, label: periodLabel, removeLabel });
+    }
     const items = this.data.hasValue() ? this.data.value().items : [];
     for (const ticker of this.tickers()) {
       const item = items.find((i) => i.t212Ticker === ticker);
@@ -337,6 +347,10 @@ export class PortfolioStocks {
   }
 
   protected removeChip(key: string): void {
+    if (key === PERIOD_CHIP) {
+      this.periodChange.emit({ preset: 'ALL', ...presetRange('ALL') });
+      return;
+    }
     if (key === 'sort') this.sort.set(DEFAULT_STOCKS_VIEW.sort);
     else this.tickers.update((tickers) => tickers.filter((t) => t !== key));
   }
