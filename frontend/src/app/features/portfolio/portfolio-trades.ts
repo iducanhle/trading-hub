@@ -109,50 +109,8 @@ const EMPTY: ListState = {
     Segment,
   ],
   template: `
-    <div class="flex items-center gap-2.5">
-      <label
-        class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
-      >
-        <app-icon name="search" [size]="18" />
-        <input
-          type="search"
-          class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
-          placeholder="Search by name or ticker"
-          i18n-placeholder
-          aria-label="Search by name or ticker"
-          i18n-aria-label
-          [value]="search()"
-          (input)="search.set($any($event.target).value)"
-        />
-      </label>
-      <button
-        type="button"
-        class="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
-        [attr.aria-label]="direction() === 'desc' ? descendingLabel : ascendingLabel"
-        (click)="direction.set(direction() === 'desc' ? 'asc' : 'desc')"
-      >
-        <app-icon [name]="direction() === 'desc' ? 'sort_desc' : 'sort_asc'" />
-      </button>
-      <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
-    </div>
-    @if (chips().length) {
-      <div class="mt-3 flex flex-wrap items-center gap-2">
-        @for (chip of chips(); track chip.key) {
-          <button
-            type="button"
-            class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
-            [attr.aria-label]="chip.removeLabel"
-            (click)="remove(chip.key)"
-          >
-            {{ chip.label }}
-            <app-icon name="close" [size]="16" />
-          </button>
-        }
-      </div>
-    }
-
     <app-segmented
-      class="mt-3 mb-4"
+      class="mb-3"
       aria-label="Trade side"
       i18n-aria-label
       stretch
@@ -163,6 +121,49 @@ const EMPTY: ListState = {
       <app-segment value="BUY" i18n="Trade direction|Kind of trade">Buy</app-segment>
       <app-segment value="SELL" i18n="Trade direction|Kind of trade">Sell</app-segment>
     </app-segmented>
+    <div class="mb-4">
+      <div class="flex items-center gap-2.5">
+        <label
+          class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
+        >
+          <app-icon name="search" [size]="18" />
+          <input
+            type="search"
+            class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
+            placeholder="Search by name or ticker"
+            i18n-placeholder
+            aria-label="Search by name or ticker"
+            i18n-aria-label
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </label>
+        <button
+          type="button"
+          class="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+          [attr.aria-label]="direction() === 'desc' ? descendingLabel : ascendingLabel"
+          (click)="direction.set(direction() === 'desc' ? 'asc' : 'desc')"
+        >
+          <app-icon [name]="direction() === 'desc' ? 'sort_desc' : 'sort_asc'" />
+        </button>
+        <app-filter-button [active]="chips().length > 0" (pressed)="openFilters()" />
+      </div>
+      @if (chips().length) {
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          @for (chip of chips(); track chip.key) {
+            <button
+              type="button"
+              class="inline-flex h-9 items-center gap-1 rounded-full bg-surface-container-high px-3.5 text-[13px] font-bold"
+              [attr.aria-label]="chip.removeLabel"
+              (click)="remove(chip.key)"
+            >
+              {{ chip.label }}
+              <app-icon name="close" [size]="16" />
+            </button>
+          }
+        </div>
+      }
+    </div>
 
     @if (state().error && !state().loaded) {
       <app-error-state [error]="state().error" (retry)="reload()" />
