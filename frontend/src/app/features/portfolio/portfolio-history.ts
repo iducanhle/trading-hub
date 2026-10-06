@@ -323,6 +323,7 @@ export class PortfolioHistory {
   private value?: ISeriesApi<'Area'>;
   private deposits?: ISeriesApi<'Line'>;
   private byTime = new Map<number, T212HistoryPoint>();
+  private outsideTap?: AbortController;
   /** The range and interval last fitted to the chart; a live refresh of the same keeps the user's pan and zoom. */
   private fitted: string | null = null;
   private readonly whenFormat = new Intl.DateTimeFormat(APP_LOCALE, {
@@ -453,10 +454,23 @@ export class PortfolioHistory {
     enableTouchCrosshair(chart, el, () => this.value, (time) =>
       this.hovered.set(this.byTime.get(time as number) ?? null),
     );
+    // A touch crosshair stays put after the finger lifts: a tap anywhere outside the chart clears it.
+    this.outsideTap = new AbortController();
+    document.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (el.contains(e.target as Node)) return;
+        chart.clearCrosshairPosition();
+        this.hovered.set(null);
+      },
+      { passive: true, signal: this.outsideTap.signal },
+    );
     this.chart = chart;
   }
 
   private removeChart(): void {
+    this.outsideTap?.abort();
+    this.outsideTap = undefined;
     this.chart?.remove();
     this.chart = undefined;
     this.fitted = null;
