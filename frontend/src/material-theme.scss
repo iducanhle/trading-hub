@@ -307,10 +307,16 @@ html.dark {
   }
 }
 
-// Dropdown fields are as tall as the dialog buttons (52 px) beside them; their text stays at the compact 12 px.
-.mat-mdc-form-field:has(.mat-mdc-select) {
+// Dropdown and date fields are as tall as the dialog buttons (52 px) beside them; their text stays at the compact 12 px.
+.mat-mdc-form-field:has(.mat-mdc-select),
+.mat-mdc-form-field:has(.mat-datepicker-input) {
   --mat-form-field-container-height: 52px;
   --mat-form-field-container-vertical-padding: 16px;
   --mat-form-field-filled-with-label-container-padding-top: 22px;
   --mat-form-field-filled-with-label-container-padding-bottom: 8px;
+}
+
+// The calendar popup keeps 8 px from its field, whether it opens below or (near the bottom) above it.
+.mat-datepicker-content {
+  margin: 8px 0;
 }
