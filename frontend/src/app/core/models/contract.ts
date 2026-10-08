@@ -529,6 +529,8 @@ export interface T212AllocationItem {
   value: number;
   /** Share of all open positions' value, in percent. */
   weightPct: number;
+  /** Unrealized profit/loss in percent of cost; null when unknown. */
+  pnlPct: number | null;
 }
 
 export interface T212AllocationResponse {
@@ -543,7 +545,7 @@ export interface T212AllocationResponse {
 export type T212HistoryRange = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
 /** The chart step; each range offers some (docs/CONTRACT.md). */
 export type T212HistoryInterval =
-  '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1mo' | '6mo' | '1y';
+  '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1mo' | '6mo' | '1y';
 
 /** The account value at one stored moment (snapshots every minute, unchanged values skipped). */
 export interface T212HistoryPoint {

@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { T212AllocationItem } from '../../core/models/contract';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Dialog } from '../../shared/components/dialog/dialog';
-import { formatPlainPercent } from '../../shared/utils/format';
+import { formatPercent, formatPlainPercent, toneClass } from '../../shared/utils/format';
 import { displayTicker } from './portfolio-model';
 
 export interface AllocationDialogData {
@@ -32,7 +32,12 @@ export interface AllocationDialogData {
                 <span class="block truncate app-row-title">{{ item.name }}</span>
                 <span class="block truncate app-row-meta">{{ ticker(item) }}</span>
               </span>
-              <span class="shrink-0 text-[15px] font-semibold">{{ share(item) }}</span>
+              <span class="shrink-0 text-[15px] font-semibold">
+                {{ share(item) }}
+                @if (item.pnlPct !== null) {
+                  <span [class]="tone(item)">({{ pnl(item) }})</span>
+                }
+              </span>
             </button>
           </li>
         }
@@ -50,5 +55,13 @@ export class AllocationDialog {
 
   protected share(item: T212AllocationItem): string {
     return formatPlainPercent(item.weightPct, 1);
+  }
+
+  protected pnl(item: T212AllocationItem): string {
+    return formatPercent(item.pnlPct, 1);
+  }
+
+  protected tone(item: T212AllocationItem): string {
+    return toneClass(item.pnlPct);
   }
 }

@@ -239,7 +239,7 @@ type T212Pie = {
 };
 type T212AllocationItem = {           // one instrument held now, inside and outside pies together
   t212Ticker: string; symbol: string | null; name: string; logoUrl: string | null;
-  value: number; weightPct: number /* of total */;
+  value: number; weightPct: number /* of total */; pnlPct: number | null /* unrealized profit/loss, % of cost */;
 };
 type T212Holding = { kind: "PIE"; pie: T212Pie; position: null } | { kind: "POSITION"; pie: null; position: T212HoldingPosition };
 type T212HistoryRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL";
@@ -408,3 +408,5 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-05 | Trading 212 multi-currency (additive): `T212Trade.original` and `T212Dividend.original` (`T212Original`) for trades and dividends settled in another currency than the account's. Their `value`, `fees`, `taxes`, `realizedPnl` and `amount` are now converted to the account currency at the close of the trade day, so all sums are in the account currency. |
 | 2026-10-05 | Added `GET /api/fx/latest` (additive): today's FX rates for the display currency. |
 | 2026-10-09 | `t212-snapshot` runs every minute (was 5) and skips a value equal to the last stored one; no shape change. `interval=5m` is still the finest. Additive. |
+| 2026-10-09 | `GET /api/t212/history`: new `interval=1m`, offered for every range. Additive. |
+| 2026-10-09 | `T212AllocationItem.pnlPct` (unrealized profit/loss in percent of cost, null when unknown). Additive. |

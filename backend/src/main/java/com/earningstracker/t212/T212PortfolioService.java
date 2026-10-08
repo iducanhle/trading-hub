@@ -279,18 +279,20 @@ public class T212PortfolioService {
         Map<String, String> logos = logos(ctx, held.stream().map(T212Live.Position::ticker).toList());
         List<T212Dtos.AllocationItem> items = held.stream().map(p -> {
             T212InstrumentInfo info = info(ctx, p.ticker());
+            Double pnlPct = p.unrealizedPnl() == null || p.cost() == null || p.cost() <= 0 ? null
+                    : round(p.unrealizedPnl() / p.cost() * 100);
             return new T212Dtos.AllocationItem(p.ticker(), info.symbol(), name(info), logos.get(p.ticker()),
-                    round(p.value()), round(p.value() / total * 100));
+                    round(p.value()), round(p.value() / total * 100), pnlPct);
         }).toList();
         return new T212Dtos.Allocation(ctx.currency(), round(total), items, ctx.asOf(), ctx.stale());
     }
 
     /**
-     * One step of {@link #history}: the last point of each 5, 15 or 30 minutes, hour, 4 hours, day, week, month,
+     * One step of {@link #history}: the last point of each 1, 5, 15 or 30 minutes, hour, 4 hours, day, week, month,
      * half-year or year. {@code minutes} also orders them against a range (approximate for the calendar steps).
      */
     public enum HistoryInterval {
-        M5("5m", 5), M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440),
+        M1("1m", 1), M5("5m", 5), M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440),
         W1("1w", 10_080), MO1("1mo", 44_640), MO6("6mo", 263_520), Y1("1y", 527_040);
 
         private final String code;

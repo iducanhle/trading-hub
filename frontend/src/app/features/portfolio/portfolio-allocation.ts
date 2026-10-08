@@ -7,7 +7,7 @@ import { T212AllocationItem } from '../../core/models/contract';
 import { T212Service } from '../../core/services/t212.service';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
-import { formatPlainPercent } from '../../shared/utils/format';
+import { formatPercent, formatPlainPercent, toneClass } from '../../shared/utils/format';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { AllocationDialog, AllocationDialogData } from './allocation-dialog';
 import { displayTicker } from './portfolio-model';
@@ -35,6 +35,8 @@ interface Tile {
   h: number;
   /** What fits: logo, ticker and change; ticker and change; ticker; nothing. */
   fit: 'full' | 'text' | 'ticker' | 'none';
+  /** Room for a third line: the profit/loss in parentheses. */
+  showPnl: boolean;
 }
 
 /**
@@ -104,6 +106,11 @@ interface Tile {
                           share(item)
                         }}</span>
                       }
+                      @if (t.showPnl && item.pnlPct !== null) {
+                        <span class="text-[12px] font-medium" [class]="tone(item)"
+                          >({{ pnl(item) }})</span
+                        >
+                      }
                     </button>
                   } @else {
                     <button
@@ -159,6 +166,7 @@ export class PortfolioAllocation {
       w: r.w,
       h: r.h,
       fit: fitOf((r.w / 100) * BOX_W, (r.h / 100) * BOX_H),
+      showPnl: (r.w / 100) * BOX_W >= 56 && (r.h / 100) * BOX_H >= 92,
     }));
   });
 
@@ -186,6 +194,14 @@ export class PortfolioAllocation {
 
   protected share(item: T212AllocationItem): string {
     return formatPlainPercent(item.weightPct, 1);
+  }
+
+  protected pnl(item: T212AllocationItem): string {
+    return formatPercent(item.pnlPct, 1);
+  }
+
+  protected tone(item: T212AllocationItem): string {
+    return toneClass(item.pnlPct);
   }
 
   protected tileLabel(item: T212AllocationItem): string {

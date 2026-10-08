@@ -60,7 +60,7 @@ public final class T212Dtos {
 
     /** One instrument held now (inside and outside pies together). */
     public record AllocationItem(String t212Ticker, String symbol, String name, String logoUrl, double value,
-            double weightPct) {
+            double weightPct, Double pnlPct) {
     }
 
     public record Allocation(String accountCurrency, double total, List<AllocationItem> items, Instant asOf,

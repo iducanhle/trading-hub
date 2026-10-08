@@ -180,6 +180,12 @@ class T212PortfolioServiceTest {
                 T212PortfolioService.HistoryInterval.H4).points()).extracting(T212Dtos.HistoryPoint::value)
                 .containsExactly(3.0); // 08:00–12:00
         assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.D1)).isFalse();
+        assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.M1)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.W1.offers(T212PortfolioService.HistoryInterval.M1)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.M1.offers(T212PortfolioService.HistoryInterval.M1)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.M3.offers(T212PortfolioService.HistoryInterval.M1)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.Y1.offers(T212PortfolioService.HistoryInterval.M1)).isTrue();
+        assertThat(T212PortfolioService.HistoryRange.ALL.offers(T212PortfolioService.HistoryInterval.M1)).isTrue();
         assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.M5)).isTrue();
         assertThat(T212PortfolioService.HistoryRange.Y1.offers(T212PortfolioService.HistoryInterval.M5)).isTrue();
         assertThat(T212PortfolioService.HistoryRange.Y1.offers(T212PortfolioService.HistoryInterval.MO6)).isTrue();

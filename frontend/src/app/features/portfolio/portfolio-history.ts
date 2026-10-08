@@ -50,6 +50,7 @@ import { readChartColors, withAlpha } from '../stock-detail/sections/price-chart
 const RANGES: T212HistoryRange[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
 
 const ORDER: T212HistoryInterval[] = [
+  '1m',
   '5m',
   '15m',
   '30m',
@@ -71,12 +72,12 @@ const DEFAULT_INTERVAL: Record<T212HistoryRange, T212HistoryInterval> = {
   ALL: '1d',
 };
 const SHORTER_THAN: Record<T212HistoryRange, number> = {
-  '1D': 4,
-  '1W': 6,
-  '1M': 7,
-  '3M': 8,
-  '1Y': 9,
-  ALL: 10,
+  '1D': 5,
+  '1W': 7,
+  '1M': 8,
+  '3M': 9,
+  '1Y': 10,
+  ALL: 11,
 };
 const INTERVALS = Object.fromEntries(
   RANGES.map((r) => [
@@ -99,6 +100,7 @@ const RANGE_LABELS: Record<T212HistoryRange, string> = {
 
 /** Compact interval codes, the same in every language (as on the price chart). */
 const INTERVAL_LABELS: Record<T212HistoryInterval, string> = {
+  '1m': '1m',
   '5m': '5m',
   '15m': '15m',
   '30m': '30m',
@@ -342,14 +344,15 @@ export class PortfolioHistory {
       this.theme.dark(); // re-read the colours when the theme changes
       untracked(() => this.render(points));
     });
-    // Snapshots are stored every minute but the chart's finest interval is 5m: refetch quietly on every 5th live
-    // tick, keep the old points on failure.
+    // Snapshots are stored every minute: refetch quietly on every live tick for the 1m interval and on every 5th
+    // for the others, keep the old points on failure.
     let seen = this.t212.liveTick();
     effect(() => {
       const tick = this.t212.liveTick();
-      if (tick === seen || tick % 5 !== 0) return;
+      if (tick === seen) return;
       seen = tick;
       untracked(() => {
+        if (this.validInterval() !== '1m' && tick % 5 !== 0) return;
         if (!this.expanded() || !this.data.hasValue()) return;
         this.t212
           .trackLive(
