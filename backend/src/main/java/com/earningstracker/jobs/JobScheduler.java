@@ -61,8 +61,8 @@ class JobScheduler {
         runner.run(T212SyncJob.NAME, "schedule");
     }
 
-    /** Trading 212 balance history: on the hour and every 5 minutes after it (9:00, 9:05, 9:10 …). */
-    @Scheduled(cron = "0 0/5 * * * *", zone = "Europe/Prague")
+    /** Trading 212 balance history: every minute, on the minute. */
+    @Scheduled(cron = "0 * * * * *", zone = "Europe/Prague")
     void trading212Snapshot() {
         runner.run(T212SnapshotJob.NAME, "schedule");
     }

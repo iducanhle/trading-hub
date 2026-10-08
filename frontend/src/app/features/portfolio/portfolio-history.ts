@@ -206,7 +206,7 @@ function chartTime(iso: string): UTCTimestamp {
                   class="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-on-surface-variant"
                   i18n
                 >
-                  History is being collected. A new point is added every 5 minutes.
+                  History is being collected.
                 </p>
               }
             </div>
@@ -226,13 +226,6 @@ function chartTime(iso: string): UTCTimestamp {
                 <ng-container i18n>Net deposits</ng-container>
               </span>
             </div>
-
-            <p
-              class="mt-2 mb-0 text-center text-xs text-on-surface-variant"
-              i18n="Note under the account history chart"
-            >
-              Data is captured every 5 minutes.
-            </p>
 
             <div class="pt-3">
               <app-segmented
@@ -349,7 +342,8 @@ export class PortfolioHistory {
       this.theme.dark(); // re-read the colours when the theme changes
       untracked(() => this.render(points));
     });
-    // A snapshot is stored every 5 minutes: refetch quietly on every 5th live tick, keep the old points on failure.
+    // Snapshots are stored every minute but the chart's finest interval is 5m: refetch quietly on every 5th live
+    // tick, keep the old points on failure.
     let seen = this.t212.liveTick();
     effect(() => {
       const tick = this.t212.liveTick();

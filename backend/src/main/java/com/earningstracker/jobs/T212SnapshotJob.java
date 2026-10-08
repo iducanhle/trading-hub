@@ -15,9 +15,10 @@ import com.earningstracker.t212.T212StateStore;
 import org.springframework.stereotype.Component;
 
 /**
- * Every 5 minutes (on the hour, :05, :10 …): stores each connected user's account value
- * ({@link T212SnapshotStore}) for the balance history chart. Reuses the live values the portfolio page shows (one account summary and one positions call when
- * not cached). A stale or missing value is skipped, never filled in. Does nothing without {@code T212_ENCRYPTION_KEY}.
+ * Every minute: stores each connected user's account value ({@link T212SnapshotStore}) for the balance history
+ * chart. Reuses the live values the portfolio page shows (one account summary and one positions call when not
+ * cached). A stale or missing value is skipped, never filled in, and a value equal to the user's last stored
+ * one is not stored again (closed markets). Does nothing without {@code T212_ENCRYPTION_KEY}.
  */
 @Component
 public class T212SnapshotJob implements Job {
@@ -53,6 +54,7 @@ public class T212SnapshotJob implements Job {
         }
         int stored = 0;
         int skipped = 0;
+        int unchanged = 0;
         for (String uid : states.connectedUsers()) {
             Optional<T212State> state = states.find(uid);
             Optional<T212Live> values = state.isPresent() && state.get().credentialsValid()
@@ -62,12 +64,17 @@ public class T212SnapshotJob implements Job {
                 skipped++;
                 continue;
             }
-            // Time of the job, not of a cached fetch, so points sit on the 5-minute marks.
+            if (snapshots.last(uid).filter(p -> p.value() == value).isPresent()) {
+                unchanged++;
+                continue;
+            }
+            // Time of the job, not of a cached fetch, so points sit on the minute marks.
             snapshots.add(uid, new T212SnapshotStore.Point(Instant.now(clock), value));
             stored++;
         }
         stats.put("stored", stored);
         stats.put("skipped", skipped);
+        stats.put("unchanged", unchanged);
         return stats;
     }
 }

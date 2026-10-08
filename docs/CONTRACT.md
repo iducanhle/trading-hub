@@ -407,3 +407,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-05 | Firestore `users/{uid}.settings.roundNumbers?: boolean` (display amounts without decimals; frontend only). Additive. |
 | 2026-10-05 | Trading 212 multi-currency (additive): `T212Trade.original` and `T212Dividend.original` (`T212Original`) for trades and dividends settled in another currency than the account's. Their `value`, `fees`, `taxes`, `realizedPnl` and `amount` are now converted to the account currency at the close of the trade day, so all sums are in the account currency. |
 | 2026-10-05 | Added `GET /api/fx/latest` (additive): today's FX rates for the display currency. |
+| 2026-10-09 | `t212-snapshot` runs every minute (was 5) and skips a value equal to the last stored one; no shape change. `interval=5m` is still the finest. Additive. |

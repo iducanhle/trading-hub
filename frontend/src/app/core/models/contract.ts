@@ -545,7 +545,7 @@ export type T212HistoryRange = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
 export type T212HistoryInterval =
   '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1mo' | '6mo' | '1y';
 
-/** The account value at one stored moment (snapshots every 5 minutes since the feature shipped). */
+/** The account value at one stored moment (snapshots every minute, unchanged values skipped). */
 export interface T212HistoryPoint {
   at: string;
   value: number;

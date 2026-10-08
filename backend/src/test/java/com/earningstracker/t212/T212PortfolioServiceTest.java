@@ -207,6 +207,15 @@ class T212PortfolioServiceTest {
     }
 
     @Test
+    void snapshotJobDoesNotStoreAnUnchangedValueAgain() {
+        var job = new com.earningstracker.jobs.T212SnapshotJob(live, snapshots, states, encryption, clock);
+        job.run();
+
+        assertThat(job.run()).containsEntry("stored", 0).containsEntry("unchanged", 1);
+        assertThat(snapshots.points(UID)).hasSize(1);
+    }
+
+    @Test
     void dayChangesGiveTodaysChangeByTicker() {
         assertThat(portfolio.dayChanges(UID).changes()).containsExactly(entry("AAPL_US_EQ", -1.16)); // 170 after 172
     }
