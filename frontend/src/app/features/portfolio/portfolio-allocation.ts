@@ -1,4 +1,14 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -35,8 +45,8 @@ interface Tile {
   h: number;
   /** What fits: logo, ticker and change; ticker and change; ticker; nothing. */
   fit: 'full' | 'text' | 'ticker' | 'none';
-  /** Room for a third line: the profit/loss in parentheses. */
-  showPnl: boolean;
+  /** The profit/loss in parentheses: on a third line, after the share, or not at all (no room). */
+  pnl: 'line' | 'inline' | 'none';
 }
 
 /**
@@ -69,9 +79,10 @@ interface Tile {
         @if (expanded()) {
           <div id="allocation-content">
             <p class="mt-1 text-[13px] text-on-surface-variant" i18n>
-              How much of your portfolio each position takes up.
+              How much of your portfolio each position takes up, with its current profit/loss in
+              parentheses.
             </p>
-            <div class="relative mt-3.5 aspect-[31/34] w-full" role="list">
+            <div #box class="relative mt-3.5 aspect-[31/34] w-full" role="list">
               @for (t of tiles(); track t.item?.t212Ticker ?? 'others') {
                 <div
                   class="absolute p-[2px]"
@@ -102,11 +113,14 @@ interface Tile {
                         }}</span>
                       }
                       @if (t.fit === 'full' || t.fit === 'text') {
-                        <span class="text-[13px] font-medium text-on-surface-variant">{{
-                          share(item)
-                        }}</span>
+                        <span class="max-w-full truncate text-[13px] font-medium text-on-surface-variant"
+                          >{{ share(item)
+                          }}@if (t.pnl === 'inline' && item.pnlPct !== null) {
+                            <span [class]="tone(item)"> ({{ pnl(item) }})</span>
+                          }</span
+                        >
                       }
-                      @if (t.showPnl && item.pnlPct !== null) {
+                      @if (t.pnl === 'line' && item.pnlPct !== null) {
                         <span class="text-[12px] font-medium" [class]="tone(item)"
                           >({{ pnl(item) }})</span
                         >
@@ -141,6 +155,10 @@ export class PortfolioAllocation {
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
 
+  private readonly box = viewChild<ElementRef<HTMLElement>>('box');
+  /** The treemap box's rendered width in pixels; starts at the layout width until measured. */
+  private readonly boxWidth = signal(BOX_W);
+
   protected readonly expanded = persistedSignal('portfolio.allocation.expanded', true);
 
   protected readonly data = rxResource({
@@ -159,18 +177,32 @@ export class PortfolioAllocation {
     }));
     if (shown.length < items.length)
       entries.push({ item: null, weight: Math.max(rest, MIN_OTHERS_PCT) });
-    return squarify(entries, (e) => e.weight, BOX_W, BOX_H).map((r) => ({
-      item: r.item.item,
-      x: r.x,
-      y: r.y,
-      w: r.w,
-      h: r.h,
-      fit: fitOf((r.w / 100) * BOX_W, (r.h / 100) * BOX_H),
-      showPnl: (r.w / 100) * BOX_W >= 56 && (r.h / 100) * BOX_H >= 92,
-    }));
+    // What fits depends on the box's real size (the text does not scale), not on the layout's BOX_W × BOX_H.
+    const width = this.boxWidth();
+    const height = (width * BOX_H) / BOX_W;
+    return squarify(entries, (e) => e.weight, BOX_W, BOX_H).map((r) => {
+      const w = (r.w / 100) * width;
+      const h = (r.h / 100) * height;
+      return {
+        item: r.item.item,
+        x: r.x,
+        y: r.y,
+        w: r.w,
+        h: r.h,
+        fit: fitOf(w, h),
+        pnl: w >= 56 && h >= 84 ? 'line' : w >= 104 && h >= 44 ? 'inline' : 'none',
+      };
+    });
   });
 
   constructor() {
+    effect((onCleanup) => {
+      const el = this.box()?.nativeElement;
+      if (!el) return;
+      const observer = new ResizeObserver(([entry]) => this.boxWidth.set(entry.contentRect.width));
+      observer.observe(el);
+      onCleanup(() => observer.disconnect());
+    });
     // Prices change: refetch quietly every minute, keep showing the old values on failure.
     let seen = this.t212.liveTick();
     effect(() => {
@@ -242,7 +274,7 @@ export class PortfolioAllocation {
   }
 }
 
-/** How much of a tile's content fits, by its size in pixels at a typical phone width. */
+/** How much of a tile's content fits, by its rendered size in pixels. */
 function fitOf(width: number, height: number): Tile['fit'] {
   if (width >= 60 && height >= 72) return 'full';
   if (width >= 52 && height >= 44) return 'text';
