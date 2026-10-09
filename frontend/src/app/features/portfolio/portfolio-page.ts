@@ -61,7 +61,7 @@ import { TradeFilters } from './trades-filters';
   ],
   template: `
     <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="sync()">
-      <app-page-header title="Portfolio" i18n-title maxWidth="max-w-3xl">
+      <app-page-header title="Trading 212" maxWidth="max-w-3xl">
         @if (t212.connected()) {
           <div actions class="flex items-center">
             <!-- Search lives in the bottom pill here. -->
@@ -77,6 +77,7 @@ import { TradeFilters } from './trades-filters';
                 <app-currency-flag [currency]="currency.current()" [size]="24" />
               </button>
             }
+            <!-- Sync button hidden: live values are cached for 60 s anyway; pull to refresh still syncs.
             <button
               matIconButton
               type="button"
@@ -86,6 +87,7 @@ import { TradeFilters } from './trades-filters';
             >
               <app-icon name="refresh" [class.animate-spin]="refreshing()" />
             </button>
+            -->
           </div>
         } @else {
           <button

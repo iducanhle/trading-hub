@@ -1,6 +1,9 @@
 {
   "locale": "cs",
   "translations": {
+    "220550782947016929": "Pořadí",
+    "9150957425070081829": "Sestupně",
+    "7349346322884585140": "Vzestupně",
     "3054677928361808046": " Aktualizovat nyní ",
     "2827777470086127875": "Máte nejnovější verzi.",
     "1613282392235761999": "Nepodařilo se zkontrolovat aktualizace",
@@ -420,7 +423,7 @@
     "2932456492840594894": "Zkontrolujte klíč a tajný klíč: vypadají neúplně.",
     "2159130950882492111": "Zrušit",
     "9201103587777813545": "Portfolio",
-    "548617222254342307": "Trading212",
+    "5488992721407782706": "Trading 212",
     "8442933885510145133": "Cenová osa",
     "409894765271689436": "Není ve vašem portfoliu",
     "7002514989795408444": "U tohoto instrumentu nemáte žádné obchody, dividendy ani pozici.",

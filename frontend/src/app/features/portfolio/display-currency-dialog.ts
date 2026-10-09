@@ -88,10 +88,13 @@ const rateFormat = new Intl.NumberFormat(NUMBER_LOCALE, { maximumSignificantDigi
                 </span>
                 <span class="block truncate app-row-meta">
                   {{ name(code) }}
-                  @if (code !== account && rate !== null) {
-                    · 1 {{ account }} = {{ formatRate(rate) }} {{ code }}
-                  }
                 </span>
+                @if (code !== account && rate !== null) {
+                  <span class="block app-row-meta">
+                    1 {{ account }} = {{ formatRate(rate) }} {{ code }} · 1 {{ code }} =
+                    {{ formatRate(1 / rate) }} {{ account }}
+                  </span>
+                }
               </span>
               @if (selected) {
                 <app-icon name="check" [size]="20" />

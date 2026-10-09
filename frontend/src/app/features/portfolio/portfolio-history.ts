@@ -186,9 +186,11 @@ function chartTime(iso: string): UTCTimestamp {
                   {{ p.profit | money: (currency() | acct) }}
                   @if (profitPct(p) !== null) {
                     <span class="font-medium">· {{ profitPct(p) | pct: 1 }}</span>
-                    <app-term-info class="ml-0.5 inline-flex align-middle" term="accountReturn" />
                   }
                   <span class="app-label ms-1" i18n="Profit since the first deposit">all time</span>
+                  @if (profitPct(p) !== null) {
+                    <app-term-info class="ml-0.5 inline-flex align-middle" term="accountReturn" />
+                  }
                 </p>
                 <p class="mt-1.5 flex items-baseline gap-2 text-[15px]">
                   <span class="font-semibold text-on-surface">{{

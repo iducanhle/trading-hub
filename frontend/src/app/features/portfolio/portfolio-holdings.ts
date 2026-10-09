@@ -10,7 +10,15 @@ import { T212Service } from '../../core/services/t212.service';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
+import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { Icon } from '../../shared/icon/icon';
+import {
+  DEFAULT_HOLDINGS_VIEW,
+  HoldingsFilterContext,
+  HoldingsFilterSheet,
+  HoldingsView,
+} from './holdings-filters';
+import { SORT_LABELS } from './portfolio-labels';
 import {
   PercentPipe,
   PricePipe,
@@ -38,6 +46,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
     Skeleton,
     StockLogo,
     Icon,
+    FilterButton,
     PricePipe,
     QuantityPipe,
     SignedMoneyPipe,
@@ -84,7 +93,9 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
                   class="min-w-0 rounded-2xl px-3.5 py-2.5"
                   [class]="unrealizedTile(unrealizedPnl())"
                 >
-                  <p class="app-label" i18n="Unrealized profit or loss of open positions">Unrealized</p>
+                  <p class="app-label" i18n="Unrealized profit or loss of open positions">
+                    Unrealized
+                  </p>
                   <p class="mt-1 text-[13px] font-semibold tabular-nums [overflow-wrap:anywhere]">
                     {{ unrealizedPnl() | money: (currency() | acct) }}
                   </p>
@@ -92,21 +103,37 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
               </div>
             </div>
           }
-          <label
-            class="mt-3.5 flex h-10 items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
-          >
-            <app-icon name="search" [size]="18" />
-            <input
-              type="search"
-              class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
-              placeholder="Search the portfolio"
-              i18n-placeholder
-              aria-label="Search the portfolio"
-              i18n-aria-label
-              [value]="search()"
-              (input)="search.set($any($event.target).value)"
-            />
-          </label>
+          <div class="mt-3.5 flex items-center gap-2">
+            <label
+              class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
+            >
+              <app-icon name="search" [size]="18" />
+              <input
+                type="search"
+                class="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant"
+                placeholder="Search the portfolio"
+                i18n-placeholder
+                aria-label="Search the portfolio"
+                i18n-aria-label
+                [value]="search()"
+                (input)="search.set($any($event.target).value)"
+              />
+            </label>
+            <app-filter-button raised [active]="sortChip() !== null" (pressed)="openFilters()" />
+          </div>
+          @if (sortChip(); as chip) {
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                class="app-filter-chip"
+                [attr.aria-label]="chip.removeLabel"
+                (click)="view.set(defaultView)"
+              >
+                {{ chip.label }}
+                <app-icon name="close" [size]="14" />
+              </button>
+            </div>
+          }
           @if (data.error() && !data.hasValue()) {
             <app-error-state [error]="data.error()" (retry)="data.reload()" />
           } @else if (!data.hasValue()) {
@@ -259,6 +286,25 @@ export class PortfolioHoldings {
   readonly unrealizedPnl = input<number | null>(null);
 
   protected readonly search = signal('');
+  protected readonly view = persistedSignal<HoldingsView>(
+    'portfolio.holdings.view',
+    DEFAULT_HOLDINGS_VIEW,
+  );
+  protected readonly defaultView = DEFAULT_HOLDINGS_VIEW;
+
+  /** A chip while the sort differs from the default; removing it resets the sort. */
+  protected readonly sortChip = computed(() => {
+    const { sort, direction } = this.view();
+    if (sort === DEFAULT_HOLDINGS_VIEW.sort && direction === DEFAULT_HOLDINGS_VIEW.direction) {
+      return null;
+    }
+    const order =
+      direction === 'desc'
+        ? $localize`:Sort direction|Largest first:Descending`
+        : $localize`:Sort direction|Smallest first:Ascending`;
+    const label = `${SORT_LABELS[sort]} · ${order}`;
+    return { label, removeLabel: $localize`Remove filter ${label}:filter:` };
+  });
 
   protected readonly expanded = signal<ReadonlySet<string>>(new Set());
 
@@ -270,16 +316,27 @@ export class PortfolioHoldings {
   /** The holdings matching the search (name or ticker); a pie stays when any of its positions matches. */
   protected readonly items = computed(() => {
     if (!this.data.hasValue()) return [];
-    const items = this.data.value().items;
     const query = this.search().trim().toLowerCase();
-    if (!query) return items;
     const matches = (p: T212HoldingPosition) =>
-      p.name.toLowerCase().includes(query) || this.ticker(p).toLowerCase().includes(query);
-    return items.flatMap((h): T212Holding[] => {
-      if (h.kind === 'POSITION') return matches(h.position) ? [h] : [];
-      const positions = h.pie.positions.filter(matches);
-      return positions.length ? [{ ...h, pie: { ...h.pie, positions } }] : [];
-    });
+      !query ||
+      p.name.toLowerCase().includes(query) ||
+      this.ticker(p).toLowerCase().includes(query);
+    const { sort, direction } = this.view();
+    const sign = direction === 'desc' ? -1 : 1;
+    // Missing amounts go last either way.
+    const compare = (a: number | null, b: number | null) =>
+      a === null ? (b === null ? 0 : 1) : b === null ? -1 : sign * (a - b);
+    const byPosition = (a: T212HoldingPosition, b: T212HoldingPosition) =>
+      compare(a[sort], b[sort]);
+    const amount = (h: T212Holding) => (h.kind === 'PIE' ? h.pie[sort] : h.position[sort]);
+    return this.data
+      .value()
+      .items.flatMap((h): T212Holding[] => {
+        if (h.kind === 'POSITION') return matches(h.position) ? [h] : [];
+        const positions = h.pie.positions.filter(matches).sort(byPosition);
+        return positions.length ? [{ ...h, pie: { ...h.pie, positions } }] : [];
+      })
+      .sort((a, b) => compare(amount(a), amount(b)));
   });
 
   constructor() {
@@ -297,6 +354,18 @@ export class PortfolioHoldings {
           () => undefined,
         );
       });
+    });
+  }
+
+  protected openFilters(): void {
+    const context: HoldingsFilterContext = {
+      view: this.view(),
+      change: (view) => this.view.set(view),
+    };
+    this.dialog.open(HoldingsFilterSheet, {
+      ...DIALOG_CONFIG,
+      data: context,
+      ariaLabel: $localize`Filters`,
     });
   }
 

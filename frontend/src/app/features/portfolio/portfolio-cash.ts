@@ -9,7 +9,6 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { Icon } from '../../shared/icon/icon';
-import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
 import {
@@ -58,7 +57,6 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
     PricePipe,
     QuantityPipe,
     SignedMoneyPipe,
-    HeroAmount,
     Segmented,
     Segment,
     FilterButton,
@@ -117,29 +115,29 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
           }
         </div>
       }
-      <section aria-labelledby="dividends-title" class="mt-5">
-        <h2 id="dividends-title" class="app-label px-1" i18n>Total dividends</h2>
+      <section aria-labelledby="dividends-title" class="mt-4">
         @if (dividends.error() && !dividends.hasValue()) {
+          <h2 id="dividends-title" class="sr-only" i18n>Total dividends</h2>
           <app-error-state
-            class="mt-3 block"
+            class="block"
             compact
             [error]="dividends.error()"
             (retry)="dividends.reload()"
           />
         } @else if (!dividends.hasValue()) {
-          <div class="mt-2 space-y-3" aria-hidden="true">
-            <app-skeleton class="block h-12 w-48" />
+          <div class="space-y-3" aria-hidden="true">
+            <app-skeleton shape="card" class="block h-[76px]" />
             <app-skeleton shape="card" class="block h-48 rounded-[22px]" />
           </div>
         } @else {
           @let d = dividends.value();
-          <app-hero-amount
-            class="mt-1 px-1"
-            size="md"
-            signed
-            [value]="filtered() ? filteredTotal() : d.total"
-            [currency]="d.accountCurrency | acct"
-          />
+          @let shownTotal = filtered() ? filteredTotal() : d.total;
+          <div class="app-card flex min-w-0 flex-col gap-2">
+            <h2 id="dividends-title" class="app-label" i18n>Total dividends</h2>
+            <span class="text-[1.5rem] font-semibold" [class]="tone(shownTotal)">{{
+              shownTotal | money: (d.accountCurrency | acct)
+            }}</span>
+          </div>
           @if (d.stale) {
             <div class="mt-3"><app-stale-chip [asOf]="d.asOf" /></div>
           }

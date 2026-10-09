@@ -12,7 +12,6 @@ import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { Icon } from '../../shared/icon/icon';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
-import { TermInfo } from '../../shared/components/term-info/term-info';
 // import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import {
   PercentPipe,
@@ -65,7 +64,6 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
     SignedMoneyPipe,
     PercentPipe,
     FilterButton,
-    TermInfo,
     // Segmented, Segment: for the unrealized switch, turned off (see the template).
   ],
   template: `
@@ -160,27 +158,11 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
           [text]="data.value().items.length ? undefined : labels.emptyText"
         />
       } @else {
-        <section
-          class="app-card mt-4 grid gap-3.5"
-          [class]="totalAfterFees() ? 'grid-cols-2' : 'grid-cols-1'"
-        >
-          <div class="flex min-w-0 flex-col gap-2">
-            <h2 class="app-label" i18n>Total profit/loss</h2>
-            <span class="text-[15px] font-semibold" [class]="tone(total())">{{
-              total() | money: (data.value().accountCurrency | acct)
-            }}</span>
-          </div>
-          @if (totalAfterFees(); as afterFees) {
-            <div class="flex min-w-0 flex-col gap-2 border-l border-outline-variant pl-3.5">
-              <h2 class="app-label">
-                <ng-container i18n>Including fees</ng-container>
-                <app-term-info class="ml-0.5 inline-flex align-middle" term="accountFees" />
-              </h2>
-              <span class="text-[15px] font-semibold" [class]="tone(afterFees.value)">{{
-                afterFees.value | money: (data.value().accountCurrency | acct)
-              }}</span>
-            </div>
-          }
+        <section class="app-card mt-4 flex min-w-0 flex-col gap-2">
+          <h2 class="app-label" i18n>Total profit/loss</h2>
+          <span class="text-[1.5rem] font-semibold" [class]="tone(shownTotal())">{{
+            shownTotal() | money: (data.value().accountCurrency | acct)
+          }}</span>
         </section>
         @if (extremes().length) {
           <section
@@ -405,6 +387,9 @@ export class PortfolioStocks {
       ? null
       : { value: this.total() - this.accountFees.value().totals.fees },
   );
+
+  /** The total shown in the card: after account fees when they apply, else the plain total. */
+  protected readonly shownTotal = computed(() => this.totalAfterFees()?.value ?? this.total());
 
   /** Best and worst stock of the period by profit/loss, on the same basis as the rows and within the search, like the total. */
   protected readonly extremes = computed(() => {

@@ -91,6 +91,7 @@ interface Tab {
           </button>
         }
       </div>
+      <!-- Account value card hidden.
       @if (account(); as a) {
         <a
           routerLink="/portfolio"
@@ -105,6 +106,7 @@ interface Tab {
           <span class="mt-0.5 block text-sm font-bold" [class]="a.tone">{{ a.pnl }}</span>
         </a>
       }
+      -->
       <ul class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
         @for (tab of tabs; track tab.path) {
           @let active = activeTab() === tab.path;
@@ -231,7 +233,7 @@ export class Shell {
   private readonly sections: Tab[] = [
     {
       path: '/portfolio',
-      label: $localize`:Bottom navigation tab:Trading212`,
+      label: $localize`:Bottom navigation tab:Trading 212`,
       icon: 'account_balance_wallet',
       activeIcon: 'account_balance_wallet',
     },

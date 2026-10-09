@@ -8,7 +8,12 @@ import { Icon } from '../../icon/icon';
   template: `
     <button
       type="button"
-      class="relative flex size-10 items-center justify-center rounded-[14px] bg-surface-container text-on-surface hover:bg-surface-container-high"
+      class="relative flex size-10 items-center justify-center rounded-[14px] text-on-surface"
+      [class]="
+        raised()
+          ? 'bg-surface-container-high hover:bg-surface-container-highest'
+          : 'bg-surface-container hover:bg-surface-container-high'
+      "
       [attr.aria-label]="label()"
       (click)="pressed.emit()"
     >
@@ -22,6 +27,8 @@ import { Icon } from '../../icon/icon';
 })
 export class FilterButton {
   readonly active = input(false, { transform: booleanAttribute });
+  /** For use inside a card: one step lighter, like the card's tiles and search field. */
+  readonly raised = input(false, { transform: booleanAttribute });
   readonly pressed = output<void>();
 
   protected readonly label = computed(() =>
