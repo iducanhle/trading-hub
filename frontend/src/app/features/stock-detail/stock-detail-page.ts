@@ -1,8 +1,18 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import {
+  Component,
+  booleanAttribute,
+  computed,
+  effect,
+  inject,
+  input,
+  untracked,
+} from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { Title } from '@angular/platform-browser';
 import { isApiError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
+import { SearchResult } from '../../core/models/contract';
+import { CompareService } from '../../core/services/compare.service';
 import { FollowTarget } from '../../core/services/follows.service';
 import { APP_NAME } from '../../core/services/app-title.strategy';
 import { MenuService } from '../../core/services/menu.service';
@@ -31,7 +41,18 @@ import { PerformanceHistory } from './sections/performance-history';
 import { YourPosition } from './sections/your-position';
 import { PriceChart } from './sections/price-chart/price-chart';
 import { Recommendations } from './sections/recommendations';
+import { CompareButton } from './compare-button';
 import { StockContext } from './stock-context';
+
+function followTargetOf(s: FollowTarget): FollowTarget {
+  return {
+    symbol: s.symbol,
+    name: s.name,
+    exchange: s.exchange,
+    region: s.region,
+    logoUrl: s.logoUrl,
+  };
+}
 
 /**
  * `/stock/:symbol` (deep-linkable; the digest email links here). One scrolling page: price, chart, your position, key
@@ -67,10 +88,12 @@ import { StockContext } from './stock-context';
     Peers,
     Notes,
     PortfolioNav,
+    CompareButton,
   ],
   template: `
     <app-pull-to-refresh
       [refreshing]="overview.isLoading() && ctx.version() > 0"
+      [disabled]="!active()"
       (refresh)="ctx.refresh()"
     >
       <header
@@ -87,6 +110,19 @@ import { StockContext } from './stock-context';
           >
             <app-icon name="menu" [size]="26" />
           </button>
+          @if (compareMode()) {
+            <!-- The compare page's controls: previous and next stock around the title, and remove. -->
+            <button
+              matIconButton
+              type="button"
+              aria-label="Previous stock"
+              i18n-aria-label
+              [disabled]="compare.items().length < 2"
+              (click)="compare.step(-1)"
+            >
+              <app-icon name="chevron_left" />
+            </button>
+          }
           <div class="flex min-w-0 flex-1 justify-center">
             <h1
               class="flex min-w-0 items-center gap-2 rounded-full bg-surface-container-high px-3.5 py-2 text-sm font-bold"
@@ -98,14 +134,40 @@ import { StockContext } from './stock-context';
               ></span>
               <span class="truncate"
                 >{{ ctx.symbol() }}
-                @if (stock(); as s) {
+                <!-- On the compare page the controls leave no room for the price (it shows right below). -->
+                @if (!compareMode() && stock(); as s) {
                   · {{ s.quote.price | price: s.currency }}
                 }
               </span>
+              @if (compareMode()) {
+                <span class="shrink-0 font-semibold text-on-surface-variant"
+                  >{{ compare.index() + 1 }}/{{ compare.items().length }}</span
+                >
+              }
             </h1>
           </div>
-          <!-- T212 users search from the bottom pill. -->
-          @if (!t212.connected()) {
+          @if (compareMode()) {
+            <button
+              matIconButton
+              type="button"
+              aria-label="Next stock"
+              i18n-aria-label
+              [disabled]="compare.items().length < 2"
+              (click)="compare.step(1)"
+            >
+              <app-icon name="chevron_right" />
+            </button>
+            <button
+              matIconButton
+              type="button"
+              [attr.aria-label]="removeLabel()"
+              [attr.title]="removeLabel()"
+              (click)="compare.remove(ctx.symbol())"
+            >
+              <app-icon name="delete" />
+            </button>
+          } @else if (!t212.connected()) {
+            <!-- T212 users search from the bottom pill. -->
             <button matIconButton type="button" appOpenSearch aria-label="Search" i18n-aria-label>
               <app-icon name="search" />
             </button>
@@ -126,7 +188,10 @@ import { StockContext } from './stock-context';
         </div>
       </header>
 
-      <div class="mx-auto max-w-4xl" [class]="t212.connected() ? 'pb-nav' : 'pb-end'">
+      <div
+        class="mx-auto max-w-4xl"
+        [class]="t212.connected() || !compareMode() ? 'pb-nav' : 'pb-end'"
+      >
         @if (notFound()) {
           <app-empty-state
             icon="search_off"
@@ -147,7 +212,7 @@ import { StockContext } from './stock-context';
           <section class="px-5 pt-3" aria-label="Price" i18n-aria-label>
             <!-- Back sits here, at the top of the content; the header's left corner holds the menu. T212 users
                  get the bottom pill instead. -->
-            @if (!t212.connected()) {
+            @if (!t212.connected() && !compareMode()) {
               <div class="mb-2.5 flex items-center">
                 <button
                   type="button"
@@ -232,8 +297,13 @@ import { StockContext } from './stock-context';
           }
         }
       </div>
-      @if (t212.connected()) {
-        <app-portfolio-nav tab="search" />
+      @if (!compareMode()) {
+        @if (!notFound()) {
+          <app-compare-button [target]="compareTarget()" [aboveNav]="t212.connected()" />
+        }
+        @if (t212.connected()) {
+          <app-portfolio-nav tab="search" />
+        }
       }
     </app-pull-to-refresh>
   `,
@@ -250,8 +320,14 @@ export class StockDetailPage {
   /** Connected T212 users get the portfolio's bottom pill here too (with search active). */
   protected readonly t212 = inject(T212Service);
 
-  /** Route parameter (`/stock/:symbol`). */
+  protected readonly compare = inject(CompareService);
+
+  /** Route parameter (`/stock/:symbol`), or the compare page's stock. */
   readonly symbol = input.required<string>();
+  /** Embedded in the compare page: its controls replace the back button, search and the bottom pill. */
+  readonly compareMode = input(false, { transform: booleanAttribute });
+  /** False while kept alive but hidden on the compare page. */
+  readonly active = input(true);
 
   protected readonly overview = this.ctx.resource((symbol, options) =>
     this.api.overview(symbol, options),
@@ -265,16 +341,15 @@ export class StockDetailPage {
   });
   protected readonly followTarget = computed<FollowTarget | null>(() => {
     const s = this.stock();
-    return s
-      ? {
-          symbol: s.symbol,
-          name: s.name,
-          exchange: s.exchange,
-          region: s.region,
-          logoUrl: s.logoUrl,
-        }
-      : null;
+    return s ? followTargetOf(s) : null;
   });
+  protected readonly compareTarget = computed<SearchResult | null>(() => {
+    const s = this.stock();
+    return s ? { ...followTargetOf(s), currency: s.currency } : null;
+  });
+  protected readonly removeLabel = computed(
+    () => $localize`Remove ${this.ctx.symbol()}:symbol: from compare`,
+  );
   /** The header pill's dot: the day's direction. */
   protected readonly dotClass = computed(() => {
     const change = this.stock()?.quote.change;
@@ -288,10 +363,15 @@ export class StockDetailPage {
       untracked(() => this.ctx.setSymbol(symbol));
     });
     // Opening a stock records it in the recent searches (once it is known to exist).
+    // On the compare page only the shown stock sets the title; none is recorded as a search.
     effect(() => {
       const s = this.stock();
-      if (!s) return;
+      if (!s || !this.active()) return;
       untracked(() => {
+        if (this.compareMode()) {
+          this.title.setTitle(`${s.symbol} · ${$localize`:Page title:Compare`} · ${APP_NAME}`);
+          return;
+        }
         this.recent.record({ ...s });
         this.title.setTitle(`${s.symbol} · ${s.name} · ${APP_NAME}`);
       });

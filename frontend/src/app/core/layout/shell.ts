@@ -26,6 +26,7 @@ import {
 import { providerLabel } from '../../shared/utils/user';
 import { ApiService } from '../api/api.service';
 import { AuthService } from '../auth/auth.service';
+import { CompareService } from '../services/compare.service';
 import { FollowsService } from '../services/follows.service';
 import { MenuService } from '../services/menu.service';
 import { OnlineService } from '../services/online.service';
@@ -123,9 +124,10 @@ interface Tab {
                 [class.text-on-surface-variant]="!active"
               />
               {{ tab.label }}
-              @if (tab.path === '/followed' && followedCount()) {
+              @let count = counts()[tab.path];
+              @if (count) {
                 <span class="ml-auto text-[13px] font-bold text-on-surface-variant">{{
-                  followedCount()
+                  count
                 }}</span>
               }
             </a>
@@ -210,7 +212,12 @@ export class Shell {
   protected readonly user = inject(AuthService).user;
   protected readonly provider = computed(() => providerLabel(this.user()));
   private readonly follows = inject(FollowsService);
-  protected readonly followedCount = computed(() => this.follows.symbols().size);
+  private readonly compare = inject(CompareService);
+  /** The counts shown next to drawer items. */
+  protected readonly counts = computed<Record<string, number>>(() => ({
+    '/followed': this.follows.symbols().size,
+    '/compare': this.compare.items().length,
+  }));
 
   /** Trading 212 account value and all-time result for the drawer's card, fetched while the drawer is open. */
   private readonly summary = rxResource({
@@ -243,6 +250,12 @@ export class Shell {
       label: $localize`Calendar`,
       icon: 'calendar_month',
       activeIcon: 'calendar_month',
+    },
+    {
+      path: '/compare',
+      label: $localize`:Navigation item:Compare`,
+      icon: 'compare',
+      activeIcon: 'compare',
     },
     { path: '/settings', label: $localize`Settings`, icon: 'settings', activeIcon: 'settings' },
   ];

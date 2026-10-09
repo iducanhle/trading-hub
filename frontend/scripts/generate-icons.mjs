@@ -31,6 +31,7 @@ const ICONS = {
   chevron_left: 'chevron-left',
   chevron_right: 'chevron-right',
   close: 'x',
+  compare: 'git-compare-arrows',
   cloud_off: 'cloud-off',
   delete: 'trash-2',
   error: 'circle-alert',

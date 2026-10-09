@@ -68,6 +68,11 @@ export const routes: Routes = [
           import('./features/calendar/calendar-page').then((m) => m.CalendarPage),
       },
       {
+        path: 'compare',
+        title: $localize`:Page title:Compare`,
+        loadComponent: () => import('./features/compare/compare-page').then((m) => m.ComparePage),
+      },
+      {
         path: 'events',
         title: $localize`Events`,
         loadComponent: () =>

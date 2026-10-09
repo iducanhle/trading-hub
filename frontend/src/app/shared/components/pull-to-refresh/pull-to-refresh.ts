@@ -49,6 +49,8 @@ const MAX_PULL = 110;
 })
 export class PullToRefresh {
   readonly refreshing = input(false);
+  /** Ignores pulls (a page kept alive but hidden, such as an inactive stock on the compare page). */
+  readonly disabled = input(false);
   readonly refresh = output<void>();
 
   protected readonly pull = signal(0);
@@ -66,7 +68,13 @@ export class PullToRefresh {
     const onStart = (event: TouchEvent) => {
       const target = event.target as Element | null;
       const inOverlay = !!target?.closest?.('.cdk-overlay-container');
-      if (event.touches.length !== 1 || view.scrollY > 0 || this.refreshing() || inOverlay) {
+      if (
+        event.touches.length !== 1 ||
+        view.scrollY > 0 ||
+        this.refreshing() ||
+        this.disabled() ||
+        inOverlay
+      ) {
         this.start = null;
         return;
       }

@@ -19,19 +19,24 @@ import { IconName } from '../../shared/icon/icon-paths';
 import { TAB_LABELS } from './portfolio-labels';
 import { PORTFOLIO_TABS, PortfolioTab } from './portfolio-model';
 
-/** The portfolio sections plus search; `search` is the active item on a stock's detail page. */
-export type NavTab = PortfolioTab | 'search';
-const NAV_TABS: readonly NavTab[] = [...PORTFOLIO_TABS, 'search'];
+/** The portfolio sections plus compare and search; `search` is the active item on a stock's detail page. */
+export type NavTab = PortfolioTab | 'compare' | 'search';
+const NAV_TABS: readonly NavTab[] = [...PORTFOLIO_TABS, 'compare', 'search'];
 
 const TAB_ICONS: Record<NavTab, IconName> = {
   overview: 'pie_chart',
   stocks: 'candlestick_chart',
   trades: 'swap_vert',
   cash: 'payments',
+  compare: 'compare',
   search: 'search',
 };
 
-const NAV_LABELS: Record<NavTab, string> = { ...TAB_LABELS, search: $localize`Search` };
+const NAV_LABELS: Record<NavTab, string> = {
+  ...TAB_LABELS,
+  compare: $localize`:Navigation item:Compare`,
+  search: $localize`Search`,
+};
 
 /** The last stock detail URL the pill was on (in memory only), so Search can lead back to it. */
 @Injectable({ providedIn: 'root' })
@@ -42,9 +47,9 @@ class LastStockMemory {
 /**
  * The portfolio's sections as a floating glass pill pinned to the bottom of the screen (like the iOS tab bar): an
  * icon over a label per section and a highlight that slides to the active one. It keeps clear of the home indicator
- * and, on wide screens, centres in the area right of the docked navigation. The tab lives in the URL (`?tab=`). The
- * last item opens the search overlay; it shows as active on a stock's detail page, where the portfolio items link
- * back to `/portfolio`.
+ * and, on wide screens, centres in the area right of the docked navigation. The tab lives in the URL (`?tab=`).
+ * The Compare item opens the compare page. The last item opens the search overlay; it shows as active on a stock's
+ * detail page, where the portfolio items link back to `/portfolio`.
  */
 @Component({
   selector: 'app-portfolio-nav',
@@ -66,12 +71,12 @@ class LastStockMemory {
   },
   template: `
     <nav
-      class="pointer-events-auto relative grid w-full max-w-[24rem] grid-cols-5 rounded-full bg-surface-container-high/70 p-1.5 ring-1 ring-outline-variant backdrop-blur-xl backdrop-saturate-150 supports-not-[backdrop-filter]:bg-surface-container-high"
+      class="pointer-events-auto relative grid w-full max-w-[26rem] grid-cols-6 rounded-full bg-surface-container-high/70 p-1.5 ring-1 ring-outline-variant backdrop-blur-xl backdrop-saturate-150 supports-not-[backdrop-filter]:bg-surface-container-high"
       aria-label="Portfolio sections"
       i18n-aria-label
     >
       <span
-        class="pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-0.75rem)/5)] rounded-full bg-surface-container-highest ring-1 ring-outline-variant transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        class="pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-0.75rem)/6)] rounded-full bg-surface-container-highest ring-1 ring-outline-variant transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         [style.transform]="'translateX(' + index() * 100 + '%)'"
         aria-hidden="true"
       ></span>
@@ -86,6 +91,16 @@ class LastStockMemory {
             <app-icon [name]="icons[t]" [size]="22" />
             <span class="max-w-full truncate">{{ labels[t] }}</span>
           </button>
+        } @else if (t === 'compare') {
+          <a
+            routerLink="/compare"
+            [attr.aria-current]="current() === t ? 'page' : null"
+            [class]="itemClass(t)"
+            (click)="search.close()"
+          >
+            <app-icon [name]="icons[t]" [size]="22" />
+            <span class="max-w-full truncate">{{ labels[t] }}</span>
+          </a>
         } @else if (onPortfolio()) {
           <a
             [routerLink]="[]"
@@ -131,7 +146,9 @@ export class PortfolioNav {
   );
   protected readonly index = computed(() => NAV_TABS.indexOf(this.current()));
   /** On the portfolio page the items swap `?tab=`; elsewhere they navigate to it. */
-  protected readonly onPortfolio = computed(() => this.tab() !== 'search');
+  protected readonly onPortfolio = computed(
+    () => this.tab() !== 'search' && this.tab() !== 'compare',
+  );
 
   constructor() {
     const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
@@ -147,7 +164,7 @@ export class PortfolioNav {
     });
     // On a detail page, remember it (and each stock opened from there) so Search can return to it.
     afterNextRender(() => {
-      if (this.onPortfolio()) return;
+      if (this.tab() !== 'search') return;
       this.memory.url = this.router.url;
       this.router.events
         .pipe(
@@ -160,11 +177,11 @@ export class PortfolioNav {
     });
   }
 
-  /** From the portfolio, Search returns to the last stock; on a stock, it forgets it and opens search. */
+  /** From the portfolio or compare, Search returns to the last stock; on a stock, it forgets it and opens search. */
   protected onSearch(): void {
     if (this.search.isOpen()) return;
     const last = this.memory.url;
-    if (this.onPortfolio() && last) {
+    if (this.tab() !== 'search' && last) {
       void this.router.navigateByUrl(last);
       return;
     }
@@ -174,7 +191,7 @@ export class PortfolioNav {
 
   protected itemClass(t: NavTab): string {
     return (
-      'relative flex min-w-0 flex-col items-center gap-0.5 rounded-full px-1 pt-2 pb-1.5 text-[11px] leading-tight font-bold transition-colors duration-200 ' +
+      'relative flex min-w-0 flex-col items-center gap-0.5 rounded-full pt-2 pb-1.5 text-[10px] leading-tight font-bold tracking-[-0.01em] transition-colors duration-200 ' +
       (this.current() === t ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface')
     );
   }

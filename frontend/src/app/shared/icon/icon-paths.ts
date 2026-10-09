@@ -25,6 +25,8 @@ export const ICON_PATHS = {
   chevron_left: 'M0 0m15 18-6-6 6-6',
   chevron_right: 'M0 0m9 18 6-6-6-6',
   close: 'M18 6 6 18M0 0m6 6 12 12',
+  compare:
+    'M2 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 6h5a2 2 0 0 1 2 2v7M0 0m15 9-3-3 3-3M16 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 18H7a2 2 0 0 1-2-2V9M0 0m9 15 3 3-3 3',
   cloud_off:
     'M10.94 5.274A7 7 0 0 1 15.71 10h1.79a4.5 4.5 0 0 1 4.222 6.057M18.796 18.81A4.5 4.5 0 0 1 17.5 19H9A7 7 0 0 1 5.79 5.78M0 0m2 2 20 20',
   delete:
@@ -90,8 +92,8 @@ export const ICON_PATHS = {
   warning:
     'M0 0m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01',
   work: 'M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2z',
-  'sort_asc': 'M6 20V4M3 7l3-3 3 3M12 6h4M12 12h7M12 18h9',
-  'sort_desc': 'M6 4v16M3 17l3 3 3-3M12 6h9M12 12h7M12 18h4',
+  sort_asc: 'M6 20V4M3 7l3-3 3 3M12 6h4M12 12h7M12 18h9',
+  sort_desc: 'M6 4v16M3 17l3 3 3-3M12 6h9M12 12h7M12 18h4',
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

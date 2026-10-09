@@ -648,6 +648,18 @@
     "1791616369350599998": "Načítám směnné kurzy…",
     "3928366788300122796": " Směnné kurzy teď nejsou k dispozici, takže částky zůstávají v měně účtu. ",
     "3284248888120842702": " Přepočtené částky jsou jen orientační. Každá částka, včetně minulých obchodů a zisku, se přepočítá dnešním kurzem, takže se může lišit od toho, co by Trading 212 ukázal v této měně. Samotný účet zůstává v {$INTERPOLATION}. ",
-    "8298612418414367990": "Měny"
+    "8298612418414367990": "Měny",
+    "2572999724448976084": "Porovnat",
+    "3465777112024397010": "Zatím nic k porovnání",
+    "5491374586470108866": "Otevřete akcii a klepněte na tlačítko porovnání vpravo dole, tím ji sem přidáte.",
+    "5608507381388744980": "Přidat {$symbol} k porovnání",
+    "494204045811917601": "{$symbol} je v porovnání. Odebrat",
+    "438155877994782752": "{$symbol} odebráno z porovnání",
+    "8400799832561199971": "Porovnat můžete nejvýš {$max} akcií. Nejdřív jednu odeberte.",
+    "8551180905947046305": "{$symbol} přidáno k porovnání",
+    "7593555694782789615": "Otevřít",
+    "3350582568601737613": "Předchozí akcie",
+    "4245890264273177566": "Další akcie",
+    "5501219388321398978": "Odebrat {$symbol} z porovnání"
   }
 }

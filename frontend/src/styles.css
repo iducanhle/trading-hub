@@ -253,6 +253,14 @@ body {
 @utility pb-nav {
   padding-bottom: calc(9rem + env(safe-area-inset-bottom));
 }
+/* Floating action buttons: right above the portfolio pill (its offset plus its 4rem height and a gap), or at the
+   bottom edge when there is no pill. */
+@utility bottom-above-nav {
+  bottom: calc(max(env(safe-area-inset-bottom) - 20px, 12px) + 4.75rem);
+}
+@utility bottom-fab {
+  bottom: calc(env(safe-area-inset-bottom) + 1rem);
+}
 @utility pl-safe {
   padding-left: env(safe-area-inset-left);
 }
@@ -293,6 +301,13 @@ body {
   .app-snackbar-offset {
     margin-bottom: 24px !important;
   }
+}
+/* …and above the stock page's floating compare button (its offset, its 3.5rem height and a gap). */
+.app-snackbar-offset.app-snackbar-above-fab {
+  margin-bottom: calc(env(safe-area-inset-bottom) + 5rem) !important;
+}
+.app-snackbar-offset.app-snackbar-above-fab-nav {
+  margin-bottom: calc(max(env(safe-area-inset-bottom) - 20px, 12px) + 8.75rem) !important;
 }
 
 /* iOS standalone PWAs (viewport-fit=cover, translucent status bar) size fixed `height: 100%` boxes short of the
