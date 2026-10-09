@@ -25,7 +25,7 @@ import { Icon } from '../../shared/icon/icon';
       <li>
         <a routerLink="/portfolio" class="app-card flex h-16 items-center gap-4 px-5 font-semibold">
           <app-icon name="account_balance_wallet" class="text-primary" />
-          <ng-container i18n="Bottom navigation tab">Trading212</ng-container>
+          <ng-container i18n="Bottom navigation tab">Trading 212</ng-container>
         </a>
       </li>
       <li>
