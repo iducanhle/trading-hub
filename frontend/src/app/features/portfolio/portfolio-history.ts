@@ -69,7 +69,7 @@ const DEFAULT_INTERVAL: Record<T212HistoryRange, T212HistoryInterval> = {
   '1M': '1h',
   '3M': '4h',
   '1Y': '1d',
-  ALL: '1d',
+  ALL: '1m',
 };
 const SHORTER_THAN: Record<T212HistoryRange, number> = {
   '1D': 5,
@@ -282,10 +282,13 @@ export class PortfolioHistory {
   readonly version = input(0);
 
   protected readonly expanded = persistedSignal('portfolio.history.expanded', true);
-  protected readonly range = persistedSignal<T212HistoryRange>('portfolio.history.range', '1M');
+  protected readonly range = persistedSignal<T212HistoryRange>(
+    'portfolio.history.range-v2',
+    'ALL',
+  );
   protected readonly interval = persistedSignal<T212HistoryInterval>(
-    'portfolio.history.interval',
-    '1h',
+    'portfolio.history.interval-v2',
+    '1m',
   );
   protected readonly ranges = RANGES;
   protected readonly rangeLabels = RANGE_LABELS;
