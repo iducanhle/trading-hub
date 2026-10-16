@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class T212GroupService {
         T212GroupEngine.Result result = compute(ctx, groups);
         Map<String, String> logos = portfolio.logos(ctx, tickers(ctx, result));
         List<T212Dtos.Group> items = groups.stream()
-                .map(g -> group(ctx, g, result.groups().get(g.id()), logos))
+                .map(g -> group(ctx, g, result, logos))
                 .sorted(Comparator.comparing(T212Dtos.Group::value, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(T212Dtos.Group::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
@@ -81,13 +82,16 @@ public class T212GroupService {
                 .toList();
         fills.forEach(f -> tickers.add(f.fill().ticker()));
         Map<String, String> logos = portfolio.logos(ctx, List.copyOf(tickers));
+        Set<String> oversold = new HashSet<>();
+        result.oversells().forEach(o -> oversold.add(o.fillId()));
         List<T212Dtos.GroupTrade> trades = fills.stream().map(f -> {
             T212Dtos.Trade t = portfolio.trade(ctx, f);
             return new T212Dtos.GroupTrade(t.id(), t.executedAt(), t.t212Ticker(), t.symbol(), t.name(), t.side(),
                     t.kind(), t.quantity(), t.price(), t.priceCurrency(), t.value(), t.fees(), t.taxes(), t.fxRate(),
-                    t.realizedPnl(), t.orderType(), t.original(), id, result.groupRealized().get(t.id()));
+                    t.realizedPnl(), t.orderType(), t.original(), id, result.groupRealized().get(t.id()),
+                    oversold.contains(t.id()));
         }).toList();
-        return new T212Dtos.GroupDetail(ctx.currency(), group(ctx, group, figures, logos), trades, ctx.asOf(),
+        return new T212Dtos.GroupDetail(ctx.currency(), group(ctx, group, result, logos), trades, ctx.asOf(),
                 ctx.stale());
     }
 
@@ -126,8 +130,8 @@ public class T212GroupService {
     }
 
     /**
-     * Moves the trades into the group ({@code groupId} null: out of any group). Refused, changing nothing, when a
-     * group whose trades change would then sell more shares than it holds.
+     * Moves the trades into the group ({@code groupId} null: out of any group). A group may then sell more shares
+     * than it holds (its buys are not assigned yet); the group reports that in {@code oversold}.
      */
     public void assign(String uid, List<String> tradeIds, String groupId) {
         Context ctx = portfolio.context(uid, false);
@@ -152,26 +156,14 @@ public class T212GroupService {
             if (groupId != null) {
                 find(groups, groupId);
             }
-            Set<String> changed = new HashSet<>();
             List<Group> updated = new ArrayList<>();
             for (Group group : groups) {
                 List<String> trades = new ArrayList<>(group.trades().stream().filter(t -> !ids.contains(t)).toList());
                 if (group.id().equals(groupId)) {
                     trades.addAll(ids);
                 }
-                if (!trades.equals(group.trades())) {
-                    changed.add(group.id());
-                }
                 updated.add(group.withTrades(trades));
             }
-            T212GroupEngine.Result result = compute(ctx, updated);
-            result.oversells().stream().filter(o -> changed.contains(o.groupId())).findFirst().ifPresent(o -> {
-                String group = updated.stream().filter(g -> g.id().equals(o.groupId())).findFirst()
-                        .map(Group::name).orElse(o.groupId());
-                String stock = T212PortfolioService.name(T212PortfolioService.info(ctx, o.ticker()));
-                throw new ApiException(ErrorCode.T212_GROUP_OVERSOLD, "Group \"" + group + "\" would sell more "
-                        + stock + " shares than it holds. Add the buys first, or move the sells too.");
-            });
             return updated;
         });
     }
@@ -184,7 +176,7 @@ public class T212GroupService {
         Group group = find(groups, id);
         T212GroupEngine.Result result = compute(ctx, groups);
         GroupResult figures = result.groups().get(id);
-        return group(ctx, group, figures, portfolio.logos(ctx, List.copyOf(figures.lots().keySet())));
+        return group(ctx, group, result, portfolio.logos(ctx, List.copyOf(figures.lots().keySet())));
     }
 
     private static T212GroupEngine.Result compute(Context ctx, List<Group> groups) {
@@ -193,7 +185,17 @@ public class T212GroupService {
         return T212GroupEngine.compute(ctx.data().fills().values(), groupOf, groups.stream().map(Group::id).toList());
     }
 
-    private static T212Dtos.Group group(Context ctx, Group group, GroupResult figures, Map<String, String> logos) {
+    private static T212Dtos.Group group(Context ctx, Group group, T212GroupEngine.Result result,
+            Map<String, String> logos) {
+        GroupResult figures = result.groups().get(group.id());
+        Map<String, Double> missing = new LinkedHashMap<>();
+        result.oversells().stream().filter(o -> o.groupId().equals(group.id()))
+                .forEach(o -> missing.merge(o.ticker(), o.missing(), Double::sum));
+        List<T212Dtos.OversoldStock> oversold = missing.entrySet().stream().map(e -> {
+            T212InstrumentInfo info = T212PortfolioService.info(ctx, e.getKey());
+            return new T212Dtos.OversoldStock(e.getKey(), info.symbol(), T212PortfolioService.name(info),
+                    e.getValue());
+        }).toList();
         List<T212Dtos.GroupHolding> holdings = figures.lots().entrySet().stream()
                 .map(e -> holding(ctx, e.getKey(), e.getValue().quantity(), e.getValue().cost(), logos))
                 .sorted(HOLDINGS_ORDER).toList();
@@ -216,7 +218,8 @@ public class T212GroupService {
         Double pct = figures.bought() > 0 ? round(total / figures.bought() * 100) : null;
         return new T212Dtos.Group(group.id(), group.name(), group.createdAt(), figures.tradeCount(),
                 round(figures.bought()), round(figures.sold()), round(invested), round(value),
-                round(figures.realizedPnl()), round(figures.fees()), round(unrealized), round(total), pct, holdings);
+                round(figures.realizedPnl()), round(figures.fees()), round(unrealized), round(total), pct, holdings,
+                oversold);
     }
 
     /** {@code quantity} shares of {@code ticker} that cost {@code cost}, valued at the live value per share. */

@@ -129,6 +129,32 @@ import { TradeTile } from './trade-tile';
         @if (d.stale) {
           <div class="mb-3"><app-stale-chip [asOf]="d.asOf" /></div>
         }
+        @if (g.oversold.length) {
+          <div
+            role="status"
+            class="mb-4 flex gap-3 rounded-2xl bg-error-container p-3 text-sm text-on-error-container"
+          >
+            <app-icon name="warning" [size]="20" class="mt-px shrink-0" />
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold" i18n>This group sells more shares than it bought</p>
+              <ul class="mt-1">
+                @for (o of g.oversold; track o.t212Ticker) {
+                  <li>
+                    {{ o.name }}:
+                    <ng-container
+                      i18n="Shares a group sold without a buy in the group; COUNT is a number of shares"
+                      >{{ o.missing | qty }} more sold than bought</ng-container
+                    >
+                  </li>
+                }
+              </ul>
+              <p class="mt-1" i18n>
+                Add their buys to the group, or move those sells out. Until then, the realized
+                profit/loss counts only the shares the group holds.
+              </p>
+            </div>
+          </div>
+        }
         <p class="app-label" i18n="Current value of a group's shares">Value</p>
         <app-hero-amount class="mt-1" [value]="g.value" [currency]="currency" />
         <p class="mt-1.5 text-[15px] font-semibold">
@@ -252,11 +278,19 @@ import { TradeTile } from './trade-tile';
                       <app-trade-tile [kind]="t.side === 'BUY' ? 'buy' : 'sell'" />
                       <span class="min-w-0 flex-1">
                         <span class="block truncate app-row-title">{{ t.name }}</span>
-                        <span class="block truncate app-row-meta">
-                          {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
-                          @if (t.price !== null) {
-                            × {{ t.price | price: t.priceCurrency }}
+                        <span class="flex items-center gap-1 app-row-meta">
+                          @if (t.oversold) {
+                            <app-icon name="warning" [size]="14" class="shrink-0 text-error" />
+                            <span class="sr-only" i18n
+                              >Sells more shares than the group held</span
+                            >
                           }
+                          <span class="min-w-0 truncate">
+                            {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
+                            @if (t.price !== null) {
+                              × {{ t.price | price: t.priceCurrency }}
+                            }
+                          </span>
                         </span>
                       </span>
                       <span class="flex shrink-0 flex-col items-end text-right">

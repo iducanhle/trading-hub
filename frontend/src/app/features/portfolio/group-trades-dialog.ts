@@ -281,14 +281,14 @@ export class GroupTradesDialog {
     return this.groupNames().get(t.groupId) ?? null;
   }
 
-  /** Adds first, so that a stock's buys are in the group before sells that need them are checked. */
+  /** Adds, then removes; a failed call is reported and keeps the dialog open. */
   protected async save(): Promise<void> {
     const { add, remove } = this.changes();
     this.saving.set(true);
     try {
       if (add.length && !(await assignTrades(this.api, this.notifier, add, this.data.groupId)))
         return;
-      // A refused removal (reported) keeps the dialog open, unless additions were saved: then the page shows them.
+      // A failed removal keeps the dialog open, unless additions were saved: then the page shows them.
       const removed = !remove.length || (await assignTrades(this.api, this.notifier, remove, null));
       if (removed || add.length) this.ref.close(true);
     } finally {

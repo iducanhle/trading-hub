@@ -41,7 +41,6 @@ The HTTP status plus the body `{ "code": string, "message": string }`.
 | 429 | `T212_RATE_LIMITED` (Trading 212's per-account limit, and nothing cached to serve) |
 | 503 | `T212_NOT_CONFIGURED` (the server has no `T212_ENCRYPTION_KEY`; the rest of the API works) |
 | 503 | `T212_UNAVAILABLE` (Trading 212 failed or timed out, and nothing cached to serve) |
-| 400 | `T212_GROUP_OVERSOLD` (the change would leave a group selling more shares than it holds; `message` names the stock) |
 
 ### Types
 ```ts
@@ -270,8 +269,13 @@ type T212Group = {
   totalPnl: number;                    // realizedPnl − fees + unrealizedPnl (when known)
   totalPnlPct: number | null;          // totalPnl ÷ bought × 100; null without buys
   holdings: T212GroupHolding[];        // largest value first
+  oversold: T212OversoldStock[];       // stocks the group sells more of than it holds (buys not assigned yet)
 };
-type T212GroupTrade = T212Trade & { groupRealizedPnl: number | null /* SELL only, at the group's average price, before fees */ };
+type T212OversoldStock = { t212Ticker: string; symbol: string | null; name: string; missing: number /* shares sold without a buy in the group */ };
+type T212GroupTrade = T212Trade & {
+  groupRealizedPnl: number | null;     // SELL only, at the group's average price, before fees
+  oversold: boolean;                   // a sell of more shares than the group held at that moment
+};
 ```
 
 ### Endpoints
@@ -410,7 +414,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
   - A group holds the shares of its trades. A buy adds its quantity and its value before fees to the group's cost; a sell takes `average × quantity` off it, where the average is the group's own (cost ÷ shares in the group). A sell's `groupRealizedPnl` = its proceeds before fees − that cost, so it differs from Trading 212's `realizedPnl` when the position has buys outside the group (as with Trading 212's pies).
   - Live value per share = the live position's `value ÷ quantity` (account currency, today's FX), the same figure as `/holdings`. A holding the account no longer has (its sell is in no group, or in another) has `value: null` and still counts in `invested`. When Trading 212 is down, `value` and `unrealizedPnl` are `null` with `stale: true`; the rest comes from stored trades.
   - Stock splits and corporate actions without a value are never assigned: each scales every group's shares of that stock by the account's quantity after ÷ before, keeping the cost.
-  - Only `kind: "TRADE"` fills can be assigned (400 `BAD_REQUEST` for others or an unknown id; at most 500 ids per call). A trade is in at most one group, so assigning it moves it. A change is refused with 400 `T212_GROUP_OVERSOLD`, changing nothing, when a group would then sell more shares than it holds at that moment (a sell added without its buys, or a buy removed after its shares were sold in the group).
+  - Only `kind: "TRADE"` fills can be assigned (400 `BAD_REQUEST` for others or an unknown id; at most 500 ids per call). A trade is in at most one group, so assigning it moves it. Any assignment is accepted, even one that leaves a group selling more shares than it holds at that moment (a sell added before its buys, or a buy removed after its shares were sold in the group). Such a sell has `oversold: true`, its stock is listed in `T212Group.oversold`, only the shares the group held are taken off, and its `groupRealizedPnl` counts only their share of the proceeds (the rest has no cost in the group).
   - `name`: 1–40 characters after trimming; at most 30 groups (400 otherwise). Names need not be unique.
   - `ungrouped.holdings`: per open position, the shares in no group (live quantity − the groups' quantity, never negative), `invested` at the position's average cost. Largest value first.
 - **`symbol`** is mapped from the Trading 212 ticker and instrument data; `null` when no supported exchange matches. `logoUrl` as for search results (stored profile, else `null`).
@@ -450,3 +454,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-09 | `GET /api/t212/history`: new `interval=1m`, offered for every range. Additive. |
 | 2026-10-09 | `T212AllocationItem.pnlPct` (unrealized profit/loss in percent of cost, null when unknown). Additive. |
 | 2026-10-16 | Trading 212 groups (additive): `/api/t212/groups` endpoints, `PUT /api/t212/trades/group`, `T212Group`, `T212GroupHolding`, `T212GroupTrade`, `T212Trade.groupId`, error code `T212_GROUP_OVERSOLD` and the backend-only `t212/{uid}/groups` document. |
+| 2026-10-16 | Groups: assigning never fails on an oversell any more; the error code `T212_GROUP_OVERSOLD` is removed, and `T212Group.oversold` (`T212OversoldStock`) and `T212GroupTrade.oversold` report it instead. Frontend and backend change together. |

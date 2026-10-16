@@ -662,7 +662,6 @@
     "4245890264273177566": "Další akcie",
     "5501219388321398978": "Odebrat {$symbol} z porovnání",
     "8623978917681527907": "Skupina",
-    "5761729688852683735": "Skupina by prodala víc akcií, než drží. Nejdřív přidejte nákupy, nebo přesuňte i prodeje.",
     "3804049063753461354": "Zadejte název.",
     "5261802245384307194": "Nová skupina",
     "8779696361516684170": "Přejmenovat skupinu",
@@ -681,7 +680,7 @@
     "3448462145758383019": "Celkem",
     "8057462855421378241": " Pozice ",
     "6330638867278515792": " Skupina teď nedrží žádné akcie. ",
-    "6753730468904275893": "prodáno mimo skupinu",
+    "6753730468904275893": "prodáno jinde",
     "7559113629342773170": "Přidat obchody",
     "5071764260428221467": " Přidejte nákupy a prodeje, které do této skupiny patří. Nákupy akcie přidejte dřív než její prodeje. ",
     "352057228582375623": "Smazat skupinu?",
@@ -704,6 +703,12 @@
     "625661185593573366": "Zisk/ztráta skupiny",
     "6758634963724368238": "Skupina funguje jako koláč v Trading 212: drží akcie z nákupů, které do ní dáte, s vlastní průměrnou cenou. Prodej ve skupině se porovnává s tímto průměrem, ne s průměrem celé pozice.",
     "3383559918262128488": "Realizovaný zisk/ztráta skupiny se proto může lišit od toho, co pro stejný prodej ukazuje Trading 212. Poplatky se neodečítají, jsou uvedené zvlášť.",
-    "2879955844096747893": "Koupíte 10 akcií za 100 $ do jedné skupiny a 10 za 200 $ do druhé. Prodej 10 akcií za 180 $ z druhé skupiny je v ní ztráta 200 $, zatímco Trading 212 počítá +300 $ proti svému průměru 150 $."
+    "2879955844096747893": "Koupíte 10 akcií za 100 $ do jedné skupiny a 10 za 200 $ do druhé. Prodej 10 akcií za 180 $ z druhé skupiny je v ní ztráta 200 $, zatímco Trading 212 počítá +300 $ proti svému průměru 150 $.",
+    "8897855011398155467": "Ve skupině {$GROUP}",
+    "6222242635402744944": "Ve skupině",
+    "364128761025343091": "Tato skupina prodává víc akcií, než nakoupila",
+    "8931225804246985129": "o {$INTERPOLATION} víc prodáno než nakoupeno",
+    "2924124267596953203": " Přidejte do skupiny jejich nákupy, nebo tyto prodeje přesuňte jinam. Do té doby počítá realizovaný zisk/ztráta jen s akciemi, které skupina drží. ",
+    "1868153717518575562": "Prodává víc akcií, než skupina držela"
   }
 }

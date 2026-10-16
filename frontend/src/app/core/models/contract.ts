@@ -645,11 +645,23 @@ export interface T212Group {
   totalPnlPct: number | null;
   /** Largest value first. */
   holdings: T212GroupHolding[];
+  /** Stocks the group sells more of than it holds (their buys are not in the group yet). */
+  oversold: T212OversoldStock[];
+}
+
+export interface T212OversoldStock {
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  /** Shares sold without a buy in the group. */
+  missing: number;
 }
 
 export interface T212GroupTrade extends T212Trade {
   /** SELL only, at the group's average price, before fees. */
   groupRealizedPnl: number | null;
+  /** A sell of more shares than the group held at that moment. */
+  oversold: boolean;
 }
 
 export interface T212GroupsResponse {
@@ -686,8 +698,7 @@ export type ApiErrorCode =
   | 'T212_NOT_CONNECTED'
   | 'T212_RATE_LIMITED'
   | 'T212_NOT_CONFIGURED'
-  | 'T212_UNAVAILABLE'
-  | 'T212_GROUP_OVERSOLD';
+  | 'T212_UNAVAILABLE';
 
 export interface ApiErrorBody {
   code: ApiErrorCode;

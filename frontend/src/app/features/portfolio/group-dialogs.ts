@@ -161,7 +161,7 @@ export class GroupPicker {
 
 /**
  * Lets the user pick the trade's group (creating one if asked) and saves it. Resolves to the new group id, or
- * `undefined` when nothing changed (cancelled, same group, or the change was refused, which is reported).
+ * `undefined` when nothing changed (cancelled, same group, or the save failed, which is reported).
  */
 export async function pickTradeGroup(
   dialog: MatDialog,
@@ -200,7 +200,7 @@ export async function pickTradeGroup(
   return (await assignTrades(api, notifier, [tradeId], groupId)) ? groupId : undefined;
 }
 
-/** Saves the trades' group; reports a failure (e.g. a group that would oversell) and resolves false. */
+/** Saves the trades' group; reports a failure and resolves false. */
 export async function assignTrades(
   api: ApiService,
   notifier: NotifierService,

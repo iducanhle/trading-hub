@@ -81,8 +81,10 @@ class T212GroupEngineTest {
 
         T212GroupEngine.Result result = T212GroupEngine.compute(fills, Map.of("b2", "g", "s1", "g"), List.of("g"));
 
-        assertThat(result.oversells()).containsExactly(new T212GroupEngine.Oversell("g", "AAPL_US_EQ", "s1"));
+        assertThat(result.oversells()).containsExactly(new T212GroupEngine.Oversell("g", "AAPL_US_EQ", "s1", 3));
         assertThat(result.groups().get("g").lots()).isEmpty(); // only the 2 shares held are taken off
+        // Only the 2 shares with a cost count: 2/5 of the proceeds (240) minus their cost (200).
+        assertThat(result.groupRealized()).containsEntry("s1", 40.0);
     }
 
     @Test

@@ -364,7 +364,8 @@ export class MockT212 {
 
   private async groupList(groups: MockGroup[]): Promise<T212GroupsResponse> {
     const data = await this.fixture();
-    const { figures } = computeGroups(data, groups);
+    const result = computeGroups(data, groups);
+    const { figures } = result;
     const grouped = new Map<string, number>();
     for (const f of figures.values())
       for (const [ticker, lot] of f.lots)
@@ -379,7 +380,7 @@ export class MockT212 {
     return {
       accountCurrency: data.accountCurrency,
       items: groups
-        .map((g) => groupDto(data, g, figures.get(g.id)!))
+        .map((g) => groupDto(data, g, result))
         .sort((a, b) => (b.value ?? -1) - (a.value ?? -1) || a.name.localeCompare(b.name)),
       ungrouped: {
         value: round(ungrouped.reduce((s, h) => s + (h.value ?? 0), 0)),
@@ -394,23 +395,24 @@ export class MockT212 {
     const data = await this.fixture();
     const groups = this.loadGroups();
     const group = groups.find((g) => g.id === id)!;
-    return groupDto(data, group, computeGroups(data, groups).figures.get(id)!);
+    return groupDto(data, group, computeGroups(data, groups));
   }
 
   private async groupDetail(groups: MockGroup[], group: MockGroup): Promise<T212GroupDetail> {
     const data = await this.fixture();
-    const { figures, groupRealized } = computeGroups(data, groups);
+    const result = computeGroups(data, groups);
     const ids = new Set(group.trades);
     const trades = compute(data, ALL_TIME, this.groupOf())
       .trades.filter((t) => ids.has(t.id))
       .reverse()
       .map(({ positionAfter: _p, ...trade }) => ({
         ...trade,
-        groupRealizedPnl: groupRealized.get(trade.id) ?? null,
+        groupRealizedPnl: result.groupRealized.get(trade.id) ?? null,
+        oversold: result.oversells.some((o) => o.tradeId === trade.id),
       }));
     return {
       accountCurrency: data.accountCurrency,
-      group: groupDto(data, group, figures.get(group.id)!),
+      group: groupDto(data, group, result),
       trades,
       asOf: new Date().toISOString(),
       stale: false,
@@ -431,23 +433,12 @@ export class MockT212 {
     }
     if (body.groupId && !groups.some((g) => g.id === body.groupId))
       throw new MockT212Error(404, 'NOT_FOUND', `No group ${body.groupId}`);
-    const changed = new Set<string>();
+    // Any change is accepted; a group that now sells more than it holds reports it (`oversold`).
     const updated = groups.map((g) => {
       const trades = g.trades.filter((t) => !ids.includes(t));
       if (g.id === body.groupId) trades.push(...ids);
-      if (trades.join() !== g.trades.join()) changed.add(g.id);
       return { ...g, trades };
     });
-    const oversell = computeGroups(data, updated).oversells.find((o) => changed.has(o.groupId));
-    if (oversell) {
-      const group = updated.find((g) => g.id === oversell.groupId)?.name;
-      const stock = data.instruments.find((i) => i.t212Ticker === oversell.ticker)?.name;
-      throw new MockT212Error(
-        400,
-        'T212_GROUP_OVERSOLD',
-        `Group "${group}" would sell more ${stock} shares than it holds. Add the buys first, or move the sells too.`,
-      );
-    }
     this.saveGroups(updated);
     return null;
   }
@@ -777,6 +768,13 @@ export class MockT212 {
 
 // ─── Groups (same rules as the backend's T212GroupEngine) ───
 
+interface Oversell {
+  groupId: string;
+  ticker: string;
+  tradeId: string;
+  missing: number;
+}
+
 interface GroupFigures {
   lots: Map<string, { quantity: number; cost: number }>;
   bought: number;
@@ -792,7 +790,7 @@ function computeGroups(
 ): {
   figures: Map<string, GroupFigures>;
   groupRealized: Map<string, number>;
-  oversells: { groupId: string; ticker: string }[];
+  oversells: Oversell[];
 } {
   const groupOf = new Map<string, string>();
   const figures = new Map<string, GroupFigures>();
@@ -808,7 +806,7 @@ function computeGroups(
     });
   }
   const groupRealized = new Map<string, number>();
-  const oversells: { groupId: string; ticker: string }[] = [];
+  const oversells: Oversell[] = [];
   const sorted = [...data.trades].sort(
     (a, b) => a.executedAt.localeCompare(b.executedAt) || a.id.localeCompare(b.id),
   );
@@ -852,10 +850,12 @@ function computeGroups(
         lot.cost += Math.max(0, t.value - t.fees - t.taxes);
         f.bought += t.value;
       } else {
-        if (t.quantity > lot.quantity * (1 + 1e-6) + 1e-9) oversells.push({ groupId, ticker });
+        if (t.quantity > lot.quantity * (1 + 1e-6) + 1e-9)
+          oversells.push({ groupId, ticker, tradeId: t.id, missing: t.quantity - lot.quantity });
         const average = lot.quantity > 1e-9 ? lot.cost / lot.quantity : 0;
         const sold = Math.min(t.quantity, lot.quantity);
-        const realized = t.value + t.fees + t.taxes - average * sold;
+        // Only the shares the group held have a cost: count that part of the proceeds.
+        const realized = (t.value + t.fees + t.taxes) * (sold / t.quantity) - average * sold;
         groupRealized.set(t.id, round(realized));
         f.realized += realized;
         f.sold += t.value;
@@ -900,7 +900,15 @@ function groupHolding(
   };
 }
 
-function groupDto(data: T212Fixture, group: MockGroup, f: GroupFigures): T212Group {
+function groupDto(
+  data: T212Fixture,
+  group: MockGroup,
+  result: ReturnType<typeof computeGroups>,
+): T212Group {
+  const f = result.figures.get(group.id)!;
+  const missing = new Map<string, number>();
+  for (const o of result.oversells)
+    if (o.groupId === group.id) missing.set(o.ticker, (missing.get(o.ticker) ?? 0) + o.missing);
   const holdings = [...f.lots]
     .map(([ticker, lot]) => groupHolding(data, ticker, lot.quantity, lot.cost))
     .sort(byValue);
@@ -922,6 +930,15 @@ function groupDto(data: T212Fixture, group: MockGroup, f: GroupFigures): T212Gro
     totalPnl: round(total),
     totalPnlPct: f.bought > 0 ? round((total / f.bought) * 100) : null,
     holdings,
+    oversold: [...missing].map(([ticker, count]) => {
+      const info = data.instruments.find((i) => i.t212Ticker === ticker);
+      return {
+        t212Ticker: ticker,
+        symbol: info?.symbol ?? null,
+        name: info?.name ?? ticker,
+        missing: count,
+      };
+    }),
   };
 }
 

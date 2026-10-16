@@ -546,20 +546,26 @@ class T212PortfolioServiceTest {
     }
 
     @Test
-    void aChangeThatWouldOversellIsRefused() {
+    void aSellWithoutItsBuysIsAllowedAndReported() {
         String id = groups.create(UID, "Swing").id();
-        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("1003-2003"), id))
-                .isInstanceOfSatisfying(ApiException.class, e -> {
-                    assertThat(e.code()).isEqualTo(ErrorCode.T212_GROUP_OVERSOLD);
-                    assertThat(e.getMessage()).contains("Swing", "Apple");
-                });
-        assertThat(groups.detail(UID, id).group().tradeCount()).isZero();
+        groups.assign(UID, java.util.List.of("1003-2003"), id);
 
-        // Removing the buy after its shares were sold in the group is refused too.
-        groups.assign(UID, java.util.List.of("1000-2000", "1003-2003"), id);
-        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("1000-2000"), null))
-                .isInstanceOfSatisfying(ApiException.class,
-                        e -> assertThat(e.code()).isEqualTo(ErrorCode.T212_GROUP_OVERSOLD));
+        T212Dtos.GroupDetail detail = groups.detail(UID, id);
+        assertThat(detail.group().oversold()).singleElement().satisfies(o -> {
+            assertThat(o.t212Ticker()).isEqualTo("AAPL_US_EQ");
+            assertThat(o.name()).isEqualTo("Apple");
+            assertThat(o.missing()).isEqualTo(5.0);
+        });
+        assertThat(detail.trades()).singleElement().satisfies(t -> {
+            assertThat(t.oversold()).isTrue();
+            assertThat(t.groupRealizedPnl()).isZero(); // no shares with a cost in the group yet
+        });
+
+        groups.assign(UID, java.util.List.of("1000-2000"), id);
+        detail = groups.detail(UID, id);
+        assertThat(detail.group().oversold()).isEmpty();
+        assertThat(detail.trades()).noneMatch(T212Dtos.GroupTrade::oversold);
+        assertThat(detail.group().realizedPnl()).isEqualTo(73.35);
     }
 
     @Test

@@ -111,7 +111,11 @@ public final class T212Dtos {
     public record GroupTrade(String id, Instant executedAt, String t212Ticker, String symbol, String name,
             String side, String kind, double quantity, Double price, String priceCurrency, double value, double fees,
             double taxes, Double fxRate, Double realizedPnl, String orderType, Original original, String groupId,
-            Double groupRealizedPnl) {
+            Double groupRealizedPnl, boolean oversold) {
+    }
+
+    /** A stock the group sells more of than it holds: {@code missing} shares have no buy in the group. */
+    public record OversoldStock(String t212Ticker, String symbol, String name, double missing) {
     }
 
     public record GroupHolding(String t212Ticker, String symbol, String name, String logoUrl, double quantity,
@@ -120,7 +124,7 @@ public final class T212Dtos {
 
     public record Group(String id, String name, Instant createdAt, int tradeCount, double bought, double sold,
             double invested, Double value, double realizedPnl, double fees, Double unrealizedPnl, double totalPnl,
-            Double totalPnlPct, List<GroupHolding> holdings) {
+            Double totalPnlPct, List<GroupHolding> holdings, List<OversoldStock> oversold) {
     }
 
     public record Ungrouped(Double value, List<GroupHolding> holdings) {

@@ -228,9 +228,21 @@ const EMPTY: ListState = {
                     (click)="openTrade(t)"
                     class="w-[calc(100%+1rem)] text-left -mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-[11px] hover:bg-surface-container-high"
                   >
-                    <app-trade-tile
-                      [kind]="t.kind !== 'TRADE' ? 'transfer' : t.side === 'BUY' ? 'buy' : 'sell'"
-                    />
+                    <span class="relative shrink-0">
+                      <app-trade-tile
+                        [kind]="t.kind !== 'TRADE' ? 'transfer' : t.side === 'BUY' ? 'buy' : 'sell'"
+                      />
+                      @if (t.groupId) {
+                        <!-- In a group: a small folder badge on the tile, the group's name for screen readers and on hover. -->
+                        <span
+                          class="absolute -right-1 -bottom-1 flex size-[18px] items-center justify-center rounded-full bg-primary text-on-primary ring-2 ring-surface-container"
+                          [attr.title]="groupLabel(t.groupId)"
+                        >
+                          <app-icon name="folder" [size]="11" [strokeWidth]="2.4" />
+                        </span>
+                        <span class="sr-only">{{ groupLabel(t.groupId) }}</span>
+                      }
+                    </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate app-row-title">{{ t.name }}</span>
                       <span class="block truncate app-row-meta">
@@ -281,9 +293,35 @@ export class PortfolioTrades {
 
   protected openTrade(trade: T212Trade): void {
     this.dialog.open<TradeDialog, TradeDialogData>(TradeDialog, {
-      data: { trade, currency: this.state().currency, period: this.period() },
+      data: {
+        trade,
+        currency: this.state().currency,
+        period: this.period(),
+        // Update the row's badge in place (the list keeps its pages and scroll position).
+        groupChanged: (groupId) => {
+          this.state.update((s) => ({
+            ...s,
+            items: s.items.map((t) => (t.id === trade.id ? { ...t, groupId } : t)),
+          }));
+          this.groups.reload();
+        },
+      },
       ...DIALOG_CONFIG,
     });
+  }
+
+  /** Group names by id, for the badge on trades in a group. */
+  private readonly groups = rxResource({
+    params: () => ({ version: this.t212.dataVersion() }),
+    stream: () => this.api.t212Groups(),
+  });
+
+  /** "In group Growth" (or just "In a group" while the names load). */
+  protected groupLabel(groupId: string): string {
+    const name = this.groups.value()?.items.find((g) => g.id === groupId)?.name;
+    return name
+      ? $localize`:Badge on a trade that is in a group; GROUP is the group's name:In group ${name}:GROUP:`
+      : $localize`:Badge on a trade that is in a group whose name is not loaded yet:In a group`;
   }
 
   protected tone(value: number | null): string {

@@ -18,8 +18,9 @@ import java.util.stream.Collectors;
  *   <li>Stock splits and corporate actions without a value are never in a group: they scale every group's shares of
  *       the stock by the account's quantity after ÷ before (fills at the same moment count as one event), keeping
  *       the cost, as {@link T212PortfolioEngine} does for the whole position.</li>
- *   <li>A sell of more shares than the group holds at that moment is an oversell: it is reported, and only the
- *       shares held are taken off.</li>
+ *   <li>A sell of more shares than the group holds at that moment is an oversell (the user has not assigned its
+ *       buys yet). It is allowed and reported; only the shares held are taken off, and its result counts only the
+ *       part of the proceeds that matches them, since the rest has no cost in the group.</li>
  * </ul>
  */
 public final class T212GroupEngine {
@@ -39,8 +40,8 @@ public final class T212GroupEngine {
             double fees, int tradeCount) {
     }
 
-    /** A sell of {@code ticker} in {@code groupId} for more shares than the group held then. */
-    public record Oversell(String groupId, String ticker, String fillId) {
+    /** A sell of {@code ticker} in {@code groupId} for {@code missing} more shares than the group held then. */
+    public record Oversell(String groupId, String ticker, String fillId, double missing) {
     }
 
     /**
@@ -112,12 +113,13 @@ public final class T212GroupEngine {
                     acc.bought += fill.value();
                 } else {
                     if (fill.quantity() > lot[0] * (1 + TOLERANCE) + EPSILON) {
-                        oversells.add(new Oversell(groupId, ticker, fill.id()));
+                        oversells.add(new Oversell(groupId, ticker, fill.id(), fill.quantity() - lot[0]));
                     }
                     double average = lot[0] > EPSILON ? lot[1] / lot[0] : 0;
                     double sold = Math.min(fill.quantity(), lot[0]);
                     double soldCost = average * sold;
-                    double realized = fill.value() + fill.fees() + fill.taxes() - soldCost;
+                    double proceeds = (fill.value() + fill.fees() + fill.taxes()) * (sold / fill.quantity());
+                    double realized = proceeds - soldCost;
                     groupRealized.put(fill.id(), T212PortfolioEngine.round(realized));
                     acc.realized += realized;
                     acc.sold += fill.value();
