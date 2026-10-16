@@ -27,6 +27,9 @@ import {
   T212HoldingsResponse,
   T212AllocationResponse,
   T212DayChangesResponse,
+  T212Group,
+  T212GroupDetail,
+  T212GroupsResponse,
   T212HistoryInterval,
   T212HistoryRange,
   T212HistoryResponse,
@@ -295,6 +298,43 @@ export class ApiService {
       options,
       TTL.t212,
     );
+  }
+
+  t212Groups(options?: LoadOptions): Observable<T212GroupsResponse> {
+    return this.get<T212GroupsResponse>('/t212/groups', {}, options, TTL.t212);
+  }
+
+  t212Group(id: string, options?: LoadOptions): Observable<T212GroupDetail> {
+    return this.get<T212GroupDetail>(
+      `/t212/groups/${encodeURIComponent(id)}`,
+      {},
+      options,
+      TTL.t212,
+    );
+  }
+
+  /** The group changes, and every cached trade list carries `groupId`, so the Trading 212 cache is dropped. */
+  t212CreateGroup(name: string): Observable<T212Group> {
+    this.cache.invalidate('/t212');
+    return this.http.post<T212Group>(`${this.baseUrl}/t212/groups`, { name });
+  }
+
+  t212RenameGroup(id: string, name: string): Observable<T212Group> {
+    this.cache.invalidate('/t212');
+    return this.http.patch<T212Group>(`${this.baseUrl}/t212/groups/${encodeURIComponent(id)}`, {
+      name,
+    });
+  }
+
+  t212DeleteGroup(id: string): Observable<void> {
+    this.cache.invalidate('/t212');
+    return this.http.delete<void>(`${this.baseUrl}/t212/groups/${encodeURIComponent(id)}`);
+  }
+
+  /** Moves the trades into the group, or out of any group with `null`. */
+  t212AssignTrades(tradeIds: string[], groupId: string | null): Observable<void> {
+    this.cache.invalidate('/t212');
+    return this.http.put<void>(`${this.baseUrl}/t212/trades/group`, { tradeIds, groupId });
   }
 
   /** Forgets cached Trading 212 responses (after a sync finished, or a key changed). */

@@ -63,6 +63,7 @@ class T212PortfolioServiceTest {
     private T212LiveService live;
     private T212StateStore states;
     private T212Encryption encryption;
+    private T212GroupService groups;
     private final QuoteService quotes = mock(QuoteService.class);
     private final FxService fx = mock(FxService.class);
 
@@ -97,9 +98,11 @@ class T212PortfolioServiceTest {
             default -> null;
         });
         live = new T212LiveService(client, connection, properties, clock);
+        T212GroupStore groupStore = new T212GroupStore(store);
         portfolio = new T212PortfolioService(connection, data, live,
                 new T212PieService(client, connection, clock), profiles, quotes, fx, snapshots,
-                new T212Logos(url -> url.equals(T212Logos.url("AAPL_US_EQ"))), clock);
+                new T212Logos(url -> url.equals(T212Logos.url("AAPL_US_EQ"))), groupStore, clock);
+        groups = new T212GroupService(portfolio, connection, groupStore, clock);
 
         connection.connect(UID, new T212Dtos.CredentialsRequest(API_KEY, API_SECRET, T212Environment.DEMO));
         sync.runNow(UID).orElseThrow();
@@ -481,5 +484,124 @@ class T212PortfolioServiceTest {
         assertThatThrownBy(() -> portfolio.summary("someone-else", T212Period.ALL_TIME))
                 .isInstanceOfSatisfying(ApiException.class,
                         e -> assertThat(e.code()).isEqualTo(ErrorCode.T212_NOT_CONNECTED));
+    }
+
+    // ---- groups ----
+
+    @Test
+    void aGroupHoldsItsSharesAtItsOwnAveragePrice() {
+        T212Dtos.Group created = groups.create(UID, "  Long term ");
+        assertThat(created.name()).isEqualTo("Long term");
+        assertThat(created.value()).isZero();
+        assertThat(created.holdings()).isEmpty();
+
+        groups.assign(UID, java.util.List.of("1000-2000", "1003-2003"), created.id());
+
+        T212Dtos.GroupList list = groups.list(UID);
+        T212Dtos.Group group = list.items().getFirst();
+        assertThat(group.tradeCount()).isEqualTo(2);
+        assertThat(group.bought()).isEqualTo(1656.0);
+        assertThat(group.sold()).isEqualTo(900.0);
+        // Average 165.60; the sell's proceeds before the 1.35 fee are 901.35, its cost 5 × 165.60 = 828.
+        assertThat(group.realizedPnl()).isEqualTo(73.35);
+        assertThat(group.fees()).isEqualTo(1.35);
+        assertThat(group.invested()).isEqualTo(828.0);
+        // Live: 10 shares worth 1,564, so 156.40 each.
+        assertThat(group.value()).isEqualTo(782.0);
+        assertThat(group.unrealizedPnl()).isEqualTo(-46.0);
+        assertThat(group.totalPnl()).isEqualTo(26.0);
+        assertThat(group.totalPnlPct()).isEqualTo(1.57);
+        assertThat(group.holdings()).singleElement().satisfies(h -> {
+            assertThat(h.t212Ticker()).isEqualTo("AAPL_US_EQ");
+            assertThat(h.quantity()).isEqualTo(5.0);
+            assertThat(h.unrealizedPnlPct()).isEqualTo(-5.56);
+            assertThat(h.logoUrl()).isNotNull();
+        });
+        // The other 5 live shares are in no group, at the position's average cost.
+        assertThat(list.ungrouped().value()).isEqualTo(782.0);
+        assertThat(list.ungrouped().holdings()).singleElement().satisfies(h -> {
+            assertThat(h.quantity()).isEqualTo(5.0);
+            assertThat(h.invested()).isEqualTo(828.0);
+        });
+
+        T212Dtos.GroupDetail detail = groups.detail(UID, created.id());
+        assertThat(detail.trades()).extracting(T212Dtos.GroupTrade::id).containsExactly("1003-2003", "1000-2000");
+        assertThat(detail.trades().getFirst().groupRealizedPnl()).isEqualTo(73.35);
+        assertThat(detail.trades().getFirst().realizedPnl()).isEqualTo(90.5);
+        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of(), null, 10).items())
+                .extracting(T212Dtos.Trade::groupId).containsExactly(created.id(), null, null, created.id());
+    }
+
+    @Test
+    void assigningMovesATradeAndNullTakesItOut() {
+        String a = groups.create(UID, "A").id();
+        String b = groups.create(UID, "B").id();
+        groups.assign(UID, java.util.List.of("1000-2000"), a);
+        groups.assign(UID, java.util.List.of("1000-2000"), b);
+        assertThat(groups.detail(UID, a).group().tradeCount()).isZero();
+        assertThat(groups.detail(UID, b).group().tradeCount()).isEqualTo(1);
+
+        groups.assign(UID, java.util.List.of("1000-2000"), null);
+        assertThat(groups.detail(UID, b).group().tradeCount()).isZero();
+    }
+
+    @Test
+    void aChangeThatWouldOversellIsRefused() {
+        String id = groups.create(UID, "Swing").id();
+        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("1003-2003"), id))
+                .isInstanceOfSatisfying(ApiException.class, e -> {
+                    assertThat(e.code()).isEqualTo(ErrorCode.T212_GROUP_OVERSOLD);
+                    assertThat(e.getMessage()).contains("Swing", "Apple");
+                });
+        assertThat(groups.detail(UID, id).group().tradeCount()).isZero();
+
+        // Removing the buy after its shares were sold in the group is refused too.
+        groups.assign(UID, java.util.List.of("1000-2000", "1003-2003"), id);
+        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("1000-2000"), null))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.code()).isEqualTo(ErrorCode.T212_GROUP_OVERSOLD));
+    }
+
+    @Test
+    void onlyKnownTradesCanBeAssigned() {
+        String id = groups.create(UID, "G").id();
+        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("900-901"), id))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo(ErrorCode.BAD_REQUEST));
+        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("nope"), id))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo(ErrorCode.BAD_REQUEST));
+        assertThatThrownBy(() -> groups.assign(UID, java.util.List.of("1000-2000"), "missing"))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo(ErrorCode.NOT_FOUND));
+    }
+
+    @Test
+    void groupsCanBeRenamedAndDeleted() {
+        String id = groups.create(UID, "Old").id();
+        groups.assign(UID, java.util.List.of("1000-2000"), id);
+        assertThat(groups.rename(UID, id, "New").name()).isEqualTo("New");
+        assertThatThrownBy(() -> groups.rename(UID, id, " "))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo(ErrorCode.BAD_REQUEST));
+        assertThatThrownBy(() -> groups.create(UID, "x".repeat(41))).isInstanceOf(ApiException.class);
+
+        groups.delete(UID, id);
+        assertThat(groups.list(UID).items()).isEmpty();
+        assertThat(portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of(), null, 10).items())
+                .extracting(T212Dtos.Trade::groupId).containsOnlyNulls();
+        assertThatThrownBy(() -> groups.delete(UID, id))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo(ErrorCode.NOT_FOUND));
+    }
+
+    @Test
+    void groupsWithoutLiveValuesKeepTheStoredFigures() {
+        String id = groups.create(UID, "G").id();
+        groups.assign(UID, java.util.List.of("1000-2000"), id);
+        routes.on("/api/v0/equity/account/summary", body(503, "{}"));
+        live.forget(UID);
+
+        T212Dtos.GroupList list = groups.list(UID);
+        assertThat(list.stale()).isTrue();
+        assertThat(list.items().getFirst().invested()).isEqualTo(1656.0);
+        assertThat(list.items().getFirst().value()).isNull();
+        assertThat(list.items().getFirst().unrealizedPnl()).isNull();
+        assertThat(list.ungrouped().value()).isNull();
     }
 }

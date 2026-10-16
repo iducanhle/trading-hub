@@ -61,12 +61,14 @@ public class T212PortfolioService {
     private final FxService fx;
     private final T212SnapshotStore snapshots;
     private final T212Logos t212Logos;
+    private final T212GroupStore groups;
     private final Clock clock;
 
     public T212PortfolioService(T212ConnectionService connection, T212DataStore store, T212LiveService liveService,
             T212PieService pieService, ProfileService profiles, QuoteService quotes, FxService fx,
-            T212SnapshotStore snapshots, T212Logos t212Logos, Clock clock) {
+            T212SnapshotStore snapshots, T212Logos t212Logos, T212GroupStore groups, Clock clock) {
         this.t212Logos = t212Logos;
+        this.groups = groups;
         this.connection = connection;
         this.store = store;
         this.liveService = liveService;
@@ -78,9 +80,13 @@ public class T212PortfolioService {
         this.clock = clock;
     }
 
-    /** What every response needs; {@code live} is null when not asked for or not available. */
-    private record Context(T212State state, T212UserData data, T212UserData raw, Map<String, Double> fillRates,
-            Map<String, Double> dividendRates, T212Live live, Instant asOf, boolean stale) {
+    /**
+     * What every response needs; {@code live} is null when not asked for or not available. {@code groupOf} maps the
+     * id of each trade in a group to the group's id.
+     */
+    record Context(T212State state, T212UserData data, T212UserData raw, Map<String, Double> fillRates,
+            Map<String, Double> dividendRates, T212Live live, Instant asOf, boolean stale,
+            Map<String, String> groupOf) {
 
         Map<String, T212Live.Position> positions() {
             return live == null ? null : live.positions();
@@ -94,7 +100,7 @@ public class T212PortfolioService {
         }
     }
 
-    private Context context(String uid, boolean withLive) {
+    Context context(String uid, boolean withLive) {
         T212State state = connection.requireConnected(uid);
         T212UserData raw = store.load(uid);
         T212Live live = withLive ? liveService.live(uid).orElse(null) : null;
@@ -107,7 +113,7 @@ public class T212PortfolioService {
         Map<String, Double> fillRates = new HashMap<>();
         Map<String, Double> dividendRates = new HashMap<>();
         T212UserData data = inAccountCurrency(raw, currency, fillRates, dividendRates);
-        return new Context(state, data, raw, fillRates, dividendRates, live, asOf, stale);
+        return new Context(state, data, raw, fillRates, dividendRates, live, asOf, stale, groups.groupOf(uid));
     }
 
     /**
@@ -610,13 +616,13 @@ public class T212PortfolioService {
         }, (a, b) -> a, java.util.LinkedHashMap::new));
     }
 
-    private T212Dtos.Trade trade(Context ctx, FillResult f) {
+    T212Dtos.Trade trade(Context ctx, FillResult f) {
         T212Fill fill = f.fill();
         T212InstrumentInfo info = info(ctx, fill.ticker());
         return new T212Dtos.Trade(fill.id(), fill.executedAt(), fill.ticker(), info.symbol(), name(info),
                 fill.side().name(), fill.kind(), fill.quantity(), fill.price(), fill.priceCurrency(), fill.value(),
                 fill.fees(), fill.taxes(), fill.fxRate(), f.realizedPnl() == null ? null : round(f.realizedPnl()),
-                fill.orderType(), original(ctx, fill.id()));
+                fill.orderType(), original(ctx, fill.id()), ctx.groupOf().get(fill.id()));
     }
 
     /** What a trade settled as when that was not the account currency; null otherwise. */
@@ -633,7 +639,7 @@ public class T212PortfolioService {
         T212Dtos.Trade t = trade(ctx, f);
         return new T212Dtos.DetailTrade(t.id(), t.executedAt(), t.t212Ticker(), t.symbol(), t.name(), t.side(),
                 t.kind(), t.quantity(), t.price(), t.priceCurrency(), t.value(), t.fees(), t.taxes(), t.fxRate(),
-                t.realizedPnl(), t.orderType(), t.original(), f.positionAfter());
+                t.realizedPnl(), t.orderType(), t.original(), t.groupId(), f.positionAfter());
     }
 
     private T212Dtos.Dividend dividend(Context ctx, T212DividendPayment d) {
@@ -651,7 +657,7 @@ public class T212PortfolioService {
     }
 
     /** Stored instrument data, else what the live position says, else the ticker alone. */
-    private static T212InstrumentInfo info(Context ctx, String ticker) {
+    static T212InstrumentInfo info(Context ctx, String ticker) {
         T212InstrumentInfo stored = ctx.data().instruments().get(ticker);
         if (stored != null) {
             return stored;
@@ -664,7 +670,7 @@ public class T212PortfolioService {
         return new T212InstrumentInfo(ticker, null, null, null, T212SymbolMapper.map(ticker, null));
     }
 
-    private static String name(T212InstrumentInfo info) {
+    static String name(T212InstrumentInfo info) {
         return info.name() != null ? info.name() : info.ticker();
     }
 
@@ -672,7 +678,7 @@ public class T212PortfolioService {
      * Logo URLs by ticker: Trading 212's own icon when it has one, else for instruments with a mapped symbol the
      * stored profile's logo, else the ticker's Parqet logo.
      */
-    private Map<String, String> logos(Context ctx, List<String> tickers) {
+    Map<String, String> logos(Context ctx, List<String> tickers) {
         Map<String, String> symbols = new java.util.HashMap<>();
         for (String ticker : tickers) {
             String symbol = info(ctx, ticker).symbol();

@@ -30,7 +30,8 @@ export type TermId =
   | 'fxFees'
   | 'accountFees'
   | 'includingFees'
-  | 'tradeDayRate';
+  | 'tradeDayRate'
+  | 'groupPnl';
 
 export interface Term {
   title: string;
@@ -217,6 +218,14 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:The app does the same: every amount and total is converted to the account currency at the exchange rate of the day of the trade, and the dialog also shows the amount as it really was.`,
     ],
     example: $localize`:Term example:A sell with a 224 USD gain on a day when 1 USD = 22 CZK counts as +4,928 CZK.`,
+  },
+  groupPnl: {
+    title: $localize`:Term title:Profit/loss of a group`,
+    body: [
+      $localize`:Term text:A group works like a Trading 212 pie: it holds the shares of the buys you put in it, with its own average cost. A sell in the group is measured against that average, not the average of the whole position.`,
+      $localize`:Term text:So a group's realized profit/loss can differ from what Trading 212 shows for the same sell. Fees are not deducted; they are shown separately.`,
+    ],
+    example: $localize`:Term example:You buy 10 shares at $100 for one group and 10 at $200 for another. Selling 10 at $180 from the second group is a loss of $200 there, while Trading 212 counts +$300 against its average of $150.`,
   },
   unrealizedPnl: {
     title: $localize`:Term title:Unrealized profit/loss`,

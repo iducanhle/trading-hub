@@ -1,7 +1,12 @@
 import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
-import { Component, computed, inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { ApiService } from '../../core/api/api.service';
 import { T212Trade } from '../../core/models/contract';
+import { NotifierService } from '../../core/services/notifier.service';
+import { Icon } from '../../shared/icon/icon';
+import { pickTradeGroup } from './group-dialogs';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
@@ -17,6 +22,8 @@ export interface TradeDialogData {
   currency: string | null;
   /** Passed on to the position dialog. */
   period?: PortfolioPeriod;
+  /** Called after the trade moved to another group (or out of one). */
+  groupChanged?: (groupId: string | null) => void;
 }
 
 const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
@@ -41,6 +48,7 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
     NumberPipe,
     PricePipe,
     QuantityPipe,
+    Icon,
   ],
   template: `
     @let t = data.trade;
@@ -126,12 +134,63 @@ const ORDER_LABELS: Record<NonNullable<T212Trade['orderType']>, string> = {
         <div appStatRow label="Order type" i18n-label>
           {{ t.orderType ? orderLabels[t.orderType] : '—' }}
         </div>
+        @if (t.kind === 'TRADE') {
+          <div appStatRow label="Group" i18n-label="The group of trades this trade is in">
+            <button
+              type="button"
+              class="-my-1 inline-flex max-w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-primary hover:bg-surface-container-high disabled:opacity-60"
+              [disabled]="saving()"
+              (click)="pickGroup()"
+            >
+              <span class="truncate">{{ groupName() }}</span>
+              <app-icon name="edit" [size]="15" class="shrink-0" />
+            </button>
+          </div>
+        }
       </dl>
     </app-dialog>
   `,
 })
 export class TradeDialog {
   protected readonly data = inject<TradeDialogData>(MAT_DIALOG_DATA);
+  private readonly api = inject(ApiService);
+  private readonly dialog = inject(MatDialog);
+  private readonly notifier = inject(NotifierService);
+
+  /** The trade's group, updated in place when the user moves it. */
+  protected readonly groupId = signal(this.data.trade.groupId ?? null);
+  protected readonly saving = signal(false);
+  private readonly groups = rxResource({
+    params: () => (this.groupId() ? { id: this.groupId() } : undefined),
+    stream: () => this.api.t212Groups(),
+  });
+  protected readonly groupName = computed(() => {
+    const id = this.groupId();
+    if (!id) return $localize`:The trade is in no group:None`;
+    const group = this.groups.hasValue()
+      ? this.groups.value().items.find((g) => g.id === id)
+      : null;
+    return group?.name ?? '…';
+  });
+
+  protected async pickGroup(): Promise<void> {
+    this.saving.set(true);
+    try {
+      const picked = await pickTradeGroup(
+        this.dialog,
+        this.api,
+        this.notifier,
+        this.data.trade.id,
+        this.groupId(),
+      );
+      if (picked === undefined) return;
+      this.groupId.set(picked);
+      this.groups.reload();
+      this.data.groupChanged?.(picked);
+    } finally {
+      this.saving.set(false);
+    }
+  }
 
   protected readonly orderLabels = ORDER_LABELS;
   protected readonly ticker = computed(() => displayTicker(this.data.trade));

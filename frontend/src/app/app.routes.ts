@@ -85,6 +85,11 @@ export const routes: Routes = [
           import('./features/portfolio/portfolio-page').then((m) => m.PortfolioPage),
       },
       {
+        path: 'portfolio/groups/:id',
+        title: $localize`:Browser tab title of a group of trades:Group`,
+        loadComponent: () => import('./features/portfolio/group-page').then((m) => m.GroupPage),
+      },
+      {
         path: 'portfolio/:t212Ticker',
         title: (route: ActivatedRouteSnapshot) =>
           displayTicker({ symbol: null, t212Ticker: route.paramMap.get('t212Ticker') ?? '' }),

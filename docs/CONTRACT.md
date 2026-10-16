@@ -41,6 +41,7 @@ The HTTP status plus the body `{ "code": string, "message": string }`.
 | 429 | `T212_RATE_LIMITED` (Trading 212's per-account limit, and nothing cached to serve) |
 | 503 | `T212_NOT_CONFIGURED` (the server has no `T212_ENCRYPTION_KEY`; the rest of the API works) |
 | 503 | `T212_UNAVAILABLE` (Trading 212 failed or timed out, and nothing cached to serve) |
+| 400 | `T212_GROUP_OVERSOLD` (the change would leave a group selling more shares than it holds; `message` names the stock) |
 
 ### Types
 ```ts
@@ -206,6 +207,7 @@ type T212Trade = {
   realizedPnl: number | null;          // SELL only, before fees and taxes
   orderType: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT" | null;
   original: T212Original | null;       // set when the trade settled in another currency than the account's
+  groupId: string | null;              // the T212Group it is in; null when in none (always null for non-TRADE fills)
 };
 
 // Multi-currency accounts settle some trades and dividends in another wallet (e.g. USD in a CZK account). The
@@ -246,6 +248,30 @@ type T212HistoryRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL";
 type T212HistoryPoint = { at: string; value: number; netDeposits: number | null /* deposits − withdrawals up to at */; profit: number | null /* value − netDeposits */ };
 
 type T212Transaction = { id: string; at: string; type: T212TransactionType; amount: number /* signed: − = money out */; currency: string };
+
+// A group: the user's own "pie", built from the buys and sells they assign to it, with its own average price.
+type T212GroupHolding = {
+  t212Ticker: string; symbol: string | null; name: string; logoUrl: string | null;
+  quantity: number;                    // shares held in the group now
+  invested: number;                    // their cost at the group's average price, before fees
+  value: number | null;                // live: quantity × the position's value per share; null when not known
+  unrealizedPnl: number | null;        // value − invested
+  unrealizedPnlPct: number | null;     // unrealizedPnl ÷ invested × 100
+};
+type T212Group = {
+  id: string; name: string; createdAt: string;
+  tradeCount: number;
+  bought: number; sold: number;        // value of the group's buys and sells, as T212Trade.value
+  invested: number;                    // sum of the holdings' invested
+  value: number | null;                // sum of the holdings' known values; null when live values are unavailable
+  realizedPnl: number;                 // the group's sells at the group's average price, before fees and taxes
+  fees: number;                        // fees and taxes of the group's trades
+  unrealizedPnl: number | null;        // sum over the holdings with a known value; null when value is null
+  totalPnl: number;                    // realizedPnl − fees + unrealizedPnl (when known)
+  totalPnlPct: number | null;          // totalPnl ÷ bought × 100; null without buys
+  holdings: T212GroupHolding[];        // largest value first
+};
+type T212GroupTrade = T212Trade & { groupRealizedPnl: number | null /* SELL only, at the group's average price, before fees */ };
 ```
 
 ### Endpoints
@@ -281,6 +307,12 @@ type T212Transaction = { id: string; at: string; type: T212TransactionType; amou
 | `GET /api/t212/trades?from=&to=&tz=&side=BUY\|SELL&ticker=&cursor=&limit=50` | `{ items: T212Trade[] /* newest first */, nextCursor: string \| null, accountCurrency, asOf, stale }` | `limit` 1–100; `ticker` is a `t212Ticker`, or several comma-separated (max 50) |
 | `GET /api/t212/dividends?from=&to=&tz=&ticker=` | `{ from, to, tz, accountCurrency, total: number, items: T212Dividend[] /* newest first */, asOf, stale }` | |
 | `GET /api/t212/transactions?from=&to=&tz=&type=` | `{ from, to, tz, accountCurrency, totals: { deposits, withdrawals, fees, interest }, items: T212Transaction[] /* newest first */, asOf, stale }` | `type` is one `T212TransactionType`; totals ignore it |
+| `GET /api/t212/groups` | `{ accountCurrency, items: T212Group[] /* largest value first */, ungrouped: { value: number \| null, holdings: T212GroupHolding[] }, asOf, stale }` | All time. `ungrouped` = the shares held in no group |
+| `POST /api/t212/groups` | `201 T212Group` | Body `{ name: string }` |
+| `GET /api/t212/groups/{id}` | `{ accountCurrency, group: T212Group, trades: T212GroupTrade[] /* newest first */, asOf, stale }` | 404 `NOT_FOUND` for an unknown id |
+| `PATCH /api/t212/groups/{id}` | `T212Group` | Body `{ name: string }` (rename) |
+| `DELETE /api/t212/groups/{id}` | `204` | Its trades become ungrouped. 404 for an unknown id |
+| `PUT /api/t212/trades/group` | `204` | Body `{ tradeIds: string[], groupId: string \| null }`: moves the trades into that group, or out of any group with `null` |
 
 ### Firestore — user-owned documents (written by the frontend)
 ```
@@ -374,8 +406,15 @@ Every endpoint acts on the caller's own account only; there is no way to address
 - **`GET /holdings`:** a position partly in a pie appears twice: its pie part inside the pie, the rest as its own item (quantity, value and result pro rata). Pie values and results are Trading 212's own (pie average price); outside pies the result is the position's unrealized P/L, `pnlPct` = that ÷ its cost. Pies come from Trading 212's deprecated pie endpoints (`pies:read`), reused for 5 minutes; when they fail, `piesAvailable: false` and all pie parts form one pie with `id` and `name` `null`. No pies at all: only `POSITION` items.
 - **`{t212Ticker}` in paths** is case-sensitive (`SAPd_EQ`). `positionAfter` is the number of shares held right after that trade.
 - **`GET /trades`:** filled trades only (cancelled and rejected orders are not stored), including corporate-action fills (`kind`). `cursor` is opaque; pass `nextCursor` back with the same filters.
+- **Groups** (the user's own pies; all time, the period selector does not apply):
+  - A group holds the shares of its trades. A buy adds its quantity and its value before fees to the group's cost; a sell takes `average × quantity` off it, where the average is the group's own (cost ÷ shares in the group). A sell's `groupRealizedPnl` = its proceeds before fees − that cost, so it differs from Trading 212's `realizedPnl` when the position has buys outside the group (as with Trading 212's pies).
+  - Live value per share = the live position's `value ÷ quantity` (account currency, today's FX), the same figure as `/holdings`. A holding the account no longer has (its sell is in no group, or in another) has `value: null` and still counts in `invested`. When Trading 212 is down, `value` and `unrealizedPnl` are `null` with `stale: true`; the rest comes from stored trades.
+  - Stock splits and corporate actions without a value are never assigned: each scales every group's shares of that stock by the account's quantity after ÷ before, keeping the cost.
+  - Only `kind: "TRADE"` fills can be assigned (400 `BAD_REQUEST` for others or an unknown id; at most 500 ids per call). A trade is in at most one group, so assigning it moves it. A change is refused with 400 `T212_GROUP_OVERSOLD`, changing nothing, when a group would then sell more shares than it holds at that moment (a sell added without its buys, or a buy removed after its shares were sold in the group).
+  - `name`: 1–40 characters after trimming; at most 30 groups (400 otherwise). Names need not be unique.
+  - `ungrouped.holdings`: per open position, the shares in no group (live quantity − the groups' quantity, never negative), `invested` at the position's average cost. Largest value first.
 - **`symbol`** is mapped from the Trading 212 ticker and instrument data; `null` when no supported exchange matches. `logoUrl` as for search results (stored profile, else `null`).
-- **Firestore** (backend-only, rules deny all client access): `t212Credentials/{uid}` (encrypted key and secret, hint, environment) and `t212/{uid}` (sync state) with subcollections `orders`, `dividends`, `transactions` (items bucketed by month), `instruments` and `snapshots` (one document per day: `{ points: [{ at, value }] }`).
+- **Firestore** (backend-only, rules deny all client access): `t212Credentials/{uid}` (encrypted key and secret, hint, environment) and `t212/{uid}` (sync state) with subcollections `orders`, `dividends`, `transactions` (items bucketed by month), `instruments`, `snapshots` (one document per day: `{ points: [{ at, value }] }`) and `groups` (one document `all`: `{ items: [{ id, name, createdAt, trades: [tradeId] }] }`). `DELETE /credentials` deletes the groups too.
 
 ---
 
@@ -410,3 +449,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-09 | `t212-snapshot` runs every minute (was 5) and skips a value equal to the last stored one; no shape change. `interval=5m` is still the finest. Additive. |
 | 2026-10-09 | `GET /api/t212/history`: new `interval=1m`, offered for every range. Additive. |
 | 2026-10-09 | `T212AllocationItem.pnlPct` (unrealized profit/loss in percent of cost, null when unknown). Additive. |
+| 2026-10-16 | Trading 212 groups (additive): `/api/t212/groups` endpoints, `PUT /api/t212/trades/group`, `T212Group`, `T212GroupHolding`, `T212GroupTrade`, `T212Trade.groupId`, error code `T212_GROUP_OVERSOLD` and the backend-only `t212/{uid}/groups` document. |

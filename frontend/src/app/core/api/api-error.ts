@@ -20,6 +20,7 @@ const CODES: readonly ApiErrorCode[] = [
   'T212_RATE_LIMITED',
   'T212_NOT_CONFIGURED',
   'T212_UNAVAILABLE',
+  'T212_GROUP_OVERSOLD',
 ];
 
 const STATUS_CODES: Record<number, ApiErrorCode> = {
@@ -97,6 +98,8 @@ export function errorMessage(error: unknown): string {
       return $localize`Trading 212 is not available on this server.`;
     case 'T212_NOT_CONNECTED':
       return $localize`Trading 212 is not connected.`;
+    case 'T212_GROUP_OVERSOLD':
+      return $localize`:Error when assigning trades to a group:The group would sell more shares than it holds. Add the buys first, or move the sells too.`;
     default:
       return $localize`Something went wrong.`;
   }

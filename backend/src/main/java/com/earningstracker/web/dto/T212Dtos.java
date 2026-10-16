@@ -88,7 +88,7 @@ public final class T212Dtos {
 
     public record Trade(String id, Instant executedAt, String t212Ticker, String symbol, String name, String side,
             String kind, double quantity, Double price, String priceCurrency, double value, double fees, double taxes,
-            Double fxRate, Double realizedPnl, String orderType, Original original) {
+            Double fxRate, Double realizedPnl, String orderType, Original original, String groupId) {
     }
 
     /**
@@ -103,8 +103,43 @@ public final class T212Dtos {
     /** A trade in the instrument detail: {@code T212Trade & { positionAfter }}. */
     public record DetailTrade(String id, Instant executedAt, String t212Ticker, String symbol, String name,
             String side, String kind, double quantity, Double price, String priceCurrency, double value, double fees,
-            double taxes, Double fxRate, Double realizedPnl, String orderType, Original original,
+            double taxes, Double fxRate, Double realizedPnl, String orderType, Original original, String groupId,
             double positionAfter) {
+    }
+
+    /** A trade in a group: {@code T212Trade & { groupRealizedPnl }}. */
+    public record GroupTrade(String id, Instant executedAt, String t212Ticker, String symbol, String name,
+            String side, String kind, double quantity, Double price, String priceCurrency, double value, double fees,
+            double taxes, Double fxRate, Double realizedPnl, String orderType, Original original, String groupId,
+            Double groupRealizedPnl) {
+    }
+
+    public record GroupHolding(String t212Ticker, String symbol, String name, String logoUrl, double quantity,
+            double invested, Double value, Double unrealizedPnl, Double unrealizedPnlPct) {
+    }
+
+    public record Group(String id, String name, Instant createdAt, int tradeCount, double bought, double sold,
+            double invested, Double value, double realizedPnl, double fees, Double unrealizedPnl, double totalPnl,
+            Double totalPnlPct, List<GroupHolding> holdings) {
+    }
+
+    public record Ungrouped(Double value, List<GroupHolding> holdings) {
+    }
+
+    public record GroupList(String accountCurrency, List<Group> items, Ungrouped ungrouped, Instant asOf,
+            boolean stale) {
+    }
+
+    public record GroupDetail(String accountCurrency, Group group, List<GroupTrade> trades, Instant asOf,
+            boolean stale) {
+    }
+
+    /** {@code POST /api/t212/groups} and {@code PATCH /api/t212/groups/{id}}. */
+    public record GroupNameRequest(String name) {
+    }
+
+    /** {@code PUT /api/t212/trades/group}; {@code groupId} null takes the trades out of any group. */
+    public record AssignRequest(List<String> tradeIds, String groupId) {
     }
 
     public record TradePage(List<Trade> items, String nextCursor, String accountCurrency, Instant asOf,

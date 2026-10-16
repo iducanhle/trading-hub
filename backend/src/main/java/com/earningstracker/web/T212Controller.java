@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import com.earningstracker.security.AuthenticatedUser;
 import com.earningstracker.t212.T212ConnectionService;
+import com.earningstracker.t212.T212GroupService;
+import com.earningstracker.t212.T212GroupStore;
 import com.earningstracker.t212.T212LiveService;
 import com.earningstracker.t212.T212Period;
 import com.earningstracker.t212.T212PieService;
@@ -25,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -48,15 +51,20 @@ public class T212Controller {
     private final T212PieService pies;
     private final T212PortfolioService portfolio;
     private final T212SnapshotStore snapshots;
+    private final T212GroupService groups;
+    private final T212GroupStore groupStore;
 
     public T212Controller(T212ConnectionService connection, T212SyncService sync, T212LiveService live,
-            T212PieService pies, T212PortfolioService portfolio, T212SnapshotStore snapshots) {
+            T212PieService pies, T212PortfolioService portfolio, T212SnapshotStore snapshots,
+            T212GroupService groups, T212GroupStore groupStore) {
         this.connection = connection;
         this.sync = sync;
         this.live = live;
         this.pies = pies;
         this.portfolio = portfolio;
         this.snapshots = snapshots;
+        this.groups = groups;
+        this.groupStore = groupStore;
     }
 
     @GetMapping("/status")
@@ -71,6 +79,7 @@ public class T212Controller {
         live.forget(user.uid());
         pies.forget(user.uid());
         snapshots.forget(user.uid());
+        groupStore.forget(user.uid());
         return sync.start(user.uid());
     }
 
@@ -81,6 +90,7 @@ public class T212Controller {
         live.forget(user.uid());
         pies.forget(user.uid());
         snapshots.forget(user.uid());
+        groupStore.forget(user.uid());
     }
 
     /** Starts an incremental sync; if one is running, answers with its status. */
@@ -173,6 +183,43 @@ public class T212Controller {
             @RequestParam(required = false) String type) {
         return portfolio.transactions(user.uid(), T212Period.of(from, to, tz),
                 type == null || type.isBlank() ? null : type.strip().toUpperCase());
+    }
+
+    @GetMapping("/groups")
+    public T212Dtos.GroupList groups(@AuthenticationPrincipal AuthenticatedUser user) {
+        return groups.list(user.uid());
+    }
+
+    @PostMapping("/groups")
+    @ResponseStatus(HttpStatus.CREATED)
+    public T212Dtos.Group createGroup(@AuthenticationPrincipal AuthenticatedUser user,
+            @RequestBody T212Dtos.GroupNameRequest request) {
+        return groups.create(user.uid(), request.name());
+    }
+
+    @GetMapping("/groups/{id}")
+    public T212Dtos.GroupDetail group(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id) {
+        return groups.detail(user.uid(), id);
+    }
+
+    @PatchMapping("/groups/{id}")
+    public T212Dtos.Group renameGroup(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id,
+            @RequestBody T212Dtos.GroupNameRequest request) {
+        return groups.rename(user.uid(), id, request.name());
+    }
+
+    @DeleteMapping("/groups/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteGroup(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id) {
+        groups.delete(user.uid(), id);
+    }
+
+    /** Moves trades into a group, or out of any group when {@code groupId} is null. */
+    @PutMapping("/trades/group")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void assignTrades(@AuthenticationPrincipal AuthenticatedUser user,
+            @RequestBody T212Dtos.AssignRequest request) {
+        groups.assign(user.uid(), request.tradeIds(), request.groupId());
     }
 
     /** A comma-separated list of tickers; empty means all. */

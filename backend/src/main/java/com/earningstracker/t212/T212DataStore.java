@@ -31,9 +31,9 @@ public class T212DataStore {
     static final String DIVIDENDS = "dividends";
     static final String TRANSACTIONS = "transactions";
     static final String INSTRUMENTS = "instruments";
-    /** Every subcollection {@link #deleteAll} removes, including the {@link T212SnapshotStore} one. */
+    /** Every subcollection {@link #deleteAll} removes, including the {@link T212SnapshotStore} and groups ones. */
     static final List<String> COLLECTIONS = List.of(ORDERS, DIVIDENDS, TRANSACTIONS, INSTRUMENTS,
-            T212SnapshotStore.SNAPSHOTS);
+            T212SnapshotStore.SNAPSHOTS, T212GroupStore.GROUPS);
     private static final String INSTRUMENTS_DOC = "all";
     /** Rough upper bound of one stored item, to stay clear of Firestore's 1 MiB document limit. */
     static final int APPROX_ITEM_BYTES = 400;

@@ -430,6 +430,8 @@ export interface T212Trade {
   orderType: 'MARKET' | 'LIMIT' | 'STOP' | 'STOP_LIMIT' | null;
   /** Set when the trade settled in another currency than the account's. */
   original: T212Original | null;
+  /** The T212Group it is in; null when in none (always null for non-TRADE fills). */
+  groupId: string | null;
 }
 
 /**
@@ -607,6 +609,68 @@ export interface T212TransactionsResponse extends T212PeriodEcho {
   stale: boolean;
 }
 
+/** Shares of one stock held in a group (or in no group), valued live. */
+export interface T212GroupHolding {
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  logoUrl: string | null;
+  quantity: number;
+  /** Their cost at the group's average price, before fees. */
+  invested: number;
+  /** Live; null when not known (Trading 212 down, or the account no longer holds the stock). */
+  value: number | null;
+  unrealizedPnl: number | null;
+  unrealizedPnlPct: number | null;
+}
+
+/** The user's own pie: built from the buys and sells assigned to it, with its own average price. */
+export interface T212Group {
+  id: string;
+  name: string;
+  createdAt: string;
+  tradeCount: number;
+  /** Value of the group's buys and sells, as T212Trade.value. */
+  bought: number;
+  sold: number;
+  invested: number;
+  /** Sum of the holdings' known values; null when live values are unavailable. */
+  value: number | null;
+  /** The group's sells at its own average price, before fees and taxes. */
+  realizedPnl: number;
+  fees: number;
+  unrealizedPnl: number | null;
+  /** realizedPnl − fees + unrealizedPnl (when known). */
+  totalPnl: number;
+  totalPnlPct: number | null;
+  /** Largest value first. */
+  holdings: T212GroupHolding[];
+}
+
+export interface T212GroupTrade extends T212Trade {
+  /** SELL only, at the group's average price, before fees. */
+  groupRealizedPnl: number | null;
+}
+
+export interface T212GroupsResponse {
+  accountCurrency: string | null;
+  /** Largest value first. */
+  items: T212Group[];
+  /** The shares held in no group. */
+  ungrouped: { value: number | null; holdings: T212GroupHolding[] };
+  asOf: string;
+  stale: boolean;
+}
+
+export interface T212GroupDetail {
+  accountCurrency: string | null;
+  group: T212Group;
+  /** Newest first. */
+  trades: T212GroupTrade[];
+  asOf: string;
+  stale: boolean;
+}
+
 export type ApiErrorCode =
   | 'BAD_REQUEST'
   | 'UNAUTHENTICATED'
@@ -622,7 +686,8 @@ export type ApiErrorCode =
   | 'T212_NOT_CONNECTED'
   | 'T212_RATE_LIMITED'
   | 'T212_NOT_CONFIGURED'
-  | 'T212_UNAVAILABLE';
+  | 'T212_UNAVAILABLE'
+  | 'T212_GROUP_OVERSOLD';
 
 export interface ApiErrorBody {
   code: ApiErrorCode;

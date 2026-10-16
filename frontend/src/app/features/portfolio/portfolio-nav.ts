@@ -5,10 +5,13 @@ import {
   Injectable,
   Injector,
   afterNextRender,
+  afterRenderEffect,
   computed,
   effect,
   inject,
   input,
+  signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -27,6 +30,7 @@ const TAB_ICONS: Record<NavTab, IconName> = {
   overview: 'pie_chart',
   stocks: 'candlestick_chart',
   trades: 'swap_vert',
+  groups: 'folder',
   cash: 'payments',
   compare: 'compare',
   search: 'search',
@@ -71,15 +75,22 @@ class LastStockMemory {
   },
   template: `
     <nav
-      class="pointer-events-auto relative grid w-full max-w-[26rem] grid-cols-6 rounded-full bg-surface-container-high/70 p-1.5 ring-1 ring-outline-variant backdrop-blur-xl backdrop-saturate-150 supports-not-[backdrop-filter]:bg-surface-container-high"
+      #nav
+      class="pointer-events-auto relative flex w-full max-w-[28rem] rounded-full bg-surface-container-high/70 p-1.5 ring-1 ring-outline-variant backdrop-blur-xl backdrop-saturate-150 supports-not-[backdrop-filter]:bg-surface-container-high"
       aria-label="Portfolio sections"
       i18n-aria-label
     >
-      <span
-        class="pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-0.75rem)/6)] rounded-full bg-surface-container-highest ring-1 ring-outline-variant transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
-        [style.transform]="'translateX(' + index() * 100 + '%)'"
-        aria-hidden="true"
-      ></span>
+      @if (highlight(); as h) {
+        <span
+          class="pointer-events-none absolute inset-y-1.5 left-0 rounded-full bg-surface-container-highest ring-1 ring-outline-variant"
+          [style.transform]="'translateX(' + h.x + 'px)'"
+          [style.width.px]="h.w"
+          [style.transition]="
+            animate() ? 'transform 300ms ' + EASE + ', width 300ms ' + EASE : 'none'
+          "
+          aria-hidden="true"
+        ></span>
+      }
       @for (t of tabs; track t) {
         @if (t === 'search') {
           <button
@@ -145,6 +156,14 @@ export class PortfolioNav {
     this.search.isOpen() ? 'search' : this.tab(),
   );
   protected readonly index = computed(() => NAV_TABS.indexOf(this.current()));
+  /**
+   * The sliding highlight, measured from the active item: items are as wide as their labels plus an equal share of
+   * the rest, so long labels (Czech) still fit on a narrow phone.
+   */
+  protected readonly highlight = signal<{ x: number; w: number } | null>(null);
+  protected readonly animate = signal(false);
+  protected readonly EASE = 'cubic-bezier(0.32,0.72,0,1)';
+  private readonly nav = viewChild.required<ElementRef<HTMLElement>>('nav');
   /** On the portfolio page the items swap `?tab=`; elsewhere they navigate to it. */
   protected readonly onPortfolio = computed(
     () => this.tab() !== 'search' && this.tab() !== 'compare',
@@ -152,6 +171,17 @@ export class PortfolioNav {
 
   constructor() {
     const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    afterRenderEffect(() => {
+      this.index();
+      this.measure();
+    });
+    afterNextRender(() => {
+      const observer = new ResizeObserver(() => this.measure());
+      observer.observe(this.nav().nativeElement);
+      this.destroyRef.onDestroy(() => observer.disconnect());
+      // Slide only after the first position is drawn.
+      requestAnimationFrame(() => this.animate.set(true));
+    });
     effect(() => {
       if (!this.search.isOpen()) return;
       // After the popover attribute is bound, raise the pill into the top layer above the dialog.
@@ -189,9 +219,20 @@ export class PortfolioNav {
     void this.search.open();
   }
 
+  private measure(): void {
+    const items = this.nav().nativeElement.querySelectorAll<HTMLElement>(
+      ':scope > a, :scope > button',
+    );
+    const item = items[this.index()];
+    if (!item) return;
+    const next = { x: item.offsetLeft, w: item.offsetWidth };
+    const current = this.highlight();
+    if (current?.x !== next.x || current?.w !== next.w) this.highlight.set(next);
+  }
+
   protected itemClass(t: NavTab): string {
     return (
-      'relative flex min-w-0 flex-col items-center gap-0.5 rounded-full pt-2 pb-1.5 text-[10px] leading-tight font-bold tracking-[-0.01em] transition-colors duration-200 ' +
+      'relative flex min-w-0 flex-[1_1_auto] flex-col items-center gap-0.5 rounded-full px-0.5 pt-2 pb-1.5 text-[10px] leading-tight font-bold tracking-[-0.01em] transition-colors duration-200 ' +
       (this.current() === t ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface')
     );
   }

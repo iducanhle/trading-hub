@@ -25,8 +25,14 @@ export interface PortfolioPeriod {
   to: string | null;
 }
 
-export type PortfolioTab = 'overview' | 'stocks' | 'trades' | 'cash';
-export const PORTFOLIO_TABS: readonly PortfolioTab[] = ['overview', 'stocks', 'trades', 'cash'];
+export type PortfolioTab = 'overview' | 'stocks' | 'trades' | 'groups' | 'cash';
+export const PORTFOLIO_TABS: readonly PortfolioTab[] = [
+  'overview',
+  'stocks',
+  'trades',
+  'groups',
+  'cash',
+];
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 

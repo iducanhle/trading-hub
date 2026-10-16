@@ -13,6 +13,10 @@ import {
   T212AllocationItem,
   T212AllocationResponse,
   T212DayChangesResponse,
+  T212Group,
+  T212GroupDetail,
+  T212GroupHolding,
+  T212GroupsResponse,
   T212HistoryInterval,
   T212HistoryRange,
   T212HistoryResponse,
@@ -54,7 +58,7 @@ export interface T212Fixture {
     costBasis: number;
     unrealizedPnl: number;
   }[];
-  trades: Omit<T212Trade, 'symbol' | 'name'>[];
+  trades: Omit<T212Trade, 'symbol' | 'name' | 'groupId'>[];
   dividends: Omit<T212Dividend, 'symbol' | 'name'>[];
   transactions: T212Transaction[];
 }
@@ -106,7 +110,31 @@ interface MockState {
 }
 
 const STORAGE_KEY = 'mock.t212';
+const GROUPS_KEY = 'mock.t212.groups';
 const SYNC_MS = 2500;
+
+interface MockGroup {
+  id: string;
+  name: string;
+  createdAt: string;
+  trades: string[];
+}
+
+/** Two groups to start with; VUSA's second buy stays in no group. */
+const SEED_GROUPS: MockGroup[] = [
+  {
+    id: 'g-long',
+    name: 'Long term',
+    createdAt: '2026-03-01T09:00:00Z',
+    trades: ['t-04', 't-05', 't-06', 't-11'],
+  },
+  {
+    id: 'g-growth',
+    name: 'Growth',
+    createdAt: '2026-03-01T09:05:00Z',
+    trades: ['t-01', 't-02', 't-10'],
+  },
+];
 
 /**
  * Trading 212 in mock mode. Starts disconnected; connecting with any key works except:
@@ -129,7 +157,12 @@ export class MockT212 {
       return this.connect(body as T212CredentialsRequest);
     if (resource === 'credentials' && method === 'DELETE') {
       this.save(null);
+      this.saveGroups(null);
       return null;
+    }
+    if (resource === 'groups' || (resource === 'trades' && id === 'group' && method === 'PUT')) {
+      this.requireConnected();
+      return this.groupsRoute(method, resource, id, body);
     }
     if (resource === 'sync' && method === 'POST') {
       const state = this.requireConnected();
@@ -254,6 +287,169 @@ export class MockT212 {
       syncUntil: now + SYNC_MS,
     });
     return this.status();
+  }
+
+  // ─── Groups ───
+
+  private loadGroups(): MockGroup[] {
+    try {
+      const raw = localStorage.getItem(GROUPS_KEY);
+      return raw ? (JSON.parse(raw) as MockGroup[]) : structuredClone(SEED_GROUPS);
+    } catch {
+      return structuredClone(SEED_GROUPS);
+    }
+  }
+
+  private saveGroups(groups: MockGroup[] | null): void {
+    try {
+      if (groups) localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
+      else localStorage.removeItem(GROUPS_KEY);
+    } catch {
+      // private mode: changes last for this page only
+    }
+  }
+
+  private groupOf(): Map<string, string> {
+    const map = new Map<string, string>();
+    for (const g of this.loadGroups()) g.trades.forEach((t) => map.set(t, g.id));
+    return map;
+  }
+
+  private async groupsRoute(
+    method: string,
+    resource: string,
+    id: string | undefined,
+    body: unknown,
+  ): Promise<unknown> {
+    const groups = this.loadGroups();
+    const find = (groupId: string) => {
+      const group = groups.find((g) => g.id === groupId);
+      if (!group) throw new MockT212Error(404, 'NOT_FOUND', `No group ${groupId}`);
+      return group;
+    };
+    const validName = (value: unknown) => {
+      const name = typeof value === 'string' ? value.trim() : '';
+      if (!name || [...name].length > 40)
+        throw new MockT212Error(400, 'BAD_REQUEST', 'name must be 1–40 characters');
+      return name;
+    };
+    if (resource === 'trades')
+      return this.assign(groups, body as { tradeIds: string[]; groupId: string | null });
+    if (!id && method === 'GET') return this.groupList(groups);
+    if (!id && method === 'POST') {
+      const name = validName((body as { name?: unknown } | null)?.name);
+      if (groups.length >= 30) throw new MockT212Error(400, 'BAD_REQUEST', 'at most 30 groups');
+      const group: MockGroup = {
+        id: `g-${Date.now().toString(36)}`,
+        name,
+        createdAt: new Date().toISOString(),
+        trades: [],
+      };
+      this.saveGroups([...groups, group]);
+      return this.groupSingle(group.id);
+    }
+    if (id && method === 'GET') return this.groupDetail(groups, find(id));
+    if (id && method === 'PATCH') {
+      find(id).name = validName((body as { name?: unknown } | null)?.name);
+      this.saveGroups(groups);
+      return this.groupSingle(id);
+    }
+    if (id && method === 'DELETE') {
+      find(id);
+      this.saveGroups(groups.filter((g) => g.id !== id));
+      return null;
+    }
+    throw new MockT212Error(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+  }
+
+  private async groupList(groups: MockGroup[]): Promise<T212GroupsResponse> {
+    const data = await this.fixture();
+    const { figures } = computeGroups(data, groups);
+    const grouped = new Map<string, number>();
+    for (const f of figures.values())
+      for (const [ticker, lot] of f.lots)
+        grouped.set(ticker, (grouped.get(ticker) ?? 0) + lot.quantity);
+    const ungrouped = data.positions
+      .map((p) => ({ p, rest: p.quantity - (grouped.get(p.t212Ticker) ?? 0) }))
+      .filter(({ p, rest }) => rest > p.quantity * 1e-6)
+      .map(({ p, rest }) =>
+        groupHolding(data, p.t212Ticker, rest, (p.costBasis * rest) / p.quantity),
+      )
+      .sort(byValue);
+    return {
+      accountCurrency: data.accountCurrency,
+      items: groups
+        .map((g) => groupDto(data, g, figures.get(g.id)!))
+        .sort((a, b) => (b.value ?? -1) - (a.value ?? -1) || a.name.localeCompare(b.name)),
+      ungrouped: {
+        value: round(ungrouped.reduce((s, h) => s + (h.value ?? 0), 0)),
+        holdings: ungrouped,
+      },
+      asOf: new Date().toISOString(),
+      stale: false,
+    };
+  }
+
+  private async groupSingle(id: string): Promise<T212Group> {
+    const data = await this.fixture();
+    const groups = this.loadGroups();
+    const group = groups.find((g) => g.id === id)!;
+    return groupDto(data, group, computeGroups(data, groups).figures.get(id)!);
+  }
+
+  private async groupDetail(groups: MockGroup[], group: MockGroup): Promise<T212GroupDetail> {
+    const data = await this.fixture();
+    const { figures, groupRealized } = computeGroups(data, groups);
+    const ids = new Set(group.trades);
+    const trades = compute(data, ALL_TIME, this.groupOf())
+      .trades.filter((t) => ids.has(t.id))
+      .reverse()
+      .map(({ positionAfter: _p, ...trade }) => ({
+        ...trade,
+        groupRealizedPnl: groupRealized.get(trade.id) ?? null,
+      }));
+    return {
+      accountCurrency: data.accountCurrency,
+      group: groupDto(data, group, figures.get(group.id)!),
+      trades,
+      asOf: new Date().toISOString(),
+      stale: false,
+    };
+  }
+
+  private async assign(
+    groups: MockGroup[],
+    body: { tradeIds: string[]; groupId: string | null },
+  ): Promise<null> {
+    const data = await this.fixture();
+    const ids = body?.tradeIds ?? [];
+    for (const id of ids) {
+      const trade = data.trades.find((t) => t.id === id);
+      if (!trade) throw new MockT212Error(400, 'BAD_REQUEST', `unknown trade ${id}`);
+      if (trade.kind !== 'TRADE')
+        throw new MockT212Error(400, 'BAD_REQUEST', 'only buys and sells can be in a group');
+    }
+    if (body.groupId && !groups.some((g) => g.id === body.groupId))
+      throw new MockT212Error(404, 'NOT_FOUND', `No group ${body.groupId}`);
+    const changed = new Set<string>();
+    const updated = groups.map((g) => {
+      const trades = g.trades.filter((t) => !ids.includes(t));
+      if (g.id === body.groupId) trades.push(...ids);
+      if (trades.join() !== g.trades.join()) changed.add(g.id);
+      return { ...g, trades };
+    });
+    const oversell = computeGroups(data, updated).oversells.find((o) => changed.has(o.groupId));
+    if (oversell) {
+      const group = updated.find((g) => g.id === oversell.groupId)?.name;
+      const stock = data.instruments.find((i) => i.t212Ticker === oversell.ticker)?.name;
+      throw new MockT212Error(
+        400,
+        'T212_GROUP_OVERSOLD',
+        `Group "${group}" would sell more ${stock} shares than it holds. Add the buys first, or move the sells too.`,
+      );
+    }
+    this.saveGroups(updated);
+    return null;
   }
 
   // ─── Reads ───
@@ -448,7 +644,20 @@ export class MockT212 {
       value = value / (1 + (seed / 2147483647 - 0.5) * 0.004);
     }
     const spanDays = { '1D': 1, '1W': 7, '1M': 31, '3M': 92, '1Y': 366, ALL: Infinity }[range];
-    const bucket = { '1m': 1 / 15, '5m': 1 / 3, '15m': 1, '30m': 2, '1h': 4, '4h': 16, '1d': 96, '1w': 672, '1mo': 2976, '6mo': 17568, '1y': 35136 }[interval] * step;
+    const bucket =
+      {
+        '1m': 1 / 15,
+        '5m': 1 / 3,
+        '15m': 1,
+        '30m': 2,
+        '1h': 4,
+        '4h': 16,
+        '1d': 96,
+        '1w': 672,
+        '1mo': 2976,
+        '6mo': 17568,
+        '1y': 35136,
+      }[interval] * step;
     const byBucket = new Map<number, { at: number; value: number }>();
     values.forEach((v, i) => {
       const at = now - (count - 1 - i) * step;
@@ -484,7 +693,7 @@ export class MockT212 {
 
   private async instrument(ticker: string): Promise<T212InstrumentDetail> {
     const data = await this.fixture();
-    const result = compute(data, ALL_TIME);
+    const result = compute(data, ALL_TIME, this.groupOf());
     const row = result.all.find((r) => r.instrument.t212Ticker === ticker);
     if (!row)
       throw new MockT212Error(404, 'NOT_FOUND', `No trades, dividends or position for ${ticker}`);
@@ -506,7 +715,7 @@ export class MockT212 {
     const tickers = (params.get('ticker') ?? '').split(',').filter(Boolean);
     const limit = Number(params.get('limit') ?? 50);
     const offset = Number(params.get('cursor') ?? 0);
-    const all = compute(data, ALL_TIME)
+    const all = compute(data, ALL_TIME, this.groupOf())
       .trades.filter((t) => inPeriod(t.executedAt, period))
       .filter((t) => !side || t.side === side)
       .filter((t) => !tickers.length || tickers.includes(t.t212Ticker))
@@ -564,6 +773,156 @@ export class MockT212 {
       stale: false,
     };
   }
+}
+
+// ─── Groups (same rules as the backend's T212GroupEngine) ───
+
+interface GroupFigures {
+  lots: Map<string, { quantity: number; cost: number }>;
+  bought: number;
+  sold: number;
+  realized: number;
+  fees: number;
+  tradeCount: number;
+}
+
+function computeGroups(
+  data: T212Fixture,
+  groups: readonly MockGroup[],
+): {
+  figures: Map<string, GroupFigures>;
+  groupRealized: Map<string, number>;
+  oversells: { groupId: string; ticker: string }[];
+} {
+  const groupOf = new Map<string, string>();
+  const figures = new Map<string, GroupFigures>();
+  for (const g of groups) {
+    g.trades.forEach((t) => groupOf.set(t, g.id));
+    figures.set(g.id, {
+      lots: new Map(),
+      bought: 0,
+      sold: 0,
+      realized: 0,
+      fees: 0,
+      tradeCount: 0,
+    });
+  }
+  const groupRealized = new Map<string, number>();
+  const oversells: { groupId: string; ticker: string }[] = [];
+  const sorted = [...data.trades].sort(
+    (a, b) => a.executedAt.localeCompare(b.executedAt) || a.id.localeCompare(b.id),
+  );
+  const valued = (t: T212Fixture['trades'][number]) =>
+    t.kind === 'TRADE' || (t.kind !== 'STOCK_SPLIT' && t.value > 0);
+  for (const ticker of new Set(sorted.map((t) => t.t212Ticker))) {
+    const list = sorted.filter((t) => t.t212Ticker === ticker);
+    let account = 0;
+    for (let i = 0; i < list.length; i++) {
+      const t = list[i];
+      if (!valued(t)) {
+        // Fills at the same moment are one event (a split is a sell of the old shares and a buy of the new).
+        const before = account;
+        let split = false;
+        let j = i;
+        for (; j < list.length && !valued(list[j]) && list[j].executedAt === t.executedAt; j++) {
+          split ||= list[j].kind === 'STOCK_SPLIT';
+          account = Math.max(0, account + (list[j].side === 'BUY' ? 1 : -1) * list[j].quantity);
+        }
+        i = j - 1;
+        if (before > 1e-9) {
+          for (const f of figures.values()) {
+            const lot = f.lots.get(ticker);
+            if (!lot) continue;
+            lot.quantity *= account / before;
+            if (lot.quantity < 1e-9 && !split) lot.cost = 0;
+          }
+        }
+        continue;
+      }
+      account = Math.max(0, account + (t.side === 'BUY' ? 1 : -1) * t.quantity);
+      const groupId = groupOf.get(t.id);
+      const f = groupId ? figures.get(groupId) : undefined;
+      if (!groupId || !f) continue;
+      f.fees += t.fees + t.taxes;
+      f.tradeCount++;
+      const lot = f.lots.get(ticker) ?? { quantity: 0, cost: 0 };
+      f.lots.set(ticker, lot);
+      if (t.side === 'BUY') {
+        lot.quantity += t.quantity;
+        lot.cost += Math.max(0, t.value - t.fees - t.taxes);
+        f.bought += t.value;
+      } else {
+        if (t.quantity > lot.quantity * (1 + 1e-6) + 1e-9) oversells.push({ groupId, ticker });
+        const average = lot.quantity > 1e-9 ? lot.cost / lot.quantity : 0;
+        const sold = Math.min(t.quantity, lot.quantity);
+        const realized = t.value + t.fees + t.taxes - average * sold;
+        groupRealized.set(t.id, round(realized));
+        f.realized += realized;
+        f.sold += t.value;
+        lot.quantity -= sold;
+        lot.cost -= average * sold;
+        if (lot.quantity < 1e-9) {
+          lot.quantity = 0;
+          lot.cost = 0;
+        }
+      }
+    }
+  }
+  for (const f of figures.values()) {
+    for (const [ticker, lot] of f.lots) if (lot.quantity <= 1e-9) f.lots.delete(ticker);
+  }
+  return { figures, groupRealized, oversells };
+}
+
+const byValue = (a: T212GroupHolding, b: T212GroupHolding) =>
+  (b.value ?? -Infinity) - (a.value ?? -Infinity) || b.invested - a.invested;
+
+function groupHolding(
+  data: T212Fixture,
+  ticker: string,
+  quantity: number,
+  cost: number,
+): T212GroupHolding {
+  const info = data.instruments.find((i) => i.t212Ticker === ticker);
+  const position = data.positions.find((p) => p.t212Ticker === ticker);
+  const value = position ? round((position.value / position.quantity) * quantity) : null;
+  const unrealized = value === null ? null : round(value - cost);
+  return {
+    t212Ticker: ticker,
+    symbol: info?.symbol ?? null,
+    name: info?.name ?? ticker,
+    logoUrl: info?.logoUrl ?? null,
+    quantity,
+    invested: round(cost),
+    value,
+    unrealizedPnl: unrealized,
+    unrealizedPnlPct: unrealized === null || cost <= 0 ? null : round((unrealized / cost) * 100),
+  };
+}
+
+function groupDto(data: T212Fixture, group: MockGroup, f: GroupFigures): T212Group {
+  const holdings = [...f.lots]
+    .map(([ticker, lot]) => groupHolding(data, ticker, lot.quantity, lot.cost))
+    .sort(byValue);
+  const value = holdings.reduce((s, h) => s + (h.value ?? 0), 0);
+  const unrealized = holdings.reduce((s, h) => s + (h.unrealizedPnl ?? 0), 0);
+  const total = f.realized - f.fees + unrealized;
+  return {
+    id: group.id,
+    name: group.name,
+    createdAt: group.createdAt,
+    tradeCount: f.tradeCount,
+    bought: round(f.bought),
+    sold: round(f.sold),
+    invested: round(holdings.reduce((s, h) => s + h.invested, 0)),
+    value: round(value),
+    realizedPnl: round(f.realized),
+    fees: round(f.fees),
+    unrealizedPnl: round(unrealized),
+    totalPnl: round(total),
+    totalPnlPct: f.bought > 0 ? round((total / f.bought) * 100) : null,
+    holdings,
+  };
 }
 
 // ─── The engine (same rules as the backend's T212PortfolioEngine) ───
@@ -644,6 +1003,7 @@ interface Row {
 function compute(
   data: T212Fixture,
   period: Period,
+  groupOf: ReadonlyMap<string, string> = new Map(),
 ): { all: Row[]; listed: Row[]; trades: T212DetailTrade[] } {
   const allTime = period.from === null && period.to === null;
   const trades: T212DetailTrade[] = [];
@@ -698,7 +1058,12 @@ function compute(
         first ??= t.executedAt;
         last = t.executedAt;
       }
-      trades.push({ ...t, realizedPnl: tradeRealized, positionAfter: quantity });
+      trades.push({
+        ...t,
+        realizedPnl: tradeRealized,
+        groupId: groupOf.get(t.id) ?? null,
+        positionAfter: quantity,
+      });
     }
     const dividends = data.dividends
       .filter((d) => d.t212Ticker === info.t212Ticker && inPeriod(d.paidAt, period))

@@ -31,10 +31,11 @@ import {
 import { PortfolioOverview } from './portfolio-overview';
 import { PortfolioStocks } from './portfolio-stocks';
 import { PortfolioTrades } from './portfolio-trades';
+import { PortfolioGroups } from './portfolio-groups';
 import { TradeFilters } from './trades-filters';
 
 /**
- * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Dividends & cash (a floating
+ * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Groups · Dividends & cash (a floating
  * pill at the bottom, `app-portfolio-nav`) share one period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
  * down starts a sync; live values refetch every minute, with the same indicator. Without a connection it explains the feature and links to Settings.
  */
@@ -56,6 +57,7 @@ import { TradeFilters } from './trades-filters';
     PortfolioOverview,
     PortfolioStocks,
     PortfolioTrades,
+    PortfolioGroups,
     PortfolioCash,
     CurrencyFlag,
   ],
@@ -155,7 +157,7 @@ import { TradeFilters } from './trades-filters';
               <app-icon name="chevron_right" [size]="20" />
             </a>
           }
-          @if (tab() !== 'overview') {
+          @if (tab() !== 'overview' && tab() !== 'groups') {
             <app-period-selector
               class="mb-4 block"
               [period]="period()"
@@ -178,6 +180,9 @@ import { TradeFilters } from './trades-filters';
                 (filtersChange)="setTradeFilters($event)"
                 (periodChange)="setPeriod($event)"
               />
+            }
+            @case ('groups') {
+              <app-portfolio-groups [version]="version()" />
             }
             @case ('cash') {
               <app-portfolio-cash
