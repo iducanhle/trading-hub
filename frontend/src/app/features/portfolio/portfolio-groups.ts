@@ -6,7 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { errorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { T212GroupHolding } from '../../core/models/contract';
+import { T212Group, T212GroupHolding } from '../../core/models/contract';
 import { NotifierService } from '../../core/services/notifier.service';
 import { T212Service } from '../../core/services/t212.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
@@ -94,6 +94,15 @@ import { displayTicker } from './portfolio-model';
             >
               <app-pnl [value]="totals().unrealized" [currency]="currency" />
             </div>
+            <div
+              appStatRow
+              total
+              divider
+              label="Profit/loss"
+              i18n-label="Realized plus unrealized profit/loss of all groups, before fees"
+            >
+              <app-pnl [value]="totals().pnl" [currency]="currency" strong />
+            </div>
           </dl>
         </section>
       }
@@ -157,10 +166,11 @@ import { displayTicker } from './portfolio-model';
                         other {{{g.holdings.length}} holdings}
                       }</ng-container>
                     </span>
-                    <span class="shrink-0 text-[13px] font-medium" [class]="tone(g.realizedPnl)">
+                    @let pnl = groupPnl(g);
+                    <span class="shrink-0 text-[13px] font-medium" [class]="tone(pnl)">
                       <ng-container
-                        i18n="Realized profit/loss of a group; AMOUNT is signed, like +12.30 €"
-                        >Realized {{ g.realizedPnl | money: currency }}</ng-container
+                        i18n="Realized + unrealized P/L of a group; AMOUNT is signed, like +12.30 €"
+                        >P/L {{ pnl | money: currency }}</ng-container
                       >
                     </span>
                   </span>
@@ -296,16 +306,19 @@ export class PortfolioGroups {
   /** Sums over the groups, and their share of the groups plus the shares in no group. */
   protected readonly totals = computed(() => {
     const d = this.data.value();
-    if (!d) return { value: null, share: null, realized: null, unrealized: null };
+    if (!d) return { value: null, share: null, realized: null, unrealized: null, pnl: null };
     const known = (values: (number | null)[]) =>
       values.some((v) => v === null) ? null : values.reduce<number>((s, v) => s + (v ?? 0), 0);
     const value = known(d.items.map((g) => g.value));
     const total = this.portfolioValue();
+    const realized = d.items.reduce((s, g) => s + g.realizedPnl, 0);
+    const unrealized = known(d.items.map((g) => g.unrealizedPnl));
     return {
       value,
       share: value !== null && total ? (value / total) * 100 : null,
-      realized: d.items.reduce((s, g) => s + g.realizedPnl, 0),
-      unrealized: known(d.items.map((g) => g.unrealizedPnl)),
+      realized,
+      unrealized,
+      pnl: unrealized === null ? null : realized + unrealized,
     };
   });
 
@@ -351,6 +364,11 @@ export class PortfolioGroups {
     } finally {
       this.creating.set(false);
     }
+  }
+
+  /** Realized plus unrealized, before fees; null while the unrealized part is unknown. */
+  protected groupPnl(g: T212Group): number | null {
+    return g.unrealizedPnl === null ? null : g.realizedPnl + g.unrealizedPnl;
   }
 
   protected plain(value: number | null): string {

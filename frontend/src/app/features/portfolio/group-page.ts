@@ -30,6 +30,7 @@ import {
 } from '../../shared/pipes/format.pipes';
 import { toneClass } from '../../shared/utils/format';
 import { askGroupName } from './group-dialogs';
+import { GroupHoldingDialog, GroupHoldingDialogData } from './group-holding-dialog';
 import { GroupTradesDialog, GroupTradesDialogData } from './group-trades-dialog';
 import { Pnl } from './pnl';
 import { SIDE_LABELS } from './portfolio-labels';
@@ -142,7 +143,9 @@ import { TradeTile } from './trade-tile';
                   <li>
                     {{ o.name }}:
                     <ng-container
-                      i18n="Shares a group sold without a buy in the group; COUNT is a number of shares"
+                      i18n="
+                        Shares a group sold without a buy in the group; COUNT is a number of shares
+                      "
                       >{{ o.missing | qty }} more sold than bought</ng-container
                     >
                   </li>
@@ -214,9 +217,10 @@ import { TradeTile } from './trade-tile';
           <ul class="app-card py-1.5">
             @for (h of g.holdings; track h.t212Ticker) {
               <li>
-                <a
-                  [routerLink]="['/portfolio', h.t212Ticker]"
-                  class="-mx-2 flex items-center gap-3.5 rounded-2xl px-2 py-3 hover:bg-surface-container-high"
+                <button
+                  type="button"
+                  (click)="openHolding(h)"
+                  class="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-2xl px-2 py-3 text-left hover:bg-surface-container-high"
                 >
                   <app-stock-logo [symbol]="ticker(h)" [logoUrl]="h.logoUrl" [size]="40" />
                   <span class="min-w-0 flex-1">
@@ -239,7 +243,7 @@ import { TradeTile } from './trade-tile';
                       }})</span
                     >
                   </span>
-                </a>
+                </button>
               </li>
             }
           </ul>
@@ -255,8 +259,10 @@ import { TradeTile } from './trade-tile';
             }
           </h2>
           <button matButton="tonal" type="button" (click)="addTrades()">
-            <app-icon matButtonIcon name="add" [size]="18" />
-            <ng-container i18n="Button that adds trades to a group">Add trades</ng-container>
+            <app-icon matButtonIcon name="edit" [size]="18" />
+            <ng-container i18n="Button that adds or removes trades of a group"
+              >Edit trades</ng-container
+            >
           </button>
         </div>
         @if (!d.trades.length) {
@@ -281,9 +287,7 @@ import { TradeTile } from './trade-tile';
                         <span class="flex items-center gap-1 app-row-meta">
                           @if (t.oversold) {
                             <app-icon name="warning" [size]="14" class="shrink-0 text-error" />
-                            <span class="sr-only" i18n
-                              >Sells more shares than the group held</span
-                            >
+                            <span class="sr-only" i18n>Sells more shares than the group held</span>
                           }
                           <span class="min-w-0 truncate">
                             {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
@@ -365,14 +369,41 @@ export class GroupPage {
     });
   }
 
+  /** That stock inside the group only, not the whole position in the account. */
+  protected async openHolding(holding: T212GroupHolding): Promise<void> {
+    const d = this.data.value();
+    if (!d) return;
+    const ref = this.dialog.open<GroupHoldingDialog, GroupHoldingDialogData, boolean>(
+      GroupHoldingDialog,
+      {
+        ...DIALOG_CONFIG,
+        data: {
+          holding,
+          trades: d.trades.filter((t) => t.t212Ticker === holding.t212Ticker),
+          groupId: d.group.id,
+          groupName: d.group.name,
+          currency: d.accountCurrency,
+        },
+      },
+    );
+    if (await firstValueFrom(ref.afterClosed())) this.reload();
+  }
+
   protected async addTrades(): Promise<void> {
     const d = this.data.value();
     if (!d) return;
+    const inGroup: Record<string, number> = {};
+    for (const t of d.trades) inGroup[t.t212Ticker] = (inGroup[t.t212Ticker] ?? 0) + 1;
     const ref = this.dialog.open<GroupTradesDialog, GroupTradesDialogData, boolean>(
       GroupTradesDialog,
       {
         ...DIALOG_CONFIG,
-        data: { groupId: d.group.id, groupName: d.group.name, currency: d.accountCurrency },
+        data: {
+          groupId: d.group.id,
+          groupName: d.group.name,
+          currency: d.accountCurrency,
+          inGroup,
+        },
       },
     );
     if (await firstValueFrom(ref.afterClosed())) this.reload();

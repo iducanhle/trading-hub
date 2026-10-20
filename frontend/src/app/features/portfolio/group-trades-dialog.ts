@@ -22,10 +22,17 @@ import { assignTrades } from './group-dialogs';
 import { SIDE_LABELS } from './portfolio-labels';
 import { dayIn, displayTicker, filterInstruments } from './portfolio-model';
 
+/** What the trades step shows of the stock. */
+type TradesStock = Pick<T212Instrument, 't212Ticker' | 'symbol' | 'name' | 'logoUrl'>;
+
 export interface GroupTradesDialogData {
   groupId: string;
   groupName: string;
   currency: string | null;
+  /** Opens on this stock, without the stock list or a way back to it. */
+  stock?: TradesStock;
+  /** How many trades of each stock (by t212Ticker) the group already has; those stocks lead the list. */
+  inGroup?: Readonly<Record<string, number>>;
 }
 
 /**
@@ -98,6 +105,16 @@ export interface GroupTradesDialogData {
                       }</ng-container>
                     </span>
                   </span>
+                  @if (inGroup(i); as count) {
+                    <span
+                      class="shrink-0 app-pill bg-primary-container text-primary"
+                      i18n="
+                        Pill: how many of a stock's trades are already in the group; COUNT is a
+                        number
+                      "
+                      >{{ count }} in group</span
+                    >
+                  }
                   <app-icon name="chevron_right" class="text-on-surface-variant" />
                 </button>
               </li>
@@ -107,15 +124,17 @@ export interface GroupTradesDialogData {
       } @else {
         @let s = stock()!;
         <div class="-mx-2 mb-2 flex items-center gap-2">
-          <button
-            matIconButton
-            type="button"
-            aria-label="Back to the stocks"
-            i18n-aria-label
-            (click)="back()"
-          >
-            <app-icon name="arrow_back" />
-          </button>
+          @if (!data.stock) {
+            <button
+              matIconButton
+              type="button"
+              aria-label="Back to the stocks"
+              i18n-aria-label
+              (click)="back()"
+            >
+              <app-icon name="arrow_back" />
+            </button>
+          }
           <app-stock-logo [symbol]="ticker(s)" [logoUrl]="s.logoUrl" [size]="32" />
           <span class="min-w-0 flex-1 truncate app-title-card">{{ s.name }}</span>
         </div>
@@ -208,7 +227,7 @@ export class GroupTradesDialog {
   };
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly search = signal('');
-  protected readonly stock = signal<T212Instrument | null>(null);
+  protected readonly stock = signal<TradesStock | null>(this.data.stock ?? null);
   protected readonly saving = signal(false);
   /** Trade ids ticked for this group, starting from the trades already in it. */
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
@@ -222,13 +241,13 @@ export class GroupTradesDialog {
     stream: ({ params }) => (params ? this.api.t212Instrument(params) : of(null)),
   });
 
-  /** Stocks with trades, A–Z, narrowed by the search. */
+  /** Stocks with trades, narrowed by the search: those with trades in this group first, then A–Z. */
   protected readonly stocks = computed(() =>
     this.instruments.hasValue()
       ? filterInstruments(
           this.instruments.value().items.filter((i) => i.tradeCount > 0),
           this.search(),
-        ).sort((a, b) => a.name.localeCompare(b.name))
+        ).sort((a, b) => this.inGroup(b) - this.inGroup(a) || a.name.localeCompare(b.name))
       : [],
   );
 
@@ -270,6 +289,10 @@ export class GroupTradesDialog {
       else next.delete(id);
       return next;
     });
+  }
+
+  protected inGroup(i: { t212Ticker: string }): number {
+    return this.data.inGroup?.[i.t212Ticker] ?? 0;
   }
 
   protected back(): void {

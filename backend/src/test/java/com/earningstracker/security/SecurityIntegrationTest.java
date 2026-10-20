@@ -119,6 +119,17 @@ class SecurityIntegrationTest {
     }
 
     @Test
+    void corsPreflightAllowsPatch() {
+        // Renaming a group is a PATCH; without it the browser blocks the request before it is sent.
+        assertThat(mvc.options().uri("/api/t212/groups/g1")
+                .header(HttpHeaders.ORIGIN, "http://localhost:4200")
+                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "PATCH")
+                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
+                .hasStatusOk()
+                .headers().hasValue(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:4200");
+    }
+
+    @Test
     void corsPreflightRejectsOtherOrigins() {
         assertThat(mvc.options().uri("/api/me")
                 .header(HttpHeaders.ORIGIN, "https://evil.example.com")
