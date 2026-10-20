@@ -142,6 +142,8 @@ class LastStockMemory {
 })
 export class PortfolioNav {
   readonly tab = input.required<NavTab>();
+  /** On a page inside a section (a group), where the portfolio items navigate back to `/portfolio`. */
+  readonly detail = input(false);
 
   protected readonly search = inject(SearchService);
   private readonly router = inject(Router);
@@ -166,7 +168,7 @@ export class PortfolioNav {
   private readonly nav = viewChild.required<ElementRef<HTMLElement>>('nav');
   /** On the portfolio page the items swap `?tab=`; elsewhere they navigate to it. */
   protected readonly onPortfolio = computed(
-    () => this.tab() !== 'search' && this.tab() !== 'compare',
+    () => !this.detail() && this.tab() !== 'search' && this.tab() !== 'compare',
   );
 
   constructor() {

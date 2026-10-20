@@ -35,6 +35,7 @@ import { GroupPnlDialog, GroupPnlDialogData } from './group-pnl-dialog';
 import { GroupTradesDialog, GroupTradesDialogData } from './group-trades-dialog';
 import { Pnl } from './pnl';
 import { SIDE_LABELS } from './portfolio-labels';
+import { PortfolioNav } from './portfolio-nav';
 import { displayTicker, groupByDay } from './portfolio-model';
 import { TradeDialog, TradeDialogData } from './trade-dialog';
 import { TradeTile } from './trade-tile';
@@ -62,6 +63,7 @@ import { TradeTile } from './trade-tile';
     TradeTile,
     Icon,
     Pnl,
+    PortfolioNav,
     AppDatePipe,
     PercentPipe,
     PricePipe,
@@ -101,7 +103,7 @@ import { TradeTile } from './trade-tile';
       }
     </app-page-header>
 
-    <div class="mx-auto w-full max-w-3xl px-4 pt-3 pb-10">
+    <div class="mx-auto w-full max-w-3xl px-4 pt-3 pb-nav">
       @if (data.error() && !data.hasValue()) {
         @if (notFound()) {
           <app-empty-state
@@ -337,6 +339,7 @@ import { TradeTile } from './trade-tile';
         }
       }
     </div>
+    <app-portfolio-nav tab="groups" [detail]="true" />
   `,
 })
 export class GroupPage {
@@ -394,7 +397,13 @@ export class GroupPage {
     if (!d) return;
     this.dialog.open<GroupPnlDialog, GroupPnlDialogData>(GroupPnlDialog, {
       ...DIALOG_CONFIG,
-      data: { kind, group: d.group, trades: d.trades, currency: d.accountCurrency },
+      data: {
+        kind,
+        group: d.group,
+        trades: d.trades,
+        currency: d.accountCurrency,
+        groupChanged: () => this.reload(),
+      },
     });
   }
 
