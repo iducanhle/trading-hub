@@ -31,6 +31,7 @@ import {
 import { toneClass } from '../../shared/utils/format';
 import { askGroupName } from './group-dialogs';
 import { GroupHoldingDialog, GroupHoldingDialogData } from './group-holding-dialog';
+import { GroupPnlDialog, GroupPnlDialogData } from './group-pnl-dialog';
 import { GroupTradesDialog, GroupTradesDialogData } from './group-trades-dialog';
 import { Pnl } from './pnl';
 import { SIDE_LABELS } from './portfolio-labels';
@@ -174,7 +175,16 @@ import { TradeTile } from './trade-tile';
             i18n-label="Unrealized profit or loss of open positions"
             term="unrealizedPnl"
           >
-            <app-pnl [value]="g.unrealizedPnl" [currency]="currency" />
+            <button
+              type="button"
+              class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+              aria-label="Unrealized by stock"
+              i18n-aria-label="Opens a group's unrealized profit/loss by stock"
+              (click)="openPnl('unrealized')"
+            >
+              <app-pnl [value]="g.unrealizedPnl" [currency]="currency" />
+              <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
+            </button>
           </div>
           <div
             appStatRow
@@ -182,7 +192,16 @@ import { TradeTile } from './trade-tile';
             i18n-label="Realized profit/loss of the groups' sells"
             term="groupPnl"
           >
-            <app-pnl [value]="g.realizedPnl" [currency]="currency" />
+            <button
+              type="button"
+              class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+              aria-label="Realized by stock"
+              i18n-aria-label="Opens a group's realized profit/loss by stock"
+              (click)="openPnl('realized')"
+            >
+              <app-pnl [value]="g.realizedPnl" [currency]="currency" />
+              <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
+            </button>
           </div>
           <div appStatRow label="Fees" i18n-label="Trading fees and taxes">
             <app-pnl [value]="-g.fees" [currency]="currency" />
@@ -366,6 +385,16 @@ export class GroupPage {
         currency: this.data.value()?.accountCurrency ?? null,
         groupChanged: () => this.reload(),
       },
+    });
+  }
+
+  /** The group's unrealized or realized profit/loss, split by stock. */
+  protected openPnl(kind: GroupPnlDialogData['kind']): void {
+    const d = this.data.value();
+    if (!d) return;
+    this.dialog.open<GroupPnlDialog, GroupPnlDialogData>(GroupPnlDialog, {
+      ...DIALOG_CONFIG,
+      data: { kind, group: d.group, trades: d.trades, currency: d.accountCurrency },
     });
   }
 
