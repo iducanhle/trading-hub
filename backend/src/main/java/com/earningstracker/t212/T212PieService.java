@@ -39,7 +39,8 @@ public class T212PieService {
     public record Item(String ticker, double ownedQuantity, Result result) {
     }
 
-    public record Pie(long id, String name, Result result, List<Item> items) {
+    /** {@code cash} is the pie's uninvested money (account currency), not part of {@code result.value}; may be null. */
+    public record Pie(long id, String name, Result result, Double cash, List<Item> items) {
     }
 
     private final T212Client client;
@@ -104,7 +105,7 @@ public class T212PieService {
                 }
             }
             pies.add(new Pie(id, Json.text(detail.path("settings").path("name")), result(node.path("result")),
-                    List.copyOf(items)));
+                    Json.number(node.path("cash")), List.copyOf(items)));
         }
         return List.copyOf(pies);
     }

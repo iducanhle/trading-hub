@@ -580,6 +580,7 @@ export interface T212Pie {
   /** id and name are null when the pies could not be read and the pie positions are grouped. */
   id: number | null;
   name: string | null;
+  /** Investments plus the pie's uninvested cash, as Trading 212 shows it. */
   value: number | null;
   pnl: number | null;
   pnlPct: number | null;

@@ -261,7 +261,7 @@ class T212PortfolioServiceTest {
         T212Dtos.Pie pie = h.items().get(1).pie();
         assertThat(pie.id()).isEqualTo(7L);
         assertThat(pie.name()).isEqualTo("Tech");
-        assertThat(pie.value()).isEqualTo(650.0);
+        assertThat(pie.value()).isEqualTo(653.5); // 650 invested + 3.5 uninvested cash, as Trading 212 shows it
         assertThat(pie.pnl()).isEqualTo(50.0);
         assertThat(pie.pnlPct()).isEqualTo(8.33);
         assertThat(pie.positions()).singleElement().satisfies(p -> {

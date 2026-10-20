@@ -251,7 +251,9 @@ public class T212PortfolioService {
                 List<T212Dtos.HoldingPosition> rows = pie.items().stream()
                         .map(item -> pieItem(ctx, item, live.get(item.ticker()), logos)).sorted(BY_VALUE).toList();
                 T212PieService.Result r = pie.result();
-                Double value = r.value() != null ? round(r.value()) : sum(rows, T212Dtos.HoldingPosition::value);
+                Double invested = r.value() != null ? r.value() : sum(rows, T212Dtos.HoldingPosition::value);
+                // Trading 212 shows a pie's value with its uninvested cash; result.value is the investments only.
+                Double value = invested == null ? null : round(invested + (pie.cash() == null ? 0 : pie.cash()));
                 Double pnl = r.pnl() != null ? round(r.pnl()) : sum(rows, T212Dtos.HoldingPosition::pnl);
                 Double pct = r.pnlCoef() != null ? round(r.pnlCoef() * 100) : percent(pnl, value);
                 items.add(new T212Dtos.Holding("PIE", new T212Dtos.Pie(pie.id(), pie.name(), value, pnl, pct, rows),

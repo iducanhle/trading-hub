@@ -235,7 +235,8 @@ type T212HoldingPosition = {         // money as of now
 };
 type T212Pie = {
   id: number | null; name: string | null;   // both null when the pies could not be read (grouped fallback)
-  value: number | null; pnl: number | null; pnlPct: number | null;
+  value: number | null;                     // investments + the pie's uninvested cash, as Trading 212 shows it
+  pnl: number | null; pnlPct: number | null;
   positions: T212HoldingPosition[];         // largest value first
 };
 type T212AllocationItem = {           // one instrument held now, inside and outside pies together
@@ -455,3 +456,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-09 | `T212AllocationItem.pnlPct` (unrealized profit/loss in percent of cost, null when unknown). Additive. |
 | 2026-10-16 | Trading 212 groups (additive): `/api/t212/groups` endpoints, `PUT /api/t212/trades/group`, `T212Group`, `T212GroupHolding`, `T212GroupTrade`, `T212Trade.groupId`, error code `T212_GROUP_OVERSOLD` and the backend-only `t212/{uid}/groups` document. |
 | 2026-10-16 | Groups: assigning never fails on an oversell any more; the error code `T212_GROUP_OVERSOLD` is removed, and `T212Group.oversold` (`T212OversoldStock`) and `T212GroupTrade.oversold` report it instead. Frontend and backend change together. |
+| 2026-10-20 | `T212Pie.value` now includes the pie's uninvested cash (Trading 212's `cash`), as the Trading 212 app shows it; before it was the investments only. Same shape. |
