@@ -18,7 +18,8 @@ export const DIALOG_CONFIG: MatDialogConfig = {
 
 /**
  * The layout of every dialog: header (optional `dialogLeading` logo, the title and subtitle, optional
- * `dialogTrailing` pill or count, close button), a body that scrolls on its own, and an optional footer of buttons
+ * `dialogTrailing` pill or count, close button), an optional `dialogSubheader` that stays put under it, a body that
+ * scrolls on its own, and an optional footer of buttons
  * marked `dialogActions`, side by side and 52 px high. A header that links somewhere projects its own `dialogHeader`
  * block instead of `title`; it must hold an element with `matDialogTitle` and `class="app-dialog-title"`.
  */
@@ -49,6 +50,9 @@ export const DIALOG_CONFIG: MatDialogConfig = {
         >
           <app-icon name="close" />
         </button>
+      </div>
+      <div class="px-5 pt-3 pb-2 empty:hidden lg:px-6">
+        <ng-content select="[dialogSubheader]" />
       </div>
       <div class="dialog-body min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-5 lg:px-6 lg:pb-6">
         <ng-content />

@@ -127,22 +127,6 @@ export interface GroupTradesDialogData {
           </ul>
         }
       } @else {
-        @let s = stock()!;
-        <div class="-mx-2 mb-2 flex items-center gap-2">
-          @if (!data.stock) {
-            <button
-              matIconButton
-              type="button"
-              aria-label="Back to the stocks"
-              i18n-aria-label
-              (click)="back()"
-            >
-              <app-icon name="arrow_back" />
-            </button>
-          }
-          <app-stock-logo [symbol]="ticker(s)" [logoUrl]="s.logoUrl" [size]="32" />
-          <span class="min-w-0 flex-1 truncate app-title-card">{{ s.name }}</span>
-        </div>
         @if (trades.error() && !trades.hasValue()) {
           <app-error-state [error]="trades.error()" (retry)="trades.reload()" />
         } @else if (!trades.hasValue()) {
@@ -198,6 +182,73 @@ export interface GroupTradesDialogData {
             </section>
           }
         }
+      }
+      <!-- The stock, and the ticked trades' shares, stay in view while the trades scroll: whether the group would still
+           hold some, none, or sell more than it bought. -->
+      @if (stock(); as s) {
+        <div dialogSubheader class="rounded-2xl bg-surface-container-high px-3 py-2">
+          <div class="flex items-center gap-2.5">
+            @if (!data.stock) {
+              <button
+                matIconButton
+                type="button"
+                class="-my-1 -ml-2 shrink-0"
+                aria-label="Back to the stocks"
+                i18n-aria-label
+                (click)="back()"
+              >
+                <app-icon name="arrow_back" />
+              </button>
+            }
+            <app-stock-logo [symbol]="ticker(s)" [logoUrl]="s.logoUrl" [size]="32" />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate app-title-card">{{ s.name }}</span>
+              <span class="block truncate app-row-meta uppercase">{{ ticker(s) }}</span>
+            </span>
+          </div>
+          <div aria-live="polite">
+            @if (balance(); as b) {
+              <div class="mt-2 flex items-center gap-3 border-t border-outline-variant pt-2">
+                <span class="min-w-0 flex-1 text-[12px] text-on-surface-variant">
+                  <span
+                    class="whitespace-nowrap"
+                    i18n="Shares bought by the ticked trades; COUNT is a number"
+                    >Bought {{ b.bought | qty }}</span
+                  >
+                  ·
+                  <span
+                    class="whitespace-nowrap"
+                    i18n="Shares sold by the ticked trades; COUNT is a number"
+                    >Sold {{ b.sold | qty }}</span
+                  >
+                </span>
+                @switch (b.state) {
+                  @case ('over') {
+                    <span
+                      class="app-pill shrink-0 bg-error-container text-on-error-container"
+                      i18n="Pill: the ticked trades sell more shares than they buy; COUNT is a number"
+                      >{{ b.net | qty }} more sold</span
+                    >
+                  }
+                  @case ('under') {
+                    <span
+                      class="app-pill shrink-0 bg-primary-container text-primary"
+                      i18n="Pill: shares the ticked trades bought and not sold yet; COUNT is a number"
+                      >{{ b.net | qty }} still held</span
+                    >
+                  }
+                  @default {
+                    <span
+                      class="app-pill shrink-0 bg-gain-container text-gain"
+                      i18n="Pill: the ticked trades sell exactly the shares they buy"
+                      >All sold</span
+                    >
+                  }
+                }
+              </div>
+            }
+          </div>
+        </div>
       }
       <!-- One element per block: a block with a single root element is projected into the actions slot. -->
       @if (stock()) {
@@ -282,6 +333,26 @@ export class GroupTradesDialog {
       else days.push({ date, items: [t] });
     }
     return days;
+  });
+
+  /**
+   * Shares bought and sold by the ticked trades, and the difference (`net`, never negative): `over` sells more than it
+   * buys, `under` still holds some, `even` sells them all (with the backend's tolerance for fractional shares).
+   */
+  protected readonly balance = computed(() => {
+    const selected = this.selected();
+    let bought = 0;
+    let sold = 0;
+    for (const t of this.stockTrades()) {
+      if (!selected.has(t.id)) continue;
+      if (t.side === 'BUY') bought += t.quantity;
+      else sold += t.quantity;
+    }
+    if (!bought && !sold) return null;
+    const diff = bought - sold;
+    const tolerance = Math.max(bought, sold) * 1e-6 + 1e-9;
+    const state = diff < -tolerance ? 'over' : diff > tolerance ? 'under' : 'even';
+    return { bought, sold, net: Math.abs(diff), state };
   });
 
   protected readonly changes = computed(() => {
