@@ -326,8 +326,11 @@ export class StockDetailPage {
   readonly symbol = input.required<string>();
   /** Embedded in the compare page: its controls replace the back button, search and the bottom pill. */
   readonly compareMode = input(false, { transform: booleanAttribute });
-  /** False while kept alive but hidden on the compare page. */
-  readonly active = input(true);
+  /**
+   * False while kept alive but hidden on the compare page. On `/stock/:symbol` the router's input binding sets it to
+   * `undefined` (no such route param), which counts as active.
+   */
+  readonly active = input(true, { transform: (value: boolean | undefined) => value ?? true });
 
   protected readonly overview = this.ctx.resource((symbol, options) =>
     this.api.overview(symbol, options),
