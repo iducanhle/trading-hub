@@ -205,23 +205,41 @@ export interface GroupTradesDialogData {
               <span class="block truncate app-title-card">{{ s.name }}</span>
               <span class="block truncate app-row-meta uppercase">{{ ticker(s) }}</span>
             </span>
+            @if (stockTrades().length) {
+              <button matButton type="button" class="-my-1 -mr-2 shrink-0" (click)="toggleAll()">
+                @if (allSelected()) {
+                  <ng-container i18n="Button: untick every trade of the stock">Deselect all</ng-container>
+                } @else {
+                  <ng-container i18n="Button: tick every trade of the stock">Select all</ng-container>
+                }
+              </button>
+            }
           </div>
           <div aria-live="polite">
             @if (balance(); as b) {
               <div class="mt-2 flex items-center gap-3 border-t border-outline-variant pt-2">
-                <span class="min-w-0 flex-1 text-[12px] text-on-surface-variant">
-                  <span
-                    class="whitespace-nowrap"
-                    i18n="Shares bought by the ticked trades; COUNT is a number"
-                    >Bought {{ b.bought | qty }}</span
-                  >
-                  ·
-                  <span
-                    class="whitespace-nowrap"
-                    i18n="Shares sold by the ticked trades; COUNT is a number"
-                    >Sold {{ b.sold | qty }}</span
-                  >
-                </span>
+                @if (b.state === 'even') {
+                  <span class="min-w-0 flex-1 truncate text-[12px] text-on-surface-variant">
+                    <span i18n="Realized profit/loss of the ticked trades">Realized</span>
+                    <span class="ml-1 text-[13px] font-semibold" [class]="tone(b.pnl)">{{
+                      b.pnl | money: (data.currency | acct)
+                    }}</span>
+                  </span>
+                } @else {
+                  <span class="min-w-0 flex-1 text-[12px] text-on-surface-variant">
+                    <span
+                      class="whitespace-nowrap"
+                      i18n="Shares bought by the ticked trades; COUNT is a number"
+                      >Bought {{ b.bought | qty }}</span
+                    >
+                    ·
+                    <span
+                      class="whitespace-nowrap"
+                      i18n="Shares sold by the ticked trades; COUNT is a number"
+                      >Sold {{ b.sold | qty }}</span
+                    >
+                  </span>
+                }
                 @switch (b.state) {
                   @case ('over') {
                     <span
@@ -343,16 +361,23 @@ export class GroupTradesDialog {
     const selected = this.selected();
     let bought = 0;
     let sold = 0;
+    // Proceeds minus cost, both before fees, as the group counts them (only shown once everything is sold).
+    let pnl = 0;
     for (const t of this.stockTrades()) {
       if (!selected.has(t.id)) continue;
-      if (t.side === 'BUY') bought += t.quantity;
-      else sold += t.quantity;
+      if (t.side === 'BUY') {
+        bought += t.quantity;
+        pnl -= Math.max(0, t.value - t.fees - t.taxes);
+      } else {
+        sold += t.quantity;
+        pnl += t.value + t.fees + t.taxes;
+      }
     }
     if (!bought && !sold) return null;
     const diff = bought - sold;
     const tolerance = Math.max(bought, sold) * 1e-6 + 1e-9;
     const state = diff < -tolerance ? 'over' : diff > tolerance ? 'under' : 'even';
-    return { bought, sold, net: Math.abs(diff), state };
+    return { bought, sold, net: Math.abs(diff), state, pnl };
   });
 
   protected readonly changes = computed(() => {
@@ -388,6 +413,19 @@ export class GroupTradesDialog {
       else next.delete(id);
       return next;
     });
+  }
+
+  protected readonly allSelected = computed(() => {
+    const selected = this.selected();
+    const trades = this.stockTrades();
+    return trades.length > 0 && trades.every((t) => selected.has(t.id));
+  });
+
+  /** Ticks every trade of the stock, or unticks them all when all are ticked. */
+  protected toggleAll(): void {
+    this.selected.set(
+      this.allSelected() ? new Set() : new Set(this.stockTrades().map((t) => t.id)),
+    );
   }
 
   protected inGroup(i: { t212Ticker: string }): number {
