@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogClose, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
@@ -48,7 +48,6 @@ export interface GroupTradesDialogData {
   imports: [
     AccountCurrencyPipe,
     MatButton,
-    MatIconButton,
     MatCheckbox,
     MatDialogClose,
     Dialog,
@@ -63,7 +62,12 @@ export interface GroupTradesDialogData {
     TradeTile,
   ],
   template: `
-    <app-dialog [title]="labels.title" [subtitle]="data.groupName">
+    <app-dialog
+      [title]="labels.title"
+      [subtitle]="data.groupName"
+      [closeAction]="stock() && !data.stock ? backToStocks : null"
+      [closeLabel]="labels.back"
+    >
       @if (!stock()) {
         <label
           class="mb-2 flex h-10 items-center gap-2.5 rounded-[14px] bg-surface-container-high px-3.5 text-on-surface-variant"
@@ -188,18 +192,6 @@ export interface GroupTradesDialogData {
       @if (stock(); as s) {
         <div dialogSubheader class="rounded-2xl bg-surface-container-high px-3 py-2">
           <div class="flex items-center gap-2.5">
-            @if (!data.stock) {
-              <button
-                matIconButton
-                type="button"
-                class="-my-1 -ml-2 shrink-0"
-                aria-label="Back to the stocks"
-                i18n-aria-label
-                (click)="back()"
-              >
-                <app-icon name="arrow_back" />
-              </button>
-            }
             <app-stock-logo [symbol]="ticker(s)" [logoUrl]="s.logoUrl" [size]="32" />
             <span class="min-w-0 flex-1">
               <span class="block truncate app-title-card">{{ s.name }}</span>
@@ -309,6 +301,7 @@ export class GroupTradesDialog {
 
   protected readonly labels = {
     title: $localize`:Dialog title|Choosing the trades of a group:Trades in the group`,
+    back: $localize`Back to the stocks`,
   };
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly search = signal('');
@@ -432,9 +425,8 @@ export class GroupTradesDialog {
     return this.data.inGroup?.[i.t212Ticker] ?? 0;
   }
 
-  protected back(): void {
-    this.stock.set(null);
-  }
+  /** The close button on a stock picked from the list: back to the list (the dialog closes from there). */
+  protected readonly backToStocks = (): void => this.stock.set(null);
 
   protected otherGroup(t: T212DetailTrade): string | null {
     if (!t.groupId || t.groupId === this.data.groupId) return null;

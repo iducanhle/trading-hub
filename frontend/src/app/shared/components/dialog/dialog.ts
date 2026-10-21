@@ -40,16 +40,28 @@ export const DIALOG_CONFIG: MatDialogConfig = {
           </div>
         }
         <ng-content select="[dialogTrailing]" />
-        <button
-          matIconButton
-          type="button"
-          class="-my-1.5 -mr-2.5 shrink-0"
-          aria-label="Close"
-          i18n-aria-label
-          mat-dialog-close
-        >
-          <app-icon name="close" />
-        </button>
+        @if (closeAction(); as action) {
+          <button
+            matIconButton
+            type="button"
+            class="-my-1.5 -mr-2.5 shrink-0"
+            [attr.aria-label]="closeLabel()"
+            (click)="action()"
+          >
+            <app-icon name="close" />
+          </button>
+        } @else {
+          <button
+            matIconButton
+            type="button"
+            class="-my-1.5 -mr-2.5 shrink-0"
+            aria-label="Close"
+            i18n-aria-label
+            mat-dialog-close
+          >
+            <app-icon name="close" />
+          </button>
+        }
       </div>
       <div class="px-5 pt-3 pb-2 empty:hidden lg:px-6">
         <ng-content select="[dialogSubheader]" />
@@ -84,4 +96,8 @@ export const DIALOG_CONFIG: MatDialogConfig = {
 export class Dialog {
   readonly title = input('');
   readonly subtitle = input('');
+  /** Runs instead of closing when the close button is pressed (a step back inside the dialog); null closes. */
+  readonly closeAction = input<(() => void) | null>(null);
+  /** The close button's label while `closeAction` is set. */
+  readonly closeLabel = input('');
 }
