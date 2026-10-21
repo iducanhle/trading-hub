@@ -49,6 +49,17 @@ import { PortfolioNav } from './portfolio-nav';
 import { displayTicker, groupByDay } from './portfolio-model';
 import { TradeDialog, TradeDialogData } from './trade-dialog';
 import { TradeTile } from './trade-tile';
+import { persistedSignal } from '../../shared/utils/persisted-signal';
+
+/** A stock the group traded but holds no shares of now. */
+interface FormerHolding {
+  t212Ticker: string;
+  symbol: string | null;
+  name: string;
+  lastTradeAt: string;
+  /** Sum of its sells' profit/loss at the group's average price; null without sells. */
+  realizedPnl: number | null;
+}
 
 /**
  * `/portfolio/groups/:id`: one group (the user's own pie): its value, profit/loss at its own average price, the
@@ -171,7 +182,8 @@ import { TradeTile } from './trade-tile';
                       {{ o.name }}:
                       <ng-container
                         i18n="
-                          Shares a group sold without a buy in the group; COUNT is a number of shares
+                          Shares a group sold without a buy in the group; COUNT is a number of
+                          shares
                         "
                         >{{ o.missing | qty }} more sold than bought</ng-container
                       >
@@ -214,12 +226,7 @@ import { TradeTile } from './trade-tile';
                 <span class="pr-3">{{ g.sold | price: currency }}</span>
               </div>
             }
-            <div
-              appStatRow
-              total
-              label="Total"
-              i18n-label="Total profit/loss of a group"
-            >
+            <div appStatRow total label="Total" i18n-label="Total profit/loss of a group">
               <button
                 type="button"
                 class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
@@ -277,17 +284,35 @@ import { TradeTile } from './trade-tile';
             }
           </dl>
 
-          <h2
-            class="mt-7 mb-3 px-1 app-title-section"
-            i18n="Section heading: the shares a group holds"
-          >
-            Holdings
+          <h2 class="mt-7 mb-3">
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 rounded-xl px-1 py-0.5 text-left hover:bg-surface-container-high"
+              [attr.aria-expanded]="holdingsOpen()"
+              (click)="holdingsOpen.set(!holdingsOpen())"
+            >
+              <span class="min-w-0 flex-1 truncate app-title-section">
+                <ng-container i18n="Section heading: the shares a group holds"
+                  >Holdings</ng-container
+                >
+                @if (g.holdings.length) {
+                  <span class="ml-1 text-[15px] font-semibold text-on-surface-variant">{{
+                    g.holdings.length
+                  }}</span>
+                }
+              </span>
+              <app-icon
+                name="keyboard_arrow_down"
+                class="text-on-surface-variant transition-transform duration-200"
+                [class.rotate-180]="holdingsOpen()"
+              />
+            </button>
           </h2>
-          @if (!g.holdings.length) {
+          @if (holdingsOpen() && !g.holdings.length) {
             <p class="app-card text-sm text-on-surface-variant" i18n>
               The group holds no shares now.
             </p>
-          } @else {
+          } @else if (holdingsOpen()) {
             <ul class="app-card py-1.5">
               @for (h of g.holdings; track h.t212Ticker) {
                 <li>
@@ -323,14 +348,85 @@ import { TradeTile } from './trade-tile';
             </ul>
           }
 
-          <div class="mt-7 mb-3 flex items-center gap-3 px-1">
-            <h2 class="app-title-section min-w-0 flex-1 truncate">
-              <ng-container i18n="Section heading: the trades in a group">Trades</ng-container>
-              @if (d.trades.length) {
-                <span class="ml-1 text-[15px] font-semibold text-on-surface-variant">{{
-                  d.trades.length
-                }}</span>
-              }
+          @if (formerHoldings().length) {
+            <h2 class="mt-7 mb-3">
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 rounded-xl px-1 py-0.5 text-left hover:bg-surface-container-high"
+                [attr.aria-expanded]="formerOpen()"
+                (click)="formerOpen.set(!formerOpen())"
+              >
+                <span class="min-w-0 flex-1 truncate app-title-section">
+                  <ng-container i18n="Section heading: stocks a group traded but no longer holds"
+                    >Former holdings</ng-container
+                  >
+                  <span class="ml-1 text-[15px] font-semibold text-on-surface-variant">{{
+                    formerHoldings().length
+                  }}</span>
+                </span>
+                <app-icon
+                  name="keyboard_arrow_down"
+                  class="text-on-surface-variant transition-transform duration-200"
+                  [class.rotate-180]="formerOpen()"
+                />
+              </button>
+            </h2>
+            @if (formerOpen()) {
+              <ul class="app-card py-1.5">
+                @for (f of formerHoldings(); track f.t212Ticker) {
+                  <li>
+                    <button
+                      type="button"
+                      (click)="openFormer(f)"
+                      class="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-2xl px-2 py-3 text-left hover:bg-surface-container-high"
+                    >
+                      <app-stock-logo [symbol]="ticker(f)" [size]="40" />
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate app-row-title">{{ f.name }}</span>
+                        <span class="mt-0.5 block truncate app-row-meta">
+                          <span class="uppercase">{{ ticker(f) }}</span> ·
+                          {{ f.lastTradeAt | appDate }}
+                        </span>
+                      </span>
+                      <span class="flex shrink-0 flex-col items-end text-right">
+                        <span class="text-[14px] font-semibold" [class]="tone(f.realizedPnl)">{{
+                          f.realizedPnl | money: currency
+                        }}</span>
+                        <span
+                          class="mt-0.5 app-row-meta"
+                          i18n="Under a former holding's profit/loss: it comes from its sells"
+                          >realized</span
+                        >
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+
+          <div class="mt-7 mb-3 flex items-center gap-3">
+            <h2 class="min-w-0 flex-1">
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 rounded-xl px-1 py-0.5 text-left hover:bg-surface-container-high"
+                [attr.aria-expanded]="tradesOpen()"
+                (click)="tradesOpen.set(!tradesOpen())"
+              >
+                <span class="min-w-0 flex-1 truncate app-title-section">
+                  <ng-container i18n="Section heading: the trades in a group">Trades</ng-container>
+                  @if (d.trades.length) {
+                    <span class="ml-1 text-[15px] font-semibold text-on-surface-variant">{{
+                      d.trades.length
+                    }}</span>
+                  }
+                </span>
+                <app-icon
+                  name="keyboard_arrow_down"
+                  class="text-on-surface-variant transition-transform duration-200"
+                  [class.rotate-180]="tradesOpen()"
+                />
+              </button>
             </h2>
             <button matButton="tonal" type="button" (click)="addTrades()">
               <app-icon matButtonIcon name="edit" [size]="18" />
@@ -339,11 +435,11 @@ import { TradeTile } from './trade-tile';
               >
             </button>
           </div>
-          @if (!d.trades.length) {
+          @if (tradesOpen() && !d.trades.length) {
             <p class="app-card text-sm text-on-surface-variant" i18n>
               Add the buys and sells that belong to this group. Add a stock's buys before its sells.
             </p>
-          } @else {
+          } @else if (tradesOpen()) {
             @for (day of days(); track day.date) {
               <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
                 <h3 class="app-title-day">{{ day.date | appDate: 'long' }}</h3>
@@ -361,7 +457,9 @@ import { TradeTile } from './trade-tile';
                           <span class="flex items-center gap-1 app-row-meta">
                             @if (t.oversold) {
                               <app-icon name="warning" [size]="14" class="shrink-0 text-error" />
-                              <span class="sr-only" i18n>Sells more shares than the group held</span>
+                              <span class="sr-only" i18n
+                                >Sells more shares than the group held</span
+                              >
                             }
                             <span class="min-w-0 truncate">
                               {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
@@ -412,6 +510,9 @@ export class GroupPage {
   protected readonly pnlOpen = signal(false);
   /** Shows what the group bought and sold under the invested amount. */
   protected readonly investedOpen = signal(false);
+  protected readonly holdingsOpen = persistedSignal('portfolio.group.holdings.expanded', true);
+  protected readonly formerOpen = persistedSignal('portfolio.group.former.expanded', true);
+  protected readonly tradesOpen = persistedSignal('portfolio.group.trades.expanded', true);
   private readonly version = signal(0);
 
   protected readonly data = rxResource({
@@ -429,6 +530,31 @@ export class GroupPage {
   protected readonly title = computed(() =>
     this.data.hasValue() ? this.data.value().group.name : '',
   );
+  /** Stocks the group has trades of but holds no shares of now, most recently traded first. */
+  protected readonly formerHoldings = computed(() => {
+    if (!this.data.hasValue()) return [];
+    const { group, trades } = this.data.value();
+    const held = new Set(group.holdings.map((h) => h.t212Ticker));
+    const former = new Map<string, FormerHolding>();
+    for (const t of trades) {
+      if (held.has(t.t212Ticker)) continue;
+      let f = former.get(t.t212Ticker);
+      if (!f) {
+        f = {
+          t212Ticker: t.t212Ticker,
+          symbol: t.symbol,
+          name: t.name,
+          lastTradeAt: t.executedAt,
+          realizedPnl: null,
+        };
+        former.set(t.t212Ticker, f);
+      }
+      if (t.groupRealizedPnl !== null) {
+        f.realizedPnl = Math.round(((f.realizedPnl ?? 0) + t.groupRealizedPnl) * 100) / 100;
+      }
+    }
+    return [...former.values()];
+  });
 
   constructor() {
     void this.t212.load();
@@ -514,6 +640,21 @@ export class GroupPage {
     if (await firstValueFrom(ref.afterClosed())) this.reload();
   }
 
+  /** A former holding opens the same dialog as a holding, with no shares left. */
+  protected openFormer(f: FormerHolding): void {
+    void this.openHolding({
+      t212Ticker: f.t212Ticker,
+      symbol: f.symbol,
+      name: f.name,
+      logoUrl: null,
+      quantity: 0,
+      invested: 0,
+      value: 0,
+      unrealizedPnl: 0,
+      unrealizedPnlPct: null,
+    });
+  }
+
   protected async addTrades(): Promise<void> {
     const d = this.data.value();
     if (!d) return;
@@ -574,7 +715,7 @@ export class GroupPage {
     return toneClass(value);
   }
 
-  protected ticker(h: T212GroupHolding): string {
+  protected ticker(h: { symbol: string | null; t212Ticker: string }): string {
     return displayTicker(h);
   }
 }

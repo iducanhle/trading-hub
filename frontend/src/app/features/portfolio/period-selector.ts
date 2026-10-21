@@ -44,7 +44,7 @@ const SHOWN: ReadonlySet<PeriodPreset> = new Set(['1D', '1W', '1M', '6M', 'YTD',
           </app-segment>
         } @else {
           <app-segment [value]="preset">{{ labels[preset] }}</app-segment>
-        }+
+        }
       }
     </app-segmented>
   `,
