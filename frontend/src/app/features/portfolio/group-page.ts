@@ -24,6 +24,7 @@ import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
 import { PageHeader } from '../../shared/components/page-header/page-header';
+import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
@@ -64,6 +65,7 @@ import { TradeTile } from './trade-tile';
     ErrorState,
     HeroAmount,
     PageHeader,
+    PullToRefresh,
     Skeleton,
     StaleChip,
     StatList,
@@ -80,305 +82,311 @@ import { TradeTile } from './trade-tile';
     SignedMoneyPipe,
   ],
   template: `
-    <app-page-header
-      [title]="title()"
-      [back]="true"
-      backFallback="/portfolio?tab=groups"
-      maxWidth="max-w-3xl"
+    <app-pull-to-refresh
+      [refreshing]="t212.syncing() || t212.liveRefreshing()"
+      [quiet]="!t212.syncing()"
+      (refresh)="sync()"
     >
-      @if (data.hasValue()) {
-        <div actions class="flex items-center">
-          <button
-            matIconButton
-            type="button"
-            aria-label="Rename group"
-            i18n-aria-label
-            [disabled]="busy()"
-            (click)="rename()"
-          >
-            <app-icon name="edit" />
-          </button>
-          <button
-            matIconButton
-            type="button"
-            aria-label="Delete group"
-            i18n-aria-label
-            [disabled]="busy()"
-            (click)="remove()"
-          >
-            <app-icon name="delete" />
-          </button>
-        </div>
-      }
-    </app-page-header>
-
-    <div class="mx-auto w-full max-w-3xl px-4 pt-3 pb-nav">
-      @if (data.hasValue()) {
-        <p
-          class="mb-3 text-center text-xs text-on-surface-variant"
-          i18n="Live data note|Note under the header: live values refetch automatically"
-        >
-          Data are refreshed every 10 seconds.
-        </p>
-      }
-      @if (data.error() && !data.hasValue()) {
-        @if (notFound()) {
-          <app-empty-state
-            icon="search_off"
-            title="Group not found"
-            i18n-title
-            text="It may have been deleted."
-            i18n-text
-          >
-            <a matButton="filled" routerLink="/portfolio" [queryParams]="{ tab: 'groups' }" i18n
-              >All groups</a
-            >
-          </app-empty-state>
-        } @else {
-          <app-error-state [error]="data.error()" (retry)="data.reload()" />
-        }
-      } @else if (!data.hasValue()) {
-        <div class="space-y-3" aria-hidden="true">
-          <app-skeleton shape="card" class="h-24" />
-          <app-skeleton shape="card" class="h-48" />
-          <app-skeleton shape="card" class="h-56" />
-        </div>
-      } @else {
-        @let d = data.value();
-        @let g = d.group;
-        @let currency = d.accountCurrency | acct;
-        @if (d.stale) {
-          <div class="mb-3"><app-stale-chip [asOf]="d.asOf" /></div>
-        }
-        @if (g.oversold.length) {
-          <div
-            role="status"
-            class="mb-4 flex gap-3 rounded-2xl bg-error-container p-3 text-sm text-on-error-container"
-          >
-            <app-icon name="warning" [size]="20" class="mt-px shrink-0" />
-            <div class="min-w-0 flex-1">
-              <p class="font-semibold" i18n>This group sells more shares than it bought</p>
-              <ul class="mt-1">
-                @for (o of g.oversold; track o.t212Ticker) {
-                  <li>
-                    {{ o.name }}:
-                    <ng-container
-                      i18n="
-                        Shares a group sold without a buy in the group; COUNT is a number of shares
-                      "
-                      >{{ o.missing | qty }} more sold than bought</ng-container
-                    >
-                  </li>
-                }
-              </ul>
-              <p class="mt-1" i18n>
-                Add their buys to the group, or move those sells out. Until then, the realized
-                profit/loss counts only the shares the group holds.
-              </p>
-            </div>
-          </div>
-        }
-        <p class="app-label" i18n="Current value of a group's shares">Value</p>
-        <app-hero-amount class="mt-1" [value]="g.value" [currency]="currency" />
-        <p class="mt-1.5 text-[15px] font-semibold">
-          <app-pnl [value]="g.totalPnl" [currency]="currency" [pct]="g.totalPnlPct" />
-        </p>
-
-        <dl appStatList card class="mt-4">
-          <div appStatRow label="Invested" i18n-label="Cost of the shares a group holds now">
-            {{ g.invested | price: currency }}
-          </div>
-          <div
-            appStatRow
-            total
-            label="Total"
-            i18n-label="Total profit/loss of a group"
-            term="totalPnl"
-          >
+      <app-page-header
+        [title]="title()"
+        [back]="true"
+        backFallback="/portfolio?tab=groups"
+        maxWidth="max-w-3xl"
+      >
+        @if (data.hasValue()) {
+          <div actions class="flex items-center">
             <button
+              matIconButton
               type="button"
-              class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
-              [attr.aria-expanded]="pnlOpen()"
-              (click)="pnlOpen.set(!pnlOpen())"
+              aria-label="Rename group"
+              i18n-aria-label
+              [disabled]="busy()"
+              (click)="rename()"
             >
-              <app-pnl [value]="g.totalPnl" [currency]="currency" [pct]="g.totalPnlPct" strong />
-              <app-icon
-                name="keyboard_arrow_down"
-                [size]="18"
-                class="text-on-surface-variant transition-transform duration-200"
-                [class.rotate-180]="pnlOpen()"
-              />
+              <app-icon name="edit" />
+            </button>
+            <button
+              matIconButton
+              type="button"
+              aria-label="Delete group"
+              i18n-aria-label
+              [disabled]="busy()"
+              (click)="remove()"
+            >
+              <app-icon name="delete" />
             </button>
           </div>
-          @if (pnlOpen()) {
-            <div
-              appStatRow
-              sub
-              label="Unrealized"
-              i18n-label="Unrealized profit or loss of open positions"
-              term="unrealizedPnl"
+        }
+      </app-page-header>
+
+      <div class="mx-auto w-full max-w-3xl px-4 pt-3 pb-nav">
+        @if (data.hasValue()) {
+          <p
+            class="mb-3 text-center text-xs text-on-surface-variant"
+            i18n="Live data note|Note under the header: live values refetch automatically"
+          >
+            Data are refreshed every 10 seconds.
+          </p>
+        }
+        @if (data.error() && !data.hasValue()) {
+          @if (notFound()) {
+            <app-empty-state
+              icon="search_off"
+              title="Group not found"
+              i18n-title
+              text="It may have been deleted."
+              i18n-text
             >
-              <button
-                type="button"
-                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
-                aria-label="Unrealized by stock"
-                i18n-aria-label="Opens a group's unrealized profit/loss by stock"
-                (click)="openPnl('unrealized')"
+              <a matButton="filled" routerLink="/portfolio" [queryParams]="{ tab: 'groups' }" i18n
+                >All groups</a
               >
-                <app-pnl [value]="g.unrealizedPnl" [currency]="currency" />
-                <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
-              </button>
-            </div>
+            </app-empty-state>
+          } @else {
+            <app-error-state [error]="data.error()" (retry)="data.reload()" />
+          }
+        } @else if (!data.hasValue()) {
+          <div class="space-y-3" aria-hidden="true">
+            <app-skeleton shape="card" class="h-24" />
+            <app-skeleton shape="card" class="h-48" />
+            <app-skeleton shape="card" class="h-56" />
+          </div>
+        } @else {
+          @let d = data.value();
+          @let g = d.group;
+          @let currency = d.accountCurrency | acct;
+          @if (d.stale) {
+            <div class="mb-3"><app-stale-chip [asOf]="d.asOf" /></div>
+          }
+          @if (g.oversold.length) {
             <div
-              appStatRow
-              sub
-              label="Realized"
-              i18n-label="Realized profit/loss of the groups' sells"
-              term="groupPnl"
+              role="status"
+              class="mb-4 flex gap-3 rounded-2xl bg-error-container p-3 text-sm text-on-error-container"
             >
-              <button
-                type="button"
-                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
-                aria-label="Realized by stock"
-                i18n-aria-label="Opens a group's realized profit/loss by stock"
-                (click)="openPnl('realized')"
-              >
-                <app-pnl [value]="g.realizedPnl" [currency]="currency" />
-                <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
-              </button>
-            </div>
-            <div appStatRow sub label="Fees" i18n-label="Trading fees and taxes">
-              <!-- Lines up with the amounts that have a chevron. -->
-              <app-pnl class="pr-3" [value]="-g.fees" [currency]="currency" />
+              <app-icon name="warning" [size]="20" class="mt-px shrink-0" />
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold" i18n>This group sells more shares than it bought</p>
+                <ul class="mt-1">
+                  @for (o of g.oversold; track o.t212Ticker) {
+                    <li>
+                      {{ o.name }}:
+                      <ng-container
+                        i18n="
+                          Shares a group sold without a buy in the group; COUNT is a number of shares
+                        "
+                        >{{ o.missing | qty }} more sold than bought</ng-container
+                      >
+                    </li>
+                  }
+                </ul>
+                <p class="mt-1" i18n>
+                  Add their buys to the group, or move those sells out. Until then, the realized
+                  profit/loss counts only the shares the group holds.
+                </p>
+              </div>
             </div>
           }
-        </dl>
-        <dl appStatList class="mt-1.5">
-          <div appStatRow label="Bought" i18n-label>{{ g.bought | price: currency }}</div>
-          <div appStatRow label="Sold" i18n-label>{{ g.sold | price: currency }}</div>
-        </dl>
-
-        <h2
-          class="mt-7 mb-3 px-1 app-title-section"
-          i18n="Section heading: the shares a group holds"
-        >
-          Holdings
-        </h2>
-        @if (!g.holdings.length) {
-          <p class="app-card text-sm text-on-surface-variant" i18n>
-            The group holds no shares now.
+          <p class="app-label" i18n="Current value of a group's shares">Value</p>
+          <app-hero-amount class="mt-1" [value]="g.value" [currency]="currency" />
+          <p class="mt-1.5 text-[15px] font-semibold">
+            <app-pnl [value]="g.totalPnl" [currency]="currency" [pct]="g.totalPnlPct" />
           </p>
-        } @else {
-          <ul class="app-card py-1.5">
-            @for (h of g.holdings; track h.t212Ticker) {
-              <li>
+
+          <dl appStatList card class="mt-4">
+            <div appStatRow label="Invested" i18n-label="Cost of the shares a group holds now">
+              {{ g.invested | price: currency }}
+            </div>
+            <div
+              appStatRow
+              total
+              label="Total"
+              i18n-label="Total profit/loss of a group"
+              term="totalPnl"
+            >
+              <button
+                type="button"
+                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                [attr.aria-expanded]="pnlOpen()"
+                (click)="pnlOpen.set(!pnlOpen())"
+              >
+                <app-pnl [value]="g.totalPnl" [currency]="currency" [pct]="g.totalPnlPct" strong />
+                <app-icon
+                  name="keyboard_arrow_down"
+                  [size]="18"
+                  class="text-on-surface-variant transition-transform duration-200"
+                  [class.rotate-180]="pnlOpen()"
+                />
+              </button>
+            </div>
+            @if (pnlOpen()) {
+              <div
+                appStatRow
+                sub
+                label="Unrealized"
+                i18n-label="Unrealized profit or loss of open positions"
+                term="unrealizedPnl"
+              >
                 <button
                   type="button"
-                  (click)="openHolding(h)"
-                  class="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-2xl px-2 py-3 text-left hover:bg-surface-container-high"
+                  class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                  aria-label="Unrealized by stock"
+                  i18n-aria-label="Opens a group's unrealized profit/loss by stock"
+                  (click)="openPnl('unrealized')"
                 >
-                  <app-stock-logo [symbol]="ticker(h)" [logoUrl]="h.logoUrl" [size]="40" />
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate app-row-title">{{ h.name }}</span>
-                    <span class="mt-0.5 block truncate app-row-meta">
-                      <span class="uppercase">{{ h.quantity | qty }} {{ ticker(h) }}</span>
-                      @if (h.value === null && !d.stale) {
-                        ·
-                        <ng-container i18n="A group's stock the account no longer holds"
-                          >sold outside the group</ng-container
-                        >
-                      }
-                    </span>
-                  </span>
-                  <span class="flex shrink-0 flex-col items-end text-right">
-                    <span class="text-[14px] font-semibold">{{ h.value | price: currency }}</span>
-                    <span class="mt-0.5 text-[13px] font-medium" [class]="tone(h.unrealizedPnl)"
-                      >{{ h.unrealizedPnl | money: currency }} ({{
-                        h.unrealizedPnlPct | pct
-                      }})</span
-                    >
-                  </span>
+                  <app-pnl [value]="g.unrealizedPnl" [currency]="currency" />
+                  <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
                 </button>
-              </li>
+              </div>
+              <div
+                appStatRow
+                sub
+                label="Realized"
+                i18n-label="Realized profit/loss of the groups' sells"
+                term="groupPnl"
+              >
+                <button
+                  type="button"
+                  class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                  aria-label="Realized by stock"
+                  i18n-aria-label="Opens a group's realized profit/loss by stock"
+                  (click)="openPnl('realized')"
+                >
+                  <app-pnl [value]="g.realizedPnl" [currency]="currency" />
+                  <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
+                </button>
+              </div>
+              <div appStatRow sub label="Fees" i18n-label="Trading fees and taxes">
+                <!-- Lines up with the amounts that have a chevron. -->
+                <app-pnl class="pr-3" [value]="-g.fees" [currency]="currency" />
+              </div>
             }
-          </ul>
-        }
+          </dl>
+          <dl appStatList class="mt-1.5">
+            <div appStatRow label="Bought" i18n-label>{{ g.bought | price: currency }}</div>
+            <div appStatRow label="Sold" i18n-label>{{ g.sold | price: currency }}</div>
+          </dl>
 
-        <div class="mt-7 mb-3 flex items-center gap-3 px-1">
-          <h2 class="app-title-section min-w-0 flex-1 truncate">
-            <ng-container i18n="Section heading: the trades in a group">Trades</ng-container>
-            @if (d.trades.length) {
-              <span class="ml-1 text-[15px] font-semibold text-on-surface-variant">{{
-                d.trades.length
-              }}</span>
-            }
+          <h2
+            class="mt-7 mb-3 px-1 app-title-section"
+            i18n="Section heading: the shares a group holds"
+          >
+            Holdings
           </h2>
-          <button matButton="tonal" type="button" (click)="addTrades()">
-            <app-icon matButtonIcon name="edit" [size]="18" />
-            <ng-container i18n="Button that adds or removes trades of a group"
-              >Edit trades</ng-container
-            >
-          </button>
-        </div>
-        @if (!d.trades.length) {
-          <p class="app-card text-sm text-on-surface-variant" i18n>
-            Add the buys and sells that belong to this group. Add a stock's buys before its sells.
-          </p>
-        } @else {
-          @for (day of days(); track day.date) {
-            <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
-              <h3 class="app-title-day">{{ day.date | appDate: 'long' }}</h3>
-              <ul>
-                @for (t of day.items; track t.id) {
-                  <li>
-                    <button
-                      type="button"
-                      (click)="openTrade(t)"
-                      class="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-2xl px-2 py-[11px] text-left hover:bg-surface-container-high"
-                    >
-                      <app-trade-tile [kind]="t.side === 'BUY' ? 'buy' : 'sell'" />
-                      <span class="min-w-0 flex-1">
-                        <span class="block truncate app-row-title">{{ t.name }}</span>
-                        <span class="flex items-center gap-1 app-row-meta">
-                          @if (t.oversold) {
-                            <app-icon name="warning" [size]="14" class="shrink-0 text-error" />
-                            <span class="sr-only" i18n>Sells more shares than the group held</span>
-                          }
-                          <span class="min-w-0 truncate">
-                            {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
-                            @if (t.price !== null) {
-                              × {{ t.price | price: t.priceCurrency }}
-                            }
-                          </span>
-                        </span>
-                      </span>
-                      <span class="flex shrink-0 flex-col items-end text-right">
-                        <span class="text-[15px] font-semibold">{{
-                          t.value | price: currency
-                        }}</span>
-                        @if (t.groupRealizedPnl !== null) {
-                          <span
-                            class="mt-0.5 text-[13px] font-medium"
-                            [class]="tone(t.groupRealizedPnl)"
-                            >{{ t.groupRealizedPnl | money: currency }}</span
+          @if (!g.holdings.length) {
+            <p class="app-card text-sm text-on-surface-variant" i18n>
+              The group holds no shares now.
+            </p>
+          } @else {
+            <ul class="app-card py-1.5">
+              @for (h of g.holdings; track h.t212Ticker) {
+                <li>
+                  <button
+                    type="button"
+                    (click)="openHolding(h)"
+                    class="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-2xl px-2 py-3 text-left hover:bg-surface-container-high"
+                  >
+                    <app-stock-logo [symbol]="ticker(h)" [logoUrl]="h.logoUrl" [size]="40" />
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate app-row-title">{{ h.name }}</span>
+                      <span class="mt-0.5 block truncate app-row-meta">
+                        <span class="uppercase">{{ h.quantity | qty }} {{ ticker(h) }}</span>
+                        @if (h.value === null && !d.stale) {
+                          ·
+                          <ng-container i18n="A group's stock the account no longer holds"
+                            >sold outside the group</ng-container
                           >
                         }
                       </span>
-                    </button>
-                  </li>
-                }
-              </ul>
-            </section>
+                    </span>
+                    <span class="flex shrink-0 flex-col items-end text-right">
+                      <span class="text-[14px] font-semibold">{{ h.value | price: currency }}</span>
+                      <span class="mt-0.5 text-[13px] font-medium" [class]="tone(h.unrealizedPnl)"
+                        >{{ h.unrealizedPnl | money: currency }} ({{
+                          h.unrealizedPnlPct | pct
+                        }})</span
+                      >
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          <div class="mt-7 mb-3 flex items-center gap-3 px-1">
+            <h2 class="app-title-section min-w-0 flex-1 truncate">
+              <ng-container i18n="Section heading: the trades in a group">Trades</ng-container>
+              @if (d.trades.length) {
+                <span class="ml-1 text-[15px] font-semibold text-on-surface-variant">{{
+                  d.trades.length
+                }}</span>
+              }
+            </h2>
+            <button matButton="tonal" type="button" (click)="addTrades()">
+              <app-icon matButtonIcon name="edit" [size]="18" />
+              <ng-container i18n="Button that adds or removes trades of a group"
+                >Edit trades</ng-container
+              >
+            </button>
+          </div>
+          @if (!d.trades.length) {
+            <p class="app-card text-sm text-on-surface-variant" i18n>
+              Add the buys and sells that belong to this group. Add a stock's buys before its sells.
+            </p>
+          } @else {
+            @for (day of days(); track day.date) {
+              <section class="app-card mt-4 pt-3.5 pb-1 first-of-type:mt-0">
+                <h3 class="app-title-day">{{ day.date | appDate: 'long' }}</h3>
+                <ul>
+                  @for (t of day.items; track t.id) {
+                    <li>
+                      <button
+                        type="button"
+                        (click)="openTrade(t)"
+                        class="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-2xl px-2 py-[11px] text-left hover:bg-surface-container-high"
+                      >
+                        <app-trade-tile [kind]="t.side === 'BUY' ? 'buy' : 'sell'" />
+                        <span class="min-w-0 flex-1">
+                          <span class="block truncate app-row-title">{{ t.name }}</span>
+                          <span class="flex items-center gap-1 app-row-meta">
+                            @if (t.oversold) {
+                              <app-icon name="warning" [size]="14" class="shrink-0 text-error" />
+                              <span class="sr-only" i18n>Sells more shares than the group held</span>
+                            }
+                            <span class="min-w-0 truncate">
+                              {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
+                              @if (t.price !== null) {
+                                × {{ t.price | price: t.priceCurrency }}
+                              }
+                            </span>
+                          </span>
+                        </span>
+                        <span class="flex shrink-0 flex-col items-end text-right">
+                          <span class="text-[15px] font-semibold">{{
+                            t.value | price: currency
+                          }}</span>
+                          @if (t.groupRealizedPnl !== null) {
+                            <span
+                              class="mt-0.5 text-[13px] font-medium"
+                              [class]="tone(t.groupRealizedPnl)"
+                              >{{ t.groupRealizedPnl | money: currency }}</span
+                            >
+                          }
+                        </span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           }
         }
-      }
-    </div>
-    <app-portfolio-nav tab="groups" [detail]="true" />
+      </div>
+      <app-portfolio-nav tab="groups" [detail]="true" />
+    </app-pull-to-refresh>
   `,
 })
 export class GroupPage {
   private readonly api = inject(ApiService);
-  private readonly t212 = inject(T212Service);
+  protected readonly t212 = inject(T212Service);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly notifier = inject(NotifierService);
@@ -420,7 +428,7 @@ export class GroupPage {
       untracked(() => {
         if (!this.data.hasValue()) return;
         const id = this.id();
-        firstValueFrom(this.api.t212Group(id, { force: true })).then(
+        this.t212.trackLive(firstValueFrom(this.api.t212Group(id, { force: true }))).then(
           (value) => {
             if (this.data.hasValue() && this.id() === id) this.data.set(value);
           },
@@ -432,6 +440,17 @@ export class GroupPage {
 
   protected reload(): void {
     this.version.update((v) => v + 1);
+  }
+
+  /** Pull-to-refresh: syncs with Trading 212, as on the portfolio page. */
+  protected async sync(): Promise<void> {
+    if (!this.t212.connected() || this.t212.syncing()) return;
+    try {
+      await this.t212.sync();
+      this.reload();
+    } catch (error) {
+      void this.notifier.show(errorMessage(error));
+    }
   }
 
   protected openTrade(trade: T212GroupTrade): void {

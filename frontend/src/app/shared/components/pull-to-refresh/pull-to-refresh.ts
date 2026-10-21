@@ -15,8 +15,9 @@ const MAX_PULL = 110;
 
 /**
  * Pull-to-refresh for touch screens: pulling down from the top of the page past a threshold emits `refresh`; the
- * indicator spins while `refreshing` is true. The browser's own pull-to-refresh is off (overscroll-behavior), and
- * pages also offer a refresh button for mouse and keyboard users.
+ * indicator spins while `refreshing` is true; with `quiet` (a background refetch, not a pull) it is smaller and faint.
+ * The browser's own pull-to-refresh is off (overscroll-behavior), and pages also offer a refresh button for mouse and
+ * keyboard users.
  */
 @Component({
   selector: 'app-pull-to-refresh',
@@ -27,14 +28,16 @@ const MAX_PULL = 110;
       aria-hidden="true"
     >
       <div
-        class="mt-2 flex size-10 items-center justify-center rounded-full bg-surface-container-highest text-primary ring-1 ring-outline-variant"
+        class="mt-2 flex items-center justify-center rounded-full bg-surface-container-highest text-primary ring-1 ring-outline-variant"
+        [class]="faint() ? 'size-7' : 'size-10'"
         [class.transition-all]="!dragging()"
         [class.duration-200]="!dragging()"
-        [style.opacity]="visible() ? 1 : 0"
+        [style.opacity]="visible() ? (faint() ? 0.55 : 1) : 0"
         [style.transform]="'translateY(' + offset() + 'px)'"
       >
         <app-icon
           name="refresh"
+          [size]="faint() ? 16 : 24"
           [class.animate-spin]="refreshing()"
           [style.transform]="refreshing() ? null : 'rotate(' + pull() * 3 + 'deg)'"
         />
@@ -49,6 +52,8 @@ const MAX_PULL = 110;
 })
 export class PullToRefresh {
   readonly refreshing = input(false);
+  /** The refresh runs in the background (no pull): show a smaller, fainter indicator. */
+  readonly quiet = input(false);
   /** Ignores pulls (a page kept alive but hidden, such as an inactive stock on the compare page). */
   readonly disabled = input(false);
   readonly refresh = output<void>();
@@ -56,8 +61,10 @@ export class PullToRefresh {
   protected readonly pull = signal(0);
   protected readonly dragging = signal(false);
   protected readonly visible = computed(() => this.refreshing() || this.pull() > 8);
+  /** A quiet refresh while the user is not pulling. */
+  protected readonly faint = computed(() => this.quiet() && this.refreshing() && !this.dragging());
   protected readonly offset = computed(() =>
-    this.refreshing() ? 24 : Math.min(this.pull(), MAX_PULL) - 40,
+    this.refreshing() ? (this.faint() ? 8 : 24) : Math.min(this.pull(), MAX_PULL) - 40,
   );
 
   private start: { x: number; y: number } | null = null;

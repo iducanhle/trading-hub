@@ -62,7 +62,11 @@ import { TradeFilters } from './trades-filters';
     CurrencyFlag,
   ],
   template: `
-    <app-pull-to-refresh [refreshing]="refreshing()" (refresh)="sync()">
+    <app-pull-to-refresh
+      [refreshing]="refreshing()"
+      [quiet]="!t212.syncing()"
+      (refresh)="sync()"
+    >
       <app-page-header title="Trading 212" maxWidth="max-w-3xl">
         @if (t212.connected()) {
           <div actions class="flex items-center">
