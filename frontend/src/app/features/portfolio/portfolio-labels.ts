@@ -17,9 +17,8 @@ export const PRESET_LABELS: Record<PeriodPreset, string> = {
 export const TAB_LABELS: Record<PortfolioTab, string> = {
   overview: $localize`:Portfolio sub-tab:Overview`,
   stocks: $localize`:Portfolio sub-tab:Stocks`,
-  trades: $localize`:Portfolio sub-tab:Trades`,
+  activity: $localize`:Portfolio sub-tab; trades, dividends and cash movements:Activity`,
   groups: $localize`:Portfolio sub-tab; the user's own groups of trades, like pies:Groups`,
-  cash: $localize`:Portfolio sub-tab:Dividends`,
 };
 
 export const SORT_LABELS: Record<StockSort, string> = {

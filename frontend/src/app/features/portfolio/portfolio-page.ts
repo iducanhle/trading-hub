@@ -14,6 +14,7 @@ import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { PullToRefresh } from '../../shared/components/pull-to-refresh/pull-to-refresh';
+import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { OpenSearch } from '../../shared/directives/open-search';
 import { Icon } from '../../shared/icon/icon';
@@ -22,6 +23,8 @@ import { PeriodSelector } from './period-selector';
 import { PortfolioCash } from './portfolio-cash';
 import { PortfolioNav } from './portfolio-nav';
 import {
+  ACTIVITY_VIEWS,
+  ActivityView,
   PORTFOLIO_TABS,
   PortfolioPeriod,
   PortfolioTab,
@@ -35,8 +38,9 @@ import { PortfolioGroups } from './portfolio-groups';
 import { TradeFilters } from './trades-filters';
 
 /**
- * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Groups · Dividends & cash (a floating
- * pill at the bottom, `app-portfolio-nav`) share one period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
+ * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Activity · Groups (a floating pill at the
+ * bottom, `app-portfolio-nav`) share one period; Activity switches between Trades, Dividends and Cash. All of it lives in
+ * the URL (`?tab=activity&view=dividends&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
  * down starts a sync; live values refetch every `LIVE_POLL_MS`, with the same indicator. Without a connection it explains the feature and links to Settings.
  */
 @Component({
@@ -60,6 +64,8 @@ import { TradeFilters } from './trades-filters';
     PortfolioGroups,
     PortfolioCash,
     CurrencyFlag,
+    Segmented,
+    Segment,
   ],
   template: `
     <app-pull-to-refresh
@@ -161,6 +167,22 @@ import { TradeFilters } from './trades-filters';
               <app-icon name="chevron_right" [size]="20" />
             </a>
           }
+          @if (tab() === 'activity') {
+            <app-segmented
+              stretch
+              class="mb-3 block"
+              aria-label="Trades, dividends or cash"
+              i18n-aria-label
+              [value]="view()"
+              (valueChange)="setView($event)"
+            >
+              <app-segment value="trades" i18n>Trades</app-segment>
+              <app-segment value="dividends" i18n>Dividends</app-segment>
+              <app-segment value="cash" i18n="Deposits, withdrawals, fees and interest"
+                >Cash</app-segment
+              >
+            </app-segmented>
+          }
           @if (tab() !== 'overview' && tab() !== 'groups') {
             <app-period-selector
               class="mb-4 block"
@@ -176,24 +198,27 @@ import { TradeFilters } from './trades-filters';
                 (periodChange)="setPeriod($event)"
               />
             }
-            @case ('trades') {
-              <app-portfolio-trades
-                [period]="period()"
-                [version]="version()"
-                [filters]="tradeFilters()"
-                (filtersChange)="setTradeFilters($event)"
-                (periodChange)="setPeriod($event)"
-              />
+            @case ('activity') {
+              @let v = view();
+              @if (v === 'trades') {
+                <app-portfolio-trades
+                  [period]="period()"
+                  [version]="version()"
+                  [filters]="tradeFilters()"
+                  (filtersChange)="setTradeFilters($event)"
+                  (periodChange)="setPeriod($event)"
+                />
+              } @else {
+                <app-portfolio-cash
+                  [view]="v"
+                  [period]="period()"
+                  [version]="version()"
+                  (periodChange)="setPeriod($event)"
+                />
+              }
             }
             @case ('groups') {
               <app-portfolio-groups [version]="version()" />
-            }
-            @case ('cash') {
-              <app-portfolio-cash
-                [period]="period()"
-                [version]="version()"
-                (periodChange)="setPeriod($event)"
-              />
             }
             @default {
               <app-portfolio-overview [version]="version()" />
@@ -236,8 +261,17 @@ export class PortfolioPage {
   protected readonly refreshing = computed(() => this.t212.syncing() || this.t212.liveRefreshing());
 
   protected readonly tab = computed<PortfolioTab>(() => {
-    const value = this.query().get('tab') as PortfolioTab | null;
-    return value && PORTFOLIO_TABS.includes(value) ? value : 'overview';
+    const value = this.query().get('tab');
+    // The Trades and Dividends tabs became views of Activity; old links still land there.
+    if (value === 'trades' || value === 'cash') return 'activity';
+    return value && PORTFOLIO_TABS.includes(value as PortfolioTab)
+      ? (value as PortfolioTab)
+      : 'overview';
+  });
+  protected readonly view = computed<ActivityView>(() => {
+    const value = this.query().get('view') as ActivityView | null;
+    if (value && ACTIVITY_VIEWS.includes(value)) return value;
+    return this.query().get('tab') === 'cash' ? 'dividends' : 'trades';
   });
   protected readonly period = computed(() =>
     parsePeriod({
@@ -271,6 +305,10 @@ export class PortfolioPage {
 
   protected setPeriod(period: PortfolioPeriod): void {
     this.navigate(periodParams(period));
+  }
+
+  protected setView(view: ActivityView): void {
+    this.navigate({ tab: 'activity', view: view === 'trades' ? null : view });
   }
 
   protected setTradeFilters(filters: TradeFilters): void {

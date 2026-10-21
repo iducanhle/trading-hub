@@ -63,6 +63,7 @@ Event titles and notes (for example "Consumer Price Index (CPI)") come from the 
 | Average cost | Průměrná nákupní cena | |
 | Open / Closed (position) | Otevřená / Uzavřená | Position status |
 | Buy / Sell (a trade) | Nákup / Prodej | Nouns; the analyst ratings use the verbs Koupit / Prodat |
+| Activity (portfolio tab: trades, dividends, cash) | Aktivita | |
 | Shares (count) | ks | "30 ks" |
 | Stock split / Corporate action | Split akcií / Korporátní akce | |
 | Deposits / Withdrawals / Interest | Vklady / Výběry / Úroky | |

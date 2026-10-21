@@ -9,7 +9,6 @@ import { ErrorState } from '../../shared/components/error-state/error-state';
 import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StaleChip } from '../../shared/components/stale-chip/stale-chip';
 import { Icon } from '../../shared/icon/icon';
-import { Segment, Segmented } from '../../shared/components/segmented/segmented';
 import { StatList, StatRow } from '../../shared/components/stat-list/stat-list';
 import {
   AppDatePipe,
@@ -42,7 +41,7 @@ import { InstrumentOption } from './trades-filters';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
 
-/** Portfolio → Dividends & cash: dividends with their total, or (switch) deposits, withdrawals, fees and interest. */
+/** Portfolio → Activity → Dividends (with their total) or Cash (deposits, withdrawals, fees and interest). */
 @Component({
   selector: 'app-portfolio-cash',
   imports: [
@@ -57,24 +56,11 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
     PricePipe,
     QuantityPipe,
     SignedMoneyPipe,
-    Segmented,
-    Segment,
     FilterButton,
   ],
   template: `
-    <app-segmented
-      stretch
-      aria-label="Dividends or cash"
-      i18n-aria-label
-      [value]="view()"
-      (valueChange)="view.set($event)"
-    >
-      <app-segment value="dividends" i18n>Dividends</app-segment>
-      <app-segment value="cash" i18n="Deposits, withdrawals, fees and interest">Cash</app-segment>
-    </app-segmented>
-
     @if (view() === 'dividends') {
-      <div class="mt-3 flex items-center gap-2.5">
+      <div class="flex items-center gap-2.5">
         <label
           class="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-[14px] bg-surface-container px-3.5 text-on-surface-variant"
         >
@@ -186,7 +172,7 @@ import { DIALOG_CONFIG } from '../../shared/components/dialog/dialog';
         }
       </section>
     } @else {
-      <section aria-labelledby="cash-title" class="mt-5">
+      <section aria-labelledby="cash-title">
         <h2 id="cash-title" class="sr-only" i18n>Deposits, withdrawals and fees</h2>
         @if (transactions.error() && !transactions.hasValue()) {
           <app-error-state compact [error]="transactions.error()" (retry)="transactions.reload()" />
@@ -248,10 +234,8 @@ export class PortfolioCash {
   readonly periodChange = output<PortfolioPeriod>();
   readonly version = input(0);
 
-  protected readonly view = persistedSignal<'dividends' | 'cash'>(
-    'portfolio.cash.view',
-    'dividends',
-  );
+  /** Activity → Dividends or Activity → Cash. */
+  readonly view = input.required<'dividends' | 'cash'>();
 
   private readonly params = computed(() => ({
     query: periodQuery(this.period()),

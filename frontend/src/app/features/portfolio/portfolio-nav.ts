@@ -29,9 +29,8 @@ const NAV_TABS: readonly NavTab[] = [...PORTFOLIO_TABS, 'compare', 'search'];
 const TAB_ICONS: Record<NavTab, IconName> = {
   overview: 'pie_chart',
   stocks: 'candlestick_chart',
-  trades: 'swap_vert',
+  activity: 'receipt_long',
   groups: 'folder',
-  cash: 'payments',
   compare: 'compare',
   search: 'search',
 };

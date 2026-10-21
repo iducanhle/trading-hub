@@ -25,14 +25,12 @@ export interface PortfolioPeriod {
   to: string | null;
 }
 
-export type PortfolioTab = 'overview' | 'stocks' | 'trades' | 'groups' | 'cash';
-export const PORTFOLIO_TABS: readonly PortfolioTab[] = [
-  'overview',
-  'stocks',
-  'trades',
-  'groups',
-  'cash',
-];
+export type PortfolioTab = 'overview' | 'stocks' | 'activity' | 'groups';
+export const PORTFOLIO_TABS: readonly PortfolioTab[] = ['overview', 'stocks', 'activity', 'groups'];
+
+/** The lists inside the Activity tab (`?view=`). */
+export type ActivityView = 'trades' | 'dividends' | 'cash';
+export const ACTIVITY_VIEWS: readonly ActivityView[] = ['trades', 'dividends', 'cash'];
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
