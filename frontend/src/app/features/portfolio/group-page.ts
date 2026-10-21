@@ -194,8 +194,30 @@ import { TradeTile } from './trade-tile';
 
           <dl appStatList card class="mt-4">
             <div appStatRow label="Invested" i18n-label="Cost of the shares a group holds now">
-              {{ g.invested | price: currency }}
+              <button
+                type="button"
+                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                [attr.aria-expanded]="investedOpen()"
+                (click)="investedOpen.set(!investedOpen())"
+              >
+                {{ g.invested | price: currency }}
+                <app-icon
+                  name="keyboard_arrow_down"
+                  [size]="18"
+                  class="text-on-surface-variant transition-transform duration-200"
+                  [class.rotate-180]="investedOpen()"
+                />
+              </button>
             </div>
+            @if (investedOpen()) {
+              <!-- pr-3 lines the amounts up with the ones that have a chevron. -->
+              <div appStatRow sub label="Bought" i18n-label>
+                <span class="pr-3">{{ g.bought | price: currency }}</span>
+              </div>
+              <div appStatRow sub label="Sold" i18n-label>
+                <span class="pr-3">{{ g.sold | price: currency }}</span>
+              </div>
+            }
             <div
               appStatRow
               total
@@ -257,10 +279,6 @@ import { TradeTile } from './trade-tile';
                 </button>
               </div>
             }
-          </dl>
-          <dl appStatList class="mt-1.5">
-            <div appStatRow label="Bought" i18n-label>{{ g.bought | price: currency }}</div>
-            <div appStatRow label="Sold" i18n-label>{{ g.sold | price: currency }}</div>
           </dl>
 
           <h2
@@ -396,6 +414,8 @@ export class GroupPage {
   protected readonly busy = signal(false);
   /** Shows the unrealized, fees and realized parts under the total. */
   protected readonly pnlOpen = signal(false);
+  /** Shows what the group bought and sold under the invested amount. */
+  protected readonly investedOpen = signal(false);
   private readonly version = signal(0);
 
   protected readonly data = rxResource({
