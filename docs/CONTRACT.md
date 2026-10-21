@@ -272,7 +272,7 @@ type T212Group = {
   holdings: T212GroupHolding[];        // largest value first
   oversold: T212OversoldStock[];       // stocks the group sells more of than it holds (buys not assigned yet)
 };
-type T212OversoldStock = { t212Ticker: string; symbol: string | null; name: string; missing: number /* shares sold without a buy in the group */ };
+type T212OversoldStock = { t212Ticker: string; symbol: string | null; name: string; missing: number /* shares sold without a buy in the group */; missingValue: number /* their part of the sells' value (as T212Trade.value), account currency */ };
 type T212GroupTrade = T212Trade & {
   groupRealizedPnl: number | null;     // SELL only, at the group's average price, before fees
   oversold: boolean;                   // a sell of more shares than the group held at that moment
@@ -458,3 +458,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-16 | Groups: assigning never fails on an oversell any more; the error code `T212_GROUP_OVERSOLD` is removed, and `T212Group.oversold` (`T212OversoldStock`) and `T212GroupTrade.oversold` report it instead. Frontend and backend change together. |
 | 2026-10-20 | `T212Pie.value` now includes the pie's uninvested cash (Trading 212's `cash`), as the Trading 212 app shows it; before it was the investments only. Same shape. |
 | 2026-10-21 | Live values are cached about 10 s (was 60 s). Same shape. |
+| 2026-10-21 | `T212OversoldStock.missingValue`: the value of the shares sold without a buy in the group, in the account currency. Additive. |

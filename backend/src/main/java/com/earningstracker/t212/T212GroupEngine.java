@@ -40,8 +40,11 @@ public final class T212GroupEngine {
             double fees, int tradeCount) {
     }
 
-    /** A sell of {@code ticker} in {@code groupId} for {@code missing} more shares than the group held then. */
-    public record Oversell(String groupId, String ticker, String fillId, double missing) {
+    /**
+     * A sell of {@code ticker} in {@code groupId} for {@code missing} more shares than the group held then;
+     * {@code missingValue} is their share of the sell's value (as {@code T212Fill.value}).
+     */
+    public record Oversell(String groupId, String ticker, String fillId, double missing, double missingValue) {
     }
 
     /**
@@ -113,7 +116,9 @@ public final class T212GroupEngine {
                     acc.bought += fill.value();
                 } else {
                     if (fill.quantity() > lot[0] * (1 + TOLERANCE) + EPSILON) {
-                        oversells.add(new Oversell(groupId, ticker, fill.id(), fill.quantity() - lot[0]));
+                        double missing = fill.quantity() - lot[0];
+                        oversells.add(new Oversell(groupId, ticker, fill.id(), missing,
+                                fill.value() * missing / fill.quantity()));
                     }
                     double average = lot[0] > EPSILON ? lot[1] / lot[0] : 0;
                     double sold = Math.min(fill.quantity(), lot[0]);

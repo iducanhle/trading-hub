@@ -773,6 +773,7 @@ interface Oversell {
   ticker: string;
   tradeId: string;
   missing: number;
+  missingValue: number;
 }
 
 interface GroupFigures {
@@ -850,8 +851,16 @@ function computeGroups(
         lot.cost += Math.max(0, t.value - t.fees - t.taxes);
         f.bought += t.value;
       } else {
-        if (t.quantity > lot.quantity * (1 + 1e-6) + 1e-9)
-          oversells.push({ groupId, ticker, tradeId: t.id, missing: t.quantity - lot.quantity });
+        if (t.quantity > lot.quantity * (1 + 1e-6) + 1e-9) {
+          const missing = t.quantity - lot.quantity;
+          oversells.push({
+            groupId,
+            ticker,
+            tradeId: t.id,
+            missing,
+            missingValue: (t.value * missing) / t.quantity,
+          });
+        }
         const average = lot.quantity > 1e-9 ? lot.cost / lot.quantity : 0;
         const sold = Math.min(t.quantity, lot.quantity);
         // Only the shares the group held have a cost: count that part of the proceeds.
@@ -907,8 +916,12 @@ function groupDto(
 ): T212Group {
   const f = result.figures.get(group.id)!;
   const missing = new Map<string, number>();
-  for (const o of result.oversells)
-    if (o.groupId === group.id) missing.set(o.ticker, (missing.get(o.ticker) ?? 0) + o.missing);
+  const missingValue = new Map<string, number>();
+  for (const o of result.oversells) {
+    if (o.groupId !== group.id) continue;
+    missing.set(o.ticker, (missing.get(o.ticker) ?? 0) + o.missing);
+    missingValue.set(o.ticker, (missingValue.get(o.ticker) ?? 0) + o.missingValue);
+  }
   const holdings = [...f.lots]
     .map(([ticker, lot]) => groupHolding(data, ticker, lot.quantity, lot.cost))
     .sort(byValue);
@@ -937,6 +950,7 @@ function groupDto(
         symbol: info?.symbol ?? null,
         name: info?.name ?? ticker,
         missing: count,
+        missingValue: round(missingValue.get(ticker) ?? 0),
       };
     }),
   };

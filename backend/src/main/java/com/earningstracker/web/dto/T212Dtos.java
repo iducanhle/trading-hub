@@ -114,8 +114,12 @@ public final class T212Dtos {
             Double groupRealizedPnl, boolean oversold) {
     }
 
-    /** A stock the group sells more of than it holds: {@code missing} shares have no buy in the group. */
-    public record OversoldStock(String t212Ticker, String symbol, String name, double missing) {
+    /**
+     * A stock the group sells more of than it holds: {@code missing} shares have no buy in the group;
+     * {@code missingValue} is their part of the sells' value, in the account currency.
+     */
+    public record OversoldStock(String t212Ticker, String symbol, String name, double missing,
+            double missingValue) {
     }
 
     public record GroupHolding(String t212Ticker, String symbol, String name, String logoUrl, double quantity,

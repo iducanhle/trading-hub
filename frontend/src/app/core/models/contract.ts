@@ -656,6 +656,8 @@ export interface T212OversoldStock {
   name: string;
   /** Shares sold without a buy in the group. */
   missing: number;
+  /** Their part of the sells' value, in the account currency. */
+  missingValue: number;
 }
 
 export interface T212GroupTrade extends T212Trade {

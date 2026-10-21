@@ -189,12 +189,15 @@ public class T212GroupService {
             Map<String, String> logos) {
         GroupResult figures = result.groups().get(group.id());
         Map<String, Double> missing = new LinkedHashMap<>();
-        result.oversells().stream().filter(o -> o.groupId().equals(group.id()))
-                .forEach(o -> missing.merge(o.ticker(), o.missing(), Double::sum));
+        Map<String, Double> missingValue = new HashMap<>();
+        result.oversells().stream().filter(o -> o.groupId().equals(group.id())).forEach(o -> {
+            missing.merge(o.ticker(), o.missing(), Double::sum);
+            missingValue.merge(o.ticker(), o.missingValue(), Double::sum);
+        });
         List<T212Dtos.OversoldStock> oversold = missing.entrySet().stream().map(e -> {
             T212InstrumentInfo info = T212PortfolioService.info(ctx, e.getKey());
             return new T212Dtos.OversoldStock(e.getKey(), info.symbol(), T212PortfolioService.name(info),
-                    e.getValue());
+                    e.getValue(), round(missingValue.get(e.getKey()).doubleValue()));
         }).toList();
         List<T212Dtos.GroupHolding> holdings = figures.lots().entrySet().stream()
                 .map(e -> holding(ctx, e.getKey(), e.getValue().quantity(), e.getValue().cost(), logos))

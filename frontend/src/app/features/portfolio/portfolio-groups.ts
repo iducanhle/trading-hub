@@ -106,7 +106,6 @@ import { displayTicker } from './portfolio-model';
                 sub
                 label="Realized"
                 i18n-label="Realized profit/loss of the groups' sells"
-                term="groupPnl"
               >
                 <!-- Lines up with the profit/loss, which has a chevron. -->
                 <app-pnl class="pr-3" [value]="totals().realized" [currency]="currency" />

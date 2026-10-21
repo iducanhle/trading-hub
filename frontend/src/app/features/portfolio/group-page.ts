@@ -175,6 +175,7 @@ import { TradeTile } from './trade-tile';
                         "
                         >{{ o.missing | qty }} more sold than bought</ng-container
                       >
+                      ({{ o.missingValue | price: currency }})
                     </li>
                   }
                 </ul>
@@ -200,7 +201,6 @@ import { TradeTile } from './trade-tile';
               total
               label="Total"
               i18n-label="Total profit/loss of a group"
-              term="totalPnl"
             >
               <button
                 type="button"
@@ -223,7 +223,6 @@ import { TradeTile } from './trade-tile';
                 sub
                 label="Unrealized"
                 i18n-label="Unrealized profit or loss of open positions"
-                term="unrealizedPnl"
               >
                 <button
                   type="button"
@@ -236,12 +235,15 @@ import { TradeTile } from './trade-tile';
                   <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
                 </button>
               </div>
+              <div appStatRow sub label="Fees" i18n-label="Trading fees and taxes">
+                <!-- Lines up with the amounts that have a chevron. -->
+                <app-pnl class="pr-3" [value]="-g.fees" [currency]="currency" />
+              </div>
               <div
                 appStatRow
                 sub
                 label="Realized"
                 i18n-label="Realized profit/loss of the groups' sells"
-                term="groupPnl"
               >
                 <button
                   type="button"
@@ -253,10 +255,6 @@ import { TradeTile } from './trade-tile';
                   <app-pnl [value]="g.realizedPnl" [currency]="currency" />
                   <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
                 </button>
-              </div>
-              <div appStatRow sub label="Fees" i18n-label="Trading fees and taxes">
-                <!-- Lines up with the amounts that have a chevron. -->
-                <app-pnl class="pr-3" [value]="-g.fees" [currency]="currency" />
               </div>
             }
           </dl>
@@ -396,7 +394,7 @@ export class GroupPage {
 
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly busy = signal(false);
-  /** Shows the unrealized, realized and fees parts under the total. */
+  /** Shows the unrealized, fees and realized parts under the total. */
   protected readonly pnlOpen = signal(false);
   private readonly version = signal(0);
 
