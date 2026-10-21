@@ -160,9 +160,9 @@ import { TradeTile } from './trade-tile';
           @if (g.oversold.length) {
             <div
               role="status"
-              class="mb-4 flex gap-3 rounded-2xl bg-error-container p-3 text-sm text-on-error-container"
+              class="mb-4 flex gap-3 rounded-2xl bg-primary-container p-3 text-sm text-on-primary-container"
             >
-              <app-icon name="warning" [size]="20" class="mt-px shrink-0" />
+              <app-icon name="info" [size]="20" class="mt-px shrink-0 text-primary" />
               <div class="min-w-0 flex-1">
                 <p class="font-semibold" i18n>This group sells more shares than it bought</p>
                 <ul class="mt-1">
@@ -179,10 +179,6 @@ import { TradeTile } from './trade-tile';
                     </li>
                   }
                 </ul>
-                <p class="mt-1" i18n>
-                  Add their buys to the group, or move those sells out. Until then, the realized
-                  profit/loss counts only the shares the group holds.
-                </p>
               </div>
             </div>
           }
