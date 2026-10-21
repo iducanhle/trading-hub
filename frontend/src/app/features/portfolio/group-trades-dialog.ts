@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
-import { MAT_DIALOG_DATA, MatDialogClose, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { T212DetailTrade, T212Instrument } from '../../core/models/contract';
@@ -49,7 +49,6 @@ export interface GroupTradesDialogData {
     AccountCurrencyPipe,
     MatButton,
     MatCheckbox,
-    MatDialogClose,
     Dialog,
     ErrorState,
     Skeleton,
@@ -211,9 +210,9 @@ export interface GroupTradesDialogData {
             @if (balance(); as b) {
               <div class="mt-2 flex items-center gap-3 border-t border-outline-variant pt-2">
                 @if (b.state === 'even') {
-                  <span class="min-w-0 flex-1 truncate text-[12px] text-on-surface-variant">
-                    <span i18n="Realized profit/loss of the ticked trades">Realized</span>
-                    <span class="ml-1 text-[13px] font-semibold" [class]="tone(b.pnl)">{{
+                  <span class="flex min-w-0 flex-1 items-baseline gap-1 text-[12px] text-on-surface-variant">
+                    <span class="min-w-0 truncate" i18n="Realized profit/loss of the ticked trades">Realized</span>
+                    <span class="shrink-0 text-[13px] font-semibold" [class]="tone(b.pnl)">{{
                       b.pnl | money: (data.currency | acct)
                     }}</span>
                   </span>
@@ -262,7 +261,7 @@ export interface GroupTradesDialogData {
       }
       <!-- One element per block: a block with a single root element is projected into the actions slot. -->
       @if (stock()) {
-        <button dialogActions matButton="tonal" type="button" mat-dialog-close>
+        <button dialogActions matButton="tonal" type="button" (click)="cancel()">
           <ng-container i18n>Cancel</ng-container>
         </button>
       }
@@ -427,6 +426,12 @@ export class GroupTradesDialog {
 
   /** The close button on a stock picked from the list: back to the list (the dialog closes from there). */
   protected readonly backToStocks = (): void => this.stock.set(null);
+
+  /** Cancel, like the close button: back to the list from a stock picked there, else closes without saving. */
+  protected cancel(): void {
+    if (this.data.stock) this.ref.close();
+    else this.backToStocks();
+  }
 
   protected otherGroup(t: T212DetailTrade): string | null {
     if (!t.groupId || t.groupId === this.data.groupId) return null;
