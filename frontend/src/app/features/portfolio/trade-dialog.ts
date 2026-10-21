@@ -1,7 +1,7 @@
 import { AccountCurrencyPipe } from '../../shared/pipes/format.pipes';
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ApiService } from '../../core/api/api.service';
 import { T212Trade } from '../../core/models/contract';
 import { NotifierService } from '../../core/services/notifier.service';
@@ -155,9 +155,10 @@ export class TradeDialog {
   protected readonly data = inject<TradeDialogData>(MAT_DIALOG_DATA);
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
+  private readonly dialogRef = inject(MatDialogRef<TradeDialog>);
   private readonly notifier = inject(NotifierService);
 
-  /** The trade's group, updated in place when the user moves it. */
+  /** The trade's group. Moving it to another group closes the dialog. */
   protected readonly groupId = signal(this.data.trade.groupId ?? null);
   protected readonly saving = signal(false);
   private readonly groups = rxResource({
@@ -184,9 +185,8 @@ export class TradeDialog {
         this.groupId(),
       );
       if (picked === undefined) return;
-      this.groupId.set(picked);
-      this.groups.reload();
       this.data.groupChanged?.(picked);
+      this.dialogRef.close();
     } finally {
       this.saving.set(false);
     }
