@@ -85,7 +85,7 @@ export class PortfolioOverview {
   });
 
   constructor() {
-    // Account value changes with prices: refetch quietly every minute, keep showing the old value on failure.
+    // Account value changes with prices: refetch quietly on every live tick, keep showing the old value on failure.
     let seen = this.t212.liveTick();
     effect(() => {
       const tick = this.t212.liveTick();

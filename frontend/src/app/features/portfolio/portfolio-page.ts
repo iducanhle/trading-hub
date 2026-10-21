@@ -37,7 +37,7 @@ import { TradeFilters } from './trades-filters';
 /**
  * `/portfolio`: the user's Trading 212 account. Sub-tabs Overview · Stocks · Trades · Groups · Dividends & cash (a floating
  * pill at the bottom, `app-portfolio-nav`) share one period; both live in the URL (`?tab=trades&period=3M`), as do the trade filters (`side`, `ticker`). Pulling
- * down starts a sync; live values refetch every minute, with the same indicator. Without a connection it explains the feature and links to Settings.
+ * down starts a sync; live values refetch every `LIVE_POLL_MS`, with the same indicator. Without a connection it explains the feature and links to Settings.
  */
 @Component({
   selector: 'app-portfolio-page',
@@ -135,12 +135,12 @@ import { TradeFilters } from './trades-filters';
             </a>
           </app-empty-state>
         } @else {
-          @if (tab() === 'overview') {
+          @if (tab() === 'overview' || tab() === 'groups') {
             <p
               class="mb-3 text-center text-xs text-on-surface-variant"
-              i18n="Portfolio page|Note under the header: live values refetch automatically"
+              i18n="Live data note|Note under the header: live values refetch automatically"
             >
-              Data are refreshed every minute.
+              Data are refreshed every 10 seconds.
             </p>
           }
           @if (t212.status()?.credentialsValid === false) {
@@ -228,7 +228,7 @@ export class PortfolioPage {
   });
 
   protected readonly version = signal(0);
-  /** A sync or the quiet once-a-minute refetch is running: both show the pull-to-refresh indicator. */
+  /** A sync or the quiet live refetch is running: both show the pull-to-refresh indicator. */
   protected readonly refreshing = computed(() => this.t212.syncing() || this.t212.liveRefreshing());
 
   protected readonly tab = computed<PortfolioTab>(() => {

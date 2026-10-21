@@ -157,7 +157,7 @@ type T212InstrumentRef = { t212Ticker: string; symbol: string | null; name: stri
 type T212Summary = {
   from: string | null; to: string | null; tz: string;   // the period asked for; both null = all time
   accountCurrency: string;
-  // As of now (live, cached ~60 s); null when Trading 212 is unavailable and nothing is cached
+  // As of now (live, cached ~10 s); null when Trading 212 is unavailable and nothing is cached
   totalValue: number | null; cash: number | null; invested: number | null /* cost basis of holdings */;
   currentValue: number | null /* of holdings */; unrealizedPnl: number | null;
   // In the period
@@ -392,7 +392,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
 - **`DELETE /credentials`** stops a running sync, then deletes the stored key and every synced document. 204 even when nothing was stored.
 - **Sync:** history (orders, dividends, transactions) is copied from Trading 212 into backend-only storage. The first sync reads everything; later ones stop at the first item already stored. It starts after `PUT /credentials`, on `POST /sync`, and every 6 hours (`t212-sync` job, all connected users). One sync per user at a time. A first sync of a long history can take minutes (Trading 212 allows 20 history pages of 50 per minute); until it finishes, read endpoints answer with what is stored so far and `syncState: "RUNNING"`.
 - **Rejected key later:** when Trading 212 answers 401/403 during a sync or a live call, status shows `credentialsValid: false`, `syncState: "FAILED"`, `lastError.code: "T212_INVALID_CREDENTIALS"`; read endpoints keep serving stored history with `stale: true` until the user replaces the key or disconnects.
-- **Live values** (summary totals, open positions: quantity, average cost, current price, value, unrealized P/L) are fetched from Trading 212 and cached per user for about 60 s. If that fails, the last good values are served with `stale: true`; with none, the live fields are `null`, `stale` is `true`, and `status` (OPEN/CLOSED) follows the synced history. Read endpoints never fail because Trading 212 is down. `/trades`, `/dividends` and `/transactions` use stored data only.
+- **Live values** (summary totals, open positions: quantity, average cost, current price, value, unrealized P/L) are fetched from Trading 212 and cached per user for about 10 s. If that fails, the last good values are served with `stale: true`; with none, the live fields are `null`, `stale` is `true`, and `status` (OPEN/CLOSED) follows the synced history. Read endpoints never fail because Trading 212 is down. `/trades`, `/dividends` and `/transactions` use stored data only.
 - **`asOf`** is the oldest of the last successful sync and the live fetch used (now, before the first sync finishes). **`stale`** is also `true` when the last sync failed or the stored key no longer works.
 - **Balance history:** Trading 212 has no balance history, so the `t212-snapshot` job stores each connected user's account value every 5 minutes (on the hour, :05, :10 … Europe/Prague; earlier points are 15 minutes apart) from the cached live values; history starts when the job first ran. A stale or failed value is skipped, never filled in. `/history` returns the last point of each interval; intervals start on Europe/Prague clock boundaries (weeks on Monday). `netDeposits` is computed when read from the synced transactions (other currencies at today's rate), so a deposit shows up once synced and never counts as profit.
 - **`best` / `worst`** are the instruments of the period with the highest and lowest `totalPnl`; `worst` is `null` with fewer than two.
@@ -457,3 +457,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-16 | Trading 212 groups (additive): `/api/t212/groups` endpoints, `PUT /api/t212/trades/group`, `T212Group`, `T212GroupHolding`, `T212GroupTrade`, `T212Trade.groupId`, error code `T212_GROUP_OVERSOLD` and the backend-only `t212/{uid}/groups` document. |
 | 2026-10-16 | Groups: assigning never fails on an oversell any more; the error code `T212_GROUP_OVERSOLD` is removed, and `T212Group.oversold` (`T212OversoldStock`) and `T212GroupTrade.oversold` report it instead. Frontend and backend change together. |
 | 2026-10-20 | `T212Pie.value` now includes the pie's uninvested cash (Trading 212's `cash`), as the Trading 212 app shows it; before it was the investments only. Same shape. |
+| 2026-10-21 | Live values are cached about 10 s (was 60 s). Same shape. |

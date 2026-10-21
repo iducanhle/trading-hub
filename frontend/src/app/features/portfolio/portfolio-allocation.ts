@@ -203,7 +203,7 @@ export class PortfolioAllocation {
       observer.observe(el);
       onCleanup(() => observer.disconnect());
     });
-    // Prices change: refetch quietly every minute, keep showing the old values on failure.
+    // Prices change: refetch quietly on every live tick, keep showing the old values on failure.
     let seen = this.t212.liveTick();
     effect(() => {
       const tick = this.t212.liveTick();

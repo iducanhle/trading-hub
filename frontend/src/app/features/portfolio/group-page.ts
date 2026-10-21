@@ -1,4 +1,13 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -104,6 +113,14 @@ import { TradeTile } from './trade-tile';
     </app-page-header>
 
     <div class="mx-auto w-full max-w-3xl px-4 pt-3 pb-nav">
+      @if (data.hasValue()) {
+        <p
+          class="mb-3 text-center text-xs text-on-surface-variant"
+          i18n="Live data note|Note under the header: live values refetch automatically"
+        >
+          Data are refreshed every 10 seconds.
+        </p>
+      }
       @if (data.error() && !data.hasValue()) {
         @if (notFound()) {
           <app-empty-state
@@ -173,51 +190,68 @@ import { TradeTile } from './trade-tile';
           </div>
           <div
             appStatRow
-            label="Unrealized"
-            i18n-label="Unrealized profit or loss of open positions"
-            term="unrealizedPnl"
-          >
-            <button
-              type="button"
-              class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
-              aria-label="Unrealized by stock"
-              i18n-aria-label="Opens a group's unrealized profit/loss by stock"
-              (click)="openPnl('unrealized')"
-            >
-              <app-pnl [value]="g.unrealizedPnl" [currency]="currency" />
-              <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
-            </button>
-          </div>
-          <div
-            appStatRow
-            label="Realized"
-            i18n-label="Realized profit/loss of the groups' sells"
-            term="groupPnl"
-          >
-            <button
-              type="button"
-              class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
-              aria-label="Realized by stock"
-              i18n-aria-label="Opens a group's realized profit/loss by stock"
-              (click)="openPnl('realized')"
-            >
-              <app-pnl [value]="g.realizedPnl" [currency]="currency" />
-              <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
-            </button>
-          </div>
-          <div appStatRow label="Fees" i18n-label="Trading fees and taxes">
-            <app-pnl [value]="-g.fees" [currency]="currency" />
-          </div>
-          <div
-            appStatRow
             total
-            divider
             label="Total"
             i18n-label="Total profit/loss of a group"
             term="totalPnl"
           >
-            <app-pnl [value]="g.totalPnl" [currency]="currency" [pct]="g.totalPnlPct" strong />
+            <button
+              type="button"
+              class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+              [attr.aria-expanded]="pnlOpen()"
+              (click)="pnlOpen.set(!pnlOpen())"
+            >
+              <app-pnl [value]="g.totalPnl" [currency]="currency" [pct]="g.totalPnlPct" strong />
+              <app-icon
+                name="keyboard_arrow_down"
+                [size]="18"
+                class="text-on-surface-variant transition-transform duration-200"
+                [class.rotate-180]="pnlOpen()"
+              />
+            </button>
           </div>
+          @if (pnlOpen()) {
+            <div
+              appStatRow
+              sub
+              label="Unrealized"
+              i18n-label="Unrealized profit or loss of open positions"
+              term="unrealizedPnl"
+            >
+              <button
+                type="button"
+                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                aria-label="Unrealized by stock"
+                i18n-aria-label="Opens a group's unrealized profit/loss by stock"
+                (click)="openPnl('unrealized')"
+              >
+                <app-pnl [value]="g.unrealizedPnl" [currency]="currency" />
+                <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
+              </button>
+            </div>
+            <div
+              appStatRow
+              sub
+              label="Realized"
+              i18n-label="Realized profit/loss of the groups' sells"
+              term="groupPnl"
+            >
+              <button
+                type="button"
+                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                aria-label="Realized by stock"
+                i18n-aria-label="Opens a group's realized profit/loss by stock"
+                (click)="openPnl('realized')"
+              >
+                <app-pnl [value]="g.realizedPnl" [currency]="currency" />
+                <app-icon name="chevron_right" [size]="18" class="text-on-surface-variant" />
+              </button>
+            </div>
+            <div appStatRow sub label="Fees" i18n-label="Trading fees and taxes">
+              <!-- Lines up with the amounts that have a chevron. -->
+              <app-pnl class="pr-3" [value]="-g.fees" [currency]="currency" />
+            </div>
+          }
         </dl>
         <dl appStatList class="mt-1.5">
           <div appStatRow label="Bought" i18n-label>{{ g.bought | price: currency }}</div>
@@ -354,6 +388,8 @@ export class GroupPage {
 
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly busy = signal(false);
+  /** Shows the unrealized, realized and fees parts under the total. */
+  protected readonly pnlOpen = signal(false);
   private readonly version = signal(0);
 
   protected readonly data = rxResource({
@@ -374,6 +410,24 @@ export class GroupPage {
 
   constructor() {
     void this.t212.load();
+    inject(DestroyRef).onDestroy(this.t212.watchLive());
+    // Values change with prices: refetch quietly on every live tick, keep showing the old value on failure.
+    let seen = this.t212.liveTick();
+    effect(() => {
+      const tick = this.t212.liveTick();
+      if (tick === seen) return;
+      seen = tick;
+      untracked(() => {
+        if (!this.data.hasValue()) return;
+        const id = this.id();
+        firstValueFrom(this.api.t212Group(id, { force: true })).then(
+          (value) => {
+            if (this.data.hasValue() && this.id() === id) this.data.set(value);
+          },
+          () => undefined,
+        );
+      });
+    });
   }
 
   protected reload(): void {

@@ -6,7 +6,7 @@ import { T212CredentialsRequest, T212Status } from '../models/contract';
 
 const POLL_MS = 3000;
 /** Matches the server's live-cache-ttl: asking more often would only get the same copy back. */
-const LIVE_POLL_MS = 60_000;
+export const LIVE_POLL_MS = 10_000;
 /** Opening the portfolio starts a history sync when the last one is older than this. */
 const STALE_SYNC_MS = 15 * 60_000;
 /** A live refetch keeps the refresh indicator up at least this long, so a fast answer doesn't just flicker. */
@@ -27,7 +27,7 @@ export class T212Service {
   readonly error = signal<unknown>(null);
   /** Bumped whenever the synced data may have changed. */
   readonly dataVersion = signal(0);
-  /** Bumped about once a minute while `watchLive` runs; live views refetch quietly (no skeleton). */
+  /** Bumped every `LIVE_POLL_MS` while `watchLive` runs; live views refetch quietly (no skeleton). */
   readonly liveTick = signal(0);
   private readonly liveRequests = signal(0);
 
@@ -89,7 +89,7 @@ export class T212Service {
   }
 
   /**
-   * Bumps `liveTick` every minute while the tab is visible and connected, and right away when the tab becomes
+   * Bumps `liveTick` every `LIVE_POLL_MS` while the tab is visible and connected, and right away when the tab becomes
    * visible after a longer pause. Not while a sync runs or the key is rejected. Returns the stop function.
    */
   watchLive(): () => void {

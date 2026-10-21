@@ -85,7 +85,7 @@ app:
     sync-interval: 6h
     connect-timeout: 5s
     read-timeout: 30s
-    live-cache-ttl: 60s       # account summary and positions
+    live-cache-ttl: 10s       # account summary and positions (summary allows 1 call / 5 s)
     max-rate-limit-wait: 70s  # longest wait for Trading 212's per-account rate limit to reset
   # Findings behind these settings: docs/DATA-SOURCES.md
   providers:

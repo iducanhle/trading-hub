@@ -340,7 +340,7 @@ export class PortfolioHoldings {
   });
 
   constructor() {
-    // Positions change with prices: refetch quietly every minute, keep showing the old value on failure.
+    // Positions change with prices: refetch quietly on every live tick, keep showing the old value on failure.
     let seen = this.t212.liveTick();
     effect(() => {
       const tick = this.t212.liveTick();

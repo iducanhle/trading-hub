@@ -33,7 +33,7 @@ import {
   T212HistoryPoint,
   T212HistoryRange,
 } from '../../core/models/contract';
-import { T212Service } from '../../core/services/t212.service';
+import { LIVE_POLL_MS, T212Service } from '../../core/services/t212.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { HeroAmount } from '../../shared/components/hero-amount/hero-amount';
@@ -46,6 +46,8 @@ import { NUMBER_LOCALE, PERIOD_LABELS, toneClass } from '../../shared/utils/form
 import { APP_LOCALE } from '../../shared/utils/locale';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { readChartColors, withAlpha } from '../stock-detail/sections/price-chart/chart-colors';
+
+const MINUTE_MS = 60_000;
 
 const RANGES: T212HistoryRange[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
 
@@ -349,16 +351,19 @@ export class PortfolioHistory {
       this.theme.dark(); // re-read the colours when the theme changes
       untracked(() => this.render(points));
     });
-    // Snapshots are stored every minute: refetch quietly on every live tick for the 1m interval and on every 5th
-    // for the others, keep the old points on failure.
+    // Snapshots are stored every minute: refetch quietly on a live tick once a minute has passed for the 1m interval
+    // and five minutes for the others, keep the old points on failure.
     let seen = this.t212.liveTick();
+    let fetchedAt = Date.now();
     effect(() => {
       const tick = this.t212.liveTick();
       if (tick === seen) return;
       seen = tick;
       untracked(() => {
-        if (this.validInterval() !== '1m' && tick % 5 !== 0) return;
+        const every = this.validInterval() === '1m' ? MINUTE_MS : 5 * MINUTE_MS;
+        if (Date.now() - fetchedAt < every - LIVE_POLL_MS / 2) return;
         if (!this.expanded() || !this.data.hasValue()) return;
+        fetchedAt = Date.now();
         this.t212
           .trackLive(
             firstValueFrom(

@@ -81,28 +81,45 @@ import { displayTicker } from './portfolio-model';
           <dl appStatList class="mt-3">
             <div
               appStatRow
-              label="Realized"
-              i18n-label="Realized profit/loss of the groups' sells"
-              term="groupPnl"
-            >
-              <app-pnl [value]="totals().realized" [currency]="currency" />
-            </div>
-            <div
-              appStatRow
-              label="Unrealized"
-              i18n-label="Unrealized profit or loss of open positions"
-            >
-              <app-pnl [value]="totals().unrealized" [currency]="currency" />
-            </div>
-            <div
-              appStatRow
               total
-              divider
               label="Profit/loss"
               i18n-label="Realized plus unrealized profit/loss of all groups, before fees"
             >
-              <app-pnl [value]="totals().pnl" [currency]="currency" strong />
+              <button
+                type="button"
+                class="-my-1 -mr-1.5 inline-flex items-center gap-0.5 rounded-lg py-1 pl-1.5 hover:bg-surface-container-high"
+                [attr.aria-expanded]="pnlOpen()"
+                (click)="pnlOpen.set(!pnlOpen())"
+              >
+                <app-pnl [value]="totals().pnl" [currency]="currency" strong />
+                <app-icon
+                  name="keyboard_arrow_down"
+                  [size]="18"
+                  class="text-on-surface-variant transition-transform duration-200"
+                  [class.rotate-180]="pnlOpen()"
+                />
+              </button>
             </div>
+            @if (pnlOpen()) {
+              <div
+                appStatRow
+                sub
+                label="Realized"
+                i18n-label="Realized profit/loss of the groups' sells"
+                term="groupPnl"
+              >
+                <!-- Lines up with the profit/loss, which has a chevron. -->
+                <app-pnl class="pr-3" [value]="totals().realized" [currency]="currency" />
+              </div>
+              <div
+                appStatRow
+                sub
+                label="Unrealized"
+                i18n-label="Unrealized profit or loss of open positions"
+              >
+                <app-pnl class="pr-3" [value]="totals().unrealized" [currency]="currency" />
+              </div>
+            }
           </dl>
         </section>
       }
@@ -297,6 +314,8 @@ export class PortfolioGroups {
 
   protected readonly creating = signal(false);
   protected readonly ungroupedOpen = signal(false);
+  /** Shows the realized and unrealized parts under the profit/loss. */
+  protected readonly pnlOpen = signal(false);
 
   protected readonly data = rxResource({
     params: () => ({ version: this.version() + this.t212.dataVersion() }),
@@ -329,7 +348,7 @@ export class PortfolioGroups {
   });
 
   constructor() {
-    // Values change with prices: refetch quietly every minute, keep showing the old value on failure.
+    // Values change with prices: refetch quietly on every live tick, keep showing the old value on failure.
     let seen = this.t212.liveTick();
     effect(() => {
       const tick = this.t212.liveTick();
