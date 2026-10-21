@@ -17,10 +17,13 @@ import {
   AppDatePipe,
   PricePipe,
   QuantityPipe,
+  SignedMoneyPipe,
 } from '../../shared/pipes/format.pipes';
+import { toneClass } from '../../shared/utils/format';
 import { assignTrades } from './group-dialogs';
 import { SIDE_LABELS } from './portfolio-labels';
 import { dayIn, displayTicker, filterInstruments } from './portfolio-model';
+import { TradeTile } from './trade-tile';
 
 /** What the trades step shows of the stock. */
 type TradesStock = Pick<T212Instrument, 't212Ticker' | 'symbol' | 'name' | 'logoUrl'>;
@@ -56,6 +59,8 @@ export interface GroupTradesDialogData {
     AppDatePipe,
     PricePipe,
     QuantityPipe,
+    SignedMoneyPipe,
+    TradeTile,
   ],
   template: `
     <app-dialog [title]="labels.title" [subtitle]="data.groupName">
@@ -147,40 +152,51 @@ export interface GroupTradesDialogData {
             }
           </div>
         } @else {
-          <ul class="-mx-2">
-            @for (t of stockTrades(); track t.id) {
-              <li>
-                <mat-checkbox
-                  class="trade-option w-full"
-                  [checked]="selected().has(t.id)"
-                  (change)="toggle(t.id, $event.checked)"
-                >
-                  <span class="flex min-w-0 items-center gap-3 py-1">
-                    <span class="min-w-0 flex-1">
-                      <span class="block truncate app-row-title">
-                        {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
-                        @if (t.price !== null) {
-                          × {{ t.price | price: t.priceCurrency }}
-                        }
+          @for (d of days(); track d.date) {
+            <section class="mt-3 first-of-type:mt-0">
+              <h3 class="app-title-day">{{ d.date | appDate: 'long' }}</h3>
+              <ul class="-mx-2">
+                @for (t of d.items; track t.id) {
+                  <li>
+                    <mat-checkbox
+                      class="trade-option w-full"
+                      [checked]="selected().has(t.id)"
+                      (change)="toggle(t.id, $event.checked)"
+                    >
+                      <span class="flex min-w-0 items-center gap-2 py-0.5">
+                        <app-trade-tile small [kind]="t.side === 'BUY' ? 'buy' : 'sell'" />
+                        <span class="min-w-0 flex-1">
+                          <span class="block truncate text-[13px] font-semibold">
+                            {{ sideLabels[t.side] }} · {{ t.quantity | qty }}
+                            @if (t.price !== null) {
+                              × {{ t.price | price: t.priceCurrency }}
+                            }
+                          </span>
+                          @if (otherGroup(t); as other) {
+                            <span class="block truncate text-[12px] text-on-surface-variant">
+                              <ng-container i18n="A trade that is in another group; GROUP is its name"
+                                >in {{ other }}</ng-container
+                              >
+                            </span>
+                          }
+                        </span>
+                        <span class="flex shrink-0 flex-col items-end text-right">
+                          <span class="text-[13px] font-semibold">{{
+                            t.value | price: (data.currency | acct)
+                          }}</span>
+                          @if (t.realizedPnl !== null) {
+                            <span class="text-[12px] font-medium" [class]="tone(t.realizedPnl)">{{
+                              t.realizedPnl | money: (data.currency | acct)
+                            }}</span>
+                          }
+                        </span>
                       </span>
-                      <span class="block truncate app-row-meta">
-                        {{ day(t.executedAt) | appDate }}
-                        @if (otherGroup(t); as other) {
-                          ·
-                          <ng-container i18n="A trade that is in another group; GROUP is its name"
-                            >in {{ other }}</ng-container
-                          >
-                        }
-                      </span>
-                    </span>
-                    <span class="shrink-0 text-[14px] font-semibold">{{
-                      t.value | price: (data.currency | acct)
-                    }}</span>
-                  </span>
-                </mat-checkbox>
-              </li>
-            }
-          </ul>
+                    </mat-checkbox>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
         }
       }
       <!-- One element per block: a block with a single root element is projected into the actions slot. -->
@@ -209,7 +225,7 @@ export interface GroupTradesDialogData {
     .trade-option ::ng-deep .mdc-form-field {
       width: 100%;
     }
-    .trade-option ::ng-deep label {
+    .trade-option ::ng-deep .mdc-label {
       flex: 1 1 auto;
       min-width: 0;
       cursor: pointer;
@@ -255,6 +271,18 @@ export class GroupTradesDialog {
   protected readonly stockTrades = computed<T212DetailTrade[]>(() =>
     (this.trades.value()?.trades ?? []).filter((t) => t.kind === 'TRADE'),
   );
+
+  /** The trades by day in the device's zone, newest day first. */
+  protected readonly days = computed(() => {
+    const days: { date: string; items: T212DetailTrade[] }[] = [];
+    for (const t of this.stockTrades()) {
+      const date = dayIn(t.executedAt);
+      const last = days.at(-1);
+      if (last?.date === date) last.items.push(t);
+      else days.push({ date, items: [t] });
+    }
+    return days;
+  });
 
   protected readonly changes = computed(() => {
     const selected = this.selected();
@@ -323,7 +351,7 @@ export class GroupTradesDialog {
     return displayTicker(i);
   }
 
-  protected day(iso: string): string {
-    return dayIn(iso);
+  protected tone(value: number | null): string {
+    return toneClass(value);
   }
 }

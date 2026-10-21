@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, booleanAttribute, computed, input } from '@angular/core';
 import { Icon } from '../../shared/icon/icon';
 import { IconName } from '../../shared/icon/icon-paths';
 
@@ -15,14 +15,16 @@ const TILES: Record<TradeTileKind, { icon: IconName; classes: string }> = {
 @Component({
   selector: 'app-trade-tile',
   imports: [Icon],
-  template: `<app-icon [name]="tile().icon" [size]="20" [strokeWidth]="2" />`,
+  template: `<app-icon [name]="tile().icon" [size]="small() ? 14 : 20" [strokeWidth]="2" />`,
   host: {
-    class: 'flex size-10 shrink-0 items-center justify-center rounded-xl',
-    '[class]': 'tile().classes',
+    class: 'flex shrink-0 items-center justify-center',
+    '[class]': "tile().classes + (small() ? ' size-6 rounded-md' : ' size-10 rounded-xl')",
     'aria-hidden': 'true',
   },
 })
 export class TradeTile {
   readonly kind = input.required<TradeTileKind>();
+  /** A 24 px tile for dense lists. */
+  readonly small = input(false, { transform: booleanAttribute });
   protected readonly tile = computed(() => TILES[this.kind()]);
 }
