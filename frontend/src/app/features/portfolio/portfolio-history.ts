@@ -125,7 +125,7 @@ function chartTime(iso: string): UTCTimestamp {
 
 /**
  * Portfolio → Overview: the account value and net deposits over time, from the snapshots the server stores every
- * 15 minutes (the gap between the lines is the profit). The header shows the latest point, or the touched one,
+ * minute (the gap between the lines is the profit). The header shows the latest point, or the touched one,
  * with its all-time profit/loss. Collapses to its title; the choice, range and interval are remembered.
  */
 @Component({
@@ -205,7 +205,13 @@ function chartTime(iso: string): UTCTimestamp {
               }
             </div>
 
-            <div class="relative mt-2 h-56">
+            <p
+              class="mt-3 mb-0 text-center text-xs text-on-surface-variant"
+              i18n="Note above the account history chart"
+            >
+              Data is captured every minute.
+            </p>
+            <div class="relative mt-1 h-56">
               <div #container class="size-full"></div>
               @if (data.hasValue() && points().length < 2) {
                 <p

@@ -125,7 +125,7 @@ import { TradeTile } from './trade-tile';
             class="mb-3 text-center text-xs text-on-surface-variant"
             i18n="Live data note|Note under the header: live values refetch automatically"
           >
-            Data are refreshed every 10 seconds.
+            Data is refreshed every 10 seconds.
           </p>
         }
         @if (data.error() && !data.hasValue()) {
