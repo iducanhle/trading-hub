@@ -38,6 +38,7 @@ The HTTP status plus the body `{ "code": string, "message": string }`.
 | 400 | `T212_INVALID_CREDENTIALS` (Trading 212 rejected the key on save) |
 | 400 | `T212_MISSING_PERMISSIONS` (the key lacks a permission the app needs; `message` names it) |
 | 409 | `T212_NOT_CONNECTED` (no Trading 212 key saved for the caller) |
+| 409 | `T212_GROUP_NOT_EMPTY` (deleting a group that still has trades; take them out first) |
 | 429 | `T212_RATE_LIMITED` (Trading 212's per-account limit, and nothing cached to serve) |
 | 503 | `T212_NOT_CONFIGURED` (the server has no `T212_ENCRYPTION_KEY`; the rest of the API works) |
 | 503 | `T212_UNAVAILABLE` (Trading 212 failed or timed out, and nothing cached to serve) |
@@ -316,7 +317,7 @@ type T212GroupTrade = T212Trade & {
 | `POST /api/t212/groups` | `201 T212Group` | Body `{ name: string }` |
 | `GET /api/t212/groups/{id}` | `{ accountCurrency, group: T212Group, trades: T212GroupTrade[] /* newest first */, asOf, stale }` | 404 `NOT_FOUND` for an unknown id |
 | `PATCH /api/t212/groups/{id}` | `T212Group` | Body `{ name: string }` (rename) |
-| `DELETE /api/t212/groups/{id}` | `204` | Its trades become ungrouped. 404 for an unknown id |
+| `DELETE /api/t212/groups/{id}` | `204` | Only an empty group: one with trades → 409 `T212_GROUP_NOT_EMPTY`. 404 for an unknown id |
 | `PUT /api/t212/trades/group` | `204` | Body `{ tradeIds: string[], groupId: string \| null }`: moves the trades into that group, or out of any group with `null` |
 
 ### Firestore — user-owned documents (written by the frontend)
@@ -460,3 +461,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-21 | Live values are cached about 10 s (was 60 s). Same shape. |
 | 2026-10-21 | `T212OversoldStock.missingValue`: the value of the shares sold without a buy in the group, in the account currency. Additive. |
 | 2026-10-22 | Groups: the shares of an oversold sell that have no cost in the group now count Trading 212's `realizedPnl` for them (pro rata) in `groupRealizedPnl` and the group's `realizedPnl`, instead of 0. Same shape. |
+| 2026-10-22 | `DELETE /api/t212/groups/{id}` refuses a group that still has trades: 409 `T212_GROUP_NOT_EMPTY` (new error code). Before, its trades became ungrouped. |

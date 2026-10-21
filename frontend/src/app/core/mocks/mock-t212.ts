@@ -355,7 +355,14 @@ export class MockT212 {
       return this.groupSingle(id);
     }
     if (id && method === 'DELETE') {
-      find(id);
+      const trades = find(id).trades.length;
+      if (trades > 0) {
+        throw new MockT212Error(
+          409,
+          'T212_GROUP_NOT_EMPTY',
+          `the group still has ${trades} trades; take them out first`,
+        );
+      }
       this.saveGroups(groups.filter((g) => g.id !== id));
       return null;
     }

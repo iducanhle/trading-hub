@@ -689,10 +689,15 @@ export class GroupPage {
     }
   }
 
+  /** Only an empty group can be deleted (the backend refuses too), so its trades are never ungrouped by accident. */
   protected async remove(): Promise<void> {
+    if (this.data.hasValue() && this.data.value().group.tradeCount > 0) {
+      void this.notifier.show($localize`Take the trades out of the group first.`);
+      return;
+    }
     const confirmed = await confirmInDialog(this.dialog, {
       title: $localize`:Dialog title:Delete the group?`,
-      message: $localize`Its trades stay in your portfolio, just in no group.`,
+      message: $localize`The group has no trades, so nothing else changes.`,
       confirm: $localize`:Button that deletes a group:Delete`,
       danger: true,
     });

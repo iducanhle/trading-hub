@@ -589,6 +589,13 @@ class T212PortfolioServiceTest {
                 .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo(ErrorCode.BAD_REQUEST));
         assertThatThrownBy(() -> groups.create(UID, "x".repeat(41))).isInstanceOf(ApiException.class);
 
+        // A group with trades cannot be deleted; once they are taken out, it can.
+        assertThatThrownBy(() -> groups.delete(UID, id))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.code()).isEqualTo(ErrorCode.T212_GROUP_NOT_EMPTY));
+        assertThat(groups.list(UID).items()).hasSize(1);
+        groups.assign(UID, java.util.List.of("1000-2000"), null);
+
         groups.delete(UID, id);
         assertThat(groups.list(UID).items()).isEmpty();
         assertThat(portfolio.trades(UID, T212Period.ALL_TIME, null, Set.of(), null, 10).items())

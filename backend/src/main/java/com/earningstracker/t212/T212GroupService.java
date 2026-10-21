@@ -120,11 +120,15 @@ public class T212GroupService {
         return single(uid, id);
     }
 
-    /** Deletes the group; its trades are then in no group. */
+    /** Deletes an empty group; one that still has trades is refused, so they are never ungrouped by accident. */
     public void delete(String uid, String id) {
         connection.requireConnected(uid);
         store.update(uid, groups -> {
-            find(groups, id);
+            int trades = find(groups, id).trades().size();
+            if (trades > 0) {
+                throw new ApiException(ErrorCode.T212_GROUP_NOT_EMPTY,
+                        "the group still has " + trades + " trades; take them out first");
+            }
             return groups.stream().filter(g -> !g.id().equals(id)).toList();
         });
     }

@@ -17,6 +17,7 @@ const CODES: readonly ApiErrorCode[] = [
   'T212_INVALID_CREDENTIALS',
   'T212_MISSING_PERMISSIONS',
   'T212_NOT_CONNECTED',
+  'T212_GROUP_NOT_EMPTY',
   'T212_RATE_LIMITED',
   'T212_NOT_CONFIGURED',
   'T212_UNAVAILABLE',
@@ -97,6 +98,8 @@ export function errorMessage(error: unknown): string {
       return $localize`Trading 212 is not available on this server.`;
     case 'T212_NOT_CONNECTED':
       return $localize`Trading 212 is not connected.`;
+    case 'T212_GROUP_NOT_EMPTY':
+      return $localize`Take the trades out of the group first.`;
     default:
       return $localize`Something went wrong.`;
   }
