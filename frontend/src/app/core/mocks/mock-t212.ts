@@ -863,8 +863,11 @@ function computeGroups(
         }
         const average = lot.quantity > 1e-9 ? lot.cost / lot.quantity : 0;
         const sold = Math.min(t.quantity, lot.quantity);
-        // Only the shares the group held have a cost: count that part of the proceeds.
-        const realized = (t.value + t.fees + t.taxes) * (sold / t.quantity) - average * sold;
+        // Only the shares the group held have a cost: count that part of the proceeds, and Trading 212's own result
+        // for the rest.
+        const unmatched = ((t.realizedPnl ?? 0) * (t.quantity - sold)) / t.quantity;
+        const realized =
+          (t.value + t.fees + t.taxes) * (sold / t.quantity) - average * sold + unmatched;
         groupRealized.set(t.id, round(realized));
         f.realized += realized;
         f.sold += t.value;

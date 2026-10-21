@@ -19,8 +19,9 @@ import java.util.stream.Collectors;
  *       the stock by the account's quantity after ÷ before (fills at the same moment count as one event), keeping
  *       the cost, as {@link T212PortfolioEngine} does for the whole position.</li>
  *   <li>A sell of more shares than the group holds at that moment is an oversell (the user has not assigned its
- *       buys yet). It is allowed and reported; only the shares held are taken off, and its result counts only the
- *       part of the proceeds that matches them, since the rest has no cost in the group.</li>
+ *       buys yet). It is allowed and reported; only the shares held are taken off. Its result is the part of the
+ *       proceeds that matches them minus their cost, plus Trading 212's realized result for the other shares (their
+ *       share of {@code T212Fill.realizedPnl}), since those have no cost in the group.</li>
  * </ul>
  */
 public final class T212GroupEngine {
@@ -124,7 +125,10 @@ public final class T212GroupEngine {
                     double sold = Math.min(fill.quantity(), lot[0]);
                     double soldCost = average * sold;
                     double proceeds = (fill.value() + fill.fees() + fill.taxes()) * (sold / fill.quantity());
-                    double realized = proceeds - soldCost;
+                    // The shares sold without a cost in the group count Trading 212's result for them.
+                    double unmatched = fill.realizedPnl() == null ? 0
+                            : fill.realizedPnl() * (fill.quantity() - sold) / fill.quantity();
+                    double realized = proceeds - soldCost + unmatched;
                     groupRealized.put(fill.id(), T212PortfolioEngine.round(realized));
                     acc.realized += realized;
                     acc.sold += fill.value();

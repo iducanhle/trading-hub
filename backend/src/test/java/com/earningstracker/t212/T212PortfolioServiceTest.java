@@ -558,7 +558,8 @@ class T212PortfolioServiceTest {
         });
         assertThat(detail.trades()).singleElement().satisfies(t -> {
             assertThat(t.oversold()).isTrue();
-            assertThat(t.groupRealizedPnl()).isZero(); // no shares with a cost in the group yet
+            // No shares with a cost in the group yet: Trading 212's own result counts.
+            assertThat(t.groupRealizedPnl()).isEqualTo(90.5);
         });
 
         groups.assign(UID, java.util.List.of("1000-2000"), id);

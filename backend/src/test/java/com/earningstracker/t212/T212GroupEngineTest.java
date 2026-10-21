@@ -19,6 +19,11 @@ class T212GroupEngineTest {
                 quantity, value / quantity, "USD", value, fees, 0, null, null, "MARKET");
     }
 
+    private static T212Fill sell(String id, int day, double quantity, double value, double realizedPnl) {
+        return new T212Fill(id, id, T0.plusSeconds(day * 86_400L), "AAPL_US_EQ", Side.SELL, T212Fill.TRADE, "TRADE",
+                quantity, value / quantity, "USD", value, 0, 0, null, realizedPnl, "MARKET");
+    }
+
     private static T212Fill split(String id, int day, Side side, double quantity) {
         return new T212Fill(id, id, T0.plusSeconds(day * 86_400L), "AAPL_US_EQ", side, T212Fill.STOCK_SPLIT,
                 "STOCK_SPLIT", quantity, 0.0, "USD", 0, 0, 0, null, null, null);
@@ -85,6 +90,25 @@ class T212GroupEngineTest {
         assertThat(result.groups().get("g").lots()).isEmpty(); // only the 2 shares held are taken off
         // Only the 2 shares with a cost count: 2/5 of the proceeds (240) minus their cost (200).
         assertThat(result.groupRealized()).containsEntry("s1", 40.0);
+    }
+
+    @Test
+    void theSharesSoldWithoutACostCountTrading212sResult() {
+        List<T212Fill> fills = List.of(
+                trade("b1", 0, Side.BUY, 10, 1000, 0),
+                trade("b2", 1, Side.BUY, 2, 200, 0),
+                sell("s1", 2, 5, 600, 100),
+                sell("s2", 3, 1, 130, 30));
+
+        T212GroupEngine.Result result = T212GroupEngine.compute(fills, Map.of("b2", "g", "s1", "g", "s2", "g"),
+                List.of("g"));
+
+        // s1: the 2 held shares make 240 − 200 = 40; the other 3 count 3/5 of Trading 212's 100.
+        assertThat(result.groupRealized()).containsEntry("s1", 100.0);
+        // s2: nothing held, so all of Trading 212's result.
+        assertThat(result.groupRealized()).containsEntry("s2", 30.0);
+        assertThat(result.groups().get("g").realizedPnl()).isCloseTo(130, within(1e-9));
+        assertThat(result.oversells()).hasSize(2);
     }
 
     @Test

@@ -274,7 +274,7 @@ type T212Group = {
 };
 type T212OversoldStock = { t212Ticker: string; symbol: string | null; name: string; missing: number /* shares sold without a buy in the group */; missingValue: number /* their part of the sells' value (as T212Trade.value), account currency */ };
 type T212GroupTrade = T212Trade & {
-  groupRealizedPnl: number | null;     // SELL only, at the group's average price, before fees
+  groupRealizedPnl: number | null;     // SELL only, at the group's average price, before fees (shares sold without a cost in the group: Trading 212's realizedPnl)
   oversold: boolean;                   // a sell of more shares than the group held at that moment
 };
 ```
@@ -415,7 +415,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
   - A group holds the shares of its trades. A buy adds its quantity and its value before fees to the group's cost; a sell takes `average × quantity` off it, where the average is the group's own (cost ÷ shares in the group). A sell's `groupRealizedPnl` = its proceeds before fees − that cost, so it differs from Trading 212's `realizedPnl` when the position has buys outside the group (as with Trading 212's pies).
   - Live value per share = the live position's `value ÷ quantity` (account currency, today's FX), the same figure as `/holdings`. A holding the account no longer has (its sell is in no group, or in another) has `value: null` and still counts in `invested`. When Trading 212 is down, `value` and `unrealizedPnl` are `null` with `stale: true`; the rest comes from stored trades.
   - Stock splits and corporate actions without a value are never assigned: each scales every group's shares of that stock by the account's quantity after ÷ before, keeping the cost.
-  - Only `kind: "TRADE"` fills can be assigned (400 `BAD_REQUEST` for others or an unknown id; at most 500 ids per call). A trade is in at most one group, so assigning it moves it. Any assignment is accepted, even one that leaves a group selling more shares than it holds at that moment (a sell added before its buys, or a buy removed after its shares were sold in the group). Such a sell has `oversold: true`, its stock is listed in `T212Group.oversold`, only the shares the group held are taken off, and its `groupRealizedPnl` counts only their share of the proceeds (the rest has no cost in the group).
+  - Only `kind: "TRADE"` fills can be assigned (400 `BAD_REQUEST` for others or an unknown id; at most 500 ids per call). A trade is in at most one group, so assigning it moves it. Any assignment is accepted, even one that leaves a group selling more shares than it holds at that moment (a sell added before its buys, or a buy removed after its shares were sold in the group). Such a sell has `oversold: true`, its stock is listed in `T212Group.oversold`, only the shares the group held are taken off, and its `groupRealizedPnl` = their share of the proceeds − their cost, plus Trading 212's `realizedPnl` for the other shares (pro rata), since those have no cost in the group.
   - `name`: 1–40 characters after trimming; at most 30 groups (400 otherwise). Names need not be unique.
   - `ungrouped.holdings`: per open position, the shares in no group (live quantity − the groups' quantity, never negative), `invested` at the position's average cost. Largest value first.
 - **`symbol`** is mapped from the Trading 212 ticker and instrument data; `null` when no supported exchange matches. `logoUrl` as for search results (stored profile, else `null`).
@@ -459,3 +459,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-20 | `T212Pie.value` now includes the pie's uninvested cash (Trading 212's `cash`), as the Trading 212 app shows it; before it was the investments only. Same shape. |
 | 2026-10-21 | Live values are cached about 10 s (was 60 s). Same shape. |
 | 2026-10-21 | `T212OversoldStock.missingValue`: the value of the shares sold without a buy in the group, in the account currency. Additive. |
+| 2026-10-22 | Groups: the shares of an oversold sell that have no cost in the group now count Trading 212's `realizedPnl` for them (pro rata) in `groupRealizedPnl` and the group's `realizedPnl`, instead of 0. Same shape. |

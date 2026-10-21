@@ -661,7 +661,7 @@ export interface T212OversoldStock {
 }
 
 export interface T212GroupTrade extends T212Trade {
-  /** SELL only, at the group's average price, before fees. */
+  /** SELL only, at the group's average price, before fees; shares without a cost in the group count T212's result. */
   groupRealizedPnl: number | null;
   /** A sell of more shares than the group held at that moment. */
   oversold: boolean;

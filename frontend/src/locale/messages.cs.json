@@ -710,6 +710,7 @@
     "625661185593573366": "Zisk/ztráta skupiny",
     "6758634963724368238": "Skupina funguje jako koláč v Trading 212: drží akcie z nákupů, které do ní dáte, s vlastní průměrnou cenou. Prodej ve skupině se porovnává s tímto průměrem, ne s průměrem celé pozice.",
     "3383559918262128488": "Realizovaný zisk/ztráta skupiny se proto může lišit od toho, co pro stejný prodej ukazuje Trading 212. Poplatky se neodečítají, jsou uvedené zvlášť.",
+    "8715837843368013859": "U prodeje akcií, které skupina nikdy nekoupila (jejich nákupy v ní nejsou), se počítá zisk/ztráta z Trading 212, protože skupina pro ně nemá nákupní cenu.",
     "2879955844096747893": "Koupíte 10 akcií za 100 $ do jedné skupiny a 10 za 200 $ do druhé. Prodej 10 akcií za 180 $ z druhé skupiny je v ní ztráta 200 $, zatímco Trading 212 počítá +300 $ proti svému průměru 150 $.",
     "8897855011398155467": "Ve skupině {$GROUP}",
     "6222242635402744944": "Ve skupině",

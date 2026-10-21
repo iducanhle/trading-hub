@@ -224,6 +224,7 @@ export const TERMS: Record<TermId, Term> = {
     body: [
       $localize`:Term text:A group works like a Trading 212 pie: it holds the shares of the buys you put in it, with its own average cost. A sell in the group is measured against that average, not the average of the whole position.`,
       $localize`:Term text:So a group's realized profit/loss can differ from what Trading 212 shows for the same sell. Fees are not deducted; they are shown separately.`,
+      $localize`:Term text:A sell of shares the group never bought (their buys are not in it) counts Trading 212's profit/loss for those shares, since the group has no cost for them.`,
     ],
     example: $localize`:Term example:You buy 10 shares at $100 for one group and 10 at $200 for another. Selling 10 at $180 from the second group is a loss of $200 there, while Trading 212 counts +$300 against its average of $150.`,
   },
