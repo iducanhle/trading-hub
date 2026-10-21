@@ -507,9 +507,9 @@ export class GroupPage {
   protected readonly sideLabels = SIDE_LABELS;
   protected readonly busy = signal(false);
   /** Shows the unrealized, fees and realized parts under the total. */
-  protected readonly pnlOpen = signal(false);
+  protected readonly pnlOpen = persistedSignal('portfolio.group.total.expanded', false);
   /** Shows what the group bought and sold under the invested amount. */
-  protected readonly investedOpen = signal(false);
+  protected readonly investedOpen = persistedSignal('portfolio.group.invested.expanded', false);
   protected readonly holdingsOpen = persistedSignal('portfolio.group.holdings.expanded', true);
   protected readonly formerOpen = persistedSignal('portfolio.group.former.expanded', true);
   protected readonly tradesOpen = persistedSignal('portfolio.group.trades.expanded', true);
