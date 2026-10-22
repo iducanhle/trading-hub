@@ -100,6 +100,8 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Pinned: 15.34.1 (2026-10-21) also asks for serviceusage.services.get, which the deploy account lacks (403).
+          firebaseToolsVersion: 15.34.0
           projectId: tradiqo
           entryPoint: frontend
           channelId: live
@@ -128,6 +130,8 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Pinned: 15.34.1 (2026-10-21) also asks for serviceusage.services.get, which the deploy account lacks (403).
+          firebaseToolsVersion: 15.34.0
           projectId: tradiqo
           entryPoint: frontend
           expires: 7d
