@@ -355,6 +355,13 @@ export interface T212Summary extends T212PeriodEcho {
   totalPnlPct: number | null;
   /** All time only: money-weighted rate of return of deposits and withdrawals, as Trading 212 shows it. */
   rateOfReturnPct: number | null;
+  /**
+   * As of now, any period: live value − the stored value at midnight (Europe/Prague) − deposits since then; null
+   * without a stored value from before today.
+   */
+  todayPnl: number | null;
+  /** todayPnl ÷ the account value at midnight, in percent. */
+  todayPnlPct: number | null;
   best: T212InstrumentRef | null;
   worst: T212InstrumentRef | null;
   syncState: T212SyncState;

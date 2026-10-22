@@ -169,6 +169,8 @@ type T212Summary = {
   includesUnrealized: boolean;         // true only for all time
   totalPnlPct: number | null;          // all time only: totalPnl ÷ total bought value
   rateOfReturnPct: number | null;      // all time only: money-weighted rate of return (see the P/L definitions)
+  todayPnl: number | null;             // any period: change since midnight (Europe/Prague), deposits excluded
+  todayPnlPct: number | null;          // todayPnl ÷ the account value at midnight
   best: T212InstrumentRef | null; worst: T212InstrumentRef | null;   // by totalPnl in the period
   syncState: T212SyncState; lastSyncAt: string | null;
   asOf: string; stale: boolean;
@@ -406,6 +408,7 @@ Every endpoint acts on the caller's own account only; there is no way to address
   - `totalPnl` = `realizedPnl` + `dividends` − `fees` (+ `unrealizedPnl` for all time). `interest`, deposits and withdrawals are not part of it.
   - `totalPnlPct` (all time only) = `totalPnl` ÷ the total value of all buys × 100.
   - `rateOfReturnPct` (all time only) = Trading 212's "Rate of return": the money-weighted rate of return (internal rate of return) of every `DEPOSIT` and `WITHDRAW` against `totalValue` now, as one rate over the time since the first deposit (not annualized). Trading 212 does not publish its exact formula, so it can differ from the app by about a percentage point. `null` without deposits or without a live `totalValue`.
+  - `todayPnl` (any period, as of now) = live `totalValue` − the last stored account value (`t212/{uid}/snapshots`) before today's midnight in Europe/Prague − the `DEPOSIT`s and `WITHDRAW`s after that value. `todayPnlPct` = `todayPnl` ÷ that value × 100, so it covers the whole account, cash and FX moves included. Both `null` without a stored value from before today (e.g. the first day after connecting), without a live `totalValue`, or when a deposit since then could not be converted.
 - **`GET /allocation`:** `total` is the sum of the open positions' live values (cash excluded). Live positions only, no quotes, so it answers as fast as `/holdings`.
 - **`GET /allocation/day-changes`:** today's price change of the 24 largest positions (the mapped symbol's quote, in percent, cached 60 s on the server). Unmapped instruments, smaller positions and failed quotes are left out of `changes`. It can take tens of seconds while quotes are uncached (Finnhub allows about one call a second), which is why it is separate; the frontend caches it for 45 s.
 - **`GET /instruments`:** all time lists every instrument ever traded or held; a period lists the instruments with a trade or dividend in it. `status` (default `ALL`) filters by the current state. `bought`/`sold`/`realizedPnl`/`dividends`/`fees`/`tradeCount` are for the period; quantity, prices, value and unrealized P/L are as of now.
@@ -462,3 +465,4 @@ Every endpoint acts on the caller's own account only; there is no way to address
 | 2026-10-21 | `T212OversoldStock.missingValue`: the value of the shares sold without a buy in the group, in the account currency. Additive. |
 | 2026-10-22 | Groups: the shares of an oversold sell that have no cost in the group now count Trading 212's `realizedPnl` for them (pro rata) in `groupRealizedPnl` and the group's `realizedPnl`, instead of 0. Same shape. |
 | 2026-10-22 | `DELETE /api/t212/groups/{id}` refuses a group that still has trades: 409 `T212_GROUP_NOT_EMPTY` (new error code). Before, its trades became ungrouped. |
+| 2026-10-22 | `T212Summary.todayPnl` and `todayPnlPct`: today's profit/loss since midnight (Europe/Prague) from the stored account values. Additive. |

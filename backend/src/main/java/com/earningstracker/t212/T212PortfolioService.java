@@ -195,6 +195,7 @@ public class T212PortfolioService {
         Double totalValue = account == null ? null : account.totalValue();
         Double rateOfReturn = period.allTime() && totalValue != null
                 ? rateOfReturn(ctx.data().transactions().values(), ctx.currency(), totalValue) : null;
+        Today today = today(uid, ctx, totalValue);
 
         Map<String, T212Dtos.InstrumentRef> refs = refs(ctx, instruments, period.allTime());
         List<T212Dtos.InstrumentRef> ranked = refs.values().stream()
@@ -207,7 +208,7 @@ public class T212PortfolioService {
                 account == null ? null : account.invested(), account == null ? null : account.currentValue(),
                 unrealized, round(realized), round(dividends), round(fees), round(interest), round(deposits),
                 round(withdrawals), round(deposits - withdrawals), trades, round(totalPnl), includesUnrealized, pct,
-                rateOfReturn, best, worst, connection.status(uid).syncState(), ctx.state().lastSyncAt(), ctx.asOf(), ctx.stale());
+                rateOfReturn, today.pnl(), today.pct(), best, worst, connection.status(uid).syncState(), ctx.state().lastSyncAt(), ctx.asOf(), ctx.stale());
     }
 
     public T212Dtos.InstrumentList instruments(String uid, T212Period period, StatusFilter status) {
@@ -384,6 +385,45 @@ public class T212PortfolioService {
         public static Optional<HistoryRange> parse(String code) {
             return Arrays.stream(values()).filter(r -> r.code.equalsIgnoreCase(code)).findFirst();
         }
+    }
+
+    private record Today(Double pnl, Double pct) {
+        static final Today UNKNOWN = new Today(null, null);
+    }
+
+    /**
+     * Today's profit/loss: the live account value minus the last stored value before midnight (Europe/Prague), less
+     * the deposits and withdrawals since then; the percentage is of that midnight value. Unknown without a value from
+     * before today, without the live value, or when a deposit since then could not be converted.
+     */
+    private Today today(String uid, Context ctx, Double totalValue) {
+        if (totalValue == null) {
+            return Today.UNKNOWN;
+        }
+        Instant midnight = clock.instant().atZone(T212SnapshotStore.ZONE).toLocalDate()
+                .atStartOfDay(T212SnapshotStore.ZONE).toInstant();
+        T212SnapshotStore.Point base = null;
+        for (T212SnapshotStore.Point p : snapshots.points(uid)) {
+            if (!p.at().isBefore(midnight)) {
+                break;
+            }
+            base = p;
+        }
+        if (base == null || base.value() <= 0) {
+            return Today.UNKNOWN;
+        }
+        double flows = 0;
+        for (T212CashTransaction t : ctx.data().transactions().values()) {
+            if ((t.type().equals("DEPOSIT") || t.type().equals("WITHDRAW")) && t.at().isAfter(base.at())) {
+                Double amount = inAccountCurrency(t.amount(), t.currency(), ctx.currency());
+                if (amount == null) {
+                    return Today.UNKNOWN;
+                }
+                flows += amount;
+            }
+        }
+        double pnl = totalValue - base.value() - flows;
+        return new Today(round(pnl), round(pnl / base.value() * 100));
     }
 
     /**

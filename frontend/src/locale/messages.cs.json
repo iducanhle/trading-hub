@@ -2,6 +2,11 @@
   "locale": "cs",
   "translations": {
     "220550782947016929": "Pořadí",
+    "5969435395449334775": "Dnešní zisk/ztráta",
+    "7639916784944495626": "O kolik se změnila hodnota vašeho účtu od půlnoci (00:00 pražského času). Porovnává současnou hodnotu s hodnotou uloženou o půlnoci.",
+    "3556758984344919331": "Peníze, které jste od půlnoci vložili nebo vybrali, se nezapočítávají, takže se počítají jen pohyby cen a kurzů. Procento je z hodnoty účtu o půlnoci, včetně hotovosti.",
+    "7678242987279690419": "Akcie obchodované v USA se hýbou hlavně odpoledne a večer pražského času. Dokud aplikace nemá hodnotu z doby před dneškem, zobrazuje se pomlčka.",
+    "493600743868227353": "Účet měl o půlnoci hodnotu 100 000 a teď má 101 500, přičemž ráno jste vložili 1 000: dnes +500 (+0,5 %).",
     "9150957425070081829": "Sestupně",
     "7349346322884585140": "Vzestupně",
     "3054677928361808046": " Aktualizovat nyní ",

@@ -31,7 +31,8 @@ export type TermId =
   | 'accountFees'
   | 'includingFees'
   | 'tradeDayRate'
-  | 'groupPnl';
+  | 'groupPnl'
+  | 'todayPnl';
 
 export interface Term {
   title: string;
@@ -235,6 +236,15 @@ export const TERMS: Record<TermId, Term> = {
       $localize`:Term text:It changes with the price every day and becomes realized only when you sell. It is always as of now.`,
     ],
     example: $localize`:Term example:You hold 10 shares with an average cost of $110 and the price is $100: unrealized loss is −$100.`,
+  },
+  todayPnl: {
+    title: $localize`:Term title:Today's profit/loss`,
+    body: [
+      $localize`:Term text:How much your account value has changed since midnight (00:00, Prague time). It compares the value now with the value stored at midnight.`,
+      $localize`:Term text:Money you deposited or withdrew since midnight is left out, so only price and exchange rate moves count. The percentage is of the account value at midnight, cash included.`,
+      $localize`:Term text:Stocks traded in the US move mostly in the afternoon and evening, Prague time. It shows a dash until the app has a value from before today.`,
+    ],
+    example: $localize`:Term example:The account was worth 100,000 at midnight and is worth 101,500 now, with 1,000 deposited this morning: today +500 (+0.5%).`,
   },
   totalPnl: {
     title: $localize`:Term title:Total profit/loss`,

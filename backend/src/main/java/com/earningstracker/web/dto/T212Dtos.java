@@ -28,7 +28,8 @@ public final class T212Dtos {
             Double cash, Double invested, Double currentValue, Double unrealizedPnl, double realizedPnl,
             double dividends, double fees, double interest, double deposits, double withdrawals, double netDeposits,
             int tradeCount, double totalPnl, boolean includesUnrealized, Double totalPnlPct, Double rateOfReturnPct,
-            InstrumentRef best, InstrumentRef worst, String syncState, Instant lastSyncAt, Instant asOf, boolean stale) {
+            Double todayPnl, Double todayPnlPct, InstrumentRef best, InstrumentRef worst, String syncState,
+            Instant lastSyncAt, Instant asOf, boolean stale) {
     }
 
     public record Amounts(double quantity, double value) {

@@ -12,6 +12,7 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { StockLogo } from '../../shared/components/stock-logo/stock-logo';
 import { FilterButton } from '../../shared/components/filter-button/filter-button';
 import { Icon } from '../../shared/icon/icon';
+import { TermInfo } from '../../shared/components/term-info/term-info';
 import {
   DEFAULT_HOLDINGS_VIEW,
   HoldingsFilterContext,
@@ -51,6 +52,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
     QuantityPipe,
     SignedMoneyPipe,
     PercentPipe,
+    TermInfo,
   ],
   template: `
     <div class="app-card" [class.pb-1.5]="open()">
@@ -80,6 +82,19 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
                   class="mt-1 text-[22px] font-semibold leading-tight tabular-nums [overflow-wrap:anywhere]"
                 >
                   {{ accountValue() | price: (currency() | acct) }}
+                </p>
+                <p class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[13px] tabular-nums">
+                  <span class="text-on-surface-variant" i18n="Profit or loss since midnight"
+                    >Today</span
+                  >
+                  @if (todayPnl() !== null) {
+                    <span class="font-semibold" [class]="tone(todayPnl())"
+                      >{{ todayPnl() | money: (currency() | acct) }} ({{ todayPnlPct() | pct }})</span
+                    >
+                  } @else {
+                    <span class="font-semibold">—</span>
+                  }
+                  <app-term-info term="todayPnl" />
                 </p>
               </div>
               <div class="grid grid-cols-2 gap-2">
@@ -284,6 +299,8 @@ export class PortfolioHoldings {
   readonly accountValue = input<number | null>(null);
   readonly cash = input<number | null>(null);
   readonly unrealizedPnl = input<number | null>(null);
+  readonly todayPnl = input<number | null>(null);
+  readonly todayPnlPct = input<number | null>(null);
 
   protected readonly search = signal('');
   protected readonly view = persistedSignal<HoldingsView>(

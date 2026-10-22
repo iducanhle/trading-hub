@@ -317,6 +317,30 @@ class T212PortfolioServiceTest {
         assertThat(s.stale()).isFalse();
         assertThat(s.syncState()).isEqualTo("IDLE");
         assertThat(s.asOf()).isEqualTo(clock.instant());
+        assertThat(s.todayPnl()).isNull(); // no stored value from before today
+        assertThat(s.todayPnlPct()).isNull();
+    }
+
+    @Test
+    void todayComparesTheLiveValueWithTheLastStoredValueBeforePragueMidnight() {
+        // Now is 2026-10-02 12:00 in Prague, so midnight is 2026-10-01T22:00Z.
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-01T19:00:00Z"), 10000));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-01T21:59:00Z"), 10200));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-02T06:00:00Z"), 10300));
+
+        T212Dtos.Summary s = portfolio.summary(UID, T212Period.ALL_TIME);
+
+        assertThat(s.todayPnl()).isEqualTo(250.25); // 10,450.25 − 10,200
+        assertThat(s.todayPnlPct()).isEqualTo(2.45);
+    }
+
+    @Test
+    void todayLeavesOutDepositsAndWithdrawalsSinceTheBaseValue() {
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-07-31T10:00:00Z"), 5100));
+
+        T212Dtos.Summary s = portfolio.summary(UID, T212Period.ALL_TIME);
+
+        assertThat(s.todayPnl()).isEqualTo(5550.25); // 10,450.25 − 5,100 + the 200 withdrawn in August
     }
 
     @Test

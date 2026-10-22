@@ -508,6 +508,10 @@ export class MockT212 {
               data.account.totalValue,
             )
           : null,
+      // A fixed +0.85% since midnight; null with the live value.
+      todayPnl:
+        data.account.totalValue !== null ? round(data.account.totalValue * (0.0085 / 1.0085)) : null,
+      todayPnlPct: data.account.totalValue !== null ? 0.85 : null,
       best: refs[0] ?? null,
       worst: refs.length > 1 ? refs[refs.length - 1] : null,
       syncState: status.syncState,
