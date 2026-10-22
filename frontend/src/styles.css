@@ -61,6 +61,8 @@ body {
   --color-on-error-container: var(--mat-sys-on-error-container);
   --color-gain: var(--app-gain);
   --color-loss: var(--app-loss);
+  --color-gain-alt: var(--app-gain-alt);
+  --color-loss-alt: var(--app-loss-alt);
   --color-gain-container: var(--app-gain-container);
   --color-loss-container: var(--app-loss-container);
   --color-neutral-mark: var(--app-neutral-mark);
@@ -82,6 +84,9 @@ body {
      */
     --app-gain: light-dark(#0b7a22, #4ade63);
     --app-loss: light-dark(#c02f36, #ff5e5b);
+    /* A darker shade of the same colour, to set one figure apart from a gain/loss next to it. */
+    --app-gain-alt: color-mix(in oklab, var(--app-gain) 78%, black);
+    --app-loss-alt: color-mix(in oklab, var(--app-loss) 78%, black);
     --app-gain-container: light-dark(rgba(11, 122, 34, 0.11), rgba(74, 222, 99, 0.13));
     --app-loss-container: light-dark(rgba(192, 47, 54, 0.11), rgba(255, 94, 91, 0.14));
     --app-neutral-mark: light-dark(#5e6773, #8d9aa6);

@@ -105,7 +105,7 @@ Map tokens onto `--mat-sys-*` so Material components pick them up without restyl
 
 Define each with `light-dark(<light>, <dark>)` (`mat.theme-overrides` in `frontend/src/material-theme.scss`). The rest are
 custom properties in `frontend/src/styles.css`: `up` = `--app-gain`, `down` = `--app-loss`, `upBg` / `downBg` =
-`--app-gain-container` / `--app-loss-container`, `--app-sheet`, `--app-scrim` and the analyst scale `--app-rec-*`. No background
+`--app-gain-container` / `--app-loss-container`, `--app-gain-alt` / `--app-loss-alt` (`up`/`down` darkened, 22 % black, for a figure that sits next to another gain/loss, e.g. "today" under "all time"), `--app-sheet`, `--app-scrim` and the analyst scale `--app-rec-*`. No background
 gradient (the dark-theme glow was removed). Tailwind exposes the same colours (`bg-surface-container`, `text-gain`,
 `bg-sheet`, `bg-scrim`, …).
 

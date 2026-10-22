@@ -42,7 +42,7 @@ import { Skeleton } from '../../shared/components/skeleton/skeleton';
 import { TermInfo } from '../../shared/components/term-info/term-info';
 import { Icon } from '../../shared/icon/icon';
 import { PercentPipe, PricePipe, SignedMoneyPipe } from '../../shared/pipes/format.pipes';
-import { NUMBER_LOCALE, PERIOD_LABELS, toneClass } from '../../shared/utils/format';
+import { NUMBER_LOCALE, PERIOD_LABELS, toneClass, toneOf } from '../../shared/utils/format';
 import { APP_LOCALE } from '../../shared/utils/locale';
 import { persistedSignal } from '../../shared/utils/persisted-signal';
 import { readChartColors, withAlpha } from '../stock-detail/sections/price-chart/chart-colors';
@@ -184,16 +184,42 @@ function chartTime(iso: string): UTCTimestamp {
                   [value]="p.value"
                   [currency]="currency() | acct"
                 />
-                <p class="mt-1 text-[15px] font-semibold" [class]="tone(p.profit)">
-                  {{ p.profit | money: (currency() | acct) }}
-                  @if (profitPct(p) !== null) {
-                    <span class="font-medium">· {{ profitPct(p) | pct: 1 }}</span>
+                <!-- Amount · percentage · label columns, so the all-time and today rows line up. -->
+                <div
+                  class="mt-1 grid w-fit grid-cols-[auto_auto_auto] items-baseline gap-x-5 gap-y-1 text-[15px] tabular-nums"
+                >
+                  <span class="text-right font-semibold" [class]="tone(p.profit)">{{
+                    p.profit | money: (currency() | acct)
+                  }}</span>
+                  <span class="text-right font-medium" [class]="tone(p.profit)">{{
+                    profitPct(p) !== null ? (profitPct(p) | pct: 1) : ''
+                  }}</span>
+                  <span class="inline-flex items-center">
+                    <span class="app-label" i18n="Profit since the first deposit">all time</span>
+                    @if (profitPct(p) !== null) {
+                      <app-term-info class="ml-1 inline-flex" term="accountReturn" />
+                    }
+                  </span>
+                  <!-- Today is as of now: hidden (space kept) while a past point is touched. -->
+                  @if (todayPnl() !== null) {
+                    <span
+                      class="text-right font-semibold"
+                      [class]="todayTone()"
+                      [class.invisible]="hovered()"
+                      >{{ todayPnl() | money: (currency() | acct) }}</span
+                    >
+                    <span
+                      class="text-right font-medium"
+                      [class]="todayTone()"
+                      [class.invisible]="hovered()"
+                      >{{ todayPnlPct() | pct: 1 }}</span
+                    >
+                    <span class="inline-flex items-center" [class.invisible]="hovered()">
+                      <span class="app-label" i18n="Profit since midnight">today</span>
+                      <app-term-info class="ml-1 inline-flex" term="todayPnl" />
+                    </span>
                   }
-                  <span class="app-label ms-1" i18n="Profit since the first deposit">all time</span>
-                  @if (profitPct(p) !== null) {
-                    <app-term-info class="ml-0.5 inline-flex align-middle" term="accountReturn" />
-                  }
-                </p>
+                </div>
                 <p class="mt-1.5 flex items-baseline gap-2 text-[15px]">
                   <span class="font-semibold text-on-surface">{{
                     p.netDeposits | price: (currency() | acct)
@@ -288,6 +314,9 @@ export class PortfolioHistory {
 
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
+  /** From the summary: profit/loss since midnight, as of now. */
+  readonly todayPnl = input<number | null>(null);
+  readonly todayPnlPct = input<number | null>(null);
 
   protected readonly expanded = persistedSignal('portfolio.history.expanded', true);
   protected readonly range = persistedSignal<T212HistoryRange>(
@@ -405,6 +434,18 @@ export class PortfolioHistory {
 
   protected tone(value: number | null): string {
     return toneClass(value);
+  }
+
+  /** A second shade for today, so it reads apart from the all-time row above it. */
+  protected todayTone(): string {
+    switch (toneOf(this.todayPnl())) {
+      case 'gain':
+        return 'text-gain-alt';
+      case 'loss':
+        return 'text-loss-alt';
+      default:
+        return 'text-on-surface-variant';
+    }
   }
 
   /** All-time profit as a share of the net deposits; null without positive deposits. */

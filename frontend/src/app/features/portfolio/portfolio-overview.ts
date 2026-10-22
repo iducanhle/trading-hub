@@ -54,7 +54,12 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
         </p>
       }
 
-      <app-portfolio-history class="mt-3.5 block" [version]="version()" />
+      <app-portfolio-history
+        class="mt-3.5 block"
+        [version]="version()"
+        [todayPnl]="s.todayPnl ?? null"
+        [todayPnlPct]="s.todayPnlPct ?? null"
+      />
 
       <app-portfolio-allocation class="mt-3.5 block" [version]="version()" />
 
