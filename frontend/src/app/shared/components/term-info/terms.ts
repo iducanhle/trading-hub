@@ -46,237 +46,187 @@ export const TERMS: Record<TermId, Term> = {
   marketCap: {
     title: $localize`:Term title:Market cap (market capitalization)`,
     body: [
-      $localize`:Term text:The total value of all the company's shares on the stock market: the share price × the number of shares.`,
-      $localize`:Term text:It shows how big the company is in the eyes of investors. Large companies usually move less than small ones.`,
+      $localize`:Term text:Share price × number of shares: what the whole company is worth on the market.`,
     ],
-    example: $localize`:Term example:$250 per share × 1 billion shares = $250B market cap.`,
   },
   pe: {
     title: $localize`:Term title:P/E (price-to-earnings ratio)`,
     body: [
-      $localize`:Term text:How many dollars investors pay for $1 of the company's yearly profit: the share price ÷ EPS over the last 12 months.`,
-      $localize`:Term text:A high P/E means investors expect strong growth; a low one can mean the stock is cheap, or that little growth is expected. Compare it with similar companies, not across industries. It is not shown when the company made a loss.`,
+      $localize`:Term text:Share price ÷ yearly EPS. High means growth is expected, low can mean a cheap stock. Not shown for loss-making companies.`,
     ],
-    example: $localize`:Term example:Price $100 ÷ EPS $5 = P/E of 20.`,
   },
   eps: {
     title: $localize`:Term title:EPS (earnings per share)`,
     body: [
-      $localize`:Term text:The company's profit divided by the number of its shares: how much of the profit belongs to one share.`,
-      $localize`:Term text:TTM (trailing twelve months) means the last four reported quarters added together.`,
+      $localize`:Term text:Company profit ÷ number of shares. TTM: the last four quarters combined.`,
     ],
-    example: $localize`:Term example:Profit $10B ÷ 2 billion shares = EPS of $5.`,
   },
   avgVolume: {
     title: $localize`:Term title:Volume`,
-    body: [
-      $localize`:Term text:How many shares changed hands during a trading day. Average volume is the usual daily amount.`,
-      $localize`:Term text:High volume means the stock is easy to buy and sell. A day with much higher volume than usual often means important news.`,
-    ],
+    body: [$localize`:Term text:Shares traded per day, on average. A spike often means news.`],
   },
   range52w: {
     title: $localize`:Term title:52-week range`,
     body: [
-      $localize`:Term text:The lowest and the highest price of the last 52 weeks (one year). The dot shows where today's price is.`,
-      $localize`:Term text:Near the right end, the stock trades close to its yearly high; near the left end, close to its yearly low.`,
+      $localize`:Term text:Lowest and highest price of the past year; the dot is today's price.`,
     ],
   },
   candles: {
     title: $localize`:Term title:Candlestick chart`,
     body: [
-      $localize`:Term text:Each candle is one trading day. Its thick body spans the opening and the closing price: green when the price closed higher than it opened, red when lower.`,
-      $localize`:Term text:The thin lines above and below (wicks) reach the highest and the lowest price of the day. The bars at the bottom show the volume.`,
+      $localize`:Term text:Each candle is one day: the body runs from open to close (green up, red down), the wicks to the day's high and low. Bars at the bottom show volume.`,
     ],
   },
   earnings: {
     title: $localize`:Term title:Earnings (quarterly results)`,
     body: [
-      $localize`:Term text:Four times a year, listed companies publish their results for the past quarter: revenue, profit (EPS) and often an outlook for the coming months.`,
-      $localize`:Term text:The price often moves strongly right after the results, because investors compare them with what analysts expected.`,
+      $localize`:Term text:Quarterly revenue, profit (EPS) and outlook. The price often moves sharply when they differ from analysts' estimates.`,
     ],
   },
   epsEstimate: {
     title: $localize`:Term title:EPS estimate`,
     body: [
-      $localize`:Term text:The average EPS that the analysts following the company expect for the quarter (also called the consensus).`,
-      $localize`:Term text:The market reacts mostly to the difference between the actual EPS and this estimate, not to the number itself.`,
+      $localize`:Term text:The average EPS analysts expect for the quarter. The market reacts mostly to how far the actual EPS lands from it.`,
     ],
   },
   revenueEstimate: {
     title: $localize`:Term title:Revenue estimate`,
     body: [
-      $localize`:Term text:Revenue is all the money the company took in from sales, before any costs are subtracted. The estimate is the analysts' average expectation for the quarter.`,
+      $localize`:Term text:The analysts' average expectation of the quarter's revenue (sales before costs).`,
     ],
   },
   surprise: {
     title: $localize`:Term title:Surprise`,
     body: [
-      $localize`:Term text:How much the actual result differed from the estimate, in percent. Positive means better than expected, negative means worse.`,
+      $localize`:Term text:How far the actual result beat (+) or missed (−) the estimate, in percent.`,
     ],
     example: $localize`:Term example:Estimate $2.00, actual $2.10 → surprise +5%.`,
   },
   result: {
     title: $localize`:Term title:Beat, Miss, In line`,
-    body: [
-      $localize`:Term text:Beat: the actual EPS was above the estimate. Miss: below it. In line: about the same.`,
-      $localize`:Term text:A beat does not guarantee that the price goes up: revenue and the company's outlook matter too.`,
-    ],
+    body: [$localize`:Term text:Beat: EPS above the estimate. Miss: below. In line: about equal.`],
   },
   reportTime: {
     title: $localize`:Term title:Before open, After close`,
     body: [
-      $localize`:Term text:When the company publishes its results. Before open: before the stock exchange opens, so the price reacts the same day. After close: after the exchange closes, so the price reacts on the next trading day.`,
-      $localize`:Term text:US exchanges trade from 9:30 to 16:00 New York time (15:30 to 22:00 Prague time). "Time TBD" means the company has not announced the time yet.`,
+      $localize`:Term text:Before open: the price reacts the same day. After close: the next trading day. Time TBD: not announced yet.`,
     ],
   },
   reaction: {
     title: $localize`:Term title:Price reaction`,
     body: [
-      $localize`:Term text:Run-up: the price change over the 5 trading days before the results.`,
-      $localize`:Term text:Gap: the jump from the last close before the results to the next opening price.`,
-      $localize`:Term text:Day: the price change on the reaction day, the first trading day after the results.`,
-      $localize`:Term text:Drift: the price change over the 5 trading days after the reaction day, showing whether the move continued or reversed.`,
+      $localize`:Term text:Run-up: the 5 trading days before the results.`,
+      $localize`:Term text:Gap: from the last close before the results to the next open.`,
+      $localize`:Term text:Day: the first trading day after the results.`,
+      $localize`:Term text:Drift: the 5 trading days after that.`,
     ],
   },
   beatRate: {
     title: $localize`:Term title:Beat rate`,
     body: [
-      $localize`:Term text:In how many of the recent quarters the company beat the EPS estimate.`,
-      $localize`:Term text:Most large companies beat the estimate most of the time, so a high beat rate is common. A low one is a warning sign.`,
+      $localize`:Term text:Share of recent quarters that beat the EPS estimate. High is common; low is a warning sign.`,
     ],
-    example: $localize`:Term example:6 of 8 quarters = 75%.`,
   },
   streak: {
     title: $localize`:Term title:Current streak`,
     body: [
-      $localize`:Term text:How many quarters in a row the company has beaten (or missed) the estimate, counting back from the latest report.`,
+      $localize`:Term text:Quarters in a row above (or below) the estimate, up to the latest report.`,
     ],
   },
   avgReaction: {
     title: $localize`:Term title:Average reaction`,
     body: [
-      $localize`:Term text:How much the price moved on the reaction day on average, up or down (the direction is ignored). It shows how big a move to expect after the results.`,
+      $localize`:Term text:Average size of the reaction-day move, either direction: how big a move to expect.`,
     ],
-    example: $localize`:Term example:±4% means the price usually moved about 4% one way or the other.`,
   },
   recommendations: {
     title: $localize`:Term title:Analyst recommendations`,
     body: [
-      $localize`:Term text:Analysts at banks and brokers rate stocks: Strong buy, Buy, Hold (keep it if you own it), Sell and Strong sell.`,
-      $localize`:Term text:Each bar shows how many analysts gave each rating in that month. It is an opinion, not a guarantee.`,
+      $localize`:Term text:How many analysts rated the stock buy, hold or sell each month. An opinion, not a guarantee.`,
     ],
   },
   peers: {
     title: $localize`:Term title:Peers`,
-    body: [
-      $localize`:Term text:Companies in the same industry. Useful for comparing numbers such as P/E or how the price reacted to results.`,
-    ],
+    body: [$localize`:Term text:Companies in the same industry, for comparison.`],
   },
   averageCost: {
     title: $localize`:Term title:Average cost`,
     body: [
-      $localize`:Term text:What you paid per share, on average, for the shares you hold now. Every buy moves it; a sell does not change it.`,
-      $localize`:Term text:Trading 212 calculates it this way, and profits from sells are measured against it.`,
+      $localize`:Term text:What you paid per share, on average, for the shares you hold. Buys change it, sells don't.`,
     ],
     example: $localize`:Term example:10 shares at $100 and 10 more at $120: the average cost is $110.`,
   },
   realizedPnl: {
     title: $localize`:Term title:Realized profit/loss`,
     body: [
-      $localize`:Term text:Money you actually made or lost by selling: the sale price minus the average cost of the shares sold.`,
-      $localize`:Term text:For a period, it counts the sells in that period, measured against what you paid, even if you bought earlier. Fees are not deducted; they are shown separately.`,
+      $localize`:Term text:What you made or lost by selling: sale price minus average cost. Fees are shown separately.`,
     ],
-    example: $localize`:Term example:Average cost $110, you sell 5 shares at $130: realized profit is 5 × $20 = $100.`,
   },
   fxFees: {
     title: $localize`:Term title:FX fees`,
     body: [
-      $localize`:Term text:Trading 212 charges 0.15% each time it converts your money into the stock's currency: on every buy and again on every sell.`,
-      $localize`:Term text:Frequent trading adds up: the fee is paid on the whole amount of each trade, win or lose. It is not deducted in Realized.`,
+      $localize`:Term text:The 0.15% Trading 212 charges for currency conversion on every buy and sell. Not deducted in Realized.`,
     ],
-    example: $localize`:Term example:You buy for 100,000 CZK and later sell for 100,000 CZK: you pay 150 CZK twice, 300 CZK in total.`,
   },
   accountFees: {
     title: $localize`:Term title:Account fees`,
     body: [
-      $localize`:Term text:Fees Trading 212 takes from the account that do not belong to any stock, so the profit/loss of the stocks does not include them.`,
-      $localize`:Term text:Mostly the 0.7% fee for deposits by card, Apple Pay or Google Pay. Deposits by bank transfer are free.`,
+      $localize`:Term text:Fees not tied to a stock, mostly 0.7% on card, Apple Pay or Google Pay deposits (bank transfers are free).`,
     ],
-    example: $localize`:Term example:You deposit 30,000 CZK by card: Trading 212 charges 210 CZK.`,
   },
   includingFees: {
     title: $localize`:Term title:Including fees`,
     body: [
-      $localize`:Term text:The amount once the fees and taxes Trading 212 charges on trades are counted: on a buy what you paid with them, on a sell what you received after them, and for profit/loss what is left after they are deducted.`,
-      $localize`:Term text:Trading 212 charges no commission, so this is mostly the 0.15% currency conversion fee.`,
+      $localize`:Term text:After the fees and taxes Trading 212 charges on trades, mostly the 0.15% FX fee.`,
     ],
-    example: $localize`:Term example:Realized +$100 and $3 of fees on the trades: including fees, +$97.`,
   },
   tradeDayRate: {
     title: $localize`:Term title:Trades in another currency`,
     body: [
-      $localize`:Term text:Trading 212 can keep money in more currencies, so a trade can be bought and sold in dollars even when the account is in another currency. Trading 212 then only shows it converted.`,
-      $localize`:Term text:The app does the same: every amount and total is converted to the account currency at the exchange rate of the day of the trade, and the dialog also shows the amount as it really was.`,
+      $localize`:Term text:Amounts in another currency are converted to the account currency at the trade day's rate, as in Trading 212. The dialog also shows the original amount.`,
     ],
-    example: $localize`:Term example:A sell with a 224 USD gain on a day when 1 USD = 22 CZK counts as +4,928 CZK.`,
   },
   groupPnl: {
     title: $localize`:Term title:Profit/loss of a group`,
     body: [
-      $localize`:Term text:A group works like a Trading 212 pie: it holds the shares of the buys you put in it, with its own average cost. A sell in the group is measured against that average, not the average of the whole position.`,
-      $localize`:Term text:So a group's realized profit/loss can differ from what Trading 212 shows for the same sell. Fees are not deducted; they are shown separately.`,
-      $localize`:Term text:A sell of shares the group never bought (their buys are not in it) counts Trading 212's profit/loss for those shares, since the group has no cost for them.`,
+      $localize`:Term text:A group works like a Trading 212 pie: its sells are measured against the average cost of its own buys, so the result can differ from Trading 212's. Sells of shares not bought in the group use Trading 212's profit/loss.`,
     ],
-    example: $localize`:Term example:You buy 10 shares at $100 for one group and 10 at $200 for another. Selling 10 at $180 from the second group is a loss of $200 there, while Trading 212 counts +$300 against its average of $150.`,
+    example: $localize`:Term example:Bought 10 at $100 (group A) and 10 at $200 (B); 10 sold at $180 from B: −$200 in B, +$300 in Trading 212.`,
   },
   unrealizedPnl: {
     title: $localize`:Term title:Unrealized profit/loss`,
     body: [
-      $localize`:Term text:How much the shares you still hold are up or down: their current value minus what you paid for them.`,
-      $localize`:Term text:It changes with the price every day and becomes realized only when you sell. It is always as of now.`,
+      $localize`:Term text:Current value of the shares you hold minus what you paid for them.`,
     ],
-    example: $localize`:Term example:You hold 10 shares with an average cost of $110 and the price is $100: unrealized loss is −$100.`,
   },
   todayPnl: {
     title: $localize`:Term title:Today's profit/loss`,
     body: [
-      $localize`:Term text:How much your account value has changed since midnight (00:00, Prague time). It compares the value now with the value stored at midnight.`,
-      $localize`:Term text:Money you deposited or withdrew since midnight is left out, so only price and exchange rate moves count. The percentage is of the account value at midnight, cash included.`,
-      $localize`:Term text:Stocks traded in the US move mostly in the afternoon and evening, Prague time. It shows a dash until the app has a value from before today.`,
+      $localize`:Term text:Change in account value since midnight Prague time, excluding deposits and withdrawals. A dash means there is no value from midnight yet.`,
     ],
-    example: $localize`:Term example:The account was worth 100,000 at midnight and is worth 101,500 now, with 1,000 deposited this morning: today +500 (+0.5%).`,
   },
   totalPnl: {
     title: $localize`:Term title:Total profit/loss`,
     body: [
-      $localize`:Term text:Realized profit/loss plus dividends, minus fees. For all time, the unrealized profit/loss of what you still hold is added too.`,
-      $localize`:Term text:The percentage compares it with everything you spent on buying the stock.`,
+      $localize`:Term text:Realized profit/loss plus dividends minus fees (for all time, plus unrealized). The percentage is of what you spent buying the stock.`,
     ],
-    example: $localize`:Term example:Realized +$100, dividends +$5, fees −$2 and unrealized −$40: total +$63.`,
   },
   accountReturn: {
     title: $localize`:Term title:Return on net deposits`,
     body: [
-      $localize`:Term text:All-time profit divided by your net deposits (everything you paid in minus what you took out). It counts the whole account, cash included.`,
-      $localize`:Term text:It can differ from the percentage in the Trading 212 app, which usually compares the profit with the cost of the stocks you hold. A large cash balance or recent deposits make this figure lower.`,
-      $localize`:Term text:The percentage is always all time: changing the range does not change it, but touching the chart shows it as of that moment.`,
+      $localize`:Term text:All-time profit ÷ net deposits (paid in minus taken out). Cash lowers it, so it is often below Trading 212's figure. The range does not change it.`,
     ],
-    example: $localize`:Term example:Profit 100,000 on net deposits of 1,290,000: +7.8%.`,
   },
   breakEven: {
     title: $localize`:Term title:Break-even price`,
     body: [
-      $localize`:Term text:The price at which you are neither up nor down on the shares you hold: your average cost. Above it you are in profit, below it at a loss. Fees are not included.`,
-      $localize`:Term text:Exchange rate changes move the value in your account currency too, so the result can change even when the price does not.`,
+      $localize`:Term text:Your average cost: above it you are in profit, below it at a loss. Fees not included.`,
     ],
-    example: $localize`:Term example:Average cost $110 and the price is $100: the price has to rise 10% to break even.`,
   },
   trueGain: {
     title: $localize`:Term title:True gain`,
     body: [
-      $localize`:Term text:What the stock's price move alone earned you, converted at today's exchange rate. It leaves out the effect of exchange rate changes since you bought.`,
-      $localize`:Term text:True gain plus FX impact equals the unrealized profit/loss.`,
+      $localize`:Term text:What the price move alone earned, without currency moves since you bought. True gain + FX impact = unrealized profit/loss.`,
     ],
-    example: $localize`:Term example:The price rose from $100 to $110 on 10 shares: true gain is $100 in your account currency, whatever the dollar did.`,
   },
 };
