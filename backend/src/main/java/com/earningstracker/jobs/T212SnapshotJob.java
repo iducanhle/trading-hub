@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.earningstracker.t212.T212Encryption;
@@ -15,8 +16,8 @@ import com.earningstracker.t212.T212StateStore;
 import org.springframework.stereotype.Component;
 
 /**
- * Every minute: stores each connected user's account value ({@link T212SnapshotStore}) for the balance history
- * chart. Reuses the live values the portfolio page shows (one account summary and one positions call when not
+ * Every minute: stores each connected user's account value and cash ({@link T212SnapshotStore}) for the balance
+ * history chart and for dating withdrawals (see {@code T212FlowTiming}). Reuses the live values the portfolio page shows (one account summary and one positions call when not
  * cached). A stale or missing value is skipped, never filled in, and a value equal to the user's last stored
  * one is not stored again (closed markets). Does nothing without {@code T212_ENCRYPTION_KEY}.
  */
@@ -59,17 +60,19 @@ public class T212SnapshotJob implements Job {
             Optional<T212State> state = states.find(uid);
             Optional<T212Live> values = state.isPresent() && state.get().credentialsValid()
                     ? live.live(uid) : Optional.empty();
-            Double value = values.filter(v -> !v.stale()).map(v -> v.account().totalValue()).orElse(null);
+            T212Live.Account account = values.filter(v -> !v.stale()).map(T212Live::account).orElse(null);
+            Double value = account == null ? null : account.totalValue();
             if (value == null) {
                 skipped++;
                 continue;
             }
-            if (snapshots.last(uid).filter(p -> p.value() == value).isPresent()) {
+            Double cash = account.cash();
+            if (snapshots.last(uid).filter(p -> p.value() == value && Objects.equals(p.cash(), cash)).isPresent()) {
                 unchanged++;
                 continue;
             }
             // Time of the job, not of a cached fetch, so points sit on the minute marks.
-            snapshots.add(uid, new T212SnapshotStore.Point(Instant.now(clock), value));
+            snapshots.add(uid, new T212SnapshotStore.Point(Instant.now(clock), value, cash));
             stored++;
         }
         stats.put("stored", stored);

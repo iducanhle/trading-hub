@@ -215,7 +215,7 @@ function chartTime(iso: string): UTCTimestamp {
                       >{{ todayPnlPct() | pct: 1 }}</span
                     >
                     <span class="inline-flex items-center" [class.invisible]="hovered()">
-                      <span class="app-label" i18n="Profit since midnight">today</span>
+                      <span class="app-label" i18n="Profit since the previous close">today</span>
                       <app-term-info class="ml-1 inline-flex" term="todayPnl" />
                     </span>
                   }
@@ -314,7 +314,7 @@ export class PortfolioHistory {
 
   /** Goes up on pull-to-refresh / Retry. */
   readonly version = input(0);
-  /** From the summary: profit/loss since midnight, as of now. */
+  /** From the summary: profit/loss since the previous US close, as of now. */
   readonly todayPnl = input<number | null>(null);
   readonly todayPnlPct = input<number | null>(null);
 

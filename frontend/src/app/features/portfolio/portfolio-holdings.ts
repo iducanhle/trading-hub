@@ -84,7 +84,7 @@ import { UnrealizedSheet, UnrealizedSheetData } from '../stock-detail/sections/u
                   {{ accountValue() | price: (currency() | acct) }}
                 </p>
                 <p class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[13px] tabular-nums">
-                  <span class="text-on-surface-variant" i18n="Profit or loss since midnight"
+                  <span class="text-on-surface-variant" i18n="Profit or loss since the previous close"
                     >Today</span
                   >
                   @if (todayPnl() !== null) {

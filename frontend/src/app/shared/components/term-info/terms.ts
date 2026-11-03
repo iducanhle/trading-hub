@@ -202,7 +202,7 @@ export const TERMS: Record<TermId, Term> = {
   todayPnl: {
     title: $localize`:Term title:Today's profit/loss`,
     body: [
-      $localize`:Term text:Change in account value since midnight Prague time, excluding deposits and withdrawals. A dash means there is no value from midnight yet.`,
+      $localize`:Term text:Change in account value since the previous US market close, excluding deposits and withdrawals. A dash means there is no value from then yet.`,
     ],
   },
   totalPnl: {

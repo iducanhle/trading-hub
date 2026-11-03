@@ -17,9 +17,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
 /**
- * The account value every minute ({@code t212-snapshot} job; unchanged values are not stored again), one
+ * The account value and cash every minute ({@code t212-snapshot} job; unchanged values are not stored again), one
  * backend-only document per day:
- * {@code t212/{uid}/snapshots/{YYYY-MM-DD}} = {@code {points: [{at, value}]}} (Europe/Prague days, epoch millis).
+ * {@code t212/{uid}/snapshots/{YYYY-MM-DD}} = {@code {points: [{at, value, cash?}]}} (Europe/Prague days, epoch
+ * millis; {@code cash} since 2026-11-03).
  * Trading 212 has no balance history, so this starts on the first snapshot. A user's whole history costs one read
  * per day stored; it is then kept in memory until unused for 6 hours.
  */
@@ -29,8 +30,12 @@ public class T212SnapshotStore {
     static final String SNAPSHOTS = "snapshots";
     static final ZoneId ZONE = ZoneId.of("Europe/Prague");
 
-    /** The account value (account currency) at one moment. */
-    public record Point(Instant at, double value) {
+    /** The account value and cash (account currency; cash null when unknown) at one moment. */
+    public record Point(Instant at, double value, Double cash) {
+
+        public Point(Instant at, double value) {
+            this(at, value, null);
+        }
     }
 
     private final DocumentStore store;
@@ -63,8 +68,7 @@ public class T212SnapshotStore {
         LocalDate day = point.at().atZone(ZONE).toLocalDate();
         List<Point> points = new ArrayList<>(days.getOrDefault(day, List.of()));
         points.add(point);
-        store.set(path(uid), day.toString(), Map.of("points", points.stream()
-                .map(p -> Map.<String, Object>of("at", p.at().toEpochMilli(), "value", p.value())).toList()));
+        store.set(path(uid), day.toString(), Map.of("points", points.stream().map(T212SnapshotStore::toMap).toList()));
         days.put(day, List.copyOf(points));
     }
 
@@ -84,13 +88,19 @@ public class T212SnapshotStore {
                 for (Object item : list) {
                     if (item instanceof Map<?, ?> m && m.get("at") instanceof Number at
                             && m.get("value") instanceof Number value) {
-                        points.add(new Point(Instant.ofEpochMilli(at.longValue()), value.doubleValue()));
+                        points.add(new Point(Instant.ofEpochMilli(at.longValue()), value.doubleValue(),
+                                m.get("cash") instanceof Number cash ? cash.doubleValue() : null));
                     }
                 }
             }
             days.put(LocalDate.parse(id), List.copyOf(points));
         });
         return days;
+    }
+
+    private static Map<String, Object> toMap(Point p) {
+        return p.cash() == null ? Map.of("at", p.at().toEpochMilli(), "value", p.value())
+                : Map.of("at", p.at().toEpochMilli(), "value", p.value(), "cash", p.cash());
     }
 
     private static String path(String uid) {

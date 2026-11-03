@@ -5,6 +5,8 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -392,19 +394,21 @@ public class T212PortfolioService {
     }
 
     /**
-     * Today's profit/loss: the live account value minus the last stored value before midnight (Europe/Prague), less
-     * the deposits and withdrawals since then; the percentage is of that midnight value. Unknown without a value from
-     * before today, without the live value, or when a deposit since then could not be converted.
+     * Today's profit/loss: the live account value minus the last stored value at the previous US close (see
+     * {@link #previousClose}), less the deposits and withdrawals since then; the percentage is of that value. Trading
+     * 212 measures a day's change from the previous close, and the value keeps moving after it (extended hours, FX),
+     * so a midnight value would differ by that. Unknown without a value from before then, without the live value, or
+     * when a deposit since then could not be converted.
      */
     private Today today(String uid, Context ctx, Double totalValue) {
         if (totalValue == null) {
             return Today.UNKNOWN;
         }
-        Instant midnight = clock.instant().atZone(T212SnapshotStore.ZONE).toLocalDate()
-                .atStartOfDay(T212SnapshotStore.ZONE).toInstant();
+        Instant close = previousClose(clock.instant());
+        List<T212SnapshotStore.Point> points = snapshots.points(uid);
         T212SnapshotStore.Point base = null;
-        for (T212SnapshotStore.Point p : snapshots.points(uid)) {
-            if (!p.at().isBefore(midnight)) {
+        for (T212SnapshotStore.Point p : points) {
+            if (p.at().isAfter(close)) {
                 break;
             }
             base = p;
@@ -413,17 +417,56 @@ public class T212PortfolioService {
             return Today.UNKNOWN;
         }
         double flows = 0;
-        for (T212CashTransaction t : ctx.data().transactions().values()) {
-            if ((t.type().equals("DEPOSIT") || t.type().equals("WITHDRAW")) && t.at().isAfter(base.at())) {
-                Double amount = inAccountCurrency(t.amount(), t.currency(), ctx.currency());
-                if (amount == null) {
+        for (Flow flow : flows(ctx, points)) {
+            if (flow.at().isAfter(base.at())) {
+                if (flow.amount() == null) {
                     return Today.UNKNOWN;
                 }
-                flows += amount;
+                flows += flow.amount();
             }
         }
         double pnl = totalValue - base.value() - flows;
         return new Today(round(pnl), round(pnl / base.value() * 100));
+    }
+
+    private static final ZoneId NEW_YORK = ZoneId.of("America/New_York");
+
+    /**
+     * The US regular close (16:00 New York) of the trading day before the current one: the current one is today in
+     * New York, or Friday on a weekend. Holidays count as trading days (the value barely moves on them).
+     */
+    static Instant previousClose(Instant now) {
+        LocalDate session = now.atZone(NEW_YORK).toLocalDate();
+        while (isWeekend(session)) {
+            session = session.minusDays(1);
+        }
+        LocalDate previous = session.minusDays(1);
+        while (isWeekend(previous)) {
+            previous = previous.minusDays(1);
+        }
+        return previous.atTime(16, 0).atZone(NEW_YORK).toInstant();
+    }
+
+    private static boolean isWeekend(LocalDate day) {
+        return day.getDayOfWeek() == DayOfWeek.SATURDAY || day.getDayOfWeek() == DayOfWeek.SUNDAY;
+    }
+
+    /** A deposit or withdrawal in the account currency (null when it could not be converted). */
+    private record Flow(Instant at, Double amount) {
+    }
+
+    /**
+     * Every deposit and withdrawal, oldest first, a withdrawal at the time it left the stored cash when that is
+     * known ({@link T212FlowTiming}), otherwise at its own (processing) time.
+     */
+    private List<Flow> flows(Context ctx, List<T212SnapshotStore.Point> points) {
+        Map<String, Instant> withdrawn = T212FlowTiming.withdrawalTimes(points, ctx.data().transactions().values(),
+                ctx.data().fills().values(), ctx.currency());
+        return ctx.data().transactions().values().stream()
+                .filter(t -> t.type().equals("DEPOSIT") || t.type().equals("WITHDRAW"))
+                .map(t -> new Flow(withdrawn.getOrDefault(t.id(), t.at()),
+                        inAccountCurrency(t.amount(), t.currency(), ctx.currency())))
+                .sorted(Comparator.comparing(Flow::at)).toList();
     }
 
     /**
@@ -433,24 +476,22 @@ public class T212PortfolioService {
     public T212Dtos.History history(String uid, HistoryRange range, HistoryInterval interval) {
         Context ctx = context(uid, false);
         Instant now = clock.instant();
+        List<T212SnapshotStore.Point> all = snapshots.points(uid);
         Map<Instant, T212SnapshotStore.Point> lastPerStep = new java.util.TreeMap<>();
-        for (T212SnapshotStore.Point p : snapshots.points(uid)) {
+        for (T212SnapshotStore.Point p : all) {
             if (range.span == null || !p.at().isBefore(now.minus(range.span))) {
                 lastPerStep.put(interval.bucket(p.at()), p);
             }
         }
         List<T212SnapshotStore.Point> points = List.copyOf(lastPerStep.values());
 
-        List<T212CashTransaction> flows = ctx.data().transactions().values().stream()
-                .filter(t -> t.type().equals("DEPOSIT") || t.type().equals("WITHDRAW"))
-                .sorted(Comparator.comparing(T212CashTransaction::at)).toList();
+        List<Flow> flows = flows(ctx, all);
         List<T212Dtos.HistoryPoint> result = new java.util.ArrayList<>();
         int next = 0;
         Double netDeposits = 0.0;
         for (T212SnapshotStore.Point p : points) {
             while (next < flows.size() && !flows.get(next).at().isAfter(p.at())) {
-                T212CashTransaction t = flows.get(next++);
-                Double amount = inAccountCurrency(t.amount(), t.currency(), ctx.currency());
+                Double amount = flows.get(next++).amount();
                 netDeposits = netDeposits == null || amount == null ? null : netDeposits + amount;
             }
             result.add(new T212Dtos.HistoryPoint(p.at(), round(p.value()),

@@ -213,6 +213,7 @@ class T212PortfolioServiceTest {
                     assertThat(p.value()).isEqualTo(10450.25);
                     assertThat(p.profit()).isEqualTo(10450.25 - 4800);
                 });
+        assertThat(snapshots.points(UID).getFirst().cash()).isEqualTo(950.25);
     }
 
     @Test
@@ -322,16 +323,47 @@ class T212PortfolioServiceTest {
     }
 
     @Test
-    void todayComparesTheLiveValueWithTheLastStoredValueBeforePragueMidnight() {
-        // Now is 2026-10-02 12:00 in Prague, so midnight is 2026-10-01T22:00Z.
+    void todayComparesTheLiveValueWithTheLastStoredValueAtThePreviousUsClose() {
+        // Now is Friday 2026-10-02 10:00Z, so the previous close is Thursday 16:00 New York = 20:00Z.
         snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-01T19:00:00Z"), 10000));
-        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-01T21:59:00Z"), 10200));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-01T21:59:00Z"), 10200)); // after hours
         snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-10-02T06:00:00Z"), 10300));
 
         T212Dtos.Summary s = portfolio.summary(UID, T212Period.ALL_TIME);
 
-        assertThat(s.todayPnl()).isEqualTo(250.25); // 10,450.25 − 10,200
-        assertThat(s.todayPnlPct()).isEqualTo(2.45);
+        assertThat(s.todayPnl()).isEqualTo(450.25); // 10,450.25 − 10,000
+        assertThat(s.todayPnlPct()).isEqualTo(4.5);
+    }
+
+    @Test
+    void thePreviousCloseIsTheUsCloseOfTheTradingDayBefore() {
+        // Tuesday afternoon in Prague: Monday's close (EST, 21:00Z).
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-03T16:00:00Z")))
+                .isEqualTo(Instant.parse("2026-11-02T21:00:00Z"));
+        // Tuesday evening after the close: still Monday's, as the day in New York is still Tuesday.
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-03T23:30:00Z")))
+                .isEqualTo(Instant.parse("2026-11-02T21:00:00Z"));
+        // Monday morning: Friday's. Saturday and Sunday: Thursday's (the change of Friday).
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-02T08:00:00Z")))
+                .isEqualTo(Instant.parse("2026-10-30T20:00:00Z"));
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-10-31T12:00:00Z")))
+                .isEqualTo(Instant.parse("2026-10-29T20:00:00Z"));
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-02T03:00:00Z")))
+                .isEqualTo(Instant.parse("2026-10-29T20:00:00Z"));
+    }
+
+    @Test
+    void aWithdrawalCountsFromWhenItLeftTheCashNotWhenItWasProcessed() {
+        // The 200 withdrawal is processed on 2026-08-01 12:00Z, but the cash fell by 200 on 31 July.
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-07-30T10:00:00Z"), 5100, 1000.0));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-07-31T09:00:00Z"), 4900, 800.0));
+
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.ALL,
+                T212PortfolioService.HistoryInterval.D1).points()).containsExactly(
+                new T212Dtos.HistoryPoint(Instant.parse("2026-07-30T10:00:00Z"), 5100.0, 5000.0, 100.0),
+                new T212Dtos.HistoryPoint(Instant.parse("2026-07-31T09:00:00Z"), 4900.0, 4800.0, 100.0));
+        // The base value already lacks the 200, so it is not added back.
+        assertThat(portfolio.summary(UID, T212Period.ALL_TIME).todayPnl()).isEqualTo(5550.25); // 10,450.25 − 4,900
     }
 
     @Test

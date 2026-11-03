@@ -689,7 +689,7 @@
     "7667114640789086481": "Skupina funguje jako koláč v Trading 212: prodeje se měří vůči průměrné ceně jejích vlastních nákupů, takže se výsledek může lišit od Trading 212. U prodeje akcií nekoupených ve skupině se použije zisk/ztráta z Trading 212.",
     "5462954222171816852": "Nákup 10 akcií za 100 $ (skupina A) a 10 za 200 $ (B); prodej 10 za 180 $ z B: v B −200 $, v Trading 212 +300 $.",
     "8082760014728322517": "Současná hodnota akcií, které držíte, minus to, co jste za ně zaplatili.",
-    "2558790043512102392": "Změna hodnoty účtu od půlnoci pražského času, bez vkladů a výběrů. Pomlčka znamená, že hodnota z půlnoci zatím chybí.",
+    "4220700700694968136": "Změna hodnoty účtu od posledního uzavření amerického trhu, bez vkladů a výběrů. Pomlčka znamená, že hodnota z té doby zatím chybí.",
     "3144935591200116436": "Realizovaný zisk/ztráta plus dividendy minus poplatky (za celé období i nerealizovaný). Procento je z toho, co jste za nákupy akcie utratili.",
     "2027790031357044818": "Celkový zisk ÷ čisté vklady (vloženo minus vybráno). Hotovost ho snižuje, takže bývá nižší než číslo v Trading 212. Období ho nemění.",
     "3727631558560982956": "Vaše průměrná nákupní cena: nad ní jste v zisku, pod ní ve ztrátě. Bez poplatků.",
