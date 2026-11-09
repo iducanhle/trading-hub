@@ -1,6 +1,6 @@
 import { EarningsMarker, PriceBar, T212Trade } from '../../core/models/contract';
 import { beatRateText } from './sections/earnings-stats';
-import { calendarCells, intensity } from './sections/history-calendar';
+import { calendarCells, intensity } from '../../shared/utils/change-calendar';
 import { periodLabel } from './sections/performance-history';
 import { ChartColors, withAlpha } from './sections/price-chart/chart-colors';
 import { futureSessions, placeMarkers, weekdaysAfter } from './sections/price-chart/chart-data';

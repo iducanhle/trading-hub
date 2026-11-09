@@ -693,6 +693,8 @@
     "3144935591200116436": "Realizovaný zisk/ztráta plus dividendy minus poplatky (za celé období i nerealizovaný). Procento je z toho, co jste za nákupy akcie utratili.",
     "2027790031357044818": "Celkový zisk ÷ čisté vklady (vloženo minus vybráno). Hotovost ho snižuje, takže bývá nižší než číslo v Trading 212. Období ho nemění.",
     "3727631558560982956": "Vaše průměrná nákupní cena: nad ní jste v zisku, pod ní ve ztrátě. Bez poplatků.",
-    "1131514878657613140": "Kolik vydělal samotný pohyb ceny, bez vlivu změn kurzu od nákupu. Skutečný zisk + dopad FX = nerealizovaný zisk/ztráta."
+    "1131514878657613140": "Kolik vydělal samotný pohyb ceny, bez vlivu změn kurzu od nákupu. Skutečný zisk + dopad FX = nerealizovaný zisk/ztráta.",
+    "33214993703169691": "Kalendář zisku/ztráty",
+    "8375218102456258947": "{$day}, bez dat"
   }
 }

@@ -196,6 +196,26 @@ export function formatSignedMoney(
   return formatTrailingCurrency(format, value);
 }
 
+/**
+ * A signed whole amount without the currency symbol, for tight spots such as calendar squares: `+123`, `−1,234`,
+ * `+12.3K`. Follows the display currency like the other money formats.
+ */
+export function formatSignedShort(
+  value: number | null | undefined,
+  currency?: string | null,
+  locale = NUMBER_LOCALE,
+): string {
+  if (!isNumber(value)) return DASH;
+  [value] = resolveMoney(value, currency);
+  const format = numberFormat(
+    locale,
+    Math.abs(value) >= 10_000
+      ? { notation: 'compact', maximumSignificantDigits: 3, signDisplay: 'exceptZero' }
+      : { maximumFractionDigits: 0, signDisplay: 'exceptZero' },
+  );
+  return withMinus(format.format(value));
+}
+
 /** Share quantities, fractional ones included: `10`, `0.5`, `1.234567`. */
 export function formatQuantity(value: number | null | undefined, locale = NUMBER_LOCALE): string {
   if (!isNumber(value)) return DASH;

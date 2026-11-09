@@ -1,0 +1,95 @@
+import { describe, expect, it } from 'vitest';
+import { T212HistoryPoint } from '../../core/models/contract';
+import { dailyPnl, elapsedWeekdays, groupPnl, pragueDate, sumPnl } from './pnl-calendar-model';
+
+/** The last point of a Prague day (20:00 UTC is 21:00 or 22:00 in Prague). */
+const point = (date: string, value: number, netDeposits: number | null): T212HistoryPoint => ({
+  at: `${date}T20:00:00Z`,
+  value,
+  netDeposits,
+  profit: netDeposits === null ? null : value - netDeposits,
+});
+
+describe('profit/loss calendar', () => {
+  it('dates points by the Prague calendar day', () => {
+    expect(pragueDate('2026-11-09T23:30:00Z')).toBe('2026-11-10');
+    expect(pragueDate('2026-11-09T22:59:00Z')).toBe('2026-11-09');
+  });
+
+  it('takes each day from the previous weekday, without deposits and with the weekend on Monday', () => {
+    const rows = dailyPnl(
+      [
+        point('2026-11-05', 1000, 900), // Thu: the first point is only the base
+        point('2026-11-06', 1010, 900), // Fri: +10
+        point('2026-11-07', 1012, 900), // Sat
+        point('2026-11-08', 1515, 1400), // Sun: a 500 deposit
+        point('2026-11-09', 1520, 1400), // Mon: +10 since Friday (2 on Saturday, 3 on Sunday, 5 today)
+      ],
+      '2026-11-20',
+    );
+    expect(rows.map((r) => [r.periodStart, r.pnl])).toEqual([
+      ['2026-11-06', 10],
+      ['2026-11-09', 10],
+    ]);
+    expect(rows[0].pnlPct).toBeCloseTo(1);
+    expect(rows[1].pnlPct).toBeCloseTo((10 / 1010) * 100);
+  });
+
+  it('leaves a missing day out and keeps unknown amounts null', () => {
+    const rows = dailyPnl(
+      [
+        point('2026-11-02', 1000, 900),
+        point('2026-11-04', 1020, 900), // Tue missing: Wed covers both days
+        point('2026-11-05', 1030, null),
+      ],
+      '2026-11-20',
+    );
+    expect(rows.map((r) => [r.periodStart, r.pnl])).toEqual([
+      ['2026-11-04', 20],
+      ['2026-11-05', null],
+    ]);
+    expect(rows[1].pnlPct).toBeNull();
+  });
+
+  it("uses the summary's figure for today", () => {
+    const rows = dailyPnl(
+      [point('2026-11-06', 1000, 900), point('2026-11-09', 1050, 900)],
+      '2026-11-09',
+      { pnl: 42, pnlPct: 4.2 },
+    );
+    expect(rows).toEqual([
+      { periodStart: '2026-11-09', periodEnd: '2026-11-09', pnl: 42, pnlPct: 4.2 },
+    ]);
+  });
+
+  it('adds days up per week and month, compounding the percentages', () => {
+    const days = [
+      { periodStart: '2026-10-30', periodEnd: '2026-10-30', pnl: 10, pnlPct: 1 },
+      { periodStart: '2026-11-02', periodEnd: '2026-11-02', pnl: 20, pnlPct: 2 },
+      { periodStart: '2026-11-03', periodEnd: '2026-11-03', pnl: -5, pnlPct: -0.5 },
+    ];
+    const weeks = groupPnl(days, 'WEEK');
+    expect(weeks.map((w) => [w.periodStart, w.periodEnd, w.pnl])).toEqual([
+      ['2026-10-26', '2026-10-30', 10],
+      ['2026-11-02', '2026-11-06', 15],
+    ]);
+    expect(weeks[1].pnlPct).toBeCloseTo((1.02 * 0.995 - 1) * 100);
+    const months = groupPnl(days, 'MONTH');
+    expect(months.map((m) => [m.periodStart, m.periodEnd, m.pnl])).toEqual([
+      ['2026-10-01', '2026-10-31', 10],
+      ['2026-11-01', '2026-11-30', 15],
+    ]);
+    expect(sumPnl('2026-01-01', '2026-12-31', days)?.pnl).toBe(25);
+    expect(sumPnl('2025-01-01', '2025-12-31', days)).toBeNull();
+  });
+
+  it('counts the weekdays of a week that have begun by today', () => {
+    const monday = '2026-11-09';
+    expect(elapsedWeekdays(monday, '2026-11-06')).toBe(0);
+    expect(elapsedWeekdays(monday, '2026-11-09')).toBe(1);
+    expect(elapsedWeekdays(monday, '2026-11-11')).toBe(3);
+    expect(elapsedWeekdays(monday, '2026-11-13')).toBe(5);
+    expect(elapsedWeekdays(monday, '2026-11-14')).toBe(5);
+    expect(elapsedWeekdays(monday, '2026-12-01')).toBe(5);
+  });
+});

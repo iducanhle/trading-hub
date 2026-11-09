@@ -10,6 +10,7 @@ import { Icon } from '../../shared/icon/icon';
 import { PortfolioAllocation } from './portfolio-allocation';
 import { PortfolioHoldings } from './portfolio-holdings';
 import { PortfolioHistory } from './portfolio-history';
+import { PnlCalendar } from './pnl-calendar';
 import { PortfolioPeriod, periodQuery } from './portfolio-model';
 
 const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
@@ -25,6 +26,7 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
     PortfolioHoldings,
     PortfolioAllocation,
     PortfolioHistory,
+    PnlCalendar,
   ],
   template: `
     @if (data.error() && !data.hasValue()) {
@@ -55,6 +57,13 @@ const ALL_TIME: PortfolioPeriod = { preset: 'ALL', from: null, to: null };
       }
 
       <app-portfolio-history
+        class="mt-3.5 block"
+        [version]="version()"
+        [todayPnl]="s.todayPnl ?? null"
+        [todayPnlPct]="s.todayPnlPct ?? null"
+      />
+
+      <app-pnl-calendar
         class="mt-3.5 block"
         [version]="version()"
         [todayPnl]="s.todayPnl ?? null"

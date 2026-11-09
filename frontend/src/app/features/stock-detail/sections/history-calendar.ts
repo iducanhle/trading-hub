@@ -9,17 +9,21 @@ import { Skeleton } from '../../../shared/components/skeleton/skeleton';
 import { Icon } from '../../../shared/icon/icon';
 import { PricePipe } from '../../../shared/pipes/format.pipes';
 import {
+  CalendarCell as Cell,
+  calendarCells,
+  calendarWeeks,
+  changeInk,
+  changeTint,
+} from '../../../shared/utils/change-calendar';
+import {
   WEEKDAYS_SHORT,
-  addDays,
   addMonths,
   endOfMonth,
   formatDate,
   formatDateRange,
   formatMonthTitle,
-  isWeekend,
   startOfMonth,
   todayIso,
-  weekdayIndex,
 } from '../../../shared/utils/dates';
 import { formatPercent } from '../../../shared/utils/format';
 import { StockContext } from '../stock-context';
@@ -30,37 +34,7 @@ const MONTH_LIMIT = 23;
 const WEEK_LIMIT = 6;
 const WEEKDAYS = WEEKDAYS_SHORT.slice(0, 5);
 
-export interface CalendarCell {
-  date: string;
-  day: number;
-  /** Null on a weekday without a session (a holiday) or not traded yet. */
-  row: HistoryRow | null;
-}
-
-/**
- * The weekdays of a month in Monday-to-Friday columns, with null blanks before the first one; each carries its
- * daily row when there is one.
- */
-export function calendarCells(month: string, rows: readonly HistoryRow[]): (CalendarCell | null)[] {
-  const byDate = new Map(rows.map((row) => [row.periodStart, row]));
-  const cells: (CalendarCell | null)[] = [];
-  const last = endOfMonth(month);
-  for (let date = startOfMonth(month); date <= last; date = addDays(date, 1)) {
-    if (isWeekend(date)) continue;
-    if (!cells.length) cells.push(...Array<null>(weekdayIndex(date)).fill(null));
-    cells.push({ date, day: Number(date.slice(8)), row: byDate.get(date) ?? null });
-  }
-  return cells;
-}
-
-/** How strongly a day's square is tinted: 0 (no change or no data) to 4 (a move of 5 % or more). */
-export function intensity(percent: number | null | undefined): 0 | 1 | 2 | 3 | 4 {
-  if (percent == null || !Number.isFinite(percent) || percent === 0) return 0;
-  const size = Math.abs(percent);
-  return size < 1 ? 1 : size < 2.5 ? 2 : size < 5 ? 3 : 4;
-}
-
-const MIX = [0, 14, 26, 42, 80];
+type CalendarCell = Cell<HistoryRow>;
 
 /**
  * Performance history as a month calendar: one square per trading day with its change (or, weekly, one pill per week
@@ -316,19 +290,14 @@ export class HistoryCalendar {
   });
   protected readonly cells = computed(() => calendarCells(this.month(), this.rows()));
   /** The calendar's Monday-to-Friday rows, each with the weekly row covering it (null when not traded yet). */
-  protected readonly weeks = computed(() => {
-    const cells = calendarCells(this.month(), []);
-    const weeks: { cells: (CalendarCell | null)[]; row: HistoryRow | null }[] = [];
-    for (let i = 0; i < cells.length; i += 5) {
-      const week = cells.slice(i, i + 5);
-      while (week.length < 5) week.push(null);
+  protected readonly weeks = computed(() =>
+    calendarWeeks(this.month()).map((week) => {
       const dates = week.filter((c) => c !== null).map((c) => c.date);
       const row =
         this.rows().find((r) => dates.some((d) => d >= r.periodStart && d <= r.periodEnd)) ?? null;
-      weeks.push({ cells: week, row });
-    }
-    return weeks;
-  });
+      return { cells: week, row };
+    }),
+  );
   /** January to December of the shown year, each with its monthly row (null when not traded yet). */
   protected readonly months = computed(() =>
     Array.from({ length: 12 }, (_, i) => {
@@ -377,18 +346,11 @@ export class HistoryCalendar {
   }
 
   protected tint(row: HistoryRow): string {
-    const change = row.changePercent;
-    const level = intensity(change);
-    if (!level) return 'var(--mat-sys-surface-container-high)';
-    const tone = change! > 0 ? 'var(--app-gain)' : 'var(--app-loss)';
-    return `color-mix(in oklab, ${tone} ${MIX[level]}%, var(--mat-sys-surface))`;
+    return changeTint(row.changePercent);
   }
 
-  /** The strongest tint takes the surface colour as text (white in light mode, dark in dark mode) for contrast. */
   protected ink(row: HistoryRow): string {
-    return intensity(row.changePercent) === 4
-      ? 'var(--mat-sys-surface)'
-      : 'var(--mat-sys-on-surface)';
+    return changeInk(row.changePercent);
   }
 
   protected rowLabel(row: HistoryRow): string {

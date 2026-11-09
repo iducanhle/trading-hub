@@ -621,7 +621,8 @@ export class MockT212 {
 
   /**
    * A made-up, stable random walk ending at today's account value: 45 days of 15-minute points (so ALL is
-   * short, like a feature that started recently), the last of each interval (UTC). Net deposits as in the fixture.
+   * short, like a feature that started recently), the last of each interval (Europe/Prague). Net deposits as in the
+   * fixture.
    */
   private async history(
     range: T212HistoryRange,
@@ -661,10 +662,17 @@ export class MockT212 {
         '1y': 35136,
       }[interval] * step;
     const byBucket = new Map<number, { at: number; value: number }>();
+    // Intervals start on Europe/Prague clock boundaries, as on the server: bucket by the Prague wall-clock time.
+    const prague = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Europe/Prague',
+      dateStyle: 'short',
+      timeStyle: 'medium',
+    });
     values.forEach((v, i) => {
       const at = now - (count - 1 - i) * step;
       if (now - at > spanDays * 86_400_000) return;
-      byBucket.set(Math.floor(at / bucket), { at, value: v });
+      const wallClock = Date.parse(prague.format(at).replace(' ', 'T') + 'Z');
+      byBucket.set(Math.floor(wallClock / bucket), { at, value: v });
     });
     return {
       range,
