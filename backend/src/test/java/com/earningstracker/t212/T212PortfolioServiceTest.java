@@ -361,16 +361,20 @@ class T212PortfolioServiceTest {
         // Tuesday afternoon in Prague: Monday's close (EST, 21:00Z).
         assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-03T16:00:00Z")))
                 .isEqualTo(Instant.parse("2026-11-02T21:00:00Z"));
-        // Tuesday evening after the close: still Monday's, as the day in New York is still Tuesday.
-        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-03T23:30:00Z")))
+        // Tuesday evening after the close: still Monday's. After Prague midnight (still Tuesday in New York):
+        // Tuesday's, so today starts from the last close.
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-03T22:30:00Z")))
                 .isEqualTo(Instant.parse("2026-11-02T21:00:00Z"));
+        assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-03T23:30:00Z")))
+                .isEqualTo(Instant.parse("2026-11-03T21:00:00Z"));
         // Monday morning: Friday's. Saturday and Sunday: Thursday's (the change of Friday).
         assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-02T08:00:00Z")))
                 .isEqualTo(Instant.parse("2026-10-30T20:00:00Z"));
         assertThat(T212PortfolioService.previousClose(Instant.parse("2026-10-31T12:00:00Z")))
                 .isEqualTo(Instant.parse("2026-10-29T20:00:00Z"));
+        // Monday 04:00 in Prague (Sunday in New York): Monday already, so Friday's.
         assertThat(T212PortfolioService.previousClose(Instant.parse("2026-11-02T03:00:00Z")))
-                .isEqualTo(Instant.parse("2026-10-29T20:00:00Z"));
+                .isEqualTo(Instant.parse("2026-10-30T20:00:00Z"));
     }
 
     @Test

@@ -29,7 +29,7 @@ export interface TodayPnl {
  * One row per US session from the `close` history points (the value at each US close; the newest is the session in
  * progress): the change of the profit since the previous close, in percent of that close's value. A session without a
  * point gets no row, and the next one covers it. The current session (`currentSession`, as the summary counts it)
- * takes the summary's figure, so it matches the account header; later points (after hours, before New York midnight)
+ * takes the summary's figure, so it matches the account header; later points (after hours, before Prague midnight)
  * wait for their own session.
  */
 export function dailyPnl(

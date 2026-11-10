@@ -22,9 +22,9 @@ describe('profit/loss calendar', () => {
     expect(usSession('2026-11-09T21:00:01Z')).toBe('2026-11-10'); // after it: Tuesday
     expect(usSession('2026-11-06T22:00:00Z')).toBe('2026-11-09'); // Friday evening: Monday
     expect(usSession('2026-11-08T12:00:00Z')).toBe('2026-11-09'); // Sunday: Monday
-    // 01:13 in Prague on Tuesday is still Monday evening in New York, Monday's session for the summary.
-    expect(currentUsSession(new Date('2026-11-10T00:13:00Z'))).toBe('2026-11-09');
-    expect(currentUsSession(new Date('2026-11-10T05:00:00Z'))).toBe('2026-11-10');
+    // The summary's day is Prague's: 23:30 on Monday is still Monday, 01:13 on Tuesday is Tuesday.
+    expect(currentUsSession(new Date('2026-11-09T22:30:00Z'))).toBe('2026-11-09');
+    expect(currentUsSession(new Date('2026-11-10T00:13:00Z'))).toBe('2026-11-10');
     expect(currentUsSession(new Date('2026-11-08T12:00:00Z'))).toBe('2026-11-06');
   });
 
@@ -65,7 +65,7 @@ describe('profit/loss calendar', () => {
     const points = [
       point('2026-11-06', 1000, 900),
       point('2026-11-09', 1050, 900, '20:30:00'), // Monday, before the close
-      point('2026-11-10', 1060, 900, '00:13:00'), // Monday evening in New York: Tuesday's session
+      point('2026-11-09', 1060, 900, '22:30:00'), // Monday after the close: Tuesday's session
     ];
     expect(dailyPnl(points, '2026-11-09', { pnl: 60, pnlPct: 6 })).toEqual([
       { periodStart: '2026-11-09', periodEnd: '2026-11-09', pnl: 60, pnlPct: 6 },

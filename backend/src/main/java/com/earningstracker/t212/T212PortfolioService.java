@@ -439,10 +439,11 @@ public class T212PortfolioService {
 
     /**
      * The US regular close (16:00 New York) of the trading day before the current one: the current one is today in
-     * New York, or Friday on a weekend. Holidays count as trading days (the value barely moves on them).
+     * Europe/Prague (the user's day, so after Prague midnight today runs from the close that evening), or Friday on a
+     * weekend. Holidays count as trading days (the value barely moves on them).
      */
     static Instant previousClose(Instant now) {
-        LocalDate session = now.atZone(NEW_YORK).toLocalDate();
+        LocalDate session = now.atZone(T212SnapshotStore.ZONE).toLocalDate();
         while (isWeekend(session)) {
             session = session.minusDays(1);
         }

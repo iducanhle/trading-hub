@@ -115,12 +115,19 @@ export function usSession(at: string | Date): string {
   return session;
 }
 
+const PRAGUE_DAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Prague',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
 /**
- * The US session the summary's `todayPnl` covers: New York's date (Friday on a weekend), so it lasts until New York
- * midnight, after hours included.
+ * The US session the summary's `todayPnl` covers: the Europe/Prague date (Friday on a weekend), so it lasts until
+ * Prague midnight, after hours included, and then today runs from that evening's close.
  */
 export function currentUsSession(now: Date = new Date()): string {
-  let session = newYorkClock(now).date;
+  let session = PRAGUE_DAY.format(now);
   while (isWeekend(session)) session = addDays(session, -1);
   return session;
 }
