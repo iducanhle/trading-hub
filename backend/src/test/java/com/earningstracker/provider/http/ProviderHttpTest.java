@@ -95,11 +95,13 @@ class ProviderHttpTest {
         for (int i = 0; i < 3; i++) {
             server.enqueue(body(200, "{}"));
         }
+        // The limiter's 150 ms periods start when it is created, so time from before that: three calls take three
+        // periods (timing only after it made the test flaky on a slow CI runner).
+        long start = System.nanoTime();
         ProviderHttp http = httpFactory(CLOCK).create("spaced", server.url("/").toString(), Duration.ofMillis(150),
                 0, null, null, builder -> {
                 });
 
-        long start = System.nanoTime();
         for (int i = 0; i < 3; i++) {
             http.getJson("/x");
         }
