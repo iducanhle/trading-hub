@@ -6,6 +6,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -300,10 +301,12 @@ public class T212PortfolioService {
 
     /**
      * One step of {@link #history}: the last point of each 1, 5, 15 or 30 minutes, hour, 4 hours, day, week, month,
-     * half-year or year. {@code minutes} also orders them against a range (approximate for the calendar steps).
+     * half-year or year, or of each US session ({@code close}: the value at each US close, see {@link #sessionClose}).
+     * {@code minutes} also orders them against a range (approximate for the calendar steps).
      */
     public enum HistoryInterval {
         M1("1m", 1), M5("5m", 5), M15("15m", 15), M30("30m", 30), H1("1h", 60), H4("4h", 240), D1("1d", 1440),
+        CLOSE("close", 1440),
         W1("1w", 10_080), MO1("1mo", 44_640), MO6("6mo", 263_520), Y1("1y", 527_040);
 
         private final String code;
@@ -324,6 +327,9 @@ public class T212PortfolioService {
 
         /** The start of the step containing {@code at}, in Europe/Prague time (weeks start on Monday). */
         Instant bucket(Instant at) {
+            if (this == CLOSE) {
+                return sessionClose(at);
+            }
             ZonedDateTime local = at.atZone(T212SnapshotStore.ZONE);
             ZonedDateTime day = local.truncatedTo(ChronoUnit.DAYS);
             switch (this) {
@@ -445,6 +451,22 @@ public class T212PortfolioService {
             previous = previous.minusDays(1);
         }
         return previous.atTime(16, 0).atZone(NEW_YORK).toInstant();
+    }
+
+    /**
+     * The US regular close (16:00 New York) ending the session a moment counts toward: that weekday's close until it
+     * (inclusive), afterwards and on a weekend the next weekday's, so a session's last point is its value at the close.
+     */
+    static Instant sessionClose(Instant at) {
+        ZonedDateTime local = at.atZone(NEW_YORK);
+        LocalDate session = local.toLocalDate();
+        if (local.toLocalTime().isAfter(LocalTime.of(16, 0))) {
+            session = session.plusDays(1);
+        }
+        while (isWeekend(session)) {
+            session = session.plusDays(1);
+        }
+        return session.atTime(16, 0).atZone(NEW_YORK).toInstant();
     }
 
     private static boolean isWeekend(LocalDate day) {

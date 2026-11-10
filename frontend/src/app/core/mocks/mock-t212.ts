@@ -30,6 +30,7 @@ import {
   T212Transaction,
   T212TransactionsResponse,
 } from '../models/contract';
+import { usSession } from '../../shared/utils/dates';
 
 /** src/assets/mocks/t212-portfolio.json */
 export interface T212Fixture {
@@ -656,6 +657,7 @@ export class MockT212 {
         '1h': 4,
         '4h': 16,
         '1d': 96,
+        close: 96, // bucketed by US session below
         '1w': 672,
         '1mo': 2976,
         '6mo': 17568,
@@ -671,6 +673,10 @@ export class MockT212 {
     values.forEach((v, i) => {
       const at = now - (count - 1 - i) * step;
       if (now - at > spanDays * 86_400_000) return;
+      if (interval === 'close') {
+        byBucket.set(Date.parse(usSession(new Date(at))), { at, value: v });
+        return;
+      }
       const wallClock = Date.parse(prague.format(at).replace(' ', 'T') + 'Z');
       byBucket.set(Math.floor(wallClock / bucket), { at, value: v });
     });

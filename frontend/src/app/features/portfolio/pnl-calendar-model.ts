@@ -2,15 +2,15 @@ import { T212HistoryPoint } from '../../core/models/contract';
 import {
   addDays,
   endOfMonth,
-  isWeekend,
   startOfMonth,
   startOfWeek,
+  usSession,
   weekdayIndex,
 } from '../../shared/utils/dates';
 
 /** The account's profit/loss over one day, week or month. */
 export interface PnlRow {
-  /** First calendar day of the period ('YYYY-MM-DD', Europe/Prague). */
+  /** First day of the period ('YYYY-MM-DD'; a day is a US session, dated in New York). */
   periodStart: string;
   /** Last calendar day of the period (Friday for a week). */
   periodEnd: string;
@@ -25,49 +25,41 @@ export interface TodayPnl {
   pnlPct: number | null;
 }
 
-const PRAGUE_DAY = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Europe/Prague',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-/** The Europe/Prague calendar day of an instant, the day the server's daily history intervals use. */
-export function pragueDate(at: string | Date): string {
-  return PRAGUE_DAY.format(typeof at === 'string' ? new Date(at) : at);
-}
-
 /**
- * One row per weekday from the daily history points (the last point of each day): the change of the profit since the
- * previous weekday's point, in percent of that point's value. Weekend changes count on Monday; a day without a point
- * gets no row, and the next one covers it. Today takes the summary's figure (since the previous US close), so it
- * matches the account header.
+ * One row per US session from the `close` history points (the value at each US close; the newest is the session in
+ * progress): the change of the profit since the previous close, in percent of that close's value. A session without a
+ * point gets no row, and the next one covers it. The current session (`currentSession`, as the summary counts it)
+ * takes the summary's figure, so it matches the account header; later points (after hours, before New York midnight)
+ * wait for their own session.
  */
 export function dailyPnl(
   points: readonly T212HistoryPoint[],
-  today: string,
+  currentSession: string,
   todayPnl: TodayPnl | null = null,
 ): PnlRow[] {
-  const byDate = new Map<string, T212HistoryPoint>();
-  for (const point of points) byDate.set(pragueDate(point.at), point);
+  const bySession = new Map<string, T212HistoryPoint>();
+  for (const point of points) bySession.set(usSession(point.at), point);
   const rows: PnlRow[] = [];
   let base: T212HistoryPoint | null = null;
-  for (const [date, point] of [...byDate].sort(([a], [b]) => a.localeCompare(b))) {
-    if (isWeekend(date)) {
-      base ??= point;
-      continue;
-    }
+  for (const [date, point] of [...bySession].sort(([a], [b]) => a.localeCompare(b))) {
+    if (date > currentSession) break;
     if (base) {
-      let pnl =
+      const pnl =
         point.profit !== null && base.profit !== null ? point.profit - base.profit : null;
-      let pnlPct = pnl !== null && base.value > 0 ? (pnl / base.value) * 100 : null;
-      if (date === today && todayPnl?.pnl != null) {
-        pnl = todayPnl.pnl;
-        pnlPct = todayPnl.pnlPct;
-      }
+      const pnlPct = pnl !== null && base.value > 0 ? (pnl / base.value) * 100 : null;
       rows.push({ periodStart: date, periodEnd: date, pnl, pnlPct });
     }
     base = point;
+  }
+  if (todayPnl?.pnl != null && base) {
+    const today = {
+      periodStart: currentSession,
+      periodEnd: currentSession,
+      pnl: todayPnl.pnl,
+      pnlPct: todayPnl.pnlPct,
+    };
+    if (rows.at(-1)?.periodStart === currentSession) rows[rows.length - 1] = today;
+    else rows.push(today);
   }
   return rows;
 }

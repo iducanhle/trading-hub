@@ -19,6 +19,7 @@ import {
 import {
   WEEKDAYS_SHORT,
   addMonths,
+  currentUsSession,
   endOfMonth,
   formatDate,
   formatDateRange,
@@ -39,7 +40,6 @@ import {
   dailyPnl,
   elapsedWeekdays,
   groupPnl,
-  pragueDate,
   sumPnl,
 } from './pnl-calendar-model';
 
@@ -281,7 +281,7 @@ export class PnlCalendar {
   protected readonly weekdays = WEEKDAYS;
   protected readonly skeletonCells = Array.from({ length: 20 }, (_, i) => i);
 
-  private readonly currentMonth = startOfMonth(pragueDate(new Date()));
+  private readonly currentMonth = startOfMonth(currentUsSession());
   /** First day of the shown month; the monthly view shows its year. */
   protected readonly month = signal(this.currentMonth);
   private readonly pageStart = computed(() =>
@@ -295,11 +295,11 @@ export class PnlCalendar {
     computation: () => null,
   });
 
-  /** Every day since the history began, as one request (the last point of each Europe/Prague day). */
+  /** Every US session since the history began, as one request (the value at each US close). */
   protected readonly data = rxResource({
     params: () =>
       this.expanded() ? { version: this.version() + this.t212.dataVersion() } : undefined,
-    stream: () => this.api.t212History('ALL', '1d'),
+    stream: () => this.api.t212History('ALL', 'close'),
   });
 
   protected readonly currency = computed(() =>
@@ -307,7 +307,7 @@ export class PnlCalendar {
   );
   protected readonly days = computed(() =>
     this.data.hasValue()
-      ? dailyPnl(this.data.value().points, pragueDate(new Date()), {
+      ? dailyPnl(this.data.value().points, currentUsSession(), {
           pnl: this.todayPnl(),
           pnlPct: this.todayPnlPct(),
         })
@@ -319,7 +319,7 @@ export class PnlCalendar {
   protected readonly cells = computed(() => calendarCells(this.month(), this.days()));
   /** The month's Monday-to-Friday rows, each with its week's row (null before the history or not reached yet). */
   protected readonly weeks = computed(() => {
-    const today = pragueDate(new Date());
+    const today = currentUsSession();
     return calendarWeeks(this.month()).map((cells) => {
       const first = cells.find((c) => c !== null)!.date;
       const start = startOfWeek(first);

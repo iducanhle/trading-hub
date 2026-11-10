@@ -1,29 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { T212HistoryPoint } from '../../core/models/contract';
-import { dailyPnl, elapsedWeekdays, groupPnl, pragueDate, sumPnl } from './pnl-calendar-model';
+import { currentUsSession, usSession } from '../../shared/utils/dates';
+import { dailyPnl, elapsedWeekdays, groupPnl, sumPnl } from './pnl-calendar-model';
 
-/** The last point of a Prague day (20:00 UTC is 21:00 or 22:00 in Prague). */
-const point = (date: string, value: number, netDeposits: number | null): T212HistoryPoint => ({
-  at: `${date}T20:00:00Z`,
+/** The value at a US close (21:00 UTC is 16:00 in New York in November). */
+const point = (
+  date: string,
+  value: number,
+  netDeposits: number | null,
+  time = '21:00:00',
+): T212HistoryPoint => ({
+  at: `${date}T${time}Z`,
   value,
   netDeposits,
   profit: netDeposits === null ? null : value - netDeposits,
 });
 
 describe('profit/loss calendar', () => {
-  it('dates points by the Prague calendar day', () => {
-    expect(pragueDate('2026-11-09T23:30:00Z')).toBe('2026-11-10');
-    expect(pragueDate('2026-11-09T22:59:00Z')).toBe('2026-11-09');
+  it('dates moments by the US session they count toward', () => {
+    expect(usSession('2026-11-09T21:00:00Z')).toBe('2026-11-09'); // Monday's close
+    expect(usSession('2026-11-09T21:00:01Z')).toBe('2026-11-10'); // after it: Tuesday
+    expect(usSession('2026-11-06T22:00:00Z')).toBe('2026-11-09'); // Friday evening: Monday
+    expect(usSession('2026-11-08T12:00:00Z')).toBe('2026-11-09'); // Sunday: Monday
+    // 01:13 in Prague on Tuesday is still Monday evening in New York, Monday's session for the summary.
+    expect(currentUsSession(new Date('2026-11-10T00:13:00Z'))).toBe('2026-11-09');
+    expect(currentUsSession(new Date('2026-11-10T05:00:00Z'))).toBe('2026-11-10');
+    expect(currentUsSession(new Date('2026-11-08T12:00:00Z'))).toBe('2026-11-06');
   });
 
-  it('takes each day from the previous weekday, without deposits and with the weekend on Monday', () => {
+  it('takes each session from the previous close, without deposits', () => {
     const rows = dailyPnl(
       [
         point('2026-11-05', 1000, 900), // Thu: the first point is only the base
         point('2026-11-06', 1010, 900), // Fri: +10
-        point('2026-11-07', 1012, 900), // Sat
-        point('2026-11-08', 1515, 1400), // Sun: a 500 deposit
-        point('2026-11-09', 1520, 1400), // Mon: +10 since Friday (2 on Saturday, 3 on Sunday, 5 today)
+        point('2026-11-09', 1520, 1400), // Mon: a 500 deposit over the weekend, +10
       ],
       '2026-11-20',
     );
@@ -35,11 +45,11 @@ describe('profit/loss calendar', () => {
     expect(rows[1].pnlPct).toBeCloseTo((10 / 1010) * 100);
   });
 
-  it('leaves a missing day out and keeps unknown amounts null', () => {
+  it('leaves a missing session out and keeps unknown amounts null', () => {
     const rows = dailyPnl(
       [
         point('2026-11-02', 1000, 900),
-        point('2026-11-04', 1020, 900), // Tue missing: Wed covers both days
+        point('2026-11-04', 1020, 900), // Tue missing: Wed covers both
         point('2026-11-05', 1030, null),
       ],
       '2026-11-20',
@@ -51,14 +61,19 @@ describe('profit/loss calendar', () => {
     expect(rows[1].pnlPct).toBeNull();
   });
 
-  it("uses the summary's figure for today", () => {
-    const rows = dailyPnl(
-      [point('2026-11-06', 1000, 900), point('2026-11-09', 1050, 900)],
-      '2026-11-09',
-      { pnl: 42, pnlPct: 4.2 },
-    );
-    expect(rows).toEqual([
-      { periodStart: '2026-11-09', periodEnd: '2026-11-09', pnl: 42, pnlPct: 4.2 },
+  it("uses the summary's figure for the current session and holds later points back", () => {
+    const points = [
+      point('2026-11-06', 1000, 900),
+      point('2026-11-09', 1050, 900, '20:30:00'), // Monday, before the close
+      point('2026-11-10', 1060, 900, '00:13:00'), // Monday evening in New York: Tuesday's session
+    ];
+    expect(dailyPnl(points, '2026-11-09', { pnl: 60, pnlPct: 6 })).toEqual([
+      { periodStart: '2026-11-09', periodEnd: '2026-11-09', pnl: 60, pnlPct: 6 },
+    ]);
+    expect(dailyPnl(points, '2026-11-09').map((r) => r.pnl)).toEqual([50]);
+    // Before the session's first point, the figure still gets its square.
+    expect(dailyPnl(points.slice(0, 1), '2026-11-09', { pnl: 5, pnlPct: 0.5 })).toEqual([
+      { periodStart: '2026-11-09', periodEnd: '2026-11-09', pnl: 5, pnlPct: 0.5 },
     ]);
   });
 

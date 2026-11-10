@@ -552,9 +552,9 @@ export interface T212AllocationResponse {
 }
 
 export type T212HistoryRange = '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
-/** The chart step; each range offers some (docs/CONTRACT.md). */
+/** The chart step; each range offers some (docs/CONTRACT.md). `close`: the value at each US close (16:00 New York). */
 export type T212HistoryInterval =
-  '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1mo' | '6mo' | '1y';
+  '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | 'close' | '1w' | '1mo' | '6mo' | '1y';
 
 /** The account value at one stored moment (snapshots every minute, unchanged values skipped). */
 export interface T212HistoryPoint {

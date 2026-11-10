@@ -85,6 +85,46 @@ export function eachDay(from: string, to: string): string[] {
   return days;
 }
 
+const NEW_YORK_CLOCK = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+
+/** The New York calendar day and wall-clock time ('HH:MM:SS') of an instant. */
+function newYorkClock(at: Date): { date: string; time: string } {
+  const p = Object.fromEntries(NEW_YORK_CLOCK.formatToParts(at).map((x) => [x.type, x.value]));
+  return { date: `${p['year']}-${p['month']}-${p['day']}`, time: `${p['hour']}:${p['minute']}:${p['second']}` };
+}
+
+/**
+ * The US session (its New York date) an instant counts toward, as the server's `close` history interval: that
+ * weekday's until its close at 16:00 New York (inclusive), the next weekday's after it and on a weekend.
+ */
+export function usSession(at: string | Date): string {
+  const instant = typeof at === 'string' ? new Date(at) : at;
+  const { date, time } = newYorkClock(instant);
+  const afterClose = time > '16:00:00' || (time === '16:00:00' && instant.getUTCMilliseconds() > 0);
+  let session = afterClose ? addDays(date, 1) : date;
+  while (isWeekend(session)) session = addDays(session, 1);
+  return session;
+}
+
+/**
+ * The US session the summary's `todayPnl` covers: New York's date (Friday on a weekend), so it lasts until New York
+ * midnight, after hours included.
+ */
+export function currentUsSession(now: Date = new Date()): string {
+  let session = newYorkClock(now).date;
+  while (isWeekend(session)) session = addDays(session, -1);
+  return session;
+}
+
 /** Monday first. */
 export const WEEKDAYS_SHORT = [
   $localize`:Monday, short:Mon`,

@@ -109,6 +109,7 @@ const INTERVAL_LABELS: Record<T212HistoryInterval, string> = {
   '1h': '1h',
   '4h': '4h',
   '1d': '1d',
+  close: 'close', // not offered on the chart
   '1w': '1w',
   '1mo': '1mo',
   '6mo': '6mo',

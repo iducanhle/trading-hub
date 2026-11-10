@@ -201,6 +201,27 @@ class T212PortfolioServiceTest {
     }
 
     @Test
+    void closeIntervalKeepsTheValueAtEachUsClose() {
+        // November: New York is UTC-5, so the close is 21:00Z. Fri 6th, Mon 9th, Tue 10th.
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-11-06T20:59:00Z"), 1));
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-11-06T21:00:00Z"), 2)); // Friday's close
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-11-07T12:00:00Z"), 3)); // weekend: Monday
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-11-09T20:59:00Z"), 4)); // Monday's close
+        snapshots.add(UID, new T212SnapshotStore.Point(Instant.parse("2026-11-10T00:13:00Z"), 5)); // after: Tuesday
+
+        assertThat(portfolio.history(UID, T212PortfolioService.HistoryRange.ALL,
+                T212PortfolioService.HistoryInterval.CLOSE).points()).extracting(T212Dtos.HistoryPoint::value)
+                .containsExactly(2.0, 4.0, 5.0);
+        assertThat(T212PortfolioService.sessionClose(Instant.parse("2026-11-09T21:00:00Z")))
+                .isEqualTo(Instant.parse("2026-11-09T21:00:00Z"));
+        assertThat(T212PortfolioService.sessionClose(Instant.parse("2026-11-06T21:00:01Z")))
+                .isEqualTo(Instant.parse("2026-11-09T21:00:00Z"));
+        assertThat(T212PortfolioService.HistoryInterval.parse("close"))
+                .contains(T212PortfolioService.HistoryInterval.CLOSE);
+        assertThat(T212PortfolioService.HistoryRange.D1.offers(T212PortfolioService.HistoryInterval.CLOSE)).isFalse();
+    }
+
+    @Test
     void snapshotJobStoresTheAccountValueAtTheJobTime() {
         Map<String, Object> stats = new com.earningstracker.jobs.T212SnapshotJob(live, snapshots, states, encryption,
                 clock).run();
